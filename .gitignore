@@ -1,7 +1,18 @@
-.gradle
-/local.properties
-/.idea/workspace.xml
-/.idea/libraries
+# ant
+bin
+build
+gen
+out
+lib
+
+# intellij
+.idea
+*.iml
+
+# eclipse
+.classpath
+.project
+.settings
 .DS_Store
-/build
-/captures
+local.properties
+.gradle
