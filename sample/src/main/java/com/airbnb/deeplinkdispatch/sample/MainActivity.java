@@ -5,6 +5,8 @@ import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import com.airbnb.deeplinkdispatch.DeepLink;
+
 
 public class MainActivity extends ActionBarActivity {
 
@@ -34,5 +36,10 @@ public class MainActivity extends ActionBarActivity {
     }
 
     return super.onOptionsItemSelected(item);
+  }
+
+  @DeepLink(uri = "Test URI")
+  private void testMethod() {
+
   }
 }
