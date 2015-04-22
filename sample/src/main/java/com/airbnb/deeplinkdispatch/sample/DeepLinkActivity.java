@@ -1,9 +1,9 @@
 package com.airbnb.deeplinkdispatch.sample;
 
+import android.app.Activity;
 import android.os.Bundle;
-import android.support.v7.app.ActionBarActivity;
 
-public class DeepLinkActivity extends ActionBarActivity {
+public class DeepLinkActivity extends Activity {
 
   private DeepLinkDispatch dispatch = new DeepLinkDispatch();
 
@@ -12,5 +12,7 @@ public class DeepLinkActivity extends ActionBarActivity {
     super.onCreate(savedInstanceState);
 
     dispatch.handleDeepLink(this, getIntent());
+
+    finish();
   }
 }
