@@ -3,14 +3,14 @@ package com.airbnb.deeplinkdispatch.sample;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.AppCompatActivity;
 import android.widget.Toast;
 
 import com.airbnb.deeplinkdispatch.DeepLink;
 
 
 @DeepLink(uri = "airbnb://classDeepLink")
-public class MainActivity extends ActionBarActivity {
+public class MainActivity extends AppCompatActivity {
 
   private static String ACTION_DEEP_LINK_METHOD = "deep_link_method";
 

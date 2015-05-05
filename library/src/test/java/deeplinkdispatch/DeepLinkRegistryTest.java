@@ -1,12 +1,14 @@
 package deeplinkdispatch;
 
+import com.airbnb.deeplinkdispatch.DeepLinkEntry;
 import com.airbnb.deeplinkdispatch.DeepLinkRegistry;
-import com.airbnb.deeplinkdispatch.internal.DeepLinkEntry;
 
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.Map;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class DeepLinkRegistryTest {
 
@@ -21,7 +23,7 @@ public class DeepLinkRegistryTest {
     Assert.assertNotNull(entry);
 
     Map<String, String> parameters = entry.getParameters(uri);
-    Assert.assertEquals(parameters.get("param1"), "12345");
+    assertThat(parameters.get("param1")).isEqualTo("12345");
   }
 
   @Test public void testTwoParameters() {
@@ -35,7 +37,7 @@ public class DeepLinkRegistryTest {
     Assert.assertNotNull(entry);
 
     Map<String, String> parameters = entry.getParameters(uri);
-    Assert.assertEquals(parameters.get("param1"), "12345");
-    Assert.assertEquals(parameters.get("param2"), "alice");
+    assertThat(parameters.get("param1")).isEqualTo("12345");
+    assertThat(parameters.get("param2")).isEqualTo("alice");
   }
 }

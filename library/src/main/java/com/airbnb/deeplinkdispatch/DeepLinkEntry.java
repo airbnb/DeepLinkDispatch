@@ -1,4 +1,4 @@
-package com.airbnb.deeplinkdispatch.internal;
+package com.airbnb.deeplinkdispatch;
 
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -12,16 +12,17 @@ public class DeepLinkEntry {
   private static final String PARAM = "([a-zA-Z][a-zA-Z0-9_-]*)";
   private static final String PARAM_REGEX = "\\{(" + PARAM + ")\\}";
 
-  public enum Type {
-    CLASS,
-    METHOD
-  }
-
   private String uri;
   private String regex;
   private Type type;
   private String activity;
   private String method;
+
+  public enum Type {
+    CLASS,
+    METHOD
+  }
+
 
   public DeepLinkEntry(String uri, Type type, String activity, String method) {
     this.uri = uri;

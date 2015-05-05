@@ -3,6 +3,7 @@ package com.airbnb.deeplinkdispatch.internal;
 import com.google.auto.service.AutoService;
 
 import com.airbnb.deeplinkdispatch.DeepLink;
+import com.airbnb.deeplinkdispatch.DeepLinkEntry;
 import com.airbnb.deeplinkdispatch.javawriter.JavaWriter;
 
 import java.io.IOException;
@@ -26,8 +27,6 @@ import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.tools.Diagnostic;
 import javax.tools.JavaFileObject;
-
-import static com.airbnb.deeplinkdispatch.internal.DeepLinkEntry.Type;
 
 @AutoService(Processor.class)
 public class DeepLinkProcessor extends AbstractProcessor {
@@ -64,7 +63,7 @@ public class DeepLinkProcessor extends AbstractProcessor {
         error(annotatedElement, "Only classes and methods can be annotated with @%s", DeepLink.class.getSimpleName());
       }
 
-      Type type = kind == ElementKind.CLASS ? Type.CLASS : Type.METHOD;
+      DeepLinkEntry.Type type = kind == ElementKind.CLASS ? DeepLinkEntry.Type.CLASS : DeepLinkEntry.Type.METHOD;
       DeepLinkAnnotatedElement element = new DeepLinkAnnotatedElement(annotatedElement, type);
       deepLinkElements.add(element);
     }
@@ -94,7 +93,7 @@ public class DeepLinkProcessor extends AbstractProcessor {
 
     jw.emitPackage("com.airbnb.deeplinkdispatch");
 
-    jw.emitImports("com.airbnb.deeplinkdispatch.internal.DeepLinkEntry.Type");
+    jw.emitImports("com.airbnb.deeplinkdispatch.DeepLinkEntry.Type");
     jw.emitEmptyLine();
 
     jw.beginType("DeepLinkLoader", "class", EnumSet.of(Modifier.PUBLIC), null, "Loader");
