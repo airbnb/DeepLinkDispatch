@@ -1,7 +1,5 @@
 package com.airbnb.deeplinkdispatch;
 
-import com.airbnb.deeplinkdispatch.internal.DeepLinkEntry;
-
 import java.util.LinkedList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -17,9 +15,9 @@ public class DeepLinkRegistry {
     }
   }
 
-  public void registerDeepLink(String uri, DeepLinkEntry.Type type, String activity, String method) {
-    DeepLinkEntry entry = new DeepLinkEntry(uri, type, activity, method);
-    registry.add(entry);
+  public void registerDeepLink(String uri, DeepLinkEntry.Type type, String activity,
+                               String method) {
+    registry.add(new DeepLinkEntry(uri, type, activity, method));
   }
 
   public DeepLinkEntry parseUri(String uriString) {

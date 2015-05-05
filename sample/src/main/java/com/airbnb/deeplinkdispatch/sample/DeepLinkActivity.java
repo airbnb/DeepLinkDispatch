@@ -7,12 +7,13 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 
-import com.airbnb.deeplinkdispatch.*;
-import com.airbnb.deeplinkdispatch.internal.DeepLinkEntry;
+import com.airbnb.deeplinkdispatch.DeepLinkEntry;
+import com.airbnb.deeplinkdispatch.DeepLinkLoader;
+import com.airbnb.deeplinkdispatch.DeepLinkRegistry;
+import com.airbnb.deeplinkdispatch.Loader;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class DeepLinkActivity extends Activity {
@@ -31,7 +32,7 @@ public class DeepLinkActivity extends Activity {
     DeepLinkEntry entry = registry.parseUri(uri.toString());
 
     if (entry != null) {
-      LinkedHashMap<String, String> parameterMap = (LinkedHashMap) entry.getParameters(uri.toString());
+      Map<String, String> parameterMap = entry.getParameters(uri.toString());
 
       try {
         Class<?> c = Class.forName(entry.getActivity());
@@ -57,7 +58,7 @@ public class DeepLinkActivity extends Activity {
         Log.e(TAG, "Deep link to non-existent method: " + entry.getMethod());
       } catch (IllegalAccessException exception) {
         Log.e(TAG, "Could not deep link to method: " + entry.getMethod());
-      } catch (InvocationTargetException exception) {
+      } catch(InvocationTargetException  exception) {
         Log.e(TAG, "Could not deep link to method: " + entry.getMethod());
       }
     } else {
