@@ -17,8 +17,8 @@
             </intent-filter>
         </activity>
         <activity
-                android:name="com.airbnb.deeplinkdispatch.sample.DeepLinkActivity"
-                android:theme="@android:style/Theme.NoDisplay">
+            android:name="com.airbnb.deeplinkdispatch.DeepLinkActivity"
+            android:theme="@android:style/Theme.NoDisplay">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
