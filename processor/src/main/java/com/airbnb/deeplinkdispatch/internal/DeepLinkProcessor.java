@@ -9,6 +9,7 @@ import com.airbnb.deeplinkdispatch.javawriter.JavaWriter;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -70,7 +71,8 @@ public class DeepLinkProcessor extends AbstractProcessor {
 
     if (deepLinkElements.size() > 0) {
       try {
-        generateCode(deepLinkElements);
+        generateRegistry(deepLinkElements);
+        generateDeepLinkActivity();
       } catch (IOException e) {
         messager.printMessage(Diagnostic.Kind.ERROR, "Error creating file");
       }
@@ -86,7 +88,7 @@ public class DeepLinkProcessor extends AbstractProcessor {
         e);
   }
 
-  private void generateCode(List<DeepLinkAnnotatedElement> elements) throws IOException {
+  private void generateRegistry(List<DeepLinkAnnotatedElement> elements) throws IOException {
     JavaFileObject jfo = filer.createSourceFile("DeepLinkLoader");
     Writer writer = jfo.openWriter();
     JavaWriter jw = new JavaWriter(writer);
@@ -112,6 +114,99 @@ public class DeepLinkProcessor extends AbstractProcessor {
       String method = element.getMethod() == null ? "null" : "\"" + element.getMethod() + "\"";
       jw.emitStatement(String.format("registry.registerDeepLink(%s, %s, %s, %s)", uri, type, activity, method));
     }
+    jw.endMethod();
+
+    jw.endType();
+
+    jw.close();
+  }
+
+  private void generateDeepLinkActivity() throws IOException {
+    JavaFileObject jfo = filer.createSourceFile("DeepLinkActivity");
+
+    Writer writer = jfo.openWriter();
+    JavaWriter jw = new JavaWriter(writer);
+    jw.emitPackage("com.airbnb.deeplinkdispatch");
+
+    List<String> imports = Arrays.asList("android.app.Activity",
+                                         "android.content.Context",
+                                         "android.content.Intent",
+                                         "android.net.Uri",
+                                         "android.os.Bundle",
+                                         "android.util.Log",
+                                         "android.util.Log",
+                                         "java.lang.reflect.InvocationTargetException",
+                                         "java.lang.reflect.Method",
+                                         "java.util.Map");
+    jw.emitImports(imports);
+    jw.emitEmptyLine();
+
+
+    jw.beginType("DeepLinkActivity", "class", EnumSet.of(Modifier.PUBLIC), "Activity");
+    jw.emitEmptyLine();
+
+    jw.emitField("String",
+                 "TAG",
+                 EnumSet.of(Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL),
+                 "DeepLinkActivity.class.getSimpleName()");
+    jw.emitEmptyLine();
+
+    jw.emitAnnotation(Override.class);
+    jw.beginMethod("void", "onCreate", EnumSet.of(Modifier.PROTECTED), "Bundle",
+                   "savedInstanceState");
+
+    jw.emitStatement("super.onCreate(savedInstanceState)");
+    jw.emitEmptyLine();
+
+    jw.emitStatement("Loader loader = new DeepLinkLoader()");
+    jw.emitStatement("DeepLinkRegistry registry = new DeepLinkRegistry(loader)");
+    jw.emitStatement("Uri uri = getIntent().getData()");
+    jw.emitStatement("DeepLinkEntry entry = registry.parseUri(uri.toString())");
+    jw.emitEmptyLine();
+
+    jw.beginControlFlow("if (entry != null)");
+    jw.emitStatement("Map<String, String> parameterMap = entry.getParameters(uri.toString())");
+    jw.emitEmptyLine();
+
+    jw.beginControlFlow("try");
+    jw.emitStatement("Class<?> c = Class.forName(entry.getActivity())");
+    jw.emitEmptyLine();
+
+    jw.emitStatement("Intent intent");
+    jw.beginControlFlow("if (entry.getType() == DeepLinkEntry.Type.CLASS)");
+    jw.emitStatement("intent = new Intent(this, c)");
+    jw.nextControlFlow("else");
+    jw.emitStatement("Method method = c.getMethod(entry.getMethod(), Context.class)");
+    jw.emitStatement("intent = (Intent) method.invoke(c, this)");
+    jw.endControlFlow();
+    jw.emitEmptyLine();
+
+    jw.emitStatement("Bundle parameters = new Bundle()");
+    jw.beginControlFlow("for (Map.Entry<String, String> parameterEntry : parameterMap.entrySet())");
+    jw.emitStatement("parameters.putString(parameterEntry.getKey(), parameterEntry.getValue())");
+    jw.endControlFlow();
+    jw.emitStatement("intent.putExtras(parameters)");
+    jw.emitEmptyLine();
+
+    jw.emitStatement("startActivity(intent)");
+
+    jw.nextControlFlow("catch (ClassNotFoundException exception)");
+    jw.emitStatement("Log.e(TAG, \"Deep link to non-existent class: \" + entry.getActivity())");
+    jw.nextControlFlow("catch (NoSuchMethodException exception)");
+    jw.emitStatement("Log.e(TAG, \"Deep link to non-existent method: \" + entry.getMethod())");
+    jw.nextControlFlow("catch (IllegalAccessException exception)");
+    jw.emitStatement("Log.e(TAG, \"Could not deep link to method: \" + entry.getMethod())");
+    jw.nextControlFlow("catch(InvocationTargetException  exception)");
+    jw.emitStatement("Log.e(TAG, \"Could not deep link to method: \" + entry.getMethod())");
+    jw.endControlFlow();
+
+    jw.nextControlFlow("else");
+    jw.emitStatement("Log.e(TAG, \"No registered entity to handle deep link: \" + uri.toString())");
+    jw.endControlFlow();
+    jw.emitEmptyLine();
+
+    jw.emitStatement("finish()");
+
     jw.endMethod();
 
     jw.endType();
