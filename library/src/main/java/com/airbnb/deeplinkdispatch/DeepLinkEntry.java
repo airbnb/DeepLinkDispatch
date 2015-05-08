@@ -48,6 +48,11 @@ public class DeepLinkEntry {
     return method;
   }
 
+  /**
+   * Generates a map of parameters and the values from the given deep link.
+   * @param inputHostPath the combined host and path of the deep link
+   * @return the map of parameter values, where all values will be strings.
+   */
   public Map<String, String> getParameters(String inputHostPath) {
     Map<String, String> parameters = generateParameterMap(hostPath);
     populateParameters(inputHostPath, parameters);

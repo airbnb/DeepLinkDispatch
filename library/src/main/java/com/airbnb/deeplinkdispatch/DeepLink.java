@@ -8,12 +8,11 @@ import java.lang.annotation.Target;
 /**
  * Associate a method to handle a deeplink URI.
  * <pre><code>
- * {@literal @}DeepLink(uri);
+ * {@literal @}DeepLink(host, path);
  * </code></pre>
  */
 @Retention(RetentionPolicy.CLASS) @Target({ElementType.TYPE, ElementType.METHOD})
 public @interface DeepLink {
-  /** The deeplink URI the method will handle */
   String host();
   String path() default "";
 }
