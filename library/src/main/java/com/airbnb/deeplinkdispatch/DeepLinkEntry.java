@@ -12,7 +12,7 @@ public class DeepLinkEntry {
   private static final String PARAM = "([a-zA-Z][a-zA-Z0-9_-]*)";
   private static final String PARAM_REGEX = "\\{(" + PARAM + ")\\}";
 
-  private String uri;
+  private String hostPath;
   private String regex;
   private Type type;
   private String activity;
@@ -24,9 +24,9 @@ public class DeepLinkEntry {
   }
 
 
-  public DeepLinkEntry(String uri, Type type, String activity, String method) {
-    this.uri = uri;
-    this.regex = generateLookupString(uri);
+  public DeepLinkEntry(String hostPath, Type type, String activity, String method) {
+    this.hostPath = hostPath;
+    this.regex = generateLookupString(hostPath);
     this.type = type;
     this.activity = activity;
     this.method = method;
@@ -48,25 +48,25 @@ public class DeepLinkEntry {
     return method;
   }
 
-  public Map<String, String> getParameters(String inputUri) {
-    Map<String, String> parameters = generateParameterMap(uri);
-    populateParameters(inputUri, parameters);
+  public Map<String, String> getParameters(String inputHostPath) {
+    Map<String, String> parameters = generateParameterMap(hostPath);
+    populateParameters(inputHostPath, parameters);
     return parameters;
   }
 
-  private Map<String, String> generateParameterMap(String uri) {
+  private Map<String, String> generateParameterMap(String hostPath) {
     Map<String, String> paramMap = new LinkedHashMap<>();
     Pattern pattern = Pattern.compile(PARAM_REGEX);
-    Matcher matcher = pattern.matcher(uri);
+    Matcher matcher = pattern.matcher(hostPath);
     while (matcher.find()) {
       paramMap.put(matcher.group(1), "");
     }
     return paramMap;
   }
 
-  private void populateParameters(String inputUri, Map<String, String> parameters) {
+  private void populateParameters(String inputHostPath, Map<String, String> parameters) {
     Iterator<String> keySetIterator = parameters.keySet().iterator();
-    Matcher matcher = Pattern.compile(getRegex()).matcher(inputUri);
+    Matcher matcher = Pattern.compile(getRegex()).matcher(inputHostPath);
     matcher.matches();
 
     int i = 1;
@@ -77,7 +77,7 @@ public class DeepLinkEntry {
     }
   }
 
-  private String generateLookupString(String uri) {
-    return uri.replaceAll(PARAM_REGEX, PARAM_VALUE);
+  private String generateLookupString(String hostPath) {
+    return hostPath.replaceAll(PARAM_REGEX, PARAM_VALUE);
   }
 }

@@ -108,11 +108,11 @@ public class DeepLinkProcessor extends AbstractProcessor {
     jw.beginMethod("void", "load", EnumSet.of(Modifier.PUBLIC), "DeepLinkRegistry",
                    "registry");
     for (DeepLinkAnnotatedElement element: elements) {
-      String uri = "\"" + element.getUri() + "\"";
+      String hostPath = "\"" + element.getHost() + "/" + element.getPath() + "\"";
       String type = "Type." + element.getAnnotationType().toString();
       String activity = "\"" + element.getActivity() + "\"";
       String method = element.getMethod() == null ? "null" : "\"" + element.getMethod() + "\"";
-      jw.emitStatement(String.format("registry.registerDeepLink(%s, %s, %s, %s)", uri, type, activity, method));
+      jw.emitStatement(String.format("registry.registerDeepLink(%s, %s, %s, %s)", hostPath, type, activity, method));
     }
     jw.endMethod();
 
@@ -161,11 +161,12 @@ public class DeepLinkProcessor extends AbstractProcessor {
     jw.emitStatement("Loader loader = new DeepLinkLoader()");
     jw.emitStatement("DeepLinkRegistry registry = new DeepLinkRegistry(loader)");
     jw.emitStatement("Uri uri = getIntent().getData()");
-    jw.emitStatement("DeepLinkEntry entry = registry.parseUri(uri.toString())");
+    jw.emitStatement("String hostPath = uri.getHost() + uri.getPath()");
+    jw.emitStatement("DeepLinkEntry entry = registry.parseUri(hostPath)");
     jw.emitEmptyLine();
 
     jw.beginControlFlow("if (entry != null)");
-    jw.emitStatement("Map<String, String> parameterMap = entry.getParameters(uri.toString())");
+    jw.emitStatement("Map<String, String> parameterMap = entry.getParameters(hostPath)");
     jw.emitEmptyLine();
 
     jw.beginControlFlow("try");

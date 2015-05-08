@@ -9,10 +9,11 @@ import android.widget.Toast;
 import com.airbnb.deeplinkdispatch.DeepLink;
 
 
-@DeepLink(uri = "airbnb://classDeepLink")
+@DeepLink(host = "classDeepLink")
 public class MainActivity extends AppCompatActivity {
 
   private static String ACTION_DEEP_LINK_METHOD = "deep_link_method";
+  private static String ACTION_DEEP_LINK_COMPLEX = "deep_link_complex";
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -23,15 +24,26 @@ public class MainActivity extends AppCompatActivity {
       Bundle parameters = getIntent().getExtras();
       String param1 = parameters.getString("param1");
       showToast(param1);
+    } else if (ACTION_DEEP_LINK_COMPLEX.equals(getIntent().getAction())) {
+      Bundle parameters = getIntent().getExtras();
+      String arbitraryNumber = parameters.getString("arbitraryNumber");
+      showToast(arbitraryNumber);
     } else {
       showToast("class");
     }
   }
 
-  @DeepLink(uri = "airbnb://methodDeepLink/{param1}")
+  @DeepLink(host = "methodDeepLink", path="{param1}")
   public static Intent intentForDeepLinkMethod(Context context) {
     Intent intent = new Intent(context, MainActivity.class);
     intent.setAction(ACTION_DEEP_LINK_METHOD);
+    return intent;
+  }
+
+  @DeepLink(host = "host", path="somePath/{arbitraryNumber}")
+  public static Intent intentForComplexMethod(Context context) {
+    Intent intent = new Intent(context, MainActivity.class);
+    intent.setAction(ACTION_DEEP_LINK_COMPLEX);
     return intent;
   }
 

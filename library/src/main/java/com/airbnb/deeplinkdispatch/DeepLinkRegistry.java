@@ -15,9 +15,9 @@ public class DeepLinkRegistry {
     }
   }
 
-  public void registerDeepLink(String uri, DeepLinkEntry.Type type, String activity,
+  public void registerDeepLink(String hostPath, DeepLinkEntry.Type type, String activity,
                                String method) {
-    registry.add(new DeepLinkEntry(uri, type, activity, method));
+    registry.add(new DeepLinkEntry(hostPath, type, activity, method));
   }
 
   public DeepLinkEntry parseUri(String uriString) {

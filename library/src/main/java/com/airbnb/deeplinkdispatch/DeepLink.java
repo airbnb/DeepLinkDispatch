@@ -14,5 +14,6 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.CLASS) @Target({ElementType.TYPE, ElementType.METHOD})
 public @interface DeepLink {
   /** The deeplink URI the method will handle */
-  String uri();
+  String host();
+  String path() default "";
 }
