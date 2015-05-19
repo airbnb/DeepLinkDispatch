@@ -108,7 +108,12 @@ public class DeepLinkProcessor extends AbstractProcessor {
     jw.beginMethod("void", "load", EnumSet.of(Modifier.PUBLIC), "DeepLinkRegistry",
                    "registry");
     for (DeepLinkAnnotatedElement element: elements) {
-      String hostPath = "\"" + element.getHost() + "/" + element.getPath() + "\"";
+      String hostPath;
+      if (element.getPath().isEmpty()) {
+        hostPath = "\"" + element.getHost() + "\"";
+      } else {
+        hostPath = "\"" + element.getHost() + "/" + element.getPath() + "\"";
+      }
       String type = "Type." + element.getAnnotationType().toString();
       String activity = "\"" + element.getActivity() + "\"";
       String method = element.getMethod() == null ? "null" : "\"" + element.getMethod() + "\"";
