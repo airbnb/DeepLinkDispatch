@@ -174,6 +174,16 @@ public class DeepLinkProcessor extends AbstractProcessor {
     jw.emitStatement("Map<String, String> parameterMap = entry.getParameters(hostPath)");
     jw.emitEmptyLine();
 
+    jw.beginControlFlow("for (String queryParameter : uri.getQueryParameterNames())");
+    jw.beginControlFlow("if (parameterMap.containsKey(queryParameter))");
+    jw.emitStatement("Log.w(TAG, \"Duplicate parameter name in path and query parameters: \" + queryParameter)");
+    jw.endControlFlow();
+    jw.emitEmptyLine();
+
+    jw.emitStatement("parameterMap.put(queryParameter, uri.getQueryParameter(queryParameter))");
+    jw.endControlFlow();
+    jw.emitEmptyLine();
+
     jw.beginControlFlow("try");
     jw.emitStatement("Class<?> c = Class.forName(entry.getActivity())");
     jw.emitEmptyLine();
