@@ -192,7 +192,8 @@ public class DeepLinkProcessor extends AbstractProcessor {
 
     jw.beginControlFlow("for (String queryParameter : uri.getQueryParameterNames())");
     jw.beginControlFlow("if (parameterMap.containsKey(queryParameter))");
-    jw.emitStatement("Log.w(TAG, \"Duplicate parameter name in path and query param: \" + queryParameter)");
+    jw.emitStatement(
+        "Log.w(TAG, \"Duplicate parameter name in path and query param: \" + queryParameter)");
     jw.endControlFlow();
     jw.emitEmptyLine();
 
@@ -210,6 +211,11 @@ public class DeepLinkProcessor extends AbstractProcessor {
     jw.nextControlFlow("else");
     jw.emitStatement("Method method = c.getMethod(entry.getMethod(), Context.class)");
     jw.emitStatement("intent = (Intent) method.invoke(c, this)");
+    jw.endControlFlow();
+    jw.emitEmptyLine();
+
+    jw.beginControlFlow("if (intent.getAction() == null)");
+    jw.emitStatement("intent.setAction(getIntent().getAction())");
     jw.endControlFlow();
     jw.emitEmptyLine();
 

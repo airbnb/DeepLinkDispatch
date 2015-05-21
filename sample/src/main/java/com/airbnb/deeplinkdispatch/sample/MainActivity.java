@@ -22,23 +22,25 @@ public class MainActivity extends AppCompatActivity {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_main);
 
-    String toastMessage;
-    Bundle parameters = getIntent().getExtras();
-    if (ACTION_DEEP_LINK_METHOD.equals(getIntent().getAction())) {
-      toastMessage = parameters.getString("param1");
-    } else if (ACTION_DEEP_LINK_COMPLEX.equals(getIntent().getAction())) {
-      toastMessage = parameters.getString("arbitraryNumber");
-    } else {
-      toastMessage = "class";
-    }
+    if (getIntent().getAction() != null) {
+      String toastMessage;
+      Bundle parameters = getIntent().getExtras();
+      if (ACTION_DEEP_LINK_METHOD.equals(getIntent().getAction())) {
+        toastMessage = parameters.getString("param1");
+      } else if (ACTION_DEEP_LINK_COMPLEX.equals(getIntent().getAction())) {
+        toastMessage = parameters.getString("arbitraryNumber");
+      } else {
+        toastMessage = "class";
+      }
 
-    // You can pass a query parameter with the URI, and it's also in parameters, like
-    // airbnb://classDeepLink?qa=123
-    if (parameters != null && parameters.getString("qp") != null) {
-      toastMessage += " with query parameter " + parameters.getString("qp");
-    }
+      // You can pass a query parameter with the URI, and it's also in parameters, like
+      // airbnb://classDeepLink?qa=123
+      if (parameters != null && parameters.getString("qp") != null) {
+        toastMessage += " with query parameter " + parameters.getString("qp");
+      }
 
-    showToast(toastMessage);
+      showToast(toastMessage);
+    }
   }
 
   @DeepLink(host = "methodDeepLink", path="{param1}")
