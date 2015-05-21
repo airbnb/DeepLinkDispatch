@@ -4,6 +4,7 @@ import com.google.auto.service.AutoService;
 
 import com.airbnb.deeplinkdispatch.DeepLink;
 import com.airbnb.deeplinkdispatch.DeepLinkEntry;
+import com.airbnb.deeplinkdispatch.DeepLinks;
 import com.airbnb.deeplinkdispatch.javawriter.JavaWriter;
 
 import java.io.IOException;
@@ -58,15 +59,30 @@ public class DeepLinkProcessor extends AbstractProcessor {
   public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
     List<DeepLinkAnnotatedElement> deepLinkElements = new ArrayList<>();
 
-    for (Element annotatedElement : roundEnv.getElementsAnnotatedWith(DeepLink.class)) {
-      ElementKind kind = annotatedElement.getKind();
+    for (Element element : roundEnv.getElementsAnnotatedWith(DeepLinks.class)) {
+      ElementKind kind = element.getKind();
       if (kind != ElementKind.METHOD && kind != ElementKind.CLASS) {
-        error(annotatedElement, "Only classes and methods can be annotated with @%s", DeepLink.class.getSimpleName());
+        error(element, "Only classes and methods can be annotated with @%s", DeepLinks.class.getSimpleName());
       }
 
+      DeepLink[] deepLinks = element.getAnnotation(DeepLinks.class).value();
       DeepLinkEntry.Type type = kind == ElementKind.CLASS ? DeepLinkEntry.Type.CLASS : DeepLinkEntry.Type.METHOD;
-      DeepLinkAnnotatedElement element = new DeepLinkAnnotatedElement(annotatedElement, type);
-      deepLinkElements.add(element);
+      for (DeepLink deepLink : deepLinks) {
+        DeepLinkAnnotatedElement annotatedElement = new DeepLinkAnnotatedElement(deepLink, element, type);
+        deepLinkElements.add(annotatedElement);
+      }
+    }
+
+    for (Element element : roundEnv.getElementsAnnotatedWith(DeepLink.class)) {
+      ElementKind kind = element.getKind();
+      if (kind != ElementKind.METHOD && kind != ElementKind.CLASS) {
+        error(element, "Only classes and methods can be annotated with @%s", DeepLink.class.getSimpleName());
+      }
+
+      DeepLink deepLink = element.getAnnotation(DeepLink.class);
+      DeepLinkEntry.Type type = kind == ElementKind.CLASS ? DeepLinkEntry.Type.CLASS : DeepLinkEntry.Type.METHOD;
+      DeepLinkAnnotatedElement annotatedElement = new DeepLinkAnnotatedElement(deepLink, element, type);
+      deepLinkElements.add(annotatedElement);
     }
 
     if (deepLinkElements.size() > 0) {
@@ -176,7 +192,7 @@ public class DeepLinkProcessor extends AbstractProcessor {
 
     jw.beginControlFlow("for (String queryParameter : uri.getQueryParameterNames())");
     jw.beginControlFlow("if (parameterMap.containsKey(queryParameter))");
-    jw.emitStatement("Log.w(TAG, \"Duplicate parameter name in path and query parameters: \" + queryParameter)");
+    jw.emitStatement("Log.w(TAG, \"Duplicate parameter name in path and query param: \" + queryParameter)");
     jw.endControlFlow();
     jw.emitEmptyLine();
 

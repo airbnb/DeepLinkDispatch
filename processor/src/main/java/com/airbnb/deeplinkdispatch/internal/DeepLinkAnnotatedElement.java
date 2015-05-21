@@ -12,9 +12,7 @@ public class DeepLinkAnnotatedElement {
   private String activity;
   private String method;
 
-  public DeepLinkAnnotatedElement(Element element, DeepLinkEntry.Type type) {
-    DeepLink annotation = element.getAnnotation(DeepLink.class);
-
+  public DeepLinkAnnotatedElement(DeepLink annotation, Element element, DeepLinkEntry.Type type) {
     host = annotation.host();
     path = annotation.path();
 

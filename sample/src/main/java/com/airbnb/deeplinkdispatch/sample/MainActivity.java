@@ -10,6 +10,8 @@ import com.airbnb.deeplinkdispatch.DeepLink;
 
 
 @DeepLink(host = "classDeepLink")
+// You can also register multiple deep links for a particular activity to handle:
+// @DeepLinks({@DeepLink(host = "classDeepLink"), @DeepLink(host="anotherClassDeepLink")})
 public class MainActivity extends AppCompatActivity {
 
   private static String ACTION_DEEP_LINK_METHOD = "deep_link_method";
