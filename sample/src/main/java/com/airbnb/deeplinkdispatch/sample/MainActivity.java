@@ -22,7 +22,7 @@ public class MainActivity extends AppCompatActivity {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_main);
 
-    if (getIntent().getAction() != null) {
+    if (getIntent().getBooleanExtra(DeepLink.IS_DEEP_LINK, false)) {
       String toastMessage;
       Bundle parameters = getIntent().getExtras();
       if (ACTION_DEEP_LINK_METHOD.equals(getIntent().getAction())) {

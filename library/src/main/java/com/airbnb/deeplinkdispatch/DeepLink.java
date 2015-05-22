@@ -13,6 +13,8 @@ import java.lang.annotation.Target;
  */
 @Retention(RetentionPolicy.CLASS) @Target({ElementType.TYPE, ElementType.METHOD})
 public @interface DeepLink {
+  String IS_DEEP_LINK = "is_deep_link_flag";
+
   String host();
   String path() default "";
 }
