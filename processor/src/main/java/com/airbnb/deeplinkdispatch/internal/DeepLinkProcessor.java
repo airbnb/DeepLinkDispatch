@@ -222,7 +222,7 @@ public class DeepLinkProcessor extends AbstractProcessor {
     jw.endControlFlow();
     jw.emitEmptyLine();
 
-    jw.emitStatement("Bundle parameters = new Bundle()");
+    jw.emitStatement("Bundle parameters = new Bundle(getIntent().getExtras())");
     jw.beginControlFlow("for (Map.Entry<String, String> parameterEntry : parameterMap.entrySet())");
     jw.emitStatement("parameters.putString(parameterEntry.getKey(), parameterEntry.getValue())");
     jw.endControlFlow();
