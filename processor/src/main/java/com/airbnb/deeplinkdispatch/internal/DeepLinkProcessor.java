@@ -190,9 +190,6 @@ public class DeepLinkProcessor extends AbstractProcessor {
     jw.emitStatement("Map<String, String> parameterMap = entry.getParameters(hostPath)");
     jw.emitEmptyLine();
 
-    jw.emitStatement("parameterMap.put(\"host\", uri.getHost())");
-    jw.emitStatement("parameterMap.put(\"path\", uri.getPath())");
-
     jw.beginControlFlow("for (String queryParameter : uri.getQueryParameterNames())");
     jw.beginControlFlow("if (parameterMap.containsKey(queryParameter))");
     jw.emitStatement(
@@ -219,6 +216,11 @@ public class DeepLinkProcessor extends AbstractProcessor {
 
     jw.beginControlFlow("if (intent.getAction() == null)");
     jw.emitStatement("intent.setAction(getIntent().getAction())");
+    jw.endControlFlow();
+    jw.emitEmptyLine();
+
+    jw.beginControlFlow("if (intent.getData() == null)");
+    jw.emitStatement("intent.setData(getIntent().getData())");
     jw.endControlFlow();
     jw.emitEmptyLine();
 
