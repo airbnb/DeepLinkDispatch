@@ -27,8 +27,9 @@ android {
 }
 
 dependencies {
-    compile project(':library')
-    apt project(':processor')
+    compile project(':deeplinkdispatch')
+    apt project(':deeplinkdispatch-processor')
+
     compile fileTree(dir: 'libs', include: ['*.jar'])
     compile 'com.android.support:appcompat-v7:22.1.1'
 }
