@@ -11,15 +11,15 @@ dependencies {
 modifyPom {
     project {
         name 'DeepLinkDispatch processor'
-        description 'Library designed to handle deep linking in an Android application.'
-        url 'https://git.musta.ch/airbnb/deeplinkdispatch'
+        description PROJECT_DESCRIPTION
+        url PROJECT_URL
         inceptionYear '2015'
         version PROJECT_VERSION
         groupId PROJECT_GROUP_ID
         artifactId 'deeplinkdispatch-processor'
 
         scm {
-            url 'https://git.musta.ch/airbnb/deeplinkdispatch'
+            url PROJECT_URL
             connection 'scm:https://git.musta.ch/airbnb/DeepLinkDispatch.git'
             developerConnection 'scm:git@git.musta.ch:airbnb/DeepLinkDispatch.git'
         }
