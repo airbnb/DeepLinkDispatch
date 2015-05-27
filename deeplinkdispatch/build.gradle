@@ -39,7 +39,7 @@ modifyPom {
             developer {
                 id 'airbnb'
                 name 'Airbnb'
-                email 'nerds@airbnb.com'
+                email 'android@airbnb.com'
             }
         }
     }
