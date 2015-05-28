@@ -19,12 +19,12 @@ public class DeepLinkRegistry {
    * Registers the deep link that DeepLinkActivity will handle, along with where to delegate
    *
    * @param hostPath the combined host and path of the deep link
-   * @param type whether its a class level annotation or method level
+   * @param type     whether its a class level annotation or method level
    * @param activity the activity to delegate the deep link to
-   * @param method the method used to generate the <code>Intent</code>
+   * @param method   the method used to generate the <code>Intent</code>
    */
   public void registerDeepLink(String hostPath, DeepLinkEntry.Type type, String activity,
-                               String method) {
+      String method) {
     registry.add(new DeepLinkEntry(hostPath, type, activity, method));
   }
 

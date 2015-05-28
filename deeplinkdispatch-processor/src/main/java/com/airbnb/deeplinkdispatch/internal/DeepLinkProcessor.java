@@ -4,8 +4,13 @@ import com.google.auto.service.AutoService;
 
 import com.airbnb.deeplinkdispatch.DeepLink;
 import com.airbnb.deeplinkdispatch.DeepLinkEntry;
+import com.airbnb.deeplinkdispatch.DeepLinkRegistry;
 import com.airbnb.deeplinkdispatch.DeepLinks;
+import com.airbnb.deeplinkdispatch.Loader;
 import com.airbnb.deeplinkdispatch.javawriter.JavaWriter;
+import com.squareup.javapoet.JavaFile;
+import com.squareup.javapoet.MethodSpec;
+import com.squareup.javapoet.TypeSpec;
 
 import java.io.IOException;
 import java.io.Writer;
@@ -62,35 +67,40 @@ public class DeepLinkProcessor extends AbstractProcessor {
     for (Element element : roundEnv.getElementsAnnotatedWith(DeepLinks.class)) {
       ElementKind kind = element.getKind();
       if (kind != ElementKind.METHOD && kind != ElementKind.CLASS) {
-        error(element, "Only classes and methods can be annotated with @%s", DeepLinks.class.getSimpleName());
+        error(element, "Only classes and methods can be annotated with @%s",
+            DeepLinks.class.getSimpleName());
       }
 
-      DeepLink[] deepLinks = element.getAnnotation(DeepLinks.class).value();
-      DeepLinkEntry.Type type = kind == ElementKind.CLASS ? DeepLinkEntry.Type.CLASS : DeepLinkEntry.Type.METHOD;
-      for (DeepLink deepLink : deepLinks) {
-        DeepLinkAnnotatedElement annotatedElement = new DeepLinkAnnotatedElement(deepLink, element, type);
-        deepLinkElements.add(annotatedElement);
+      String[] deepLinks = element.getAnnotation(DeepLinks.class).value();
+      DeepLinkEntry.Type type = kind == ElementKind.CLASS
+                                ? DeepLinkEntry.Type.CLASS : DeepLinkEntry.Type.METHOD;
+      for (String deepLink : deepLinks) {
+        deepLinkElements.add(new DeepLinkAnnotatedElement(deepLink, element, type));
       }
     }
 
     for (Element element : roundEnv.getElementsAnnotatedWith(DeepLink.class)) {
       ElementKind kind = element.getKind();
       if (kind != ElementKind.METHOD && kind != ElementKind.CLASS) {
-        error(element, "Only classes and methods can be annotated with @%s", DeepLink.class.getSimpleName());
+        error(element, "Only classes and methods can be annotated with @%s",
+            DeepLink.class.getSimpleName());
       }
 
       DeepLink deepLink = element.getAnnotation(DeepLink.class);
-      DeepLinkEntry.Type type = kind == ElementKind.CLASS ? DeepLinkEntry.Type.CLASS : DeepLinkEntry.Type.METHOD;
-      DeepLinkAnnotatedElement annotatedElement = new DeepLinkAnnotatedElement(deepLink, element, type);
-      deepLinkElements.add(annotatedElement);
+      DeepLinkEntry.Type type = kind == ElementKind.CLASS
+                                ? DeepLinkEntry.Type.CLASS : DeepLinkEntry.Type.METHOD;
+      deepLinkElements.add(new DeepLinkAnnotatedElement(deepLink.value(), element, type));
     }
 
-    if (deepLinkElements.size() > 0) {
+    if (!deepLinkElements.isEmpty()) {
       try {
         generateRegistry(deepLinkElements);
         generateDeepLinkActivity();
       } catch (IOException e) {
         messager.printMessage(Diagnostic.Kind.ERROR, "Error creating file");
+      } catch (Exception e) {
+        messager.printMessage(Diagnostic.Kind.ERROR,
+            "Internal error during annotation processing: " + e.getClass().getSimpleName());
       }
     }
 
@@ -98,48 +108,34 @@ public class DeepLinkProcessor extends AbstractProcessor {
   }
 
   private void error(Element e, String msg, Object... args) {
-    messager.printMessage(
-        Diagnostic.Kind.ERROR,
-        String.format(msg, args),
-        e);
+    messager.printMessage(Diagnostic.Kind.ERROR, String.format(msg, args), e);
   }
 
   private void generateRegistry(List<DeepLinkAnnotatedElement> elements) throws IOException {
-    JavaFileObject jfo = filer.createSourceFile("DeepLinkLoader");
-    Writer writer = jfo.openWriter();
-    JavaWriter jw = new JavaWriter(writer);
+    MethodSpec.Builder loadMethod = MethodSpec.methodBuilder("load")
+        .addModifiers(Modifier.PUBLIC)
+        .returns(void.class)
+        .addParameter(DeepLinkRegistry.class, "registry");
 
-    jw.emitPackage("com.airbnb.deeplinkdispatch");
-
-    jw.emitImports("com.airbnb.deeplinkdispatch.DeepLinkEntry.Type");
-    jw.emitEmptyLine();
-
-    jw.beginType("DeepLinkLoader", "class", EnumSet.of(Modifier.PUBLIC), null, "Loader");
-    jw.emitEmptyLine();
-
-    jw.beginConstructor(EnumSet.of(Modifier.PUBLIC));
-    jw.endConstructor();
-    jw.emitEmptyLine();
-
-    jw.beginMethod("void", "load", EnumSet.of(Modifier.PUBLIC), "DeepLinkRegistry",
-                   "registry");
-    for (DeepLinkAnnotatedElement element: elements) {
-      String hostPath;
-      if (element.getPath().isEmpty()) {
-        hostPath = "\"" + element.getHost() + "\"";
-      } else {
-        hostPath = "\"" + element.getHost() + "/" + element.getPath() + "\"";
-      }
-      String type = "Type." + element.getAnnotationType().toString();
-      String activity = "\"" + element.getActivity() + "\"";
-      String method = element.getMethod() == null ? "null" : "\"" + element.getMethod() + "\"";
-      jw.emitStatement(String.format("registry.registerDeepLink(%s, %s, %s, %s)", hostPath, type, activity, method));
+    for (DeepLinkAnnotatedElement element : elements) {
+      String hostPath = element.getPath().equals("")
+        ? element.getHost() : element.getHost() + "/" + element.getPath();
+      String type = "DeepLinkEntry.Type." + element.getAnnotationType().toString();
+      String activity = element.getActivity();
+      Object method = element.getMethod() == null ? null : element.getMethod();
+      loadMethod.addStatement("registry.registerDeepLink($S, $L, $S, $S)",
+          hostPath, type, activity, method);
     }
-    jw.endMethod();
 
-    jw.endType();
+    TypeSpec deepLinkLoader = TypeSpec.classBuilder("DeepLinkLoader")
+        .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
+        .addSuperinterface(Loader.class)
+        .addMethod(loadMethod.build())
+        .build();
 
-    jw.close();
+    JavaFile.builder("com.airbnb.deeplinkdispatch", deepLinkLoader)
+        .build()
+        .writeTo(filer);
   }
 
   private void generateDeepLinkActivity() throws IOException {
@@ -150,31 +146,30 @@ public class DeepLinkProcessor extends AbstractProcessor {
     jw.emitPackage("com.airbnb.deeplinkdispatch");
 
     List<String> imports = Arrays.asList("android.app.Activity",
-                                         "android.content.Context",
-                                         "android.content.Intent",
-                                         "android.net.Uri",
-                                         "android.os.Bundle",
-                                         "android.util.Log",
-                                         "android.util.Log",
-                                         "java.lang.reflect.InvocationTargetException",
-                                         "java.lang.reflect.Method",
-                                         "java.util.Map");
+        "android.content.Context",
+        "android.content.Intent",
+        "android.net.Uri",
+        "android.os.Bundle",
+        "android.util.Log",
+        "android.util.Log",
+        "java.lang.reflect.InvocationTargetException",
+        "java.lang.reflect.Method",
+        "java.util.Map");
     jw.emitImports(imports);
     jw.emitEmptyLine();
-
 
     jw.beginType("DeepLinkActivity", "class", EnumSet.of(Modifier.PUBLIC), "Activity");
     jw.emitEmptyLine();
 
     jw.emitField("String",
-                 "TAG",
-                 EnumSet.of(Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL),
-                 "DeepLinkActivity.class.getSimpleName()");
+        "TAG",
+        EnumSet.of(Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL),
+        "DeepLinkActivity.class.getSimpleName()");
     jw.emitEmptyLine();
 
     jw.emitAnnotation(Override.class);
     jw.beginMethod("void", "onCreate", EnumSet.of(Modifier.PROTECTED), "Bundle",
-                   "savedInstanceState");
+        "savedInstanceState");
 
     jw.emitStatement("super.onCreate(savedInstanceState)");
     jw.emitEmptyLine();

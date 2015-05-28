@@ -1,22 +1,26 @@
 package com.airbnb.deeplinkdispatch.internal;
 
-import com.airbnb.deeplinkdispatch.DeepLink;
 import com.airbnb.deeplinkdispatch.DeepLinkEntry;
 
 import javax.lang.model.element.Element;
 
 public class DeepLinkAnnotatedElement {
-  private String host;
-  private String path;
-  private DeepLinkEntry.Type annotationType;
-  private String activity;
-  private String method;
 
-  public DeepLinkAnnotatedElement(DeepLink annotation, Element element, DeepLinkEntry.Type type) {
-    host = annotation.host();
-    path = annotation.path();
+  private final String host;
+  private final String path;
+  private final DeepLinkEntry.Type annotationType;
+  private final String activity;
+  private final String method;
 
-    activity = element.getEnclosingElement().getSimpleName().toString();
+  public DeepLinkAnnotatedElement(String annotation, Element element, DeepLinkEntry.Type type) {
+    int firstSlash = annotation.indexOf('/');
+    if (firstSlash != -1) {
+      host = annotation.substring(0, firstSlash);
+      path = annotation.substring(firstSlash + 1, annotation.length());
+    } else {
+      host = annotation;
+      path = "";
+    }
     annotationType = type;
 
     if (type == DeepLinkEntry.Type.METHOD) {
