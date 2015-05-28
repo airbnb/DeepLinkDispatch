@@ -11,7 +11,8 @@ import java.lang.annotation.Target;
  * {@literal @}DeepLink(host, path);
  * </code></pre>
  */
-@Retention(RetentionPolicy.CLASS) @Target({ElementType.TYPE, ElementType.METHOD})
+@Target({ElementType.TYPE, ElementType.METHOD})
+@Retention(RetentionPolicy.CLASS)
 public @interface DeepLink {
   String IS_DEEP_LINK = "is_deep_link_flag";
 
