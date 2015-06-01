@@ -263,12 +263,12 @@ public class DeepLinkProcessor extends AbstractProcessor {
 
     jw.beginMethod("void", "notifyListener", EnumSet.of(Modifier.PRIVATE), "boolean",
                    "isError", "Uri", "uri", "String", "errorMessage");
-    jw.beginControlFlow("if (getApplication() instanceof OnDeepLinkListener)");
-    jw.emitStatement("OnDeepLinkListener listener = (OnDeepLinkListener) getApplication()");
+    jw.beginControlFlow("if (getApplication() instanceof DeepLinkCallback)");
+    jw.emitStatement("DeepLinkCallback listener = (DeepLinkCallback) getApplication()");
     jw.beginControlFlow("if (!isError)");
-    jw.emitStatement("listener.onDeepLinkSuccess(uri.toString())");
+    jw.emitStatement("listener.onSuccess(uri.toString())");
     jw.nextControlFlow("else");
-    jw.emitStatement("listener.onDeepLinkError(new DeepLinkError(uri.toString(), errorMessage))");
+    jw.emitStatement("listener.onError(new DeepLinkError(uri.toString(), errorMessage))");
     jw.endControlFlow();
     jw.endControlFlow();
     jw.endMethod();

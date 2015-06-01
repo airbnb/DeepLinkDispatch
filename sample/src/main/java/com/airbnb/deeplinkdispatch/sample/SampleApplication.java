@@ -3,20 +3,20 @@ package com.airbnb.deeplinkdispatch.sample;
 import android.app.Application;
 import android.util.Log;
 
+import com.airbnb.deeplinkdispatch.DeepLinkCallback;
 import com.airbnb.deeplinkdispatch.DeepLinkError;
-import com.airbnb.deeplinkdispatch.OnDeepLinkListener;
 
-public class SampleApplication extends Application implements OnDeepLinkListener {
+public class SampleApplication extends Application implements DeepLinkCallback {
 
   private static final String TAG = "DeepLinkDispatch";
 
   @Override
-  public void onDeepLinkSuccess(String uri) {
+  public void onSuccess(String uri) {
     Log.i(TAG, "Successful deep link: " + uri.toString());
   }
 
   @Override
-  public void onDeepLinkError(DeepLinkError error) {
+  public void onError(DeepLinkError error) {
     Log.e(TAG, "Deep Link Error: " + error.getErrorMessage());
   }
 }
