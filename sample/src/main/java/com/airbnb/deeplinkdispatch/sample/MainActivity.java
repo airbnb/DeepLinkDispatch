@@ -4,15 +4,17 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.widget.Toast;
 
 import com.airbnb.deeplinkdispatch.DeepLink;
-
+import com.airbnb.deeplinkdispatch.DeepLinkCallback;
+import com.airbnb.deeplinkdispatch.DeepLinkError;
 
 @DeepLink(host = "classDeepLink")
 // You can also register multiple deep links for a particular activity to handle:
 // @DeepLinks({@DeepLink(host = "classDeepLink"), @DeepLink(host="anotherClassDeepLink")})
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements DeepLinkCallback {
 
   private static String ACTION_DEEP_LINK_METHOD = "deep_link_method";
   private static String ACTION_DEEP_LINK_COMPLEX = "deep_link_complex";
@@ -59,5 +61,15 @@ public class MainActivity extends AppCompatActivity {
 
   private void showToast(String message) {
     Toast.makeText(this, "Deep Link: " + message, Toast.LENGTH_SHORT).show();
+  }
+
+  @Override
+  public void onSuccess(String uri) {
+    Log.i("DeepLinkDispatch", "Some logging event here");
+  }
+
+  @Override
+  public void onError(DeepLinkError error) {
+    showToast("Deep Link Error: " + error.getErrorMessage() + " with uri " + error.getUri());
   }
 }

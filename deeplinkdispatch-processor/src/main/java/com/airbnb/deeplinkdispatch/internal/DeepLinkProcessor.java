@@ -179,7 +179,7 @@ public class DeepLinkProcessor extends AbstractProcessor {
     jw.emitStatement("super.onCreate(savedInstanceState)");
     jw.emitEmptyLine();
 
-    jw.emitStatement("Loader loader = new DeepLinkLoader()");
+    jw.emitStatement("Loader loader = new com.airbnb.deeplinkdispatch.DeepLinkLoader()");
     jw.emitStatement("DeepLinkRegistry registry = new DeepLinkRegistry(loader)");
     jw.emitStatement("Uri uri = getIntent().getData()");
     jw.emitStatement("String hostPath = uri.getHost() + uri.getPath()");
@@ -240,24 +240,37 @@ public class DeepLinkProcessor extends AbstractProcessor {
     jw.emitEmptyLine();
 
     jw.emitStatement("startActivity(intent)");
-
+    jw.emitStatement("notifyListener(false, uri, null)");
     jw.nextControlFlow("catch (ClassNotFoundException exception)");
-    jw.emitStatement("Log.e(TAG, \"Deep link to non-existent class: \" + entry.getActivity())");
+    jw.emitStatement("notifyListener(true, uri, \"Deep link to non-existent class: \" + entry.getActivity())");
     jw.nextControlFlow("catch (NoSuchMethodException exception)");
-    jw.emitStatement("Log.e(TAG, \"Deep link to non-existent method: \" + entry.getMethod())");
+    jw.emitStatement("notifyListener(true, uri, \"Deep link to non-existent method: \" + entry.getMethod())");
     jw.nextControlFlow("catch (IllegalAccessException exception)");
-    jw.emitStatement("Log.e(TAG, \"Could not deep link to method: \" + entry.getMethod())");
+    jw.emitStatement("notifyListener(true, uri, \"Could not deep link to method: \" + entry.getMethod())");
     jw.nextControlFlow("catch(InvocationTargetException  exception)");
-    jw.emitStatement("Log.e(TAG, \"Could not deep link to method: \" + entry.getMethod())");
+    jw.emitStatement("notifyListener(true, uri, \"Could not deep link to method: \" + entry.getMethod())");
+    jw.nextControlFlow("finally");
+    jw.emitStatement("finish()");
     jw.endControlFlow();
 
     jw.nextControlFlow("else");
-    jw.emitStatement("Log.e(TAG, \"No registered entity to handle deep link: \" + uri.toString())");
-    jw.endControlFlow();
-    jw.emitEmptyLine();
-
+    jw.emitStatement(
+        "notifyListener(true, uri, \"No registered entity to handle deep link: \" + uri.toString())");
     jw.emitStatement("finish()");
+    jw.endControlFlow();
 
+    jw.endMethod();
+
+    jw.beginMethod("void", "notifyListener", EnumSet.of(Modifier.PRIVATE), "boolean",
+                   "isError", "Uri", "uri", "String", "errorMessage");
+    jw.beginControlFlow("if (getApplication() instanceof DeepLinkCallback)");
+    jw.emitStatement("DeepLinkCallback listener = (DeepLinkCallback) getApplication()");
+    jw.beginControlFlow("if (!isError)");
+    jw.emitStatement("listener.onSuccess(uri.toString())");
+    jw.nextControlFlow("else");
+    jw.emitStatement("listener.onError(new DeepLinkError(uri.toString(), errorMessage))");
+    jw.endControlFlow();
+    jw.endControlFlow();
     jw.endMethod();
 
     jw.endType();
