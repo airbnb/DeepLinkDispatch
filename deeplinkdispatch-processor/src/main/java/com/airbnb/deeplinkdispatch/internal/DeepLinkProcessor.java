@@ -237,8 +237,8 @@ public class DeepLinkProcessor extends AbstractProcessor {
         .addModifiers(Modifier.PUBLIC)
         .superclass(ClassName.get("android.app", "Activity"))
         .addField(tag)
-        .addMethod(notifyListenerMethod)
         .addMethod(onCreateMethod)
+        .addMethod(notifyListenerMethod)
         .build();
 
     JavaFile.builder("com.airbnb.deeplinkdispatch", deepLinkActivity)
