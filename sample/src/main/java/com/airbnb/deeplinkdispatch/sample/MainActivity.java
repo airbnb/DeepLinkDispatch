@@ -10,8 +10,9 @@ import android.widget.Toast;
 import com.airbnb.deeplinkdispatch.DeepLink;
 import com.airbnb.deeplinkdispatch.DeepLinkCallback;
 import com.airbnb.deeplinkdispatch.DeepLinkError;
+import com.airbnb.deeplinkdispatch.DeepLinks;
 
-@DeepLink(host = "classDeepLink")
+@DeepLinks({"classDeepLink", "otherClassDeepLink"})
 // You can also register multiple deep links for a particular activity to handle:
 // @DeepLinks({@DeepLink(host = "classDeepLink"), @DeepLink(host="anotherClassDeepLink")})
 public class MainActivity extends AppCompatActivity implements DeepLinkCallback {
@@ -45,14 +46,14 @@ public class MainActivity extends AppCompatActivity implements DeepLinkCallback 
     }
   }
 
-  @DeepLink(host = "methodDeepLink", path="{param1}")
+  @DeepLink("methodDeepLink/{param1}")
   public static Intent intentForDeepLinkMethod(Context context) {
     Intent intent = new Intent(context, MainActivity.class);
     intent.setAction(ACTION_DEEP_LINK_METHOD);
     return intent;
   }
 
-  @DeepLink(host = "host", path="somePath/{arbitraryNumber}")
+  @DeepLink("host/somePath/{arbitraryNumber}")
   public static Intent intentForComplexMethod(Context context) {
     Intent intent = new Intent(context, MainActivity.class);
     intent.setAction(ACTION_DEEP_LINK_COMPLEX);

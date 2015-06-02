@@ -6,6 +6,10 @@ dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     compile project(':deeplinkdispatch')
     compile 'com.google.auto.service:auto-service:1.0-rc2'
+    compile 'com.squareup:javapoet:1.1.0'
+
+    testCompile 'junit:junit:4.12'
+    testCompile 'org.assertj:assertj-core:1.7.0'
 }
 
 modifyPom {

@@ -12,17 +12,16 @@ public class DeepLinkEntry {
   private static final String PARAM = "([a-zA-Z][a-zA-Z0-9_-]*)";
   private static final String PARAM_REGEX = "\\{(" + PARAM + ")\\}";
 
-  private String hostPath;
-  private String regex;
-  private Type type;
-  private String activity;
-  private String method;
+  private final String hostPath;
+  private final String regex;
+  private final Type type;
+  private final String activity;
+  private final String method;
 
   public enum Type {
     CLASS,
     METHOD
   }
-
 
   public DeepLinkEntry(String hostPath, Type type, String activity, String method) {
     this.hostPath = hostPath;

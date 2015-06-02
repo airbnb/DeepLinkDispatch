@@ -16,6 +16,5 @@ import java.lang.annotation.Target;
 public @interface DeepLink {
   String IS_DEEP_LINK = "is_deep_link_flag";
 
-  String host();
-  String path() default "";
+  String value();
 }
