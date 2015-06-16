@@ -6,10 +6,10 @@ You can register an `Activity` to handle specific deep links by annotating with 
 
 ### Example
 
-Here's an example where we register `SampleActivity` to pull out an ID from a deep link like `example://deepLink/123`. We annotated with `@DeepLink` and specify there will be a parameter that we'll identify with `id`.
+Here's an example where we register `SampleActivity` to pull out an ID from a deep link like `example://example.com/deepLink/123`. We annotated with `@DeepLink` and specify there will be a parameter that we'll identify with `id`.
 
 ```
-@DeepLink("deepLink/{id}")
+@DeepLink("example.com/deepLink/{id}")
 public class MainActivity extends Activity {
 
   @Override
@@ -33,7 +33,7 @@ public class MainActivity extends Activity {
 Sometimes you'll have an activity that should handle several kinds of deep links. You can use the `@DeepLinks` annotation to register multiple deep links on an activity:
 
 ```
-@DeepLinks({"deepLink/{id}", "anotherDeepLink"})
+@DeepLinks({"example.com/deepLink/{id}", "example.com/anotherDeepLink"})
 public class MainActivity extends Activity {
 
   @Override
@@ -57,7 +57,7 @@ public class MainActivity extends Activity {
 You can also annotate static methods that return an `Intent`. `DeepLinkDispatch` will call that method to create that `Intent` and use it when starting your activity via that registered deep link:
 
 ```
-  @DeepLink("methodDeepLink/{param1}")
+  @DeepLink("example.com/methodDeepLink/{param1}")
   public static Intent intentForDeepLinkMethod(Context context) {
     Intent intent = new Intent(context, MainActivity.class);
     intent.setAction(ACTION_DEEP_LINK_METHOD);
@@ -67,10 +67,10 @@ You can also annotate static methods that return an `Intent`. `DeepLinkDispatch`
 
 ### Query Parameters
 
-Query parameters are parsed and passed along automatically, along with retrievable like it was any other parameters. For example, we could retrieve the query parameter passed along in the URI `example://deepLink?qp=123`:
+Query parameters are parsed and passed along automatically, along with retrievable like it was any other parameters. For example, we could retrieve the query parameter passed along in the URI `example://example.com/deepLink?qp=123`:
 
 ```
-@DeepLink("deepLink/{id}")
+@DeepLink("example.com/deepLink")
 public class MainActivity extends Activity {
 
   @Override
@@ -113,7 +113,7 @@ public class SampleApplication extends Application implements DeepLinkCallback {
 
 ## Including DeepLinkDispatch
 
-It's straightfoward to add `DeepLinkDispatch`:
+It's straight-foward to add `DeepLinkDispatch`:
 
 Modify your `build.gradle` file to include the library by adding the line:
 
@@ -138,6 +138,18 @@ Register `DeepLinkActivity` with the scheme you'd like in your `AndroidManifest.
 ```
 
 That's it. The library will generate `DeepLinkActivity` during compilation.
+
+## Testing the sample
+
+Use adb to launch deep links.
+
+This fires a standard deep link:
+
+`adb shell am start -W -a android.intent.action.VIEW -d "airbnb://example.com/deepLink" com.airbnb.deeplinkdispatch.sample`
+
+This fires a deep link associated with a method, and also passes along a parameter:
+
+`adb shell am start -W -a android.intent.action.VIEW -d "airbnb://methodDeepLink/abc123" com.airbnb.deeplinkdispatch.sample`
 
 ## License
 
