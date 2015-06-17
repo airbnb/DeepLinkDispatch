@@ -67,7 +67,7 @@ You can also annotate static methods that return an `Intent`. `DeepLinkDispatch`
 
 ### Query Parameters
 
-Query parameters are parsed and passed along automatically, along with retrievable like it was any other parameters. For example, we could retrieve the query parameter passed along in the URI `example://example.com/deepLink?qp=123`:
+Query parameters are parsed and passed along automatically, and it is retrievable like it was any other parameter. For example, we could retrieve the query parameter passed along in the URI `example://example.com/deepLink?qp=123`:
 
 ```
 @DeepLink("example.com/deepLink")
