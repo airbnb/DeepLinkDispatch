@@ -25,15 +25,12 @@ import com.airbnb.deeplinkdispatch.DeepLink;
 import com.airbnb.deeplinkdispatch.DeepLinks;
 
 @DeepLinks({"classDeepLink", "otherClassDeepLink", "example.com/deepLink"})
-// You can also register multiple deep links for a particular activity to handle:
-// @DeepLinks({@DeepLink(host = "classDeepLink"), @DeepLink(host="anotherClassDeepLink")})
 public class MainActivity extends AppCompatActivity {
 
   private static String ACTION_DEEP_LINK_METHOD = "deep_link_method";
   private static String ACTION_DEEP_LINK_COMPLEX = "deep_link_complex";
 
-  @Override
-  protected void onCreate(Bundle savedInstanceState) {
+  @Override protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_main);
 
@@ -60,16 +57,12 @@ public class MainActivity extends AppCompatActivity {
 
   @DeepLink("methodDeepLink/{param1}")
   public static Intent intentForDeepLinkMethod(Context context) {
-    Intent intent = new Intent(context, MainActivity.class);
-    intent.setAction(ACTION_DEEP_LINK_METHOD);
-    return intent;
+    return new Intent(context, MainActivity.class).setAction(ACTION_DEEP_LINK_METHOD);
   }
 
   @DeepLink("host/somePath/{arbitraryNumber}")
   public static Intent intentForComplexMethod(Context context) {
-    Intent intent = new Intent(context, MainActivity.class);
-    intent.setAction(ACTION_DEEP_LINK_COMPLEX);
-    return intent;
+    return new Intent(context, MainActivity.class).setAction(ACTION_DEEP_LINK_COMPLEX);
   }
 
   private void showToast(String message) {
