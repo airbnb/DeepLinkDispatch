@@ -10,6 +10,9 @@ dependencies {
 
     testCompile 'junit:junit:4.12'
     testCompile 'org.assertj:assertj-core:1.7.0'
+    testCompile 'com.google.android:android:4.1.1.4'
+    testCompile 'com.google.testing.compile:compile-testing:0.6'
+    testCompile files(org.gradle.internal.jvm.Jvm.current().getToolsJar())
 }
 
 modifyPom {
@@ -24,8 +27,8 @@ modifyPom {
 
         scm {
             url PROJECT_URL
-            connection 'scm:https://git.musta.ch/airbnb/DeepLinkDispatch.git'
-            developerConnection 'scm:git@git.musta.ch:airbnb/DeepLinkDispatch.git'
+            connection 'scm:https://gitub.com/airbnb/DeepLinkDispatch.git'
+            developerConnection 'scm:git@gitub.com:airbnb/DeepLinkDispatch.git'
         }
 
         licenses {

@@ -13,13 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.airbnb.deeplinkdispatch.internal;
-
-import com.airbnb.deeplinkdispatch.DeepLinkEntry;
+package com.airbnb.deeplinkdispatch;
 
 import javax.lang.model.element.Element;
 
-public class DeepLinkAnnotatedElement {
+final class DeepLinkAnnotatedElement {
 
   private final String host;
   private final String path;

@@ -13,15 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.airbnb.deeplinkdispatch.internal;
+package com.airbnb.deeplinkdispatch;
 
 import com.google.auto.service.AutoService;
-
-import com.airbnb.deeplinkdispatch.DeepLink;
-import com.airbnb.deeplinkdispatch.DeepLinkEntry;
-import com.airbnb.deeplinkdispatch.DeepLinkRegistry;
-import com.airbnb.deeplinkdispatch.DeepLinks;
-import com.airbnb.deeplinkdispatch.Loader;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.JavaFile;
@@ -56,22 +50,19 @@ public class DeepLinkProcessor extends AbstractProcessor {
   private Filer filer;
   private Messager messager;
 
-  @Override
-  public synchronized void init(ProcessingEnvironment processingEnv) {
+  @Override public synchronized void init(ProcessingEnvironment processingEnv) {
     super.init(processingEnv);
     filer = processingEnv.getFiler();
     messager = processingEnv.getMessager();
   }
 
-  @Override
-  public Set<String> getSupportedAnnotationTypes() {
+  @Override public Set<String> getSupportedAnnotationTypes() {
     Set<String> annotations = new LinkedHashSet<>();
     annotations.add(DeepLink.class.getCanonicalName());
     return annotations;
   }
 
-  @Override
-  public SourceVersion getSupportedSourceVersion() {
+  @Override public SourceVersion getSupportedSourceVersion() {
     return SourceVersion.latestSupported();
   }
 
@@ -88,7 +79,7 @@ public class DeepLinkProcessor extends AbstractProcessor {
 
       String[] deepLinks = element.getAnnotation(DeepLinks.class).value();
       DeepLinkEntry.Type type = kind == ElementKind.CLASS
-                                ? DeepLinkEntry.Type.CLASS : DeepLinkEntry.Type.METHOD;
+          ? DeepLinkEntry.Type.CLASS : DeepLinkEntry.Type.METHOD;
       for (String deepLink : deepLinks) {
         deepLinkElements.add(new DeepLinkAnnotatedElement(deepLink, element, type));
       }
@@ -103,7 +94,7 @@ public class DeepLinkProcessor extends AbstractProcessor {
 
       DeepLink deepLink = element.getAnnotation(DeepLink.class);
       DeepLinkEntry.Type type = kind == ElementKind.CLASS
-                                ? DeepLinkEntry.Type.CLASS : DeepLinkEntry.Type.METHOD;
+          ? DeepLinkEntry.Type.CLASS : DeepLinkEntry.Type.METHOD;
       deepLinkElements.add(new DeepLinkAnnotatedElement(deepLink.value(), element, type));
     }
 
@@ -134,11 +125,11 @@ public class DeepLinkProcessor extends AbstractProcessor {
 
     for (DeepLinkAnnotatedElement element : elements) {
       String hostPath = element.getPath().equals("")
-        ? element.getHost() : element.getHost() + "/" + element.getPath();
+          ? element.getHost() : element.getHost() + "/" + element.getPath();
       String type = "DeepLinkEntry.Type." + element.getAnnotationType().toString();
-      String activity = element.getActivity();
+      ClassName activity = ClassName.bestGuess(element.getActivity());
       Object method = element.getMethod() == null ? null : element.getMethod();
-      loadMethod.addStatement("registry.registerDeepLink($S, $L, $S, $S)",
+      loadMethod.addStatement("registry.registerDeepLink($S, $L, $T.class, $S)",
           hostPath, type, activity, method);
     }
 
@@ -197,7 +188,7 @@ public class DeepLinkProcessor extends AbstractProcessor {
         .addStatement("parameterMap.put(queryParameter, uri.getQueryParameter(queryParameter))")
         .endControlFlow()
         .beginControlFlow("try")
-        .addStatement("Class<?> c = Class.forName(entry.getActivity())")
+        .addStatement("Class<?> c = entry.getActivityClass()")
         .addStatement("$T intent", ClassName.get("android.content", "Intent"))
         .beginControlFlow("if (entry.getType() == DeepLinkEntry.Type.CLASS)")
         .addStatement("intent = new Intent(this, c)")
@@ -226,9 +217,6 @@ public class DeepLinkProcessor extends AbstractProcessor {
         .addStatement("intent.putExtra(DeepLink.IS_DEEP_LINK, true)")
         .addStatement("startActivity(intent)")
         .addStatement("notifyListener(false, uri, null)")
-        .nextControlFlow("catch (ClassNotFoundException exception)")
-        .addStatement(
-            "notifyListener(true, uri, \"Deep link to non-existent class: \" + entry.getActivity())")
         .nextControlFlow("catch (NoSuchMethodException exception)")
         .addStatement(
             "notifyListener(true, uri, \"Deep link to non-existent method: \" + entry.getMethod())")
@@ -242,8 +230,8 @@ public class DeepLinkProcessor extends AbstractProcessor {
         .addStatement("finish()")
         .endControlFlow()
         .nextControlFlow("else")
-        .addStatement(
-            "notifyListener(true, uri, \"No registered entity to handle deep link: \" + uri.toString())")
+        .addStatement("notifyListener(true, uri, \"No registered entity to handle deep link: \"" +
+            " + uri.toString())")
         .addStatement("finish()")
         .endControlFlow()
         .build();

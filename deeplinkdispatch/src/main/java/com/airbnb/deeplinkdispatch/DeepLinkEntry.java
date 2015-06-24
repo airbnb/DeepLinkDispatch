@@ -21,7 +21,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class DeepLinkEntry {
+final class DeepLinkEntry {
 
   private static final String PARAM_VALUE = "([a-zA-Z0-9]*)";
   private static final String PARAM = "([a-zA-Z][a-zA-Z0-9_-]*)";
@@ -30,7 +30,7 @@ public class DeepLinkEntry {
   private final String hostPath;
   private final String regex;
   private final Type type;
-  private final String activity;
+  private final Class<?> activityClass;
   private final String method;
 
   public enum Type {
@@ -38,11 +38,11 @@ public class DeepLinkEntry {
     METHOD
   }
 
-  public DeepLinkEntry(String hostPath, Type type, String activity, String method) {
+  public DeepLinkEntry(String hostPath, Type type, Class<?> activityClass, String method) {
     this.hostPath = hostPath;
     this.regex = generateLookupString(hostPath);
     this.type = type;
-    this.activity = activity;
+    this.activityClass = activityClass;
     this.method = method;
   }
 
@@ -54,8 +54,8 @@ public class DeepLinkEntry {
     return type;
   }
 
-  public String getActivity() {
-    return activity;
+  public Class<?> getActivityClass() {
+    return activityClass;
   }
 
   public String getMethod() {

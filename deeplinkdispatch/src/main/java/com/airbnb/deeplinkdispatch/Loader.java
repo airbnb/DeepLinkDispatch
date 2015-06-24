@@ -15,6 +15,6 @@
  */
 package com.airbnb.deeplinkdispatch;
 
-public interface Loader {
+interface Loader {
   void load(DeepLinkRegistry registry);
 }

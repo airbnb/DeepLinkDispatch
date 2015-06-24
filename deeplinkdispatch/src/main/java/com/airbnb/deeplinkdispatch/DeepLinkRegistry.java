@@ -20,9 +20,9 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class DeepLinkRegistry {
+final class DeepLinkRegistry {
 
-  private List<DeepLinkEntry> registry = new LinkedList<>();
+  private final List<DeepLinkEntry> registry = new LinkedList<>();
 
   public DeepLinkRegistry(Loader loader) {
     if (loader != null) {
@@ -33,14 +33,14 @@ public class DeepLinkRegistry {
   /**
    * Registers the deep link that DeepLinkActivity will handle, along with where to delegate
    *
-   * @param hostPath the combined host and path of the deep link
-   * @param type     whether its a class level annotation or method level
-   * @param activity the activity to delegate the deep link to
-   * @param method   the method used to generate the <code>Intent</code>
+   * @param hostPath      the combined host and path of the deep link
+   * @param type          whether its a class level annotation or method level
+   * @param activityClass the activity class to delegate the deep link to
+   * @param method        the method used to generate the <code>Intent</code>
    */
-  public void registerDeepLink(String hostPath, DeepLinkEntry.Type type, String activity,
+  public void registerDeepLink(String hostPath, DeepLinkEntry.Type type, Class<?> activityClass,
       String method) {
-    registry.add(new DeepLinkEntry(hostPath, type, activity, method));
+    registry.add(new DeepLinkEntry(hostPath, type, activityClass, method));
   }
 
   /**

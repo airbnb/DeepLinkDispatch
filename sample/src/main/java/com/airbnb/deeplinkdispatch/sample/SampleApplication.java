@@ -25,13 +25,11 @@ public class SampleApplication extends Application implements DeepLinkCallback {
 
   private static final String TAG = "DeepLinkDispatch";
 
-  @Override
-  public void onSuccess(String uri) {
-    Log.i(TAG, "Successful deep link: " + uri.toString());
+  @Override public void onSuccess(String uri) {
+    Log.i(TAG, "Successful deep link: " + uri);
   }
 
-  @Override
-  public void onError(DeepLinkError error) {
+  @Override public void onError(DeepLinkError error) {
     Log.e(TAG, "Deep Link Error: " + error.getErrorMessage());
   }
 }
