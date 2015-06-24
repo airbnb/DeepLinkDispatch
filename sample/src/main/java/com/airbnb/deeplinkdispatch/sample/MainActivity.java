@@ -25,6 +25,8 @@ import com.airbnb.deeplinkdispatch.DeepLink;
 import com.airbnb.deeplinkdispatch.DeepLinks;
 
 @DeepLinks({"classDeepLink", "otherClassDeepLink", "example.com/deepLink"})
+// You can also register a single deep link for a particular activity to handle:
+// @DeepLink("example.com/something")
 public class MainActivity extends AppCompatActivity {
 
   private static String ACTION_DEEP_LINK_METHOD = "deep_link_method";
