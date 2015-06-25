@@ -67,7 +67,7 @@ public static Intent intentForDeepLinkMethod(Context context) {
 
 ### Query Parameters
 
-Query parameters are parsed and passed along automatically, and it is retrievable like it was any
+Query parameters are parsed and passed along automatically, and are retrievable like any
 other parameter. For example, we could retrieve the query parameter passed along in the URI
 `example://example.com/deepLink?qp=123`:
 
