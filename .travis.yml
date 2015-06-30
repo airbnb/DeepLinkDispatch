@@ -1,0 +1,16 @@
+language: java
+
+branches:
+  except:
+    - gh-pages
+
+notifications:
+  email: false
+
+script: ./gradlew assemble testDebug
+
+sudo: false
+
+cache:
+  directories:
+    - $HOME/.m2
