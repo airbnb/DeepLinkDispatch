@@ -1,5 +1,7 @@
 # DeepLinkDispatch
 
+[![Build Status](https://travis-ci.org/airbnb/deeplinkdispatch.svg)](https://travis-ci.org/airbnb/deeplinkdispatch)
+
 DeepLinkDispatch provides a declarative, annotation-based API to declare application deep links.
 
 You can register an `Activity` to handle specific deep links by annotating it with `@DeepLink` and a URI.
