@@ -46,13 +46,13 @@ modifyPom {
 }
 
 extraArchive {
-    sources = false
-    tests = true
-    javadoc = false
+    sources = true
+    tests = false
+    javadoc = true
 }
 
 nexus {
     sign = true
-    repositoryUrl = 'http://airbnb-maven-master.d.musta.ch/nexus/content/repositories/releases/'
-    snapshotRepositoryUrl = 'http://airbnb-maven-master.d.musta.ch/nexus/content/repositories/snapshots/'
+    repositoryUrl = 'https://oss.sonatype.org/service/local/staging/deploy/maven2/'
+    snapshotRepositoryUrl = 'https://oss.sonatype.org/content/repositories/snapshots/'
 }
