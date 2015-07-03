@@ -31,5 +31,8 @@ dependencies {
     apt project(':deeplinkdispatch-processor')
 
     compile fileTree(dir: 'libs', include: ['*.jar'])
-    compile 'com.android.support:appcompat-v7:22.1.1'
+    compile 'com.android.support:appcompat-v7:22.2.0'
+
+    testCompile 'org.robolectric:robolectric:3.0-rc3'
+    testCompile 'junit:junit:4.12'
 }
