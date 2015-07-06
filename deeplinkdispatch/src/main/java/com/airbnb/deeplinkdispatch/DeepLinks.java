@@ -22,13 +22,12 @@ import java.lang.annotation.Target;
 
 /**
  * Register a class or method to handle multiple deep links.
- *
  * <pre><code>
  * {@literal @}DeepLinks({uri2, uri2});
  * </code></pre>
  */
 @Retention(RetentionPolicy.CLASS)
-@Target({ElementType.TYPE, ElementType.METHOD})
+@Target({ ElementType.TYPE, ElementType.METHOD })
 public @interface DeepLinks {
   String[] value();
 }

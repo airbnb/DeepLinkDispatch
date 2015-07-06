@@ -22,7 +22,7 @@ branches:
 notifications:
   email: false
 
-script: ./gradlew test assemble
+script: ./gradlew check assemble
 
 sudo: false
 

@@ -3,11 +3,18 @@ apply plugin: 'java'
 sourceCompatibility = 1.7
 
 apply plugin: 'com.bmuschko.nexus'
+apply plugin: 'checkstyle'
 
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     testCompile 'junit:junit:4.12'
     testCompile 'org.assertj:assertj-core:1.7.0'
+}
+
+checkstyle {
+    configFile rootProject.file('checkstyle.xml')
+    showViolations true
+    configProperties = ['checkstyle.cache.file': rootProject.file('build/checkstyle.cache')]
 }
 
 project.group = 'com.airbnb'
