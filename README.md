@@ -117,7 +117,7 @@ public class SampleApplication extends Application implements DeepLinkCallback {
 
 Add to your project `build.gradle` file:
 
-```
+```groovy
 compile 'com.airbnb:deeplinkdispatch:1.1.0'
 apt 'com.airbnb:deeplinkdispatch-processor:1.1.0'
 ```
