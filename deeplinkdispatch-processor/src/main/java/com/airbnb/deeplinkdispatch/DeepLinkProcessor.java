@@ -124,7 +124,7 @@ public class DeepLinkProcessor extends AbstractProcessor {
         .addParameter(DeepLinkRegistry.class, "registry");
 
     for (DeepLinkAnnotatedElement element : elements) {
-      String hostPath = element.getPath().equals("")
+      String hostPath = "".equals(element.getPath())
           ? element.getHost() : element.getHost() + "/" + element.getPath();
       String type = "DeepLinkEntry.Type." + element.getAnnotationType().toString();
       ClassName activity = ClassName.bestGuess(element.getActivity());
@@ -231,8 +231,8 @@ public class DeepLinkProcessor extends AbstractProcessor {
         .addStatement("finish()")
         .endControlFlow()
         .nextControlFlow("else")
-        .addStatement("notifyListener(true, uri, \"No registered entity to handle deep link: \"" +
-            " + uri.toString())")
+        .addStatement("notifyListener(true, uri, \"No registered entity to handle deep link: \""
+            + " + uri.toString())")
         .addStatement("finish()")
         .endControlFlow()
         .build();

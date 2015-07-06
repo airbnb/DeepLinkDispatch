@@ -22,12 +22,12 @@ import java.lang.annotation.Target;
 
 /**
  * Register a class or method to handle a deep link.
- *
+ * <p/>
  * <pre><code>
  * {@literal @}DeepLink(uri);
  * </code></pre>
  */
-@Target({ElementType.TYPE, ElementType.METHOD})
+@Target({ ElementType.TYPE, ElementType.METHOD })
 @Retention(RetentionPolicy.CLASS)
 public @interface DeepLink {
   String IS_DEEP_LINK = "is_deep_link_flag";

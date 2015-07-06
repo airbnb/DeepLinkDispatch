@@ -1,5 +1,12 @@
 apply plugin: 'com.android.application'
 apply plugin: 'android-apt'
+apply plugin: 'checkstyle'
+
+checkstyle {
+    configFile rootProject.file('checkstyle.xml')
+    showViolations true
+    configProperties = ['checkstyle.cache.file': rootProject.file('build/checkstyle.cache')]
+}
 
 android {
     compileSdkVersion 22

@@ -1,6 +1,13 @@
 apply plugin: 'java'
 
 apply plugin: 'com.bmuschko.nexus'
+apply plugin: 'checkstyle'
+
+checkstyle {
+    configFile rootProject.file('checkstyle.xml')
+    showViolations true
+    configProperties = ['checkstyle.cache.file': rootProject.file('build/checkstyle.cache')]
+}
 
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
