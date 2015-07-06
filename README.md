@@ -118,8 +118,18 @@ public class SampleApplication extends Application implements DeepLinkCallback {
 Add to your project `build.gradle` file:
 
 ```groovy
-compile 'com.airbnb:deeplinkdispatch:1.1.0'
-apt 'com.airbnb:deeplinkdispatch-processor:1.1.0'
+buildscript {
+  dependencies {
+    classpath 'com.neenbedankt.gradle.plugins:android-apt:1.4'
+  }
+}
+
+apply plugin: 'com.neenbedankt.android-apt'
+
+dependencies {
+  compile 'com.airbnb:deeplinkdispatch:1.1.0'
+  apt 'com.airbnb:deeplinkdispatch-processor:1.1.0'
+}
 ```
 
 Register `DeepLinkActivity` with the scheme you'd like in your `AndroidManifest.xml` file (using
