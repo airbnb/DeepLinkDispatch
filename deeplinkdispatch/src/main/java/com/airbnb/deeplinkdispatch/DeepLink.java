@@ -22,7 +22,6 @@ import java.lang.annotation.Target;
 
 /**
  * Register a class or method to handle a deep link.
- * <p/>
  * <pre><code>
  * {@literal @}DeepLink(uri);
  * </code></pre>
