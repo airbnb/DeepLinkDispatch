@@ -31,6 +31,7 @@ public class DeepLinkActivity extends Activity {
         }
         parameterMap.put(queryParameter, uri.getQueryParameter(queryParameter));
       }
+      parameterMap.put(DeepLink.URI, uri.toString());
       try {
         Class<?> c = entry.getActivityClass();
         Intent intent;

@@ -187,6 +187,7 @@ public class DeepLinkProcessor extends AbstractProcessor {
         .endControlFlow()
         .addStatement("parameterMap.put(queryParameter, uri.getQueryParameter(queryParameter))")
         .endControlFlow()
+        .addStatement("parameterMap.put(DeepLink.URI, uri.toString())")
         .beginControlFlow("try")
         .addStatement("Class<?> c = entry.getActivityClass()")
         .addStatement("$T intent", ClassName.get("android.content", "Intent"))
