@@ -14,7 +14,7 @@ public class DeepLinkProcessorTest {
     JavaFileObject sampleActivity = JavaFileObjects
         .forSourceString("SampleActivity", "package com.example;"
             + "import com.airbnb.deeplinkdispatch.DeepLink; "
-            + "@DeepLink(\"example.com/deepLink\") public class SampleActivity {}");
+            + "@DeepLink(\"airbnb://example.com/deepLink\") public class SampleActivity {}");
 
     assert_().about(javaSource())
         .that(sampleActivity)
@@ -28,7 +28,7 @@ public class DeepLinkProcessorTest {
     + "import com.example.SampleActivity;\n"
     + "public final class DeepLinkLoader implements Loader {\n"
     + "  public void load(DeepLinkRegistry registry) {\n"
-    + "    registry.registerDeepLink(\"example.com/deepLink\", DeepLinkEntry.Type.CLASS, "
+    + "    registry.registerDeepLink(\"airbnb://example.com/deepLink\", DeepLinkEntry.Type.CLASS, "
     + "SampleActivity.class, null);\n"
     + "  }\n"
     + "}\n"));
