@@ -14,28 +14,22 @@ public class DeepLinkRegistryTest {
   }
 
   @Test public void testSingleParameter() {
-    registry.registerDeepLink("test/{param1}", DeepLinkEntry.Type.CLASS, String.class, null);
+    registry.registerDeepLink("http://test/{param1}", DeepLinkEntry.Type.CLASS, String.class, null);
 
-    DeepLinkEntry entry = registry.parseUri("test/12345");
-
-    assertThat(entry).isNotNull();
+    assertThat(registry.parseUri("http://test/12345")).isNotNull();
   }
 
   @Test public void testTwoParameters() {
     registry.registerDeepLink(
-        "test/{param1}/{param2}", DeepLinkEntry.Type.CLASS, String.class, null);
+        "http://test/{param1}/{param2}", DeepLinkEntry.Type.CLASS, String.class, null);
 
-    DeepLinkEntry entry = registry.parseUri("test/12345/alice");
-
-    assertThat(entry).isNotNull();
+    assertThat(registry.parseUri("http://test/12345/alice")).isNotNull();
   }
 
   @Test public void testEntryNotFound() {
     registry.registerDeepLink(
-        "test/{param1}/{param2}", DeepLinkEntry.Type.CLASS, String.class, null);
+        "http://test/{param1}/{param2}", DeepLinkEntry.Type.CLASS, String.class, null);
 
-    DeepLinkEntry entry = registry.parseUri("blah/232");
-
-    assertThat(entry).isNull();
+    assertThat(registry.parseUri("http://blah/232")).isNull();
   }
 }

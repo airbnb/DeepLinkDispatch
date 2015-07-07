@@ -15,9 +15,13 @@
  */
 package com.airbnb.deeplinkdispatch;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -27,27 +31,23 @@ final class DeepLinkEntry {
   private static final String PARAM = "([a-zA-Z][a-zA-Z0-9_-]*)";
   private static final String PARAM_REGEX = "\\{(" + PARAM + ")\\}";
 
-  private final String hostPath;
-  private final String regex;
   private final Type type;
   private final Class<?> activityClass;
   private final String method;
+  private final Set<String> parameters;
+  private final String regex;
 
-  public enum Type {
+  enum Type {
     CLASS,
     METHOD
   }
 
-  public DeepLinkEntry(String hostPath, Type type, Class<?> activityClass, String method) {
-    this.hostPath = hostPath;
-    this.regex = generateLookupString(hostPath);
+  DeepLinkEntry(String uri, Type type, Class<?> activityClass, String method) {
     this.type = type;
     this.activityClass = activityClass;
     this.method = method;
-  }
-
-  public String getRegex() {
-    return regex;
+    this.parameters = parsePathParameters(uri);
+    this.regex = schemeHostAndPath(uri).replaceAll(PARAM_REGEX, PARAM_VALUE);
   }
 
   public Type getType() {
@@ -63,40 +63,55 @@ final class DeepLinkEntry {
   }
 
   /**
+   * Gets the set of unique path parameters used in the given URI. If a parameter is used twice
+   * in the URI, it will only show up once in the set.
+   */
+  private static Set<String> parsePathParameters(String path) {
+    Matcher m = Pattern.compile(PARAM_REGEX).matcher(path);
+    Set<String> patterns = new LinkedHashSet<>();
+    while (m.find()) {
+      patterns.add(m.group(1));
+    }
+    return patterns;
+  }
+
+  /**
    * Generates a map of parameters and the values from the given deep link.
-   * @param inputHostPath the combined host and path of the deep link
+   *
+   * @param inputUri the intent Uri used to launch the Activity
    * @return the map of parameter values, where all values will be strings.
    */
-  public Map<String, String> getParameters(String inputHostPath) {
-    Map<String, String> parameters = generateParameterMap(hostPath);
-    populateParameters(inputHostPath, parameters);
-    return parameters;
-  }
-
-  private Map<String, String> generateParameterMap(String hostPath) {
-    Map<String, String> paramMap = new LinkedHashMap<>();
-    Pattern pattern = Pattern.compile(PARAM_REGEX);
-    Matcher matcher = pattern.matcher(hostPath);
-    while (matcher.find()) {
-      paramMap.put(matcher.group(1), "");
-    }
-    return paramMap;
-  }
-
-  private void populateParameters(String inputHostPath, Map<String, String> parameters) {
-    Iterator<String> keySetIterator = parameters.keySet().iterator();
-    Matcher matcher = Pattern.compile(getRegex()).matcher(inputHostPath);
-    matcher.matches();
-
+  Map<String, String> getParameters(String inputUri) {
+    Iterator<String> paramsIterator = parameters.iterator();
+    Map<String, String> paramsMap = new HashMap<>(parameters.size());
+    Matcher matcher = Pattern.compile(regex).matcher(schemeHostAndPath(inputUri));
     int i = 1;
-    while (keySetIterator.hasNext()) {
-      String key = keySetIterator.next();
-      parameters.put(key, matcher.group(i));
-      i++;
+    if (matcher.matches()) {
+      while (paramsIterator.hasNext()) {
+        String key = paramsIterator.next();
+        String value = matcher.group(i++);
+        if (value != null && !"".equals(value.trim())) {
+          paramsMap.put(key, value);
+        }
+      }
+    }
+    return paramsMap;
+  }
+
+  private static String parsePath(DeepLinkUri parsedUri) {
+    try {
+      return URLDecoder.decode(parsedUri.encodedPath(), "UTF-8");
+    } catch (UnsupportedEncodingException e) {
+      return "";
     }
   }
 
-  private String generateLookupString(String hostPath) {
-    return hostPath.replaceAll(PARAM_REGEX, PARAM_VALUE);
+  boolean matches(String inputUri) {
+    return Pattern.compile(regex).matcher(schemeHostAndPath(inputUri)).find();
+  }
+
+  private String schemeHostAndPath(String uri) {
+    DeepLinkUri parsedUri = DeepLinkUri.parse(uri);
+    return parsedUri.scheme() + "://" + parsedUri.host() + parsePath(parsedUri);
   }
 }

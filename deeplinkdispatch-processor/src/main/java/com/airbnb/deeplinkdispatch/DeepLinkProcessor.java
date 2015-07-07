@@ -25,6 +25,7 @@ import com.squareup.javapoet.TypeSpec;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -81,7 +82,12 @@ public class DeepLinkProcessor extends AbstractProcessor {
       DeepLinkEntry.Type type = kind == ElementKind.CLASS
           ? DeepLinkEntry.Type.CLASS : DeepLinkEntry.Type.METHOD;
       for (String deepLink : deepLinks) {
-        deepLinkElements.add(new DeepLinkAnnotatedElement(deepLink, element, type));
+        try {
+          deepLinkElements.add(new DeepLinkAnnotatedElement(deepLink, element, type));
+        } catch (MalformedURLException e) {
+          messager.printMessage(Diagnostic.Kind.ERROR,
+              "Malformed Deep Link URL " + deepLink);
+        }
       }
     }
 
@@ -95,7 +101,12 @@ public class DeepLinkProcessor extends AbstractProcessor {
       DeepLink deepLink = element.getAnnotation(DeepLink.class);
       DeepLinkEntry.Type type = kind == ElementKind.CLASS
           ? DeepLinkEntry.Type.CLASS : DeepLinkEntry.Type.METHOD;
-      deepLinkElements.add(new DeepLinkAnnotatedElement(deepLink.value(), element, type));
+      try {
+        deepLinkElements.add(new DeepLinkAnnotatedElement(deepLink.value(), element, type));
+      } catch (MalformedURLException e) {
+        messager.printMessage(Diagnostic.Kind.ERROR,
+            "Malformed Deep Link URL " + deepLink.value());
+      }
     }
 
     if (!deepLinkElements.isEmpty()) {
@@ -124,13 +135,12 @@ public class DeepLinkProcessor extends AbstractProcessor {
         .addParameter(DeepLinkRegistry.class, "registry");
 
     for (DeepLinkAnnotatedElement element : elements) {
-      String hostPath = "".equals(element.getPath())
-          ? element.getHost() : element.getHost() + "/" + element.getPath();
       String type = "DeepLinkEntry.Type." + element.getAnnotationType().toString();
       ClassName activity = ClassName.bestGuess(element.getActivity());
       Object method = element.getMethod() == null ? null : element.getMethod();
+      String uri = element.getUri();
       loadMethod.addStatement("registry.registerDeepLink($S, $L, $T.class, $S)",
-          hostPath, type, activity, method);
+          uri, type, activity, method);
     }
 
     TypeSpec deepLinkLoader = TypeSpec.classBuilder("DeepLinkLoader")
@@ -175,10 +185,10 @@ public class DeepLinkProcessor extends AbstractProcessor {
         .addStatement("Loader loader = new com.airbnb.deeplinkdispatch.DeepLinkLoader()")
         .addStatement("DeepLinkRegistry registry = new DeepLinkRegistry(loader)")
         .addStatement("$T uri = getIntent().getData()", ClassName.get("android.net", "Uri"))
-        .addStatement("String hostPath = uri.getHost() + uri.getPath()")
-        .addStatement("DeepLinkEntry entry = registry.parseUri(hostPath)")
+        .addStatement("String uriString = uri.toString()")
+        .addStatement("DeepLinkEntry entry = registry.parseUri(uriString)")
         .beginControlFlow("if (entry != null)")
-        .addStatement("$T<String, String> parameterMap = entry.getParameters(hostPath)", Map.class)
+        .addStatement("$T<String, String> parameterMap = entry.getParameters(uriString)", Map.class)
         .beginControlFlow("for (String queryParameter : uri.getQueryParameterNames())")
         .beginControlFlow("if (parameterMap.containsKey(queryParameter))")
         .addStatement(

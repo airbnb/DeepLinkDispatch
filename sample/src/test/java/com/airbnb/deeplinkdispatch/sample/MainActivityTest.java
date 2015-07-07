@@ -32,7 +32,8 @@ public class MainActivityTest {
         equalTo(new ComponentName(deepLinkActivity, MainActivity.class)));
 
     assertThat(launchedIntent.getBooleanExtra(DeepLink.IS_DEEP_LINK, false), equalTo(true));
-    assertThat(launchedIntent.getStringExtra(DeepLink.URI), equalTo("airbnb://example.com/deepLink"));
+    assertThat(launchedIntent.getStringExtra(DeepLink.URI),
+        equalTo("airbnb://example.com/deepLink"));
   }
 
   @Test public void testMethodAnnotationWithParams() {
@@ -49,7 +50,8 @@ public class MainActivityTest {
     assertThat(launchedIntent.getBooleanExtra(DeepLink.IS_DEEP_LINK, false), equalTo(true));
     assertThat(launchedIntent.getStringExtra("arbitraryNumber"), equalTo("1234321"));
     assertThat(launchedIntent.getAction(), equalTo("deep_link_complex"));
-    assertThat(launchedIntent.getStringExtra(DeepLink.URI), equalTo("airbnb://host/somePath/1234321"));
+    assertThat(launchedIntent.getStringExtra(DeepLink.URI),
+        equalTo("airbnb://host/somePath/1234321"));
   }
 
   @Test public void testQueryParams() {
@@ -64,6 +66,25 @@ public class MainActivityTest {
 
     assertThat(launchedIntent.getBooleanExtra(DeepLink.IS_DEEP_LINK, false), equalTo(true));
     assertThat(launchedIntent.getStringExtra("foo"), equalTo("bar"));
-    assertThat(launchedIntent.getStringExtra(DeepLink.URI), equalTo("airbnb://classDeepLink?foo=bar"));
+    assertThat(launchedIntent.getStringExtra(DeepLink.URI),
+        equalTo("airbnb://classDeepLink?foo=bar"));
+  }
+
+  @Test public void testHttpScheme() {
+    Intent intent = new Intent(Intent.ACTION_VIEW,
+        Uri.parse("http://example.com/fooball?baz=something"));
+    DeepLinkActivity deepLinkActivity = Robolectric.buildActivity(DeepLinkActivity.class)
+        .withIntent(intent).create().get();
+    ShadowActivity shadowActivity = shadowOf(deepLinkActivity);
+
+    Intent launchedIntent = shadowActivity.peekNextStartedActivityForResult().intent;
+    assertThat(launchedIntent.getComponent(),
+        equalTo(new ComponentName(deepLinkActivity, MainActivity.class)));
+
+    assertThat(launchedIntent.getBooleanExtra(DeepLink.IS_DEEP_LINK, false), equalTo(true));
+    assertThat(launchedIntent.getStringExtra("baz"), equalTo("something"));
+    assertThat(launchedIntent.getStringExtra("arg"), equalTo("ball"));
+    assertThat(launchedIntent.getStringExtra(DeepLink.URI),
+        equalTo("http://example.com/fooball?baz=something"));
   }
 }

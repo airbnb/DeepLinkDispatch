@@ -38,7 +38,7 @@ Sometimes you'll have an activity that should handle several kinds of deep links
 `@DeepLinks` annotation to register multiple deep links on an activity:
 
 ```java
-@DeepLinks({"example.com/deepLink/{id}", "example.com/anotherDeepLink"})
+@DeepLinks({"foo://example.com/deepLink/{id}", "foo://example.com/anotherDeepLink"})
 public class MainActivity extends Activity {
   @Override protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -61,7 +61,7 @@ You can also annotate static methods that return an `Intent`. `DeepLinkDispatch`
 method to create that `Intent` and use it when starting your activity via that registered deep link:
 
 ```java
-@DeepLink("example.com/methodDeepLink/{param1}")
+@DeepLink("foo://example.com/methodDeepLink/{param1}")
 public static Intent intentForDeepLinkMethod(Context context) {
   return new Intent(context, MainActivity.class).setAction(ACTION_DEEP_LINK_METHOD);
 }
@@ -74,7 +74,7 @@ other parameter. For example, we could retrieve the query parameter passed along
 `example://example.com/deepLink?qp=123`:
 
 ```java
-@DeepLink("example.com/deepLink")
+@DeepLink("foo://example.com/deepLink")
 public class MainActivity extends Activity {
   @Override protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);

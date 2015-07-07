@@ -21,10 +21,10 @@ public class DeepLinkActivity extends Activity {
     Loader loader = new com.airbnb.deeplinkdispatch.DeepLinkLoader();
     DeepLinkRegistry registry = new DeepLinkRegistry(loader);
     Uri uri = getIntent().getData();
-    String hostPath = uri.getHost() + uri.getPath();
-    DeepLinkEntry entry = registry.parseUri(hostPath);
+    String uriString = uri.toString();
+    DeepLinkEntry entry = registry.parseUri(uriString);
     if (entry != null) {
-      Map<String, String> parameterMap = entry.getParameters(hostPath);
+      Map<String, String> parameterMap = entry.getParameters(uriString);
       for (String queryParameter : uri.getQueryParameterNames()) {
         if (parameterMap.containsKey(queryParameter)) {
           Log.w(TAG, "Duplicate parameter name in path and query param: " + queryParameter);

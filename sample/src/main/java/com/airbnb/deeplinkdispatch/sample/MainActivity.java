@@ -24,7 +24,8 @@ import android.widget.Toast;
 import com.airbnb.deeplinkdispatch.DeepLink;
 import com.airbnb.deeplinkdispatch.DeepLinks;
 
-@DeepLinks({"classDeepLink", "otherClassDeepLink", "example.com/deepLink"})
+@DeepLinks({"airbnb://classDeepLink", "http://example.com/foo{arg}",
+    "airbnb://example.com/deepLink"})
 // You can also register a single deep link for a particular activity to handle:
 // @DeepLink("example.com/something")
 public class MainActivity extends AppCompatActivity {
@@ -57,12 +58,12 @@ public class MainActivity extends AppCompatActivity {
     }
   }
 
-  @DeepLink("methodDeepLink/{param1}")
+  @DeepLink("airbnb://methodDeepLink/{param1}")
   public static Intent intentForDeepLinkMethod(Context context) {
     return new Intent(context, MainActivity.class).setAction(ACTION_DEEP_LINK_METHOD);
   }
 
-  @DeepLink("host/somePath/{arbitraryNumber}")
+  @DeepLink("airbnb://host/somePath/{arbitraryNumber}")
   public static Intent intentForComplexMethod(Context context) {
     return new Intent(context, MainActivity.class).setAction(ACTION_DEEP_LINK_COMPLEX);
   }
