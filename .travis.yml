@@ -11,6 +11,9 @@ android:
     - extra-android-support
     - extra-google-m2repository
 
+after_success:
+  - .buildscript/deploy_snapshot.sh
+
 jdk:
   - oraclejdk7
   - oraclejdk8
@@ -29,3 +32,8 @@ sudo: false
 cache:
   directories:
     - $HOME/.m2
+
+env:
+  global:
+    - secure: "Xm0JTIhNrY/6S6k7pkB2kLgZT9Lt/UMIhwXGZgkgEe/9kpRzbX8Y1KNpm/t7XRAgPa3nc6GnrM75XSNPAzNJKb+ismEuddaw6SATtE18LHJU+8Vu0PkmYumL+TXhBAh7n4dhT96FC+cbAI6TPRmW4R1fN7b5g+Hbde2KDYJM15mlxQX0KuHvBlh8VciFoJ9jucfAQ4/TiMYFjhbMVAqeEu8hUGktklMMWXMXSfH25wTEJ0iQI31wvsPVlJEU4nVARegGHkVHcnG02mI1RLjvZI6oIn5GxFFBYzt0bOWy41w83u7ro/sNw1PLaII9i4Eq0iujDCEi9CmoI3HrunRbwea9mL6vNUz+Wk+1/sr1TIyfySNnETWqNnCDepM1jiyykgePs0YNgF16vl8iZReK4t99ev/sn3eY1+T/e2wi3zSnNXJE88h+pgFQ+cBys14SetwhH5qt+QSV8bw13T2OazUkjzfy2XadJ0nwhbn8MqrNYp7Xyqxzh5lR1jenTdAuhtbV3bVh6blf+4SupyOZDYGg+KA2s+Zn47KHW6GcFyiRw+CMAKpcm2NJXMdpY8EeVlqv+WRLAoM29DdlCjSjPQUw2bIUEuBBM/1GzlLE45iTkwTNXO0hSXHNXUXlcHLGwzjk2AN1CC72yTIzbR2fe37lNr3EbS/0Giia7RSZd5M="
+    - secure: "gFylosEUzh97kGTcg57qy1Mb8I/invR9qLEFSKz0Zn8yPzVnj1AQk119U/p7tg4vs8WLDkIonTTIIul7xIGqThaJIPLUAzSwoXOq5TAUvVOZv3KO+ZZWCuW2mqhMEbZMjk2vjyyRUGuRTCJ1C/MORVRzE57Ml1b2DmCkzkq2SkcvZg0Fh6N9Sl5hky8Y1iuxNKuRGBiyX6GjVHHLvv6OK1qW6jKrgLGZDtgewLSgbdmZUxrsmTeoAqKqEXK6+Vx8OM8MwMmDmlQGB1xBmxqMi8WNI/Hzt1nQ9V1zZ/LEFFlcYCIBljQ1SEqaQpKg7xvbQy/RZsZmp8xkl00AkH9io7dGLuVq8mMddB8clBKYGP5BMK2je8fUWc3AfbJxhwhjulueziv2D0Pp9ISgCekT6Fu9Y3hgavhl+uihzrhH9gsZQvL4ujggTBM4T19SjXS0UMktRlCN3s36ZR4Wjv+HPZXY/cN842nBde7Lb7iEA3CLKileVtOuhDpSOsEfCJ3ejFd2wQB6JBxPBZxPu16Ww0yKKk2AmXkKsCIb8WOVbzLwczgmeAwNKmZHW1alZp+vOuZT+X6mDfMYpU3aJoLdapUaeEZ+fwJbl+5qUxsaGiaNzaTtbNIENGi6KexXQfJTSmhKzpOTwYFHp9RVXAVWDGEDGQv/IdT3AGfxmkJ/GBw="
