@@ -16,3 +16,7 @@ allprojects {
         jcenter()
     }
 }
+
+def isCi() {
+    project.hasProperty('CI') && CI.equals('true')
+}

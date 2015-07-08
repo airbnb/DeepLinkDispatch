@@ -15,7 +15,7 @@ Here's an example where we register `SampleActivity` to pull out an ID from a de
 parameter that we'll identify with `id`.
 
 ```java
-@DeepLink("example.com/deepLink/{id}")
+@DeepLink("foo://example.com/deepLink/{id}")
 public class MainActivity extends Activity {
   @Override protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
