@@ -18,6 +18,9 @@ checkstyle {
     configProperties = ['checkstyle.cache.file': rootProject.file('build/checkstyle.cache')]
 }
 
+project.group = 'com.airbnb'
+project.version = PROJECT_VERSION
+
 modifyPom {
     project {
         name 'DeepLinkDispatch library'
