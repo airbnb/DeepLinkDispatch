@@ -18,9 +18,6 @@ checkstyle {
     configProperties = ['checkstyle.cache.file': rootProject.file('build/checkstyle.cache')]
 }
 
-project.group = 'com.airbnb'
-project.version = PROJECT_VERSION
-
 modifyPom {
     project {
         name 'DeepLinkDispatch library'
@@ -55,6 +52,7 @@ modifyPom {
     }
 }
 
+
 extraArchive {
     sources = true
     tests = false
@@ -62,7 +60,7 @@ extraArchive {
 }
 
 nexus {
-    sign = true
+    sign = !isCi()
     repositoryUrl = 'https://oss.sonatype.org/service/local/staging/deploy/maven2/'
     snapshotRepositoryUrl = 'https://oss.sonatype.org/content/repositories/snapshots/'
 }

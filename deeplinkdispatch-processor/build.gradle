@@ -1,13 +1,9 @@
 apply plugin: 'java'
 
+sourceCompatibility = 1.7
+
 apply plugin: 'com.bmuschko.nexus'
 apply plugin: 'checkstyle'
-
-checkstyle {
-    configFile rootProject.file('checkstyle.xml')
-    showViolations true
-    configProperties = ['checkstyle.cache.file': rootProject.file('build/checkstyle.cache')]
-}
 
 dependencies {
     compile project(':deeplinkdispatch')
@@ -20,6 +16,12 @@ dependencies {
     testCompile 'com.google.testing.compile:compile-testing:0.6'
     testCompile 'org.mockito:mockito-core:1.10.19'
     testCompile files(org.gradle.internal.jvm.Jvm.current().getToolsJar())
+}
+
+checkstyle {
+    configFile rootProject.file('checkstyle.xml')
+    showViolations true
+    configProperties = ['checkstyle.cache.file': rootProject.file('build/checkstyle.cache')]
 }
 
 modifyPom {
@@ -63,7 +65,7 @@ extraArchive {
 }
 
 nexus {
-    sign = true
+    sign = !isCi()
     repositoryUrl = 'https://oss.sonatype.org/service/local/staging/deploy/maven2/'
     snapshotRepositoryUrl = 'https://oss.sonatype.org/content/repositories/snapshots/'
 }
