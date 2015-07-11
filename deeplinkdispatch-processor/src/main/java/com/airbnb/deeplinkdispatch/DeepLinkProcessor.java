@@ -160,21 +160,43 @@ public class DeepLinkProcessor extends AbstractProcessor {
         .initializer("DeepLinkActivity.class.getSimpleName()")
         .build();
 
-    MethodSpec notifyListenerMethod = MethodSpec.methodBuilder("notifyListener")
-        .addModifiers(Modifier.PRIVATE)
-        .returns(void.class)
-        .addParameter(boolean.class, "isError")
-        .addParameter(ClassName.get("android.net", "Uri"), "uri")
-        .addParameter(String.class, "errorMessage")
-        .beginControlFlow("if (getApplication() instanceof DeepLinkCallback)")
-        .addStatement("DeepLinkCallback listener = (DeepLinkCallback) getApplication()")
-        .beginControlFlow("if (!isError)")
-        .addStatement("listener.onSuccess(uri.toString())")
-        .nextControlFlow("else")
-        .addStatement("listener.onError(new DeepLinkError(uri.toString(), errorMessage))")
-        .endControlFlow()
-        .endControlFlow()
+    FieldSpec action = FieldSpec
+        .builder(String.class, "ACTION", Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL)
+        .initializer("\"com.airbnb.deeplinkdispatch.DEEPLINK_ACTION\"")
         .build();
+
+    FieldSpec extraResultOK = FieldSpec
+        .builder(String.class, "EXTRA_RESULT_OK", Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL)
+        .initializer("\"com.airbnb.deeplinkdispatch.EXTRA_RESULT_OK\"")
+        .build();
+
+    FieldSpec extraUri = FieldSpec
+        .builder(String.class, "EXTRA_URI", Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL)
+        .initializer("\"com.airbnb.deeplinkdispatch.EXTRA_URI\"")
+        .build();
+
+      FieldSpec extraErrorMessage = FieldSpec
+        .builder(String.class, "EXTRA_ERROR_MESSAGE", Modifier.PUBLIC, Modifier.STATIC,
+                 Modifier.FINAL)
+        .initializer("\"com.airbnb.deeplinkdispatch.EXTRA_ERROR_MESSAGE\"")
+        .build();
+
+  MethodSpec notifyListenerMethod = MethodSpec.methodBuilder("notifyListener")
+      .addModifiers(Modifier.PRIVATE)
+      .returns(void.class)
+      .addParameter(boolean.class, "isError")
+      .addParameter(ClassName.get("android.net", "Uri"), "uri")
+      .addParameter(String.class, "errorMessage")
+      .addStatement("Intent intent = new Intent()")
+      .addStatement("intent.setAction(DeepLinkActivity.ACTION)")
+      .addStatement("intent.putExtra(DeepLinkActivity.EXTRA_URI, uri.toString())")
+      .addStatement("intent.putExtra(DeepLinkActivity.EXTRA_RESULT_OK, !isError)")
+      .beginControlFlow("if (isError)")
+      .addStatement("intent.putExtra(DeepLinkActivity.EXTRA_ERROR_MESSAGE, errorMessage)")
+      .endControlFlow()
+      .addStatement("sendBroadcast(intent)")
+      .build();
+
 
     MethodSpec onCreateMethod = MethodSpec.methodBuilder("onCreate")
         .addModifiers(Modifier.PROTECTED)
@@ -251,6 +273,10 @@ public class DeepLinkProcessor extends AbstractProcessor {
         .addModifiers(Modifier.PUBLIC)
         .superclass(ClassName.get("android.app", "Activity"))
         .addField(tag)
+        .addField(action)
+        .addField(extraResultOK)
+        .addField(extraUri)
+        .addField(extraErrorMessage)
         .addMethod(onCreateMethod)
         .addMethod(notifyListenerMethod)
         .build();
