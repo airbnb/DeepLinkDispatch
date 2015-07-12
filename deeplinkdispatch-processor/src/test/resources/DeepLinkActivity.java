@@ -15,6 +15,14 @@ import java.util.Map;
 public class DeepLinkActivity extends Activity {
   private static final String TAG = DeepLinkActivity.class.getSimpleName();
 
+  public static final String ACTION = "com.airbnb.deeplinkdispatch.DEEPLINK_ACTION";
+
+  public static final String EXTRA_SUCCESSFUL = "com.airbnb.deeplinkdispatch.EXTRA_SUCCESSFUL";
+
+  public static final String EXTRA_URI = "com.airbnb.deeplinkdispatch.EXTRA_URI";
+
+  public static final String EXTRA_ERROR_MESSAGE = "com.airbnb.deeplinkdispatch.EXTRA_ERROR_MESSAGE";
+
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -76,13 +84,14 @@ public class DeepLinkActivity extends Activity {
   }
 
   private void notifyListener(boolean isError, Uri uri, String errorMessage) {
-    if (getApplication() instanceof DeepLinkCallback) {
-      DeepLinkCallback listener = (DeepLinkCallback) getApplication();
-      if (!isError) {
-        listener.onSuccess(uri.toString());
-      } else {
-        listener.onError(new DeepLinkError(uri.toString(), errorMessage));
-      }
+    Intent intent = new Intent();
+    intent.setAction(DeepLinkActivity.ACTION);
+    intent.putExtra(DeepLinkActivity.EXTRA_URI, uri.toString());
+    intent.putExtra(DeepLinkActivity.EXTRA_SUCCESSFUL, !isError);
+    if (isError) {
+      intent.putExtra(DeepLinkActivity.EXTRA_ERROR_MESSAGE, errorMessage);
     }
+    sendBroadcast(intent);
   }
 }
+
