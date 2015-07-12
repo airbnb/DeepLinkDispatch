@@ -94,21 +94,31 @@ public class MainActivity extends Activity {
 
 ### Callbacks
 
-You can optionally register callbacks to be called on any deep link success or failure. Simply
-implement `DeepLinkCallback` on your `Application`, and `DeepLinkDispatch` will call them
-appropriately:
+You can optionally register callbacks to be called on any deep link success or failure.
+`DeepLinkActivity` will broadcast an intent with any success or failure when deep linking. The intent
+will be populated with these extras:
+
+* `DeepLinkActivity.EXTRA_URI`: The URI of the deep link.
+* `DeepLinkActivity.EXTRA_SUCCESSFUL`: Whether the deep link was fired successfully.
+* `DeepLinkActivity.EXTRA_ERROR_MESSAGE`: If there was an error, the appropriate error message.
+
+You can register a receiver to receive this intent. An example of such a use is below:
 
 ```java
-public class SampleApplication extends Application implements DeepLinkCallback {
+public class DeepLinkReceiver extends BroadcastReceiver {
 
-  private static final String TAG = "DeepLinkDispatch";
+  private static final String TAG = DeepLinkReceiver.class.getSimpleName();
 
-  @Override public void onSuccess(String uri) {
-    Log.i(TAG, "Successful deep link: " + uri.toString());
-  }
+  @Override
+  public void onReceive(Context context, Intent intent) {
+    String deepLinkUri = intent.getStringExtra(DeepLinkActivity.EXTRA_URI);
 
-  @Override public void onError(DeepLinkError error) {
-    Log.e(TAG, "Deep Link Error: " + error.getErrorMessage());
+    if (intent.getBooleanExtra(DeepLinkActivity.EXTRA_SUCCESSFUL, false)) {
+      Log.i(TAG, "Success deep linking: " + deepLinkUri);
+    } else {
+      String errorMessage = intent.getStringExtra(DeepLinkActivity.EXTRA_ERROR_MESSAGE);
+      Log.e(TAG, "Error deep linking: " + deepLinkUri + " with error message +" + errorMessage);
+    }
   }
 }
 ```
