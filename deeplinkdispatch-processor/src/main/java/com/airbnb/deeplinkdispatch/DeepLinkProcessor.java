@@ -166,8 +166,8 @@ public class DeepLinkProcessor extends AbstractProcessor {
         .build();
 
     FieldSpec extraResultOK = FieldSpec
-        .builder(String.class, "EXTRA_RESULT_OK", Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL)
-        .initializer("\"com.airbnb.deeplinkdispatch.EXTRA_RESULT_OK\"")
+        .builder(String.class, "EXTRA_SUCCESSFUL", Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL)
+        .initializer("\"com.airbnb.deeplinkdispatch.EXTRA_SUCCESSFUL\"")
         .build();
 
     FieldSpec extraUri = FieldSpec
@@ -190,7 +190,7 @@ public class DeepLinkProcessor extends AbstractProcessor {
       .addStatement("Intent intent = new Intent()")
       .addStatement("intent.setAction(DeepLinkActivity.ACTION)")
       .addStatement("intent.putExtra(DeepLinkActivity.EXTRA_URI, uri.toString())")
-      .addStatement("intent.putExtra(DeepLinkActivity.EXTRA_RESULT_OK, !isError)")
+      .addStatement("intent.putExtra(DeepLinkActivity.EXTRA_SUCCESSFUL, !isError)")
       .beginControlFlow("if (isError)")
       .addStatement("intent.putExtra(DeepLinkActivity.EXTRA_ERROR_MESSAGE, errorMessage)")
       .endControlFlow()

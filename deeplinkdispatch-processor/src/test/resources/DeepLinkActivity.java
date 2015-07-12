@@ -17,7 +17,7 @@ public class DeepLinkActivity extends Activity {
 
   public static final String ACTION = "com.airbnb.deeplinkdispatch.DEEPLINK_ACTION";
 
-  public static final String EXTRA_RESULT_OK = "com.airbnb.deeplinkdispatch.EXTRA_RESULT_OK";
+  public static final String EXTRA_SUCCESSFUL = "com.airbnb.deeplinkdispatch.EXTRA_SUCCESSFUL";
 
   public static final String EXTRA_URI = "com.airbnb.deeplinkdispatch.EXTRA_URI";
 
@@ -87,7 +87,7 @@ public class DeepLinkActivity extends Activity {
     Intent intent = new Intent();
     intent.setAction(DeepLinkActivity.ACTION);
     intent.putExtra(DeepLinkActivity.EXTRA_URI, uri.toString());
-    intent.putExtra(DeepLinkActivity.EXTRA_RESULT_OK, !isError);
+    intent.putExtra(DeepLinkActivity.EXTRA_SUCCESSFUL, !isError);
     if (isError) {
       intent.putExtra(DeepLinkActivity.EXTRA_ERROR_MESSAGE, errorMessage);
     }

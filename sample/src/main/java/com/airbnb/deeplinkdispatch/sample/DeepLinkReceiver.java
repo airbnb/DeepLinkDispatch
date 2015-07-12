@@ -15,7 +15,7 @@ public class DeepLinkReceiver extends BroadcastReceiver {
   public void onReceive(Context context, Intent intent) {
     String deepLinkUri = intent.getStringExtra(DeepLinkActivity.EXTRA_URI);
 
-    if (intent.getBooleanExtra(DeepLinkActivity.EXTRA_RESULT_OK, false)) {
+    if (intent.getBooleanExtra(DeepLinkActivity.EXTRA_SUCCESSFUL, false)) {
       Log.i(TAG, "Success deep linking: " + deepLinkUri);
     } else {
       String errorMessage = intent.getStringExtra(DeepLinkActivity.EXTRA_ERROR_MESSAGE);
