@@ -16,6 +16,7 @@
 package com.airbnb.deeplinkdispatch;
 
 import com.google.auto.service.AutoService;
+import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.JavaFile;
@@ -27,7 +28,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -58,9 +58,7 @@ public class DeepLinkProcessor extends AbstractProcessor {
   }
 
   @Override public Set<String> getSupportedAnnotationTypes() {
-    Set<String> annotations = new LinkedHashSet<>();
-    annotations.add(DeepLink.class.getCanonicalName());
-    return annotations;
+    return ImmutableSet.of(DeepLink.class.getCanonicalName(), DeepLinks.class.getCanonicalName());
   }
 
   @Override public SourceVersion getSupportedSourceVersion() {
