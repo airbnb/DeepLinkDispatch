@@ -47,7 +47,7 @@ final class DeepLinkEntry {
     this.activityClass = activityClass;
     this.method = method;
     this.parameters = parsePathParameters(uri);
-    this.regex = schemeHostAndPath(uri).replaceAll(PARAM_REGEX, PARAM_VALUE);
+    this.regex = schemeHostAndPath(uri).replaceAll(PARAM_REGEX, PARAM_VALUE) + "$";
   }
 
   public Type getType() {

@@ -16,6 +16,9 @@
             </intent-filter>
         </activity>
         <activity
+            android:name=".SecondActivity"
+            android:label="@string/app_name" />
+        <activity
             android:name="com.airbnb.deeplinkdispatch.DeepLinkActivity"
             android:theme="@android:style/Theme.NoDisplay">
             <intent-filter>
