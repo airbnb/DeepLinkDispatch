@@ -32,4 +32,12 @@ public class DeepLinkRegistryTest {
 
     assertThat(registry.parseUri("http://blah/232")).isNull();
   }
+
+  @Test public void testMultipleEntries() {
+    registry.registerDeepLink("http://test", DeepLinkEntry.Type.CLASS, Integer.class, null);
+    registry.registerDeepLink("http://test/{param1}", DeepLinkEntry.Type.CLASS, String.class, null);
+
+    assertThat(registry.parseUri("http://test").getActivityClass()).isEqualTo(Integer.class);
+    assertThat(registry.parseUri("http://test/12345").getActivityClass()).isEqualTo(String.class);
+  }
 }
