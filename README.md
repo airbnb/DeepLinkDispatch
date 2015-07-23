@@ -132,7 +132,7 @@ dependencies {
 }
 ```
 
-Snapshots of the development version are available in [Sonatype's `snapshots` repository][https://oss.sonatype.org/content/repositories/snapshots/].
+Snapshots of the development version are available in [Sonatype's `snapshots` repository](https://oss.sonatype.org/content/repositories/snapshots/).
 
 Register `DeepLinkActivity` with the scheme you'd like in your `AndroidManifest.xml` file (using
 `airbnb` as an example):
