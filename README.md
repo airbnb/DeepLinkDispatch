@@ -127,8 +127,8 @@ buildscript {
 apply plugin: 'com.neenbedankt.android-apt'
 
 dependencies {
-  compile 'com.airbnb:deeplinkdispatch:1.2.0'
-  apt 'com.airbnb:deeplinkdispatch-processor:1.2.0'
+  compile 'com.airbnb:deeplinkdispatch:1.3.0'
+  apt 'com.airbnb:deeplinkdispatch-processor:1.3.0'
 }
 ```
 
