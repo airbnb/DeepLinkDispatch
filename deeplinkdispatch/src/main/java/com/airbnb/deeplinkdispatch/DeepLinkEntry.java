@@ -27,7 +27,7 @@ import java.util.regex.Pattern;
 
 final class DeepLinkEntry {
 
-  private static final String PARAM_VALUE = "([a-zA-Z0-9_-]*)";
+  private static final String PARAM_VALUE = "([a-zA-Z0-9_#!+% -]*)";
   private static final String PARAM = "([a-zA-Z][a-zA-Z0-9_-]*)";
   private static final String PARAM_REGEX = "\\{(" + PARAM + ")\\}";
 

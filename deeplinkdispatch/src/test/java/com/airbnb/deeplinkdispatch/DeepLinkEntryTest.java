@@ -55,6 +55,13 @@ public class DeepLinkEntryTest {
     assertThat(parameters.get("bar")).isEqualTo("baz");
   }
 
+  @Test public void urlWithSpaces() {
+    DeepLinkEntry entry = deepLinkEntry("http://example.com/{query}");
+
+    Map<String, String> parameters = entry.getParameters("http://example.com/search paris");
+    assertThat(parameters.get("query")).isEqualTo("search paris");
+  }
+
   @Test public void noMatchesDifferentScheme() {
     DeepLinkEntry entry = deepLinkEntry("airbnb://something");
 
