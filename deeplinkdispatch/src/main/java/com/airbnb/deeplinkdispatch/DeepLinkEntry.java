@@ -15,8 +15,6 @@
  */
 package com.airbnb.deeplinkdispatch;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
@@ -27,15 +25,15 @@ import java.util.regex.Pattern;
 
 final class DeepLinkEntry {
 
-  private static final String PARAM_VALUE = "([a-zA-Z0-9_#!+% -]*)";
+  private static final String PARAM_VALUE = "([a-zA-Z0-9_#!+%-]*)";
   private static final String PARAM = "([a-zA-Z][a-zA-Z0-9_-]*)";
-  private static final String PARAM_REGEX = "\\{(" + PARAM + ")\\}";
+  private static final String PARAM_REGEX = "%7B(" + PARAM + ")%7D";
 
   private final Type type;
   private final Class<?> activityClass;
   private final String method;
   private final Set<String> parameters;
-  private final String regex;
+  private final Pattern regex;
 
   enum Type {
     CLASS,
@@ -43,11 +41,13 @@ final class DeepLinkEntry {
   }
 
   DeepLinkEntry(String uri, Type type, Class<?> activityClass, String method) {
+    DeepLinkUri parsedUri = DeepLinkUri.parse(uri);
+    String schemeHostAndPath = schemeHostAndPath(parsedUri);
     this.type = type;
     this.activityClass = activityClass;
     this.method = method;
-    this.parameters = parsePathParameters(uri);
-    this.regex = schemeHostAndPath(uri).replaceAll(PARAM_REGEX, PARAM_VALUE) + "$";
+    this.parameters = parsePathParameters(parsedUri);
+    this.regex = Pattern.compile(schemeHostAndPath.replaceAll(PARAM_REGEX, PARAM_VALUE) + "$");
   }
 
   public Type getType() {
@@ -66,11 +66,11 @@ final class DeepLinkEntry {
    * Gets the set of unique path parameters used in the given URI. If a parameter is used twice
    * in the URI, it will only show up once in the set.
    */
-  private static Set<String> parsePathParameters(String path) {
-    Matcher m = Pattern.compile(PARAM_REGEX).matcher(path);
+  private static Set<String> parsePathParameters(DeepLinkUri uri) {
+    Matcher matcher = Pattern.compile(PARAM_REGEX).matcher(uri.encodedPath());
     Set<String> patterns = new LinkedHashSet<>();
-    while (m.find()) {
-      patterns.add(m.group(1));
+    while (matcher.find()) {
+      patterns.add(matcher.group(1));
     }
     return patterns;
   }
@@ -84,7 +84,8 @@ final class DeepLinkEntry {
   Map<String, String> getParameters(String inputUri) {
     Iterator<String> paramsIterator = parameters.iterator();
     Map<String, String> paramsMap = new HashMap<>(parameters.size());
-    Matcher matcher = Pattern.compile(regex).matcher(schemeHostAndPath(inputUri));
+    DeepLinkUri deepLinkUri = DeepLinkUri.parse(inputUri);
+    Matcher matcher = regex.matcher(schemeHostAndPath(deepLinkUri));
     int i = 1;
     if (matcher.matches()) {
       while (paramsIterator.hasNext()) {
@@ -99,19 +100,15 @@ final class DeepLinkEntry {
   }
 
   private static String parsePath(DeepLinkUri parsedUri) {
-    try {
-      return URLDecoder.decode(parsedUri.encodedPath(), "UTF-8");
-    } catch (UnsupportedEncodingException e) {
-      return "";
-    }
+    return parsedUri.encodedPath();
   }
 
   boolean matches(String inputUri) {
-    return Pattern.compile(regex).matcher(schemeHostAndPath(inputUri)).find();
+    DeepLinkUri deepLinkUri = DeepLinkUri.parse(inputUri);
+    return regex.matcher(schemeHostAndPath(deepLinkUri)).find();
   }
 
-  private String schemeHostAndPath(String uri) {
-    DeepLinkUri parsedUri = DeepLinkUri.parse(uri);
-    return parsedUri.scheme() + "://" + parsedUri.host() + parsePath(parsedUri);
+  private String schemeHostAndPath(DeepLinkUri uri) {
+    return uri.scheme() + "://" + uri.host() + parsePath(uri);
   }
 }
