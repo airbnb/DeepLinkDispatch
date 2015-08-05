@@ -28,6 +28,13 @@ public class DeepLinkEntryTest {
     assertThat(parameters.get("bar")).isEqualTo("hyphens-and_underscores123");
   }
 
+  @Test public void testParamWithTildeAndDollarSign() {
+    DeepLinkEntry entry = deepLinkEntry("airbnb://test/{param1}");
+
+    Map<String, String> parameters = entry.getParameters("airbnb://test/tilde~dollar$ign");
+    assertThat(parameters.get("param1")).isEqualTo("tilde~dollar$ign");
+  }
+
   @Test public void testNoMatchesFound() {
     DeepLinkEntry entry = deepLinkEntry("airbnb://foo/{bar}");
 
