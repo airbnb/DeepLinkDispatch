@@ -35,6 +35,13 @@ public class DeepLinkEntryTest {
     assertThat(parameters.get("param1")).isEqualTo("tilde~dollar$ign");
   }
 
+  @Test public void testParamWithDotAndComma() {
+    DeepLinkEntry entry = deepLinkEntry("airbnb://test/{param1}");
+
+    Map<String, String> parameters = entry.getParameters("airbnb://test/N1.55,22.11");
+    assertThat(parameters.get("param1")).isEqualTo("N1.55,22.11");
+  }
+
   @Test public void testNoMatchesFound() {
     DeepLinkEntry entry = deepLinkEntry("airbnb://foo/{bar}");
 
