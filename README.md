@@ -134,7 +134,7 @@ buildscript {
   }
 }
 
-apply plugin: 'com.neenbedankt.android-apt'
+apply plugin: 'android-apt'
 
 dependencies {
   compile 'com.airbnb:deeplinkdispatch:1.3.0'
