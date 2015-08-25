@@ -16,7 +16,6 @@
 package com.airbnb.deeplinkdispatch;
 
 import com.google.auto.service.AutoService;
-import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.JavaFile;
@@ -28,6 +27,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -58,7 +58,7 @@ public class DeepLinkProcessor extends AbstractProcessor {
   }
 
   @Override public Set<String> getSupportedAnnotationTypes() {
-    return ImmutableSet.of(DeepLink.class.getCanonicalName(), DeepLinks.class.getCanonicalName());
+    return Collections.singleton(DeepLink.class.getCanonicalName());
   }
 
   @Override public SourceVersion getSupportedSourceVersion() {
@@ -69,14 +69,14 @@ public class DeepLinkProcessor extends AbstractProcessor {
   public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
     List<DeepLinkAnnotatedElement> deepLinkElements = new ArrayList<>();
 
-    for (Element element : roundEnv.getElementsAnnotatedWith(DeepLinks.class)) {
+    for (Element element : roundEnv.getElementsAnnotatedWith(DeepLink.class)) {
       ElementKind kind = element.getKind();
       if (kind != ElementKind.METHOD && kind != ElementKind.CLASS) {
         error(element, "Only classes and methods can be annotated with @%s",
-            DeepLinks.class.getSimpleName());
+            DeepLink.class.getSimpleName());
       }
 
-      String[] deepLinks = element.getAnnotation(DeepLinks.class).value();
+      String[] deepLinks = element.getAnnotation(DeepLink.class).value();
       DeepLinkEntry.Type type = kind == ElementKind.CLASS
           ? DeepLinkEntry.Type.CLASS : DeepLinkEntry.Type.METHOD;
       for (String deepLink : deepLinks) {
@@ -86,24 +86,6 @@ public class DeepLinkProcessor extends AbstractProcessor {
           messager.printMessage(Diagnostic.Kind.ERROR,
               "Malformed Deep Link URL " + deepLink);
         }
-      }
-    }
-
-    for (Element element : roundEnv.getElementsAnnotatedWith(DeepLink.class)) {
-      ElementKind kind = element.getKind();
-      if (kind != ElementKind.METHOD && kind != ElementKind.CLASS) {
-        error(element, "Only classes and methods can be annotated with @%s",
-            DeepLink.class.getSimpleName());
-      }
-
-      DeepLink deepLink = element.getAnnotation(DeepLink.class);
-      DeepLinkEntry.Type type = kind == ElementKind.CLASS
-          ? DeepLinkEntry.Type.CLASS : DeepLinkEntry.Type.METHOD;
-      try {
-        deepLinkElements.add(new DeepLinkAnnotatedElement(deepLink.value(), element, type));
-      } catch (MalformedURLException e) {
-        messager.printMessage(Diagnostic.Kind.ERROR,
-            "Malformed Deep Link URL " + deepLink.value());
       }
     }
 
