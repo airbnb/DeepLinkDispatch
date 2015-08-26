@@ -104,7 +104,7 @@ final class DeepLinkEntry {
 
   boolean matches(String inputUri) {
     DeepLinkUri deepLinkUri = DeepLinkUri.parse(inputUri);
-    return regex.matcher(schemeHostAndPath(deepLinkUri)).find();
+    return deepLinkUri != null && regex.matcher(schemeHostAndPath(deepLinkUri)).find();
   }
 
   private String schemeHostAndPath(DeepLinkUri uri) {

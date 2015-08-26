@@ -83,6 +83,11 @@ public class DeepLinkEntryTest {
     assertThat(entry.getParameters("http://something").isEmpty()).isTrue();
   }
 
+  @Test public void invalidUrl() {
+    DeepLinkEntry entry = deepLinkEntry("airbnb://something");
+    assertThat(entry.matches("airbnb://")).isFalse();
+  }
+
   private static DeepLinkEntry deepLinkEntry(String uri) {
     return new DeepLinkEntry(uri, DeepLinkEntry.Type.CLASS, String.class, null);
   }
