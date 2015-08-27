@@ -32,5 +32,5 @@ public @interface DeepLink {
   String IS_DEEP_LINK = "is_deep_link_flag";
   String URI = "deep_link_uri";
 
-  String value();
+  String[] value();
 }
