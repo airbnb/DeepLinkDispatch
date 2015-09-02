@@ -160,6 +160,15 @@ Register `DeepLinkActivity` with the scheme you'd like in your `AndroidManifest.
 </activity>
 ```
 
+## Proguard Rules
+
+```
+-keep class com.airbnb.deeplinkdispatch.** { *; }
+-keepclasseswithmembers class * {
+     @com.airbnb.deeplinkdispatch.DeepLink <methods>;
+}
+```
+
 That's it. The library will generate the class `DeepLinkActivity` during compilation.
 
 ## Testing the sample
