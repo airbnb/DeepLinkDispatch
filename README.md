@@ -19,12 +19,12 @@ parameter that we'll identify with `id`.
 public class MainActivity extends Activity {
   @Override protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-  
+
     if (getIntent().getBooleanExtra(DeepLink.IS_DEEP_LINK, false)) {
       Bundle parameters = getIntent().getExtras();
-    
+
       String idString = parameters.getString("id");
-    
+
       // Do something with the ID...
     }
     ...
@@ -42,12 +42,12 @@ Sometimes you'll have an activity that should handle several kinds of deep links
 public class MainActivity extends Activity {
   @Override protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-  
+
     if (getIntent().getBooleanExtra(DeepLink.IS_DEEP_LINK, false)) {
       Bundle parameters = getIntent().getExtras();
-    
+
       String idString = parameters.getString("id");
-    
+
       // Do something with the ID...
     }
     ...
@@ -78,13 +78,13 @@ other parameter. For example, we could retrieve the query parameter passed along
 public class MainActivity extends Activity {
   @Override protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-  
+
     if (getIntent().getBooleanExtra(DeepLink.IS_DEEP_LINK, false)) {
       Bundle parameters = getIntent().getExtras();
-    
+
       if (parameters != null && parameters.getString("qp") != null) {
         String queryParameter = parameters.getString("qp");
-        
+
         // Do something with the query parameter...
       }
     }
@@ -130,7 +130,7 @@ Add to your project `build.gradle` file:
 ```groovy
 buildscript {
   dependencies {
-    classpath 'com.neenbedankt.gradle.plugins:android-apt:1.4'
+    classpath 'com.neenbedankt.gradle.plugins:android-apt:1.7'
   }
 }
 
