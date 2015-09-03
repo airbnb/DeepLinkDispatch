@@ -25,7 +25,7 @@ branches:
 notifications:
   email: false
 
-script: ./gradlew check assemble
+script: ./gradlew assemble check
 
 sudo: false
 
