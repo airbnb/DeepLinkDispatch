@@ -34,9 +34,9 @@ import java.util.Set;
 import okio.Buffer;
 
 /**
- * Adapted from OkHttp's HttpUrl class. Only change is to allow any scheme, instead of just http or
+ * Adapted from OkHttp's DeepLinkUri class. Only change is to allow any scheme, instead of just http or
  * https.
- *https://github.com/square/okhttp/blob/master/okhttp/src/main/java/com/squareup/okhttp/HttpUrl.java
+ *https://github.com/square/okhttp/blob/master/okhttp/src/main/java/com/squareup/okhttp/DeepLinkUri.java
  */
 final class DeepLinkUri {
   private static final char[] HEX_DIGITS =
@@ -46,6 +46,7 @@ final class DeepLinkUri {
   static final String PATH_SEGMENT_ENCODE_SET = " \"<>^`{}|/\\?#";
   static final String QUERY_ENCODE_SET = " \"'<>#";
   static final String QUERY_COMPONENT_ENCODE_SET = " \"'<>#&=";
+  static final String CONVERT_TO_URI_ENCODE_SET = "^`{}|\\";
   static final String FORM_ENCODE_SET = " \"':;<=>@[]^`{}|/\\?#&!$(),~";
   static final String FRAGMENT_ENCODE_SET = "";
 
@@ -117,7 +118,8 @@ final class DeepLinkUri {
    */
   URI uri() {
     try {
-      return new URI(url);
+      String uriSafeUrl = canonicalize(url, CONVERT_TO_URI_ENCODE_SET, true, false);
+      return new URI(uriSafeUrl);
     } catch (URISyntaxException e) {
       throw new IllegalStateException("not valid as a java.net.URI: " + url);
     }
@@ -219,7 +221,7 @@ final class DeepLinkUri {
     int pathStart = url.indexOf('/', scheme.length() + 3);
     int pathEnd = delimiterOffset(url, pathStart, url.length(), "?#");
     List<String> result = new ArrayList<>();
-    for (int i = pathStart; i < pathEnd;) {
+    for (int i = pathStart; i < pathEnd; ) {
       i++; // Skip the '/'.
       int segmentEnd = delimiterOffset(url, i, pathEnd, "/");
       result.add(url.substring(i, segmentEnd));
@@ -265,7 +267,7 @@ final class DeepLinkUri {
    */
   static List<String> queryStringToNamesAndValues(String encodedQuery) {
     List<String> result = new ArrayList<>();
-    for (int pos = 0; pos <= encodedQuery.length();) {
+    for (int pos = 0; pos <= encodedQuery.length(); ) {
       int ampersandOffset = encodedQuery.indexOf('&', pos);
       if (ampersandOffset == -1) ampersandOffset = encodedQuery.length();
 
@@ -347,7 +349,9 @@ final class DeepLinkUri {
 
   /** Returns the URL that would be retrieved by following {@code link} from this URL. */
   DeepLinkUri resolve(String link) {
-    return new Builder().parse(this, link);
+    Builder builder = new Builder();
+    Builder.ParseResult result = builder.parse(this, link);
+    return result == Builder.ParseResult.SUCCESS ? builder.build() : null;
   }
 
   Builder newBuilder() {
@@ -365,19 +369,44 @@ final class DeepLinkUri {
   }
 
   /**
-   * Returns a new {@code OkUrl} representing {@code url} if it is a well-formed HTTP or HTTPS URL,
-   * or null if it isn't.
+   * Returns a new {@code DeepLinkUri} representing {@code url} if it is a well-formed HTTP or HTTPS
+   * URL, or null if it isn't.
    */
   static DeepLinkUri parse(String url) {
-    return new Builder().parse(null, url);
+    Builder builder = new Builder();
+    Builder.ParseResult result = builder.parse(null, url);
+    return result == Builder.ParseResult.SUCCESS ? builder.build() : null;
   }
 
   /**
-   * Returns an {@link DeepLinkUri} for {@code url} if its protocol is {@code http} or
-   * {@code https}, or null if it has any other protocol.
+   * Returns an {@link DeepLinkUri} for {@code url} if its protocol is {@code http} or {@code https}, or
+   * null if it has any other protocol.
    */
   static DeepLinkUri get(URL url) {
     return parse(url.toString());
+  }
+
+  /**
+   * Returns a new {@code DeepLinkUri} representing {@code url} if it is a well-formed HTTP or HTTPS
+   * URL, or throws an exception if it isn't.
+   *
+   * @throws MalformedURLException if there was a non-host related URL issue
+   * @throws UnknownHostException if the host was invalid
+   */
+  static DeepLinkUri getChecked(String url) throws MalformedURLException, UnknownHostException {
+    Builder builder = new Builder();
+    Builder.ParseResult result = builder.parse(null, url);
+    switch (result) {
+      case SUCCESS:
+        return builder.build();
+      case INVALID_HOST:
+        throw new UnknownHostException("Invalid host: " + url);
+      case UNSUPPORTED_SCHEME:
+      case MISSING_SCHEME:
+      case INVALID_PORT:
+      default:
+        throw new MalformedURLException("Invalid URL: " + result + " for " + url);
+    }
   }
 
   static DeepLinkUri get(URI uri) {
@@ -658,7 +687,15 @@ final class DeepLinkUri {
       return result.toString();
     }
 
-    DeepLinkUri parse(DeepLinkUri base, String input) {
+    enum ParseResult {
+      SUCCESS,
+      MISSING_SCHEME,
+      UNSUPPORTED_SCHEME,
+      INVALID_PORT,
+      INVALID_HOST,
+    }
+
+    ParseResult parse(DeepLinkUri base, String input) {
       int pos = skipLeadingAsciiWhitespace(input, 0, input.length());
       int limit = skipTrailingAsciiWhitespace(input, pos, input.length());
 
@@ -678,7 +715,7 @@ final class DeepLinkUri {
       } else if (base != null) {
         this.scheme = base.scheme;
       } else {
-        return null; // No scheme.
+        return ParseResult.MISSING_SCHEME; // No scheme.
       }
 
       // Authority.
@@ -736,15 +773,14 @@ final class DeepLinkUri {
               if (portColonOffset + 1 < componentDelimiterOffset) {
                 this.host = canonicalizeHost(input, pos, portColonOffset);
                 this.port = parsePort(input, portColonOffset + 1, componentDelimiterOffset);
-                if (this.port == -1) return null; // Invalid port.
+                if (this.port == -1) return ParseResult.INVALID_PORT; // Invalid port.
               } else {
                 this.host = canonicalizeHost(input, pos, portColonOffset);
                 this.port = defaultPort(this.scheme);
               }
-              if (this.host == null) return null; // Invalid host.
+              if (this.host == null) return ParseResult.INVALID_HOST; // Invalid host.
               pos = componentDelimiterOffset;
               break authority;
-            default:
           }
         }
       } else {
@@ -779,7 +815,7 @@ final class DeepLinkUri {
             input, pos + 1, limit, FRAGMENT_ENCODE_SET, true, false);
       }
 
-      return build();
+      return ParseResult.SUCCESS;
     }
 
     private void resolvePath(String input, int pos, int limit) {
@@ -800,7 +836,7 @@ final class DeepLinkUri {
       }
 
       // Read path segments.
-      for (int i = pos; i < limit;) {
+      for (int i = pos; i < limit; ) {
         int pathSegmentDelimiterOffset = delimiterOffset(input, i, limit, "/\\");
         boolean segmentHasTrailingSlash = pathSegmentDelimiterOffset < limit;
         push(input, i, pathSegmentDelimiterOffset, segmentHasTrailingSlash, true);
@@ -918,6 +954,7 @@ final class DeepLinkUri {
 
         if ((c >= 'a' && c <= 'z')
             || (c >= 'A' && c <= 'Z')
+            || (c >= '0' && c <= '9')
             || c == '+'
             || c == '-'
             || c == '.') {
@@ -958,7 +995,6 @@ final class DeepLinkUri {
             break;
           case ':':
             return i;
-          default:
         }
       }
       return limit; // No colon.
@@ -972,18 +1008,13 @@ final class DeepLinkUri {
       // If the input is encased in square braces "[...]", drop 'em. We have an IPv6 address.
       if (percentDecoded.startsWith("[") && percentDecoded.endsWith("]")) {
         InetAddress inetAddress = decodeIpv6(percentDecoded, 1, percentDecoded.length() - 1);
-        return inetAddress != null ? inetAddress.getHostAddress() : null;
-      }
-      String idnDecoded = domainToAscii(percentDecoded);
-      if (idnDecoded == null) return null;
-
-      // Confirm that the decoded result doesn't contain any illegal characters.
-      int length = idnDecoded.length();
-      if (delimiterOffset(idnDecoded, 0, length, "\u0000\t\n\r #%/:?@[\\]") != length) {
-        return null;
+        if (inetAddress == null) return null;
+        byte[] address = inetAddress.getAddress();
+        if (address.length == 16) return inet6AddressToAscii(address);
+        throw new AssertionError();
       }
 
-      return idnDecoded;
+      return domainToAscii(percentDecoded);
     }
 
     /** Decodes an IPv6 address like 1111:2222:3333:4444:5555:6666:7777:8888 or ::1. */
@@ -993,7 +1024,7 @@ final class DeepLinkUri {
       int compress = -1;
       int groupOffset = -1;
 
-      for (int i = pos; i < limit;) {
+      for (int i = pos; i < limit; ) {
         if (b == address.length) return null; // Too many groups.
 
         // Read a delimiter.
@@ -1062,7 +1093,7 @@ final class DeepLinkUri {
         String input, int pos, int limit, byte[] address, int addressOffset) {
       int b = addressOffset;
 
-      for (int i = pos; i < limit;) {
+      for (int i = pos; i < limit; ) {
         if (b == address.length) return false; // Too many groups.
 
         // Read a delimiter.
@@ -1092,15 +1123,80 @@ final class DeepLinkUri {
       return true; // Success.
     }
 
+    /**
+     * Performs IDN ToASCII encoding and canonicalize the result to lowercase. e.g. This converts
+     * {@code ☃.net} to {@code xn--n3h.net}, and {@code WwW.GoOgLe.cOm} to {@code www.google.com}.
+     * {@code null} will be returned if the input cannot be ToASCII encoded or if the result
+     * contains unsupported ASCII characters.
+     */
     private static String domainToAscii(String input) {
       try {
         String result = IDN.toASCII(input).toLowerCase(Locale.US);
         if (result.isEmpty()) return null;
+
+        if (result == null) return null;
+
+        // Confirm that the IDN ToASCII result doesn't contain any illegal characters.
+        if (containsInvalidHostnameAsciiCodes(result)) {
+          return null;
+        }
         // TODO: implement all label limits.
         return result;
       } catch (IllegalArgumentException e) {
         return null;
       }
+    }
+
+    private static boolean containsInvalidHostnameAsciiCodes(String hostnameAscii) {
+      for (int i = 0; i < hostnameAscii.length(); i++) {
+        char c = hostnameAscii.charAt(i);
+        // The WHATWG Host parsing rules accepts some character codes which are invalid by
+        // definition for OkHttp's host header checks (and the WHATWG Host syntax definition). Here
+        // we rule out characters that would cause problems in host headers.
+        if (c <= '\u001f' || c >= '\u007f') {
+          return true;
+        }
+        // Check for the characters mentioned in the WHATWG Host parsing spec:
+        // U+0000, U+0009, U+000A, U+000D, U+0020, "#", "%", "/", ":", "?", "@", "[", "\", and "]"
+        // (excluding the characters covered above).
+        if (" #%/:?@[\\]".indexOf(c) != -1) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    private static String inet6AddressToAscii(byte[] address) {
+      // Go through the address looking for the longest run of 0s. Each group is 2-bytes.
+      int longestRunOffset = -1;
+      int longestRunLength = 0;
+      for (int i = 0; i < address.length; i += 2) {
+        int currentRunOffset = i;
+        while (i < 16 && address[i] == 0 && address[i + 1] == 0) {
+          i += 2;
+        }
+        int currentRunLength = i - currentRunOffset;
+        if (currentRunLength > longestRunLength) {
+          longestRunOffset = currentRunOffset;
+          longestRunLength = currentRunLength;
+        }
+      }
+
+      // Emit each 2-byte group in hex, separated by ':'. The longest run of zeroes is "::".
+      Buffer result = new Buffer();
+      for (int i = 0; i < address.length; ) {
+        if (i == longestRunOffset) {
+          result.writeByte(':');
+          i += longestRunLength;
+          if (i == 16) result.writeByte(':');
+        } else {
+          if (i > 0) result.writeByte(':');
+          int group = (address[i] & 0xff) << 8 | address[i + 1] & 0xff;
+          result.writeHexadecimalUnsignedLong(group);
+          i += 2;
+        }
+      }
+      return result.readUtf8();
     }
 
     private static int parsePort(String input, int pos, int limit) {

@@ -88,6 +88,11 @@ public class DeepLinkEntryTest {
     assertThat(entry.matches("airbnb://")).isFalse();
   }
 
+  @Test public void schemeWithNumbers() {
+    DeepLinkEntry entry = deepLinkEntry("jackson5://example.com");
+    assertThat(entry.matches("jackson5://example.com")).isTrue();
+  }
+
   private static DeepLinkEntry deepLinkEntry(String uri) {
     return new DeepLinkEntry(uri, DeepLinkEntry.Type.CLASS, String.class, null);
   }
