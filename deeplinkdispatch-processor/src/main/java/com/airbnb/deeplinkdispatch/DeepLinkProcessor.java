@@ -76,6 +76,14 @@ public class DeepLinkProcessor extends AbstractProcessor {
             DeepLink.class.getSimpleName());
       }
 
+      if (kind == ElementKind.METHOD) {
+        Set<Modifier> methodModifiers = element.getModifiers();
+        if (!methodModifiers.contains(Modifier.STATIC)) {
+          error(element, "Only static methods can be annotated with @%s",
+              DeepLink.class.getSimpleName());
+        }
+      }
+
       String[] deepLinks = element.getAnnotation(DeepLink.class).value();
       DeepLinkEntry.Type type = kind == ElementKind.CLASS
           ? DeepLinkEntry.Type.CLASS : DeepLinkEntry.Type.METHOD;
