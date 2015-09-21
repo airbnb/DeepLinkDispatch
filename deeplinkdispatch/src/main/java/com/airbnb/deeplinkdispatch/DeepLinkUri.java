@@ -782,7 +782,7 @@ final class DeepLinkUri {
               pos = componentDelimiterOffset;
               break authority;
             default:
-              throw new AssertionError();
+              break;
           }
         }
       } else {
@@ -998,7 +998,7 @@ final class DeepLinkUri {
           case ':':
             return i;
           default:
-            throw new AssertionError();
+            break;
         }
       }
       return limit; // No colon.
