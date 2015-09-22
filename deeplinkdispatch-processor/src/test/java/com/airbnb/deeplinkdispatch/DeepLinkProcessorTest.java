@@ -33,4 +33,23 @@ public class DeepLinkProcessorTest {
     + "  }\n"
     + "}\n"));
   }
+
+  @Test public void testNonStaticMethodCompileFail() {
+    JavaFileObject sampleActivity = JavaFileObjects
+        .forSourceString("SampleActivity", "package com.example;"
+                      + "import com.airbnb.deeplinkdispatch.DeepLink; "
+                      + "public class SampleActivity {"
+                      + "  @DeepLink(\"airbnb://host/{arbitraryNumber}\")"
+                      + "  public Intent intentFromNoStatic(Context context){"
+                      + "    return new Intent();"
+                      + "  }"
+                      + "}"
+        );
+
+    assert_().about(javaSource())
+        .that(sampleActivity)
+        .processedWith(new DeepLinkProcessor())
+        .failsToCompile()
+        .withErrorContaining("Only static methods can be annotated");
+  }
 }
