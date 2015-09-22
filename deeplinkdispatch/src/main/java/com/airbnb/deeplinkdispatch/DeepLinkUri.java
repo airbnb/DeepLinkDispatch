@@ -34,9 +34,9 @@ import java.util.Set;
 import okio.Buffer;
 
 /**
- * Adapted from OkHttp's DeepLinkUri class. Only change is to allow any scheme, instead of just http or
+ * Adapted from OkHttp's HttpUrl class. Only change is to allow any scheme, instead of just http or
  * https.
- *https://github.com/square/okhttp/blob/master/okhttp/src/main/java/com/squareup/okhttp/DeepLinkUri.java
+ *https://github.com/square/okhttp/blob/master/okhttp/src/main/java/com/squareup/okhttp/HttpUri.java
  */
 final class DeepLinkUri {
   private static final char[] HEX_DIGITS =
@@ -221,7 +221,7 @@ final class DeepLinkUri {
     int pathStart = url.indexOf('/', scheme.length() + 3);
     int pathEnd = delimiterOffset(url, pathStart, url.length(), "?#");
     List<String> result = new ArrayList<>();
-    for (int i = pathStart; i < pathEnd; ) {
+    for (int i = pathStart; i < pathEnd;) {
       i++; // Skip the '/'.
       int segmentEnd = delimiterOffset(url, i, pathEnd, "/");
       result.add(url.substring(i, segmentEnd));
@@ -267,7 +267,7 @@ final class DeepLinkUri {
    */
   static List<String> queryStringToNamesAndValues(String encodedQuery) {
     List<String> result = new ArrayList<>();
-    for (int pos = 0; pos <= encodedQuery.length(); ) {
+    for (int pos = 0; pos <= encodedQuery.length();) {
       int ampersandOffset = encodedQuery.indexOf('&', pos);
       if (ampersandOffset == -1) ampersandOffset = encodedQuery.length();
 
@@ -379,8 +379,8 @@ final class DeepLinkUri {
   }
 
   /**
-   * Returns an {@link DeepLinkUri} for {@code url} if its protocol is {@code http} or {@code https}, or
-   * null if it has any other protocol.
+   * Returns an {@link DeepLinkUri} for {@code url} if its protocol is {@code http} or
+   * {@code https}, or null if it has any other protocol.
    */
   static DeepLinkUri get(URL url) {
     return parse(url.toString());
@@ -781,6 +781,8 @@ final class DeepLinkUri {
               if (this.host == null) return ParseResult.INVALID_HOST; // Invalid host.
               pos = componentDelimiterOffset;
               break authority;
+            default:
+              break;
           }
         }
       } else {
@@ -836,7 +838,7 @@ final class DeepLinkUri {
       }
 
       // Read path segments.
-      for (int i = pos; i < limit; ) {
+      for (int i = pos; i < limit;) {
         int pathSegmentDelimiterOffset = delimiterOffset(input, i, limit, "/\\");
         boolean segmentHasTrailingSlash = pathSegmentDelimiterOffset < limit;
         push(input, i, pathSegmentDelimiterOffset, segmentHasTrailingSlash, true);
@@ -995,6 +997,8 @@ final class DeepLinkUri {
             break;
           case ':':
             return i;
+          default:
+            break;
         }
       }
       return limit; // No colon.
@@ -1024,7 +1028,7 @@ final class DeepLinkUri {
       int compress = -1;
       int groupOffset = -1;
 
-      for (int i = pos; i < limit; ) {
+      for (int i = pos; i < limit;) {
         if (b == address.length) return null; // Too many groups.
 
         // Read a delimiter.
@@ -1093,7 +1097,7 @@ final class DeepLinkUri {
         String input, int pos, int limit, byte[] address, int addressOffset) {
       int b = addressOffset;
 
-      for (int i = pos; i < limit; ) {
+      for (int i = pos; i < limit;) {
         if (b == address.length) return false; // Too many groups.
 
         // Read a delimiter.
@@ -1184,7 +1188,7 @@ final class DeepLinkUri {
 
       // Emit each 2-byte group in hex, separated by ':'. The longest run of zeroes is "::".
       Buffer result = new Buffer();
-      for (int i = 0; i < address.length; ) {
+      for (int i = 0; i < address.length;) {
         if (i == longestRunOffset) {
           result.writeByte(':');
           i += longestRunLength;
