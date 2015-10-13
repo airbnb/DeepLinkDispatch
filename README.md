@@ -34,11 +34,10 @@ public class MainActivity extends Activity {
 
 ### Multiple Deep Links
 
-Sometimes you'll have an activity that should handle several kinds of deep links. You can use the
-`@DeepLinks` annotation to register multiple deep links on an activity:
+Sometimes you'll have an activity that should handle several kinds of deep links.
 
 ```java
-@DeepLinks({"foo://example.com/deepLink/{id}", "foo://example.com/anotherDeepLink"})
+@DeepLink({"foo://example.com/deepLink/{id}", "foo://example.com/anotherDeepLink"})
 public class MainActivity extends Activity {
   @Override protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -137,12 +136,10 @@ buildscript {
 apply plugin: 'android-apt'
 
 dependencies {
-  compile 'com.airbnb:deeplinkdispatch:1.3.0'
-  apt 'com.airbnb:deeplinkdispatch-processor:1.3.0'
+  compile 'com.airbnb:deeplinkdispatch:1.4.0'
+  apt 'com.airbnb:deeplinkdispatch-processor:1.4.0'
 }
 ```
-
-Snapshots of the development version are available in [Sonatype's `snapshots` repository](https://oss.sonatype.org/content/repositories/snapshots/).
 
 Register `DeepLinkActivity` with the scheme you'd like in your `AndroidManifest.xml` file (using
 `airbnb` as an example):
@@ -159,6 +156,8 @@ Register `DeepLinkActivity` with the scheme you'd like in your `AndroidManifest.
     </intent-filter>
 </activity>
 ```
+
+Snapshots of the development version are available in [Sonatype's `snapshots` repository](https://oss.sonatype.org/content/repositories/snapshots/).
 
 ## Proguard Rules
 
