@@ -66,7 +66,7 @@ final class DeepLinkEntry {
    * in the URI, it will only show up once in the set.
    */
   private static Set<String> parsePathParameters(DeepLinkUri uri) {
-    Matcher matcher = Pattern.compile(PARAM_REGEX).matcher(uri.encodedPath());
+    Matcher matcher = Pattern.compile(PARAM_REGEX).matcher(uri.encodedHost() + uri.encodedPath());
     Set<String> patterns = new LinkedHashSet<>();
     while (matcher.find()) {
       patterns.add(matcher.group(1));
@@ -108,6 +108,6 @@ final class DeepLinkEntry {
   }
 
   private String schemeHostAndPath(DeepLinkUri uri) {
-    return uri.scheme() + "://" + uri.host() + parsePath(uri);
+    return uri.scheme() + "://" + uri.encodedHost() + parsePath(uri);
   }
 }

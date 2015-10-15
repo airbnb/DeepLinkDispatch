@@ -173,6 +173,10 @@ final class DeepLinkUri {
     return host;
   }
 
+  String encodedHost() {
+    return canonicalize(host, DeepLinkUri.CONVERT_TO_URI_ENCODE_SET, true, true);
+  }
+
   /**
    * Returns the explicitly-specified port if one was provided, or the default port for this URL's
    * scheme. For example, this returns 8443 for {@code https://square.com:8443/} and 443 for {@code
