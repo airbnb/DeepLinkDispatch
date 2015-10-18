@@ -5,6 +5,7 @@ import org.junit.Test;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.entry;
 
 public class DeepLinkEntryTest {
   @Test public void testSingleParam() {
@@ -91,6 +92,15 @@ public class DeepLinkEntryTest {
   @Test public void schemeWithNumbers() {
     DeepLinkEntry entry = deepLinkEntry("jackson5://example.com");
     assertThat(entry.matches("jackson5://example.com")).isTrue();
+  }
+
+  @Test public void multiplePathParams() {
+    DeepLinkEntry entry = deepLinkEntry("airbnb://{foo}/{bar}");
+
+    Map<String, String> parameters = entry.getParameters("airbnb://baz/qux");
+    assertThat(parameters)
+      .hasSize(2)
+      .contains(entry("foo", "baz"), entry("bar", "qux"));
   }
 
   private static DeepLinkEntry deepLinkEntry(String uri) {

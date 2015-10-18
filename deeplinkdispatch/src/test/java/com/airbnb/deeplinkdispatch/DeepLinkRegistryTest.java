@@ -26,6 +26,13 @@ public class DeepLinkRegistryTest {
     assertThat(registry.parseUri("http://test/12345/alice")).isNotNull();
   }
 
+  @Test public void testHostParameter() {
+    registry.registerDeepLink(
+        "http://{param1}", DeepLinkEntry.Type.CLASS, String.class, null);
+
+    assertThat(registry.parseUri("http://test")).isNotNull();
+  }
+
   @Test public void testEntryNotFound() {
     registry.registerDeepLink(
         "http://test/{param1}/{param2}", DeepLinkEntry.Type.CLASS, String.class, null);
