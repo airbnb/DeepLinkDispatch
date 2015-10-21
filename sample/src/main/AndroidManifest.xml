@@ -3,6 +3,7 @@
     package="com.airbnb.deeplinkdispatch.sample" >
 
     <application
+        android:name=".SampleApplication"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
@@ -27,14 +28,8 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="airbnb" />
                 <data android:scheme="http" />
-
             </intent-filter>
         </activity>
-        <receiver android:name=".DeepLinkReceiver" >
-            <intent-filter>
-                <action android:name="com.airbnb.deeplinkdispatch.DEEPLINK_ACTION" />
-            </intent-filter>
-        </receiver>
     </application>
 
 </manifest>
