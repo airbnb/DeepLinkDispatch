@@ -182,7 +182,8 @@ public class DeepLinkProcessor extends AbstractProcessor {
       .beginControlFlow("if (isError)")
       .addStatement("intent.putExtra(DeepLinkActivity.EXTRA_ERROR_MESSAGE, errorMessage)")
       .endControlFlow()
-      .addStatement("sendBroadcast(intent)")
+      .addStatement("$T.getInstance(this).sendBroadcast(intent)",
+          ClassName.get("android.support.v4.content", "LocalBroadcastManager"))
       .build();
 
 
