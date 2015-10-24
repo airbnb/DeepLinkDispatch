@@ -444,9 +444,8 @@ final class DeepLinkUri {
     }
 
     Builder scheme(String scheme) {
-      if (scheme == null) {
-        throw new IllegalArgumentException("scheme == null");
-      }
+      if (scheme == null) throw new IllegalArgumentException("scheme == null");
+      this.scheme = scheme;
       return this;
     }
 
