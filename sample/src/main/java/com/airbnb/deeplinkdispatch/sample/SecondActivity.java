@@ -5,7 +5,7 @@ import android.support.v7.app.AppCompatActivity;
 
 import com.airbnb.deeplinkdispatch.DeepLink;
 
-@DeepLink("airbnb://example.com/deepLink/{id}")
+@DeepLink("dld://example.com/deepLink/{id}")
 public class SecondActivity extends AppCompatActivity {
 
     @Override protected void onCreate(Bundle savedInstanceState) {

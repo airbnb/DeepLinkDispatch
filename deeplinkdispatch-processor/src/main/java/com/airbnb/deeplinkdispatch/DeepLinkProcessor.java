@@ -20,6 +20,8 @@ import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
+import com.squareup.javapoet.ParameterizedTypeName;
+import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 
 import java.io.IOException;
@@ -28,6 +30,7 @@ import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -69,41 +72,41 @@ public class DeepLinkProcessor extends AbstractProcessor {
   public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
     List<DeepLinkAnnotatedElement> deepLinkElements = new ArrayList<>();
 
-    for (Element element : roundEnv.getElementsAnnotatedWith(DeepLink.class)) {
+    Class<DeepLink> deepLinkClass = DeepLink.class;
+    for (Element element : roundEnv.getElementsAnnotatedWith(deepLinkClass)) {
       ElementKind kind = element.getKind();
       if (kind != ElementKind.METHOD && kind != ElementKind.CLASS) {
         error(element, "Only classes and methods can be annotated with @%s",
-            DeepLink.class.getSimpleName());
+            deepLinkClass.getSimpleName());
       }
 
       if (kind == ElementKind.METHOD) {
         Set<Modifier> methodModifiers = element.getModifiers();
         if (!methodModifiers.contains(Modifier.STATIC)) {
           error(element, "Only static methods can be annotated with @%s",
-              DeepLink.class.getSimpleName());
+              deepLinkClass.getSimpleName());
         }
       }
 
-      String[] deepLinks = element.getAnnotation(DeepLink.class).value();
+      String[] deepLinks = element.getAnnotation(deepLinkClass).value();
       DeepLinkEntry.Type type = kind == ElementKind.CLASS
           ? DeepLinkEntry.Type.CLASS : DeepLinkEntry.Type.METHOD;
       for (String deepLink : deepLinks) {
         try {
           deepLinkElements.add(new DeepLinkAnnotatedElement(deepLink, element, type));
         } catch (MalformedURLException e) {
-          messager.printMessage(Diagnostic.Kind.ERROR,
-              "Malformed Deep Link URL " + deepLink);
+          messager.printMessage(Diagnostic.Kind.ERROR, "Malformed Deep Link URL " + deepLink);
         }
       }
     }
 
     if (!deepLinkElements.isEmpty()) {
       try {
-        generateRegistry(deepLinkElements);
+        generateDeepLinkLoader(deepLinkElements);
         generateDeepLinkActivity();
       } catch (IOException e) {
         messager.printMessage(Diagnostic.Kind.ERROR, "Error creating file");
-      } catch (Exception e) {
+      } catch (RuntimeException e) {
         messager.printMessage(Diagnostic.Kind.ERROR,
             "Internal error during annotation processing: " + e.getClass().getSimpleName());
       }
@@ -116,25 +119,41 @@ public class DeepLinkProcessor extends AbstractProcessor {
     messager.printMessage(Diagnostic.Kind.ERROR, String.format(msg, args), e);
   }
 
-  private void generateRegistry(List<DeepLinkAnnotatedElement> elements) throws IOException {
+  private void generateDeepLinkLoader(List<DeepLinkAnnotatedElement> elements) throws IOException {
+    FieldSpec registry = FieldSpec
+        .builder(ParameterizedTypeName.get(List.class, DeepLinkEntry.class), "registry",
+            Modifier.PRIVATE, Modifier.FINAL)
+        .initializer("new $T<>()", TypeName.get(LinkedList.class))
+        .build();
+
     MethodSpec.Builder loadMethod = MethodSpec.methodBuilder("load")
-        .addModifiers(Modifier.PUBLIC)
-        .returns(void.class)
-        .addParameter(DeepLinkRegistry.class, "registry");
+        .returns(void.class);
 
     for (DeepLinkAnnotatedElement element : elements) {
       String type = "DeepLinkEntry.Type." + element.getAnnotationType().toString();
       ClassName activity = ClassName.bestGuess(element.getActivity());
       Object method = element.getMethod() == null ? null : element.getMethod();
       String uri = element.getUri();
-      loadMethod.addStatement("registry.registerDeepLink($S, $L, $T.class, $S)",
+      loadMethod.addStatement("registry.add(new DeepLinkEntry($S, $L, $T.class, $S))",
           uri, type, activity, method);
     }
 
+    MethodSpec parseMethod = MethodSpec.methodBuilder("parseUri")
+        .addParameter(String.class, "uri")
+        .returns(DeepLinkEntry.class)
+        .beginControlFlow("for (DeepLinkEntry entry : registry)")
+        .beginControlFlow("if (entry.matches(uri))")
+        .addStatement("return entry")
+        .endControlFlow()
+        .endControlFlow()
+        .addStatement("return null")
+        .build();
+
     TypeSpec deepLinkLoader = TypeSpec.classBuilder("DeepLinkLoader")
         .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
-        .addSuperinterface(Loader.class)
+        .addField(registry)
         .addMethod(loadMethod.build())
+        .addMethod(parseMethod)
         .build();
 
     JavaFile.builder("com.airbnb.deeplinkdispatch", deepLinkLoader)
@@ -163,28 +182,28 @@ public class DeepLinkProcessor extends AbstractProcessor {
         .initializer("\"com.airbnb.deeplinkdispatch.EXTRA_URI\"")
         .build();
 
-      FieldSpec extraErrorMessage = FieldSpec
+    FieldSpec extraErrorMessage = FieldSpec
         .builder(String.class, "EXTRA_ERROR_MESSAGE", Modifier.PUBLIC, Modifier.STATIC,
-                 Modifier.FINAL)
+            Modifier.FINAL)
         .initializer("\"com.airbnb.deeplinkdispatch.EXTRA_ERROR_MESSAGE\"")
         .build();
 
-  MethodSpec notifyListenerMethod = MethodSpec.methodBuilder("notifyListener")
-      .addModifiers(Modifier.PRIVATE)
-      .returns(void.class)
-      .addParameter(boolean.class, "isError")
-      .addParameter(ClassName.get("android.net", "Uri"), "uri")
-      .addParameter(String.class, "errorMessage")
-      .addStatement("Intent intent = new Intent()")
-      .addStatement("intent.setAction(DeepLinkActivity.ACTION)")
-      .addStatement("intent.putExtra(DeepLinkActivity.EXTRA_URI, uri.toString())")
-      .addStatement("intent.putExtra(DeepLinkActivity.EXTRA_SUCCESSFUL, !isError)")
-      .beginControlFlow("if (isError)")
-      .addStatement("intent.putExtra(DeepLinkActivity.EXTRA_ERROR_MESSAGE, errorMessage)")
-      .endControlFlow()
-      .addStatement("$T.getInstance(this).sendBroadcast(intent)",
-          ClassName.get("android.support.v4.content", "LocalBroadcastManager"))
-      .build();
+    MethodSpec notifyListenerMethod = MethodSpec.methodBuilder("notifyListener")
+        .addModifiers(Modifier.PRIVATE)
+        .returns(void.class)
+        .addParameter(boolean.class, "isError")
+        .addParameter(ClassName.get("android.net", "Uri"), "uri")
+        .addParameter(String.class, "errorMessage")
+        .addStatement("Intent intent = new Intent()")
+        .addStatement("intent.setAction(DeepLinkActivity.ACTION)")
+        .addStatement("intent.putExtra(DeepLinkActivity.EXTRA_URI, uri.toString())")
+        .addStatement("intent.putExtra(DeepLinkActivity.EXTRA_SUCCESSFUL, !isError)")
+        .beginControlFlow("if (isError)")
+        .addStatement("intent.putExtra(DeepLinkActivity.EXTRA_ERROR_MESSAGE, errorMessage)")
+        .endControlFlow()
+        .addStatement("$T.getInstance(this).sendBroadcast(intent)",
+            ClassName.get("android.support.v4.content", "LocalBroadcastManager"))
+        .build();
 
 
     MethodSpec onCreateMethod = MethodSpec.methodBuilder("onCreate")
@@ -193,13 +212,13 @@ public class DeepLinkProcessor extends AbstractProcessor {
         .returns(void.class)
         .addParameter(ClassName.get("android.os", "Bundle"), "savedInstanceState")
         .addStatement("super.onCreate(savedInstanceState)")
-        .addStatement("Loader loader = new com.airbnb.deeplinkdispatch.DeepLinkLoader()")
-        .addStatement("DeepLinkRegistry registry = new DeepLinkRegistry(loader)")
+        .addStatement("DeepLinkLoader loader = new DeepLinkLoader()")
+        .addStatement("loader.load()")
         .addStatement("$T uri = getIntent().getData()", ClassName.get("android.net", "Uri"))
         .addStatement("String uriString = uri.toString()")
-        .addStatement("DeepLinkEntry entry = registry.parseUri(uriString)")
-        .addStatement("DeepLinkUri deepLinkUri = DeepLinkUri.parse(uriString)")
+        .addStatement("DeepLinkEntry entry = loader.parseUri(uriString)")
         .beginControlFlow("if (entry != null)")
+        .addStatement("DeepLinkUri deepLinkUri = DeepLinkUri.parse(uriString)")
         .addStatement("$T<String, String> parameterMap = entry.getParameters(uriString)", Map.class)
         .beginControlFlow("for (String queryParameter : deepLinkUri.queryParameterNames())")
         .beginControlFlow(
@@ -249,7 +268,7 @@ public class DeepLinkProcessor extends AbstractProcessor {
         .nextControlFlow("catch (IllegalAccessException exception)")
         .addStatement(
             "notifyListener(true, uri, \"Could not deep link to method: \" + entry.getMethod())")
-        .nextControlFlow("catch($T  exception)", InvocationTargetException.class)
+        .nextControlFlow("catch ($T  exception)", InvocationTargetException.class)
         .addStatement(
             "notifyListener(true, uri, \"Could not deep link to method: \" + entry.getMethod())")
         .nextControlFlow("finally")

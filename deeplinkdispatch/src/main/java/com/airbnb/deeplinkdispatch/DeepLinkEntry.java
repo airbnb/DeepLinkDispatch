@@ -45,7 +45,7 @@ final class DeepLinkEntry {
     this.type = type;
     this.activityClass = activityClass;
     this.method = method;
-    this.parameters = parsePathParameters(parsedUri);
+    this.parameters = parseParameters(parsedUri);
     this.regex = Pattern.compile(schemeHostAndPath.replaceAll(PARAM_REGEX, PARAM_VALUE) + "$");
   }
 
@@ -65,7 +65,7 @@ final class DeepLinkEntry {
    * Gets the set of unique path parameters used in the given URI. If a parameter is used twice
    * in the URI, it will only show up once in the set.
    */
-  private static Set<String> parsePathParameters(DeepLinkUri uri) {
+  private static Set<String> parseParameters(DeepLinkUri uri) {
     Matcher matcher = Pattern.compile(PARAM_REGEX).matcher(uri.encodedHost() + uri.encodedPath());
     Set<String> patterns = new LinkedHashSet<>();
     while (matcher.find()) {

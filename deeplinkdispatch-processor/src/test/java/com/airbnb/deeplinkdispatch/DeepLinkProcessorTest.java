@@ -23,27 +23,43 @@ public class DeepLinkProcessorTest {
         .and()
         .generatesSources(
             JavaFileObjects.forResource("DeepLinkActivity.java"),
-            JavaFileObjects.forSourceString("DeepLinkLoader",
+            JavaFileObjects.forSourceString("DeepLinkLoader.java",
                 "package com.airbnb.deeplinkdispatch;\n"
-    + "import com.example.SampleActivity;\n"
-    + "public final class DeepLinkLoader implements Loader {\n"
-    + "  public void load(DeepLinkRegistry registry) {\n"
-    + "    registry.registerDeepLink(\"airbnb://example.com/deepLink\", DeepLinkEntry.Type.CLASS, "
-    + "SampleActivity.class, null);\n"
-    + "  }\n"
-    + "}\n"));
+                    + "\n"
+                    + "import com.example.SampleActivity;\n"
+                    + "import java.lang.String;\n"
+                    + "import java.util.LinkedList;\n"
+                    + "import java.util.List;\n"
+                    + "\n"
+                    + "public final class DeepLinkLoader {\n"
+                    + "  private final List<DeepLinkEntry> registry = new LinkedList<>();\n"
+                    + "\n"
+                    + "  void load() {\n"
+                    + "    registry.add(new DeepLinkEntry(\"airbnb://example.com/deepLink\", "
+                    + "DeepLinkEntry.Type.CLASS, SampleActivity.class, null));\n"
+                    + "  }\n"
+                    + "\n"
+                    + "  DeepLinkEntry parseUri(String uri) {\n"
+                    + "    for (DeepLinkEntry entry : registry) {\n"
+                    + "      if (entry.matches(uri)) {\n"
+                    + "        return entry;\n"
+                    + "      }\n"
+                    + "    }\n"
+                    + "    return null;\n"
+                    + "  }\n"
+                    + "}"));
   }
 
   @Test public void testNonStaticMethodCompileFail() {
     JavaFileObject sampleActivity = JavaFileObjects
         .forSourceString("SampleActivity", "package com.example;"
-                      + "import com.airbnb.deeplinkdispatch.DeepLink; "
-                      + "public class SampleActivity {"
-                      + "  @DeepLink(\"airbnb://host/{arbitraryNumber}\")"
-                      + "  public Intent intentFromNoStatic(Context context){"
-                      + "    return new Intent();"
-                      + "  }"
-                      + "}"
+                + "import com.airbnb.deeplinkdispatch.DeepLink; "
+                + "public class SampleActivity {"
+                + "  @DeepLink(\"airbnb://host/{arbitraryNumber}\")"
+                + "  public Intent intentFromNoStatic(Context context){"
+                + "    return new Intent();"
+                + "  }"
+                + "}"
         );
 
     assert_().about(javaSource())

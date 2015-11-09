@@ -22,7 +22,7 @@ import static org.robolectric.Shadows.shadowOf;
 @RunWith(RobolectricTestRunner.class)
 public class MainActivityTest {
   @Test public void testIntent() {
-    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("airbnb://example.com/deepLink"));
+    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("dld://example.com/deepLink"));
     DeepLinkActivity deepLinkActivity = Robolectric.buildActivity(DeepLinkActivity.class)
         .withIntent(intent).create().get();
     ShadowActivity shadowActivity = shadowOf(deepLinkActivity);
@@ -33,12 +33,12 @@ public class MainActivityTest {
 
     assertThat(launchedIntent.getBooleanExtra(DeepLink.IS_DEEP_LINK, false), equalTo(true));
     assertThat(launchedIntent.getStringExtra(DeepLink.URI),
-        equalTo("airbnb://example.com/deepLink"));
+        equalTo("dld://example.com/deepLink"));
   }
 
   @Test public void testMethodAnnotationWithParams() {
     Intent intent = new Intent(Intent.ACTION_VIEW,
-        Uri.parse("airbnb://host/somePath/1234321"));
+        Uri.parse("dld://host/somePath/1234321"));
     DeepLinkActivity deepLinkActivity = Robolectric.buildActivity(DeepLinkActivity.class)
         .withIntent(intent).create().get();
     ShadowActivity shadowActivity = shadowOf(deepLinkActivity);
@@ -51,11 +51,11 @@ public class MainActivityTest {
     assertThat(launchedIntent.getStringExtra("arbitraryNumber"), equalTo("1234321"));
     assertThat(launchedIntent.getAction(), equalTo("deep_link_complex"));
     assertThat(launchedIntent.getStringExtra(DeepLink.URI),
-        equalTo("airbnb://host/somePath/1234321"));
+        equalTo("dld://host/somePath/1234321"));
   }
 
   @Test public void testQueryParams() {
-    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("airbnb://classDeepLink?foo=bar"));
+    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("dld://classDeepLink?foo=bar"));
     DeepLinkActivity deepLinkActivity = Robolectric.buildActivity(DeepLinkActivity.class)
         .withIntent(intent).create().get();
     ShadowActivity shadowActivity = shadowOf(deepLinkActivity);
@@ -67,23 +67,25 @@ public class MainActivityTest {
     assertThat(launchedIntent.getBooleanExtra(DeepLink.IS_DEEP_LINK, false), equalTo(true));
     assertThat(launchedIntent.getStringExtra("foo"), equalTo("bar"));
     assertThat(launchedIntent.getStringExtra(DeepLink.URI),
-        equalTo("airbnb://classDeepLink?foo=bar"));
+        equalTo("dld://classDeepLink?foo=bar"));
   }
- @Test public void testQueryParamsWithBracket() {
-     Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("airbnb://classDeepLink?foo[max]=123"));
-     DeepLinkActivity deepLinkActivity = Robolectric.buildActivity(DeepLinkActivity.class)
-             .withIntent(intent).create().get();
-     ShadowActivity shadowActivity = shadowOf(deepLinkActivity);
 
-     Intent launchedIntent = shadowActivity.peekNextStartedActivityForResult().intent;
-     assertThat(launchedIntent.getComponent(),
-             equalTo(new ComponentName(deepLinkActivity, MainActivity.class)));
+  @Test public void testQueryParamsWithBracket() {
+    Intent intent =
+        new Intent(Intent.ACTION_VIEW, Uri.parse("dld://classDeepLink?foo[max]=123"));
+    DeepLinkActivity deepLinkActivity = Robolectric.buildActivity(DeepLinkActivity.class)
+        .withIntent(intent).create().get();
+    ShadowActivity shadowActivity = shadowOf(deepLinkActivity);
 
-     assertThat(launchedIntent.getBooleanExtra(DeepLink.IS_DEEP_LINK, false), equalTo(true));
-     assertThat(launchedIntent.getStringExtra("foo[max]"), equalTo("123"));
-     assertThat(launchedIntent.getStringExtra(DeepLink.URI),
-             equalTo("airbnb://classDeepLink?foo[max]=123"));
- }
+    Intent launchedIntent = shadowActivity.peekNextStartedActivityForResult().intent;
+    assertThat(launchedIntent.getComponent(),
+        equalTo(new ComponentName(deepLinkActivity, MainActivity.class)));
+
+    assertThat(launchedIntent.getBooleanExtra(DeepLink.IS_DEEP_LINK, false), equalTo(true));
+    assertThat(launchedIntent.getStringExtra("foo[max]"), equalTo("123"));
+    assertThat(launchedIntent.getStringExtra(DeepLink.URI),
+        equalTo("dld://classDeepLink?foo[max]=123"));
+  }
 
   @Test public void testHttpScheme() {
     Intent intent = new Intent(Intent.ACTION_VIEW,
