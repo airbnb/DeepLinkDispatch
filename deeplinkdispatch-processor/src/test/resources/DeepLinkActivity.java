@@ -32,13 +32,16 @@ public class DeepLinkActivity extends Activity {
     Uri uri = getIntent().getData();
     String uriString = uri.toString();
     DeepLinkEntry entry = registry.parseUri(uriString);
+    DeepLinkUri deepLinkUri = DeepLinkUri.parse(uriString);
     if (entry != null) {
       Map<String, String> parameterMap = entry.getParameters(uriString);
-      for (String queryParameter : uri.getQueryParameterNames()) {
-        if (parameterMap.containsKey(queryParameter)) {
-          Log.w(TAG, "Duplicate parameter name in path and query param: " + queryParameter);
+      for (String queryParameter : deepLinkUri.queryParameterNames()) {
+        for (String queryParameterValue : deepLinkUri.queryParameterValues(queryParameter)) {
+          if (parameterMap.containsKey(queryParameter)) {
+            Log.w(TAG, "Duplicate parameter name in path and query param: " + queryParameter);
+          }
+          parameterMap.put(queryParameter, queryParameterValue);
         }
-        parameterMap.put(queryParameter, uri.getQueryParameter(queryParameter));
       }
       parameterMap.put(DeepLink.URI, uri.toString());
       try {
