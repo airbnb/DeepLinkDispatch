@@ -69,6 +69,21 @@ public class MainActivityTest {
     assertThat(launchedIntent.getStringExtra(DeepLink.URI),
         equalTo("airbnb://classDeepLink?foo=bar"));
   }
+ @Test public void testQueryParamsWithBracket() {
+     Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("airbnb://classDeepLink?foo[max]=123"));
+     DeepLinkActivity deepLinkActivity = Robolectric.buildActivity(DeepLinkActivity.class)
+             .withIntent(intent).create().get();
+     ShadowActivity shadowActivity = shadowOf(deepLinkActivity);
+
+     Intent launchedIntent = shadowActivity.peekNextStartedActivityForResult().intent;
+     assertThat(launchedIntent.getComponent(),
+             equalTo(new ComponentName(deepLinkActivity, MainActivity.class)));
+
+     assertThat(launchedIntent.getBooleanExtra(DeepLink.IS_DEEP_LINK, false), equalTo(true));
+     assertThat(launchedIntent.getStringExtra("foo[max]"), equalTo("123"));
+     assertThat(launchedIntent.getStringExtra(DeepLink.URI),
+             equalTo("airbnb://classDeepLink?foo[max]=123"));
+ }
 
   @Test public void testHttpScheme() {
     Intent intent = new Intent(Intent.ACTION_VIEW,
