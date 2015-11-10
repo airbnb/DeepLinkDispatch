@@ -198,15 +198,19 @@ public class DeepLinkProcessor extends AbstractProcessor {
         .addStatement("$T uri = getIntent().getData()", ClassName.get("android.net", "Uri"))
         .addStatement("String uriString = uri.toString()")
         .addStatement("DeepLinkEntry entry = registry.parseUri(uriString)")
+        .addStatement("DeepLinkUri deepLinkUri = DeepLinkUri.parse(uriString)")
         .beginControlFlow("if (entry != null)")
         .addStatement("$T<String, String> parameterMap = entry.getParameters(uriString)", Map.class)
-        .beginControlFlow("for (String queryParameter : uri.getQueryParameterNames())")
+        .beginControlFlow("for (String queryParameter : deepLinkUri.queryParameterNames())")
+        .beginControlFlow(
+            "for (String queryParameterValue : deepLinkUri.queryParameterValues(queryParameter))")
         .beginControlFlow("if (parameterMap.containsKey(queryParameter))")
         .addStatement(
             "$T.w(TAG, \"Duplicate parameter name in path and query param: \" + queryParameter)",
             ClassName.get("android.util", "Log"))
         .endControlFlow()
-        .addStatement("parameterMap.put(queryParameter, uri.getQueryParameter(queryParameter))")
+        .addStatement("parameterMap.put(queryParameter, queryParameterValue)")
+        .endControlFlow()
         .endControlFlow()
         .addStatement("parameterMap.put(DeepLink.URI, uri.toString())")
         .beginControlFlow("try")
