@@ -43,6 +43,13 @@ public class DeepLinkEntryTest {
     assertThat(parameters.get("param1")).isEqualTo("N1.55,22.11");
   }
 
+  @Test public void testParamWithSlash() {
+    DeepLinkEntry entry = deepLinkEntry("airbnb://test/{param1}");
+
+    Map<String, String> parameters = entry.getParameters("airbnb://test/123/foo");
+    assertThat(parameters).isEmpty();
+  }
+
   @Test public void testNoMatchesFound() {
     DeepLinkEntry entry = deepLinkEntry("airbnb://foo/{bar}");
 
