@@ -20,13 +20,12 @@ import java.net.MalformedURLException;
 import javax.lang.model.element.Element;
 
 final class DeepLinkAnnotatedElement {
-
   private final String uri;
   private final DeepLinkEntry.Type annotationType;
   private final String activity;
   private final String method;
 
-  public DeepLinkAnnotatedElement(String annotation, Element element, DeepLinkEntry.Type type)
+  DeepLinkAnnotatedElement(String annotation, Element element, DeepLinkEntry.Type type)
       throws MalformedURLException {
     DeepLinkUri url = DeepLinkUri.parse(annotation);
     if (url == null) {

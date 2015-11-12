@@ -26,8 +26,8 @@
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="airbnb" />
-                <data android:scheme="http" />
+                <data android:scheme="dld" />
+                <data android:scheme="http" android:host="example.com" />
             </intent-filter>
         </activity>
     </application>

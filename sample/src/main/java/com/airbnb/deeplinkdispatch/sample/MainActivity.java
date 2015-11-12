@@ -23,12 +23,8 @@ import android.widget.Toast;
 
 import com.airbnb.deeplinkdispatch.DeepLink;
 
-@DeepLink({"airbnb://classDeepLink", "http://example.com/foo{arg}",
-    "airbnb://example.com/deepLink"})
-// You can also register a single deep link for a particular activity to handle:
-// @DeepLink("example.com/something")
+@DeepLink({ "dld://classDeepLink", "http://example.com/foo{arg}", "dld://example.com/deepLink" })
 public class MainActivity extends AppCompatActivity {
-
   private static final String ACTION_DEEP_LINK_METHOD = "deep_link_method";
   private static final String ACTION_DEEP_LINK_COMPLEX = "deep_link_complex";
 
@@ -48,7 +44,7 @@ public class MainActivity extends AppCompatActivity {
       }
 
       // You can pass a query parameter with the URI, and it's also in parameters, like
-      // airbnb://classDeepLink?qp=123
+      // dld://classDeepLink?qp=123
       if (parameters != null && parameters.getString("qp") != null) {
         toastMessage += " with query parameter " + parameters.getString("qp");
       }
@@ -57,12 +53,12 @@ public class MainActivity extends AppCompatActivity {
     }
   }
 
-  @DeepLink("airbnb://methodDeepLink/{param1}")
+  @DeepLink("dld://methodDeepLink/{param1}")
   public static Intent intentForDeepLinkMethod(Context context) {
     return new Intent(context, MainActivity.class).setAction(ACTION_DEEP_LINK_METHOD);
   }
 
-  @DeepLink("airbnb://host/somePath/{arbitraryNumber}")
+  @DeepLink("dld://host/somePath/{arbitraryNumber}")
   public static Intent intentForComplexMethod(Context context) {
     return new Intent(context, MainActivity.class).setAction(ACTION_DEEP_LINK_COMPLEX);
   }
