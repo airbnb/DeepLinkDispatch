@@ -25,6 +25,9 @@ checkstyle {
     configProperties = ['checkstyle.cache.file': rootProject.file('build/checkstyle.cache')]
 }
 
+project.group = PROJECT_GROUP_ID
+project.version = PROJECT_VERSION
+
 modifyPom {
     project {
         name 'DeepLinkDispatch processor'

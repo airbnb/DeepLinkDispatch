@@ -18,7 +18,7 @@ checkstyle {
     configProperties = ['checkstyle.cache.file': rootProject.file('build/checkstyle.cache')]
 }
 
-project.group = 'com.airbnb'
+project.group = PROJECT_GROUP_ID
 project.version = PROJECT_VERSION
 
 modifyPom {
