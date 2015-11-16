@@ -1,3 +1,21 @@
+# 1.5.0 (11/16/2015)
+
+* [PR 64](https://github.com/airbnb/DeepLinkDispatch/pull/64) Fixed deeplinkdispatch project group
+and version
+* [PR 60](https://github.com/airbnb/DeepLinkDispatch/pull/60) Internal cleanup
+* [PR 62](https://github.com/airbnb/DeepLinkDispatch/pull/62) Prevent parameters regex from matching
+strings containing "/"
+* [PR 59](https://github.com/airbnb/DeepLinkDispatch/pull/59) Allow URI query parameters with square
+brackets.
+* [PR 57](https://github.com/airbnb/DeepLinkDispatch/pull/57) Fixes scheme setter in DeepLinkUri
+Builder
+* [PR 56](https://github.com/airbnb/DeepLinkDispatch/pull/56) Broadcast intents via
+LocalBroadcastManager instead of global.
+* [PR 54](https://github.com/airbnb/DeepLinkDispatch/pull/54) Support templating params as 'host' of
+Uri
+* [PR 50](https://github.com/airbnb/DeepLinkDispatch/pull/50) Prevent `@DeepLink` annotation on
+non static methods.
+
 # 1.4.0 (10/12/2015)
 
 * [PR 49](https://github.com/airbnb/DeepLinkDispatch/pull/49) URL schemes with a number in them are
