@@ -93,9 +93,9 @@ public class MainActivity extends Activity {
 
 ### Callbacks
 
-You can optionally register callbacks to be called on any deep link success or failure.
-`DeepLinkActivity` will broadcast an intent with any success or failure when deep linking. The intent
-will be populated with these extras:
+You can optionally register a `BroadcastReceiver` to be called on any incoming deep link into your
+app. `DeepLinkActivity` will use `LocalBroadcastManager` to broadcast an `Intent` with any success
+or failure when deep linking. The intent will be populated with these extras:
 
 * `DeepLinkActivity.EXTRA_URI`: The URI of the deep link.
 * `DeepLinkActivity.EXTRA_SUCCESSFUL`: Whether the deep link was fired successfully.
@@ -105,7 +105,6 @@ You can register a receiver to receive this intent. An example of such a use is 
 
 ```java
 public class DeepLinkReceiver extends BroadcastReceiver {
-
   private static final String TAG = DeepLinkReceiver.class.getSimpleName();
 
   @Override
@@ -118,6 +117,14 @@ public class DeepLinkReceiver extends BroadcastReceiver {
       String errorMessage = intent.getStringExtra(DeepLinkActivity.EXTRA_ERROR_MESSAGE);
       Log.e(TAG, "Error deep linking: " + deepLinkUri + " with error message +" + errorMessage);
     }
+  }
+}
+
+public class YourApplication extends Application {
+  @Override public void onCreate() {
+    super.onCreate();
+    IntentFilter intentFilter = new IntentFilter(DeepLinkActivity.ACTION);
+    LocalBroadcastManager.getInstance(this).registerReceiver(new DeepLinkReceiver(), intentFilter);
   }
 }
 ```
@@ -136,8 +143,8 @@ buildscript {
 apply plugin: 'android-apt'
 
 dependencies {
-  compile 'com.airbnb:deeplinkdispatch:1.4.0'
-  apt 'com.airbnb:deeplinkdispatch-processor:1.4.0'
+  compile 'com.airbnb:deeplinkdispatch:1.5.0'
+  apt 'com.airbnb:deeplinkdispatch-processor:1.5.0'
 }
 ```
 
@@ -157,7 +164,10 @@ Register `DeepLinkActivity` with the scheme you'd like in your `AndroidManifest.
 </activity>
 ```
 
-Snapshots of the development version are available in [Sonatype's `snapshots` repository](https://oss.sonatype.org/content/repositories/snapshots/).
+That's it. The library will generate the class `DeepLinkActivity` during compilation.
+
+Snapshots of the development version are available in
+[Sonatype's `snapshots` repository](https://oss.sonatype.org/content/repositories/snapshots/).
 
 ## Proguard Rules
 
@@ -167,8 +177,6 @@ Snapshots of the development version are available in [Sonatype's `snapshots` re
      @com.airbnb.deeplinkdispatch.DeepLink <methods>;
 }
 ```
-
-That's it. The library will generate the class `DeepLinkActivity` during compilation.
 
 ## Testing the sample
 
