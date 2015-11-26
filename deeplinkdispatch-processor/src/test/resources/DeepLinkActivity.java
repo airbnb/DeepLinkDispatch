@@ -31,10 +31,11 @@ public class DeepLinkActivity extends Activity {
     loader.load();
     Uri uri = getIntent().getData();
     String uriString = uri.toString();
-    DeepLinkEntry entry = loader.parseUri(uriString);
-    if (entry != null) {
-      DeepLinkUri deepLinkUri = DeepLinkUri.parse(uriString);
-      Map<String, String> parameterMap = entry.getParameters(uriString);
+    DeepLinkMatch deepLinkMatch = loader.parseUri(uriString);
+    if (deepLinkMatch != null) {
+      DeepLinkEntry entry = deepLinkMatch.getEntry();
+      DeepLinkUri deepLinkUri = deepLinkMatch.getUri();
+      Map<String, String> parameterMap = deepLinkMatch.getParameters();
       for (String queryParameter : deepLinkUri.queryParameterNames()) {
         for (String queryParameterValue : deepLinkUri.queryParameterValues(queryParameter)) {
           if (parameterMap.containsKey(queryParameter)) {

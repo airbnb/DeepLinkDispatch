@@ -11,13 +11,20 @@ public class DeepLinkEntryTest {
   @Test public void testSingleParam() {
     DeepLinkEntry entry = deepLinkEntry("airbnb://foo/{bar}");
 
-    assertThat(entry.getParameters("airbnb://foo/myData").get("bar")).isEqualTo("myData");
+    final Optional<DeepLinkMatch> matches = entry.matches("airbnb://foo/myData");
+    assertThat(matches.isPresent()).isTrue();
+    assertThat(matches.get().getEntry()).isEqualTo(entry);
+    final Map<String, String> parameters = matches.get().getParameters();
+    assertThat(parameters.get("bar")).isEqualTo("myData");
   }
 
   @Test public void testTwoParams() {
     DeepLinkEntry entry = deepLinkEntry("airbnb://test/{param1}/{param2}");
 
-    Map<String, String> parameters = entry.getParameters("airbnb://test/12345/alice");
+    final Optional<DeepLinkMatch> matches = entry.matches("airbnb://test/12345/alice");
+    assertThat(matches.isPresent()).isTrue();
+    assertThat(matches.get().getEntry()).isEqualTo(entry);
+    final Map<String, String> parameters = matches.get().getParameters();
     assertThat(parameters.get("param1")).isEqualTo("12345");
     assertThat(parameters.get("param2")).isEqualTo("alice");
   }
@@ -25,75 +32,93 @@ public class DeepLinkEntryTest {
   @Test public void testParamWithSpecialCharacters() throws Exception {
     DeepLinkEntry entry = deepLinkEntry("airbnb://foo/{bar}");
 
-    Map<String, String> parameters = entry.getParameters("airbnb://foo/hyphens-and_underscores123");
+    final Optional<DeepLinkMatch> matches = entry.matches("airbnb://foo/hyphens-and_underscores123");
+    assertThat(matches.isPresent()).isTrue();
+    assertThat(matches.get().getEntry()).isEqualTo(entry);
+    final Map<String, String> parameters = matches.get().getParameters();
     assertThat(parameters.get("bar")).isEqualTo("hyphens-and_underscores123");
   }
 
   @Test public void testParamWithTildeAndDollarSign() {
     DeepLinkEntry entry = deepLinkEntry("airbnb://test/{param1}");
 
-    Map<String, String> parameters = entry.getParameters("airbnb://test/tilde~dollar$ign");
+    final Optional<DeepLinkMatch> matches = entry.matches("airbnb://test/tilde~dollar$ign");
+    assertThat(matches.isPresent()).isTrue();
+    assertThat(matches.get().getEntry()).isEqualTo(entry);
+    final Map<String, String> parameters = matches.get().getParameters();
     assertThat(parameters.get("param1")).isEqualTo("tilde~dollar$ign");
   }
 
   @Test public void testParamWithDotAndComma() {
     DeepLinkEntry entry = deepLinkEntry("airbnb://test/{param1}");
 
-    Map<String, String> parameters = entry.getParameters("airbnb://test/N1.55,22.11");
+    final Optional<DeepLinkMatch> matches = entry.matches("airbnb://test/N1.55,22.11");
+    assertThat(matches.isPresent()).isTrue();
+    assertThat(matches.get().getEntry()).isEqualTo(entry);
+    final Map<String, String> parameters = matches.get().getParameters();
     assertThat(parameters.get("param1")).isEqualTo("N1.55,22.11");
   }
 
   @Test public void testParamWithSlash() {
     DeepLinkEntry entry = deepLinkEntry("airbnb://test/{param1}");
 
-    Map<String, String> parameters = entry.getParameters("airbnb://test/123/foo");
-    assertThat(parameters).isEmpty();
+    final Optional<DeepLinkMatch> matches = entry.matches("airbnb://test/123/foo");
+    assertThat(matches.isPresent()).isFalse();
   }
 
   @Test public void testNoMatchesFound() {
     DeepLinkEntry entry = deepLinkEntry("airbnb://foo/{bar}");
 
-    assertThat(entry.matches("airbnb://test.com")).isFalse();
-    assertThat(entry.getParameters("airbnb://test.com").isEmpty()).isTrue();
+    final Optional<DeepLinkMatch> matches = entry.matches("airbnb://test.com");
+    assertThat(matches.isPresent()).isFalse();
   }
 
   @Test public void testWithQueryParam() {
     DeepLinkEntry entry = deepLinkEntry("airbnb://something");
 
-    assertThat(entry.matches("airbnb://something?foo=bar")).isTrue();
-    assertThat(entry.getParameters("airbnb://something?foo=bar").isEmpty()).isTrue();
+    final Optional<DeepLinkMatch> matches = entry.matches("airbnb://something?foo=bar");
+    assertThat(matches.isPresent()).isTrue();
+    assertThat(matches.get().getEntry()).isEqualTo(entry);
+    final Map<String, String> parameters = matches.get().getParameters();
+    assertThat(parameters.isEmpty()).isTrue();
   }
 
   @Test public void noMatches() {
     DeepLinkEntry entry = deepLinkEntry("airbnb://something.com/some-path");
 
-    assertThat(entry.matches("airbnb://something.com/something-else")).isFalse();
+    final Optional<DeepLinkMatch> matches = entry.matches("airbnb://something.com/something-else");
+    assertThat(matches.isPresent()).isFalse();
   }
 
   @Test public void pathParamAndQueryString() {
     DeepLinkEntry entry = deepLinkEntry("airbnb://foo/{bar}");
 
-    Map<String, String> parameters = entry.getParameters("airbnb://foo/baz?kit=kat");
+    final Optional<DeepLinkMatch> matches = entry.matches("airbnb://foo/baz?kit=kat");
+    assertThat(matches.isPresent()).isTrue();
+    assertThat(matches.get().getEntry()).isEqualTo(entry);
+    final Map<String, String> parameters = matches.get().getParameters();
     assertThat(parameters.get("bar")).isEqualTo("baz");
   }
 
   @Test public void urlWithSpaces() {
     DeepLinkEntry entry = deepLinkEntry("http://example.com/{query}");
 
-    Map<String, String> parameters = entry.getParameters("http://example.com/search%20paris");
+    final Optional<DeepLinkMatch> matches = entry.matches("http://example.com/search%20paris");
+    final Map<String, String> parameters = matches.get().getParameters();
     assertThat(parameters.get("query")).isEqualTo("search%20paris");
   }
 
   @Test public void noMatchesDifferentScheme() {
     DeepLinkEntry entry = deepLinkEntry("airbnb://something");
 
-    assertThat(entry.matches("http://something")).isFalse();
-    assertThat(entry.getParameters("http://something").isEmpty()).isTrue();
+    final Optional<DeepLinkMatch> matches = entry.matches("http://something");
+    assertThat(matches.isPresent()).isFalse();
   }
 
   @Test public void invalidUrl() {
     DeepLinkEntry entry = deepLinkEntry("airbnb://something");
-    assertThat(entry.matches("airbnb://")).isFalse();
+    final Optional<DeepLinkMatch> matches = entry.matches("airbnb://");
+    assertThat(matches.isPresent()).isFalse();
   }
 
   @Test public void pathWithQuotes() {
@@ -103,13 +128,17 @@ public class DeepLinkEntryTest {
 
   @Test public void schemeWithNumbers() {
     DeepLinkEntry entry = deepLinkEntry("jackson5://example.com");
-    assertThat(entry.matches("jackson5://example.com")).isTrue();
+    final Optional<DeepLinkMatch> matches = entry.matches("jackson5://example.com");
+    assertThat(matches.isPresent()).isTrue();
   }
 
   @Test public void multiplePathParams() {
     DeepLinkEntry entry = deepLinkEntry("airbnb://{foo}/{bar}");
 
-    Map<String, String> parameters = entry.getParameters("airbnb://baz/qux");
+    final Optional<DeepLinkMatch> matches = entry.matches("airbnb://baz/qux");
+    assertThat(matches.isPresent()).isTrue();
+    assertThat(matches.get().getEntry()).isEqualTo(entry);
+    final Map<String, String> parameters = matches.get().getParameters();
     assertThat(parameters)
       .hasSize(2)
       .contains(entry("foo", "baz"), entry("bar", "qux"));
