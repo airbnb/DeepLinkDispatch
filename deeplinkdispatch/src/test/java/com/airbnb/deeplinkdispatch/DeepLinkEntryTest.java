@@ -96,6 +96,11 @@ public class DeepLinkEntryTest {
     assertThat(entry.matches("airbnb://")).isFalse();
   }
 
+  @Test public void pathWithQuotes() {
+    DeepLinkEntry entry = deepLinkEntry("airbnb://s/{query}");
+    assertThat(entry.matches("airbnb://s/Sant'Eufemia-a-Maiella--Italia")).isTrue();
+  }
+
   @Test public void schemeWithNumbers() {
     DeepLinkEntry entry = deepLinkEntry("jackson5://example.com");
     assertThat(entry.matches("jackson5://example.com")).isTrue();
