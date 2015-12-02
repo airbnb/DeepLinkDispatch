@@ -164,6 +164,9 @@ Register `DeepLinkActivity` with the scheme you'd like in your `AndroidManifest.
 </activity>
 ```
 
+Note: Intent filters may only contain a single data element for a URI pattern. Create separate intent filters to capture additional URI patterns.
+
+
 That's it. The library will generate the class `DeepLinkActivity` during compilation.
 
 Snapshots of the development version are available in
@@ -180,15 +183,22 @@ Snapshots of the development version are available in
 
 ## Testing the sample
 
-Use adb to launch deep links.
+Use adb shell to launch deep links (in the terminal type: `adb shell`).
 
-This fires a standard deep link:
+This fires a standard deep link. Source annotation `@DeepLink("dld://example.com/deepLink")`
 
-`adb shell am start -W -a android.intent.action.VIEW -d "airbnb://example.com/deepLink" com.airbnb.deeplinkdispatch.sample`
+`am start -W -a android.intent.action.VIEW -d "dld://example.com/deepLink" com.airbnb.deeplinkdispatch.sample`
 
-This fires a deep link associated with a method, and also passes along a parameter:
+This fires a deep link associated with a method, and also passes along a path parameter. Source annotation `@DeepLink("dld://methodDeepLink/{param1}")`
 
-`adb shell am start -W -a android.intent.action.VIEW -d "airbnb://methodDeepLink/abc123" com.airbnb.deeplinkdispatch.sample`
+`am start -W -a android.intent.action.VIEW -d "dld://methodDeepLink/abc123" com.airbnb.deeplinkdispatch.sample`
+
+You can include multiple path parameters (also you don't have to include the sample app's package name). Source annotation `@DeepLink("http://example.com/deepLink/{id}/{name}")`
+
+`am start -W -a android.intent.action.VIEW -d "http://example.com/deepLink/123abc/myname"`
+
+
+Note it is possible to call directly `adb shell am ...` however this seems to miss the URI sometimes so better to call from within shell.
 
 ## License
 
