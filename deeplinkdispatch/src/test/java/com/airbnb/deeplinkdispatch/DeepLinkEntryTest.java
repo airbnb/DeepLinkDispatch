@@ -123,7 +123,7 @@ public class DeepLinkEntryTest {
 
   @Test public void pathWithQuotes() {
     DeepLinkEntry entry = deepLinkEntry("airbnb://s/{query}");
-    assertThat(entry.matches("airbnb://s/Sant'Eufemia-a-Maiella--Italia")).isTrue();
+    assertThat(entry.matches("airbnb://s/Sant'Eufemia-a-Maiella--Italia").isPresent()).isTrue();
   }
 
   @Test public void schemeWithNumbers() {
