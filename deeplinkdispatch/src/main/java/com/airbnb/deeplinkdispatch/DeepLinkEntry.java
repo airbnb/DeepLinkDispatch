@@ -81,7 +81,8 @@ final class DeepLinkEntry {
     Pattern regex = Pattern.compile(schemeHostAndPath.replaceAll(PARAM_REGEX, PARAM_VALUE) + "$");
 
     DeepLinkUri inputParsedUri = DeepLinkUri.parse(inputUri);
-    boolean isMatch = inputParsedUri != null && regex.matcher(schemeHostAndPath(inputParsedUri)).find();
+    boolean isMatch = inputParsedUri != null
+        && regex.matcher(schemeHostAndPath(inputParsedUri)).find();
 
     if (isMatch) {
       Iterator<String> paramsIterator = parameters.iterator();
