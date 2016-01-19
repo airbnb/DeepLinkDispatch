@@ -70,6 +70,9 @@ public class DeepLinkActivity extends Activity {
         }
         intent.putExtras(parameters);
         intent.putExtra(DeepLink.IS_DEEP_LINK, true);
+        if (getCallingActivity() != null) {
+          intent.setFlags(Intent.FLAG_ACTIVITY_FORWARD_RESULT);
+        }
         startActivity(intent);
         notifyListener(false, uri, null);
       } catch (NoSuchMethodException exception) {
