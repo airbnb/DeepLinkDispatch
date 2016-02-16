@@ -56,7 +56,7 @@ public class MainActivity extends Activity {
 
 ### Method Annotations
 
-You can also annotate static methods that return an `Intent`. `DeepLinkDispatch` will call that
+You can also annotate static methods that take a `Context` and return an `Intent`. `DeepLinkDispatch` will call that
 method to create that `Intent` and use it when starting your activity via that registered deep link:
 
 ```java
