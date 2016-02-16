@@ -19,6 +19,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.widget.Toast;
 
 import com.airbnb.deeplinkdispatch.DeepLink;
@@ -28,6 +29,9 @@ public class MainActivity extends AppCompatActivity {
   private static final String ACTION_DEEP_LINK_METHOD = "deep_link_method";
   private static final String ACTION_DEEP_LINK_COMPLEX = "deep_link_complex";
 
+  private String TAG = SecondActivity.class.getSimpleName();
+
+
   @Override protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_main);
@@ -35,17 +39,21 @@ public class MainActivity extends AppCompatActivity {
     if (getIntent().getBooleanExtra(DeepLink.IS_DEEP_LINK, false)) {
       String toastMessage;
       Bundle parameters = getIntent().getExtras();
+      Log.d(TAG, "Deeplink params: " + parameters);
+
       if (ACTION_DEEP_LINK_METHOD.equals(getIntent().getAction())) {
-        toastMessage = parameters.getString("param1");
+        toastMessage = "method with param1:"  + parameters.getString("param1");
       } else if (ACTION_DEEP_LINK_COMPLEX.equals(getIntent().getAction())) {
         toastMessage = parameters.getString("arbitraryNumber");
+      } else if (parameters.containsKey("arg")){
+          toastMessage = "class and found arg:" + parameters.getString("arg");
       } else {
         toastMessage = "class";
       }
 
       // You can pass a query parameter with the URI, and it's also in parameters, like
       // dld://classDeepLink?qp=123
-      if (parameters != null && parameters.getString("qp") != null) {
+      if (parameters.containsKey("qp")) {
         toastMessage += " with query parameter " + parameters.getString("qp");
       }
 

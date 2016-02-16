@@ -24,7 +24,7 @@ public class SecondActivityTest {
     @Test
     public void testIntent() {
         Intent intent = new Intent(Intent.ACTION_VIEW,
-                                   Uri.parse("dld://example.com/deepLink/123"));
+                                   Uri.parse("http://example.com/deepLink/123/myname"));
         DeepLinkActivity deepLinkActivity = Robolectric.buildActivity(DeepLinkActivity.class)
             .withIntent(intent).create().get();
         ShadowActivity shadowActivity = shadowOf(deepLinkActivity);
@@ -35,6 +35,6 @@ public class SecondActivityTest {
 
         assertThat(launchedIntent.getBooleanExtra(DeepLink.IS_DEEP_LINK, false), equalTo(true));
         assertThat(launchedIntent.getStringExtra(DeepLink.URI),
-                   equalTo("dld://example.com/deepLink/123"));
+                   equalTo("http://example.com/deepLink/123/myname"));
     }
 }
