@@ -50,6 +50,46 @@ public class DeepLinkProcessorTest {
                     + "}"));
   }
 
+  @Test public void uppercasePackage() {
+    JavaFileObject activityWithUppercasePackage = JavaFileObjects
+        .forSourceString("SampleActivity", "package com.Example;"
+            + "import com.airbnb.deeplinkdispatch.DeepLink; "
+            + "@DeepLink(\"airbnb://example.com/deepLink\") public class SampleActivity {}");
+
+    assert_().about(javaSource())
+        .that(activityWithUppercasePackage)
+        .processedWith(new DeepLinkProcessor())
+        .compilesWithoutError()
+        .and()
+        .generatesSources(
+            JavaFileObjects.forResource("DeepLinkActivity.java"),
+            JavaFileObjects.forSourceString("DeepLinkLoader.java",
+                "package com.airbnb.deeplinkdispatch;\n"
+                    + "\n"
+                    + "import com.Example.SampleActivity;\n"
+                    + "import java.lang.String;\n"
+                    + "import java.util.LinkedList;\n"
+                    + "import java.util.List;\n"
+                    + "\n"
+                    + "public final class DeepLinkLoader {\n"
+                    + "  private final List<DeepLinkEntry> registry = new LinkedList<>();\n"
+                    + "\n"
+                    + "  void load() {\n"
+                    + "    registry.add(new DeepLinkEntry(\"airbnb://example.com/deepLink\", "
+                    + "DeepLinkEntry.Type.CLASS, SampleActivity.class, null));\n"
+                    + "  }\n"
+                    + "\n"
+                    + "  DeepLinkEntry parseUri(String uri) {\n"
+                    + "    for (DeepLinkEntry entry : registry) {\n"
+                    + "      if (entry.matches(uri)) {\n"
+                    + "        return entry;\n"
+                    + "      }\n"
+                    + "    }\n"
+                    + "    return null;\n"
+                    + "  }\n"
+                    + "}"));
+  }
+
   @Test public void testNonStaticMethodCompileFail() {
     JavaFileObject sampleActivity = JavaFileObjects
         .forSourceString("SampleActivity", "package com.example;"
