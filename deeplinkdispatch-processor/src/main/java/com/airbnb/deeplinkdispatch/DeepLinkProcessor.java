@@ -119,7 +119,8 @@ public class DeepLinkProcessor extends AbstractProcessor {
     messager.printMessage(Diagnostic.Kind.ERROR, String.format(msg, args), e);
   }
 
-  private void generateDeepLinkLoader(List<DeepLinkAnnotatedElement> elements) throws IOException {
+  private void generateDeepLinkLoader(List<DeepLinkAnnotatedElement> elements)
+      throws IOException {
     FieldSpec registry = FieldSpec
         .builder(ParameterizedTypeName.get(List.class, DeepLinkEntry.class), "registry",
             Modifier.PRIVATE, Modifier.FINAL)
@@ -131,7 +132,7 @@ public class DeepLinkProcessor extends AbstractProcessor {
 
     for (DeepLinkAnnotatedElement element : elements) {
       String type = "DeepLinkEntry.Type." + element.getAnnotationType().toString();
-      ClassName activity = ClassName.bestGuess(element.getActivity());
+      ClassName activity = ClassName.get(element.getActivityElement());
       Object method = element.getMethod() == null ? null : element.getMethod();
       String uri = element.getUri();
       loadMethod.addStatement("registry.add(new DeepLinkEntry($S, $L, $T.class, $S))",

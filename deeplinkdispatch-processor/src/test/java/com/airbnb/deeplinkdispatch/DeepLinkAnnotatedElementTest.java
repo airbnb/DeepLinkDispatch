@@ -7,13 +7,13 @@ import org.mockito.MockitoAnnotations;
 
 import java.net.MalformedURLException;
 
-import javax.lang.model.element.Element;
+import javax.lang.model.element.TypeElement;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
 public class DeepLinkAnnotatedElementTest {
-  @Mock Element element;
+  @Mock TypeElement element;
 
   @Before public void setUp() {
     MockitoAnnotations.initMocks(this);
