@@ -4,6 +4,7 @@ import android.app.Application;
 import android.content.IntentFilter;
 import android.support.v4.content.LocalBroadcastManager;
 
+import com.airbnb.deeplinkdispatch.DeepLink;
 import com.airbnb.deeplinkdispatch.DeepLinkActivity;
 
 public class SampleApplication extends Application {
