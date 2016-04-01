@@ -72,7 +72,7 @@ public class DeepLinkProcessor extends AbstractProcessor {
     return new HashSet<>(
         Arrays.asList(
             DeepLink.class.getCanonicalName(),
-            DeepLinkActivity.class.getCanonicalName()));
+            DeepLinkHandler.class.getCanonicalName()));
   }
 
   @Override public SourceVersion getSupportedSourceVersion() {
@@ -112,7 +112,7 @@ public class DeepLinkProcessor extends AbstractProcessor {
     }
 
     boolean hasSpecifiedDeepLinkActivity
-        = !roundEnv.getElementsAnnotatedWith(DeepLinkActivity.class).isEmpty();
+        = !roundEnv.getElementsAnnotatedWith(DeepLinkHandler.class).isEmpty();
 
     if (!deepLinkElements.isEmpty()) {
       try {
@@ -280,12 +280,12 @@ public class DeepLinkProcessor extends AbstractProcessor {
         .addParameter(ClassName.get("android.net", "Uri"), "uri")
         .addParameter(String.class, "errorMessage")
         .addStatement("$T intent = new Intent()", ANDROID_INTENT)
-        .addStatement("intent.setAction($T.ACTION)", DeepLinkActivity.class)
-        .addStatement("intent.putExtra($T.EXTRA_URI, uri.toString())", DeepLinkActivity.class)
-        .addStatement("intent.putExtra($T.EXTRA_SUCCESSFUL, !isError)", DeepLinkActivity.class)
+        .addStatement("intent.setAction($T.ACTION)", DeepLinkHandler.class)
+        .addStatement("intent.putExtra($T.EXTRA_URI, uri.toString())", DeepLinkHandler.class)
+        .addStatement("intent.putExtra($T.EXTRA_SUCCESSFUL, !isError)", DeepLinkHandler.class)
         .beginControlFlow("if (isError)")
         .addStatement("intent.putExtra($T.EXTRA_ERROR_MESSAGE, errorMessage)",
-                DeepLinkActivity.class)
+                DeepLinkHandler.class)
         .endControlFlow()
         .addStatement("$T.getInstance(context).sendBroadcast(intent)",
             ClassName.get("android.support.v4.content", "LocalBroadcastManager"))
@@ -397,7 +397,7 @@ public class DeepLinkProcessor extends AbstractProcessor {
         .endControlFlow()
         .build();
 
-    TypeSpec deepLinkActivity = TypeSpec.classBuilder("DeepLinkDelegate")
+    TypeSpec deepLinkDelegate = TypeSpec.classBuilder("DeepLinkDelegate")
         .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
         .addField(tag)
         .addMethod(constructor)
@@ -406,7 +406,7 @@ public class DeepLinkProcessor extends AbstractProcessor {
         .addMethod(notifyListenerMethod)
         .build();
 
-    JavaFile.builder("com.airbnb.deeplinkdispatch", deepLinkActivity)
+    JavaFile.builder("com.airbnb.deeplinkdispatch", deepLinkDelegate)
         .build()
         .writeTo(filer);
   }
@@ -422,7 +422,7 @@ public class DeepLinkProcessor extends AbstractProcessor {
             ClassName.get("com.airbnb.deeplinkdispatch", "DeepLinkDelegate"))
         .build();
 
-    TypeSpec deepLinkActivity = TypeSpec.classBuilder("DeepLinkDispatchActivity")
+    TypeSpec deepLinkActivity = TypeSpec.classBuilder("DeepLinkActivity")
         .addModifiers(Modifier.PUBLIC)
         .superclass(ClassName.get("android.app", "Activity"))
         .addMethod(onCreateMethod)

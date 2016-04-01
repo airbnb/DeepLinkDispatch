@@ -5,7 +5,7 @@ import android.content.Intent;
 import android.net.Uri;
 
 import com.airbnb.deeplinkdispatch.DeepLink;
-import com.airbnb.deeplinkdispatch.DeepLinkDispatchActivity;
+import com.airbnb.deeplinkdispatch.DeepLinkActivity;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -23,7 +23,7 @@ import static org.robolectric.Shadows.shadowOf;
 public class MainActivityTest {
   @Test public void testIntent() {
     Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("dld://host/somePath/1234321"));
-    DeepLinkDispatchActivity deepLinkActivity = Robolectric.buildActivity(DeepLinkDispatchActivity.class)
+    DeepLinkActivity deepLinkActivity = Robolectric.buildActivity(DeepLinkActivity.class)
         .withIntent(intent).create().get();
     ShadowActivity shadowActivity = shadowOf(deepLinkActivity);
 
@@ -40,7 +40,7 @@ public class MainActivityTest {
 
   @Test public void testQueryParams() {
     Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("dld://classDeepLink?foo=bar"));
-    DeepLinkDispatchActivity deepLinkActivity = Robolectric.buildActivity(DeepLinkDispatchActivity.class)
+    DeepLinkActivity deepLinkActivity = Robolectric.buildActivity(DeepLinkActivity.class)
         .withIntent(intent).create().get();
     ShadowActivity shadowActivity = shadowOf(deepLinkActivity);
 
@@ -57,7 +57,7 @@ public class MainActivityTest {
   @Test public void testQueryParamsWithBracket() {
     Intent intent =
         new Intent(Intent.ACTION_VIEW, Uri.parse("dld://classDeepLink?foo[max]=123"));
-    DeepLinkDispatchActivity deepLinkActivity = Robolectric.buildActivity(DeepLinkDispatchActivity.class)
+    DeepLinkActivity deepLinkActivity = Robolectric.buildActivity(DeepLinkActivity.class)
         .withIntent(intent).create().get();
     ShadowActivity shadowActivity = shadowOf(deepLinkActivity);
 
@@ -74,7 +74,7 @@ public class MainActivityTest {
   @Test public void testHttpScheme() {
     Intent intent = new Intent(Intent.ACTION_VIEW,
         Uri.parse("http://example.com/fooball?baz=something"));
-    DeepLinkDispatchActivity deepLinkActivity = Robolectric.buildActivity(DeepLinkDispatchActivity.class)
+    DeepLinkActivity deepLinkActivity = Robolectric.buildActivity(DeepLinkActivity.class)
         .withIntent(intent).create().get();
     ShadowActivity shadowActivity = shadowOf(deepLinkActivity);
 
