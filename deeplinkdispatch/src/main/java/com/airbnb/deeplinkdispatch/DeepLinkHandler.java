@@ -21,12 +21,12 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Indicates that this activity will receive deep links, so the processor knows not to generate
- * a separate activity.
+ * Indicates that this a given type will receive deep links and handle them, so the processor
+ * knows not to generate a separate activity.
  */
 @Target({ ElementType.TYPE })
 @Retention(RetentionPolicy.CLASS)
-public @interface DeepLinkActivity {
+public @interface DeepLinkHandler {
     String ACTION = "com.airbnb.deeplinkdispatch.DEEPLINK_ACTION";
     String EXTRA_SUCCESSFUL = "com.airbnb.deeplinkdispatch.EXTRA_SUCCESSFUL";
     String EXTRA_URI = "com.airbnb.deeplinkdispatch.EXTRA_URI";

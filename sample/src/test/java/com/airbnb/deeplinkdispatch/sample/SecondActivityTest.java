@@ -5,7 +5,7 @@ import android.content.Intent;
 import android.net.Uri;
 
 import com.airbnb.deeplinkdispatch.DeepLink;
-import com.airbnb.deeplinkdispatch.DeepLinkDispatchActivity;
+import com.airbnb.deeplinkdispatch.DeepLinkActivity;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -25,7 +25,7 @@ public class SecondActivityTest {
     public void testIntent() {
         Intent intent = new Intent(Intent.ACTION_VIEW,
                                    Uri.parse("http://example.com/deepLink/123/myname"));
-        DeepLinkDispatchActivity deepLinkActivity = Robolectric.buildActivity(DeepLinkDispatchActivity.class)
+        DeepLinkActivity deepLinkActivity = Robolectric.buildActivity(DeepLinkActivity.class)
             .withIntent(intent).create().get();
         ShadowActivity shadowActivity = shadowOf(deepLinkActivity);
 

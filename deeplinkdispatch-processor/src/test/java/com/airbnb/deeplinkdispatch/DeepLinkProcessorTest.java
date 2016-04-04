@@ -22,7 +22,7 @@ public class DeepLinkProcessorTest {
         .compilesWithoutError()
         .and()
         .generatesSources(
-            JavaFileObjects.forResource("DeepLinkDispatchActivity.java"),
+            JavaFileObjects.forResource("DeepLinkActivity.java"),
             JavaFileObjects.forSourceString("DeepLinkLoader.java",
                 "package com.airbnb.deeplinkdispatch;\n"
                     + "\n"
@@ -62,7 +62,7 @@ public class DeepLinkProcessorTest {
         .compilesWithoutError()
         .and()
         .generatesSources(
-            JavaFileObjects.forResource("DeepLinkDispatchActivity.java"),
+            JavaFileObjects.forResource("DeepLinkActivity.java"),
             JavaFileObjects.forSourceString("DeepLinkLoader.java",
                 "package com.airbnb.deeplinkdispatch;\n"
                     + "\n"

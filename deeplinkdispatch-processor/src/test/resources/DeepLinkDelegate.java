@@ -97,11 +97,11 @@ public final class DeepLinkDelegate {
 
   private static void notifyListener(Context context, boolean isError, Uri uri, String errorMessage) {
     Intent intent = new Intent();
-    intent.setAction(DeepLinkActivity.ACTION);
-    intent.putExtra(DeepLinkActivity.EXTRA_URI, uri.toString());
-    intent.putExtra(DeepLinkActivity.EXTRA_SUCCESSFUL, !isError);
+    intent.setAction(DeepLinkHandler.ACTION);
+    intent.putExtra(DeepLinkHandler.EXTRA_URI, uri.toString());
+    intent.putExtra(DeepLinkHandler.EXTRA_SUCCESSFUL, !isError);
     if (isError) {
-      intent.putExtra(DeepLinkActivity.EXTRA_ERROR_MESSAGE, errorMessage);
+      intent.putExtra(DeepLinkHandler.EXTRA_ERROR_MESSAGE, errorMessage);
     }
     LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
   }
