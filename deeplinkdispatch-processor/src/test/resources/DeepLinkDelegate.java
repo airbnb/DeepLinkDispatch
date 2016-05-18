@@ -55,10 +55,10 @@ public final class DeepLinkDelegate {
           Method method = c.getMethod(entry.getMethod(), Context.class);
           newIntent = (Intent) method.invoke(c, activity);
         }
-        if (sourceIntent.getAction() == null) {
+        if (newIntent.getAction() == null) {
           newIntent.setAction(sourceIntent.getAction());
         }
-        if (sourceIntent.getData() == null) {
+        if (newIntent.getData() == null) {
           newIntent.setData(sourceIntent.getData());
         }
         Bundle parameters;
