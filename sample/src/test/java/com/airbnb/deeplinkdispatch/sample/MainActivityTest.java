@@ -22,7 +22,8 @@ import static org.robolectric.Shadows.shadowOf;
 @RunWith(RobolectricTestRunner.class)
 public class MainActivityTest {
   @Test public void testIntent() {
-    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("dld://host/somePath/1234321"));
+    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("dld://host/somePath/1234321"))
+        .putExtra("TEST_EXTRA", "FOO");
     DeepLinkActivity deepLinkActivity = Robolectric.buildActivity(DeepLinkActivity.class)
         .withIntent(intent).create().get();
     ShadowActivity shadowActivity = shadowOf(deepLinkActivity);
@@ -33,7 +34,9 @@ public class MainActivityTest {
 
     assertThat(launchedIntent.getBooleanExtra(DeepLink.IS_DEEP_LINK, false), equalTo(true));
     assertThat(launchedIntent.getStringExtra("arbitraryNumber"), equalTo("1234321"));
+    assertThat(launchedIntent.getStringExtra("TEST_EXTRA"), equalTo("FOO"));
     assertThat(launchedIntent.getAction(), equalTo("deep_link_complex"));
+    assertThat(launchedIntent.getData(), equalTo(Uri.parse("dld://host/somePath/1234321")));
     assertThat(launchedIntent.getStringExtra(DeepLink.URI),
         equalTo("dld://host/somePath/1234321"));
   }
@@ -50,6 +53,7 @@ public class MainActivityTest {
 
     assertThat(launchedIntent.getBooleanExtra(DeepLink.IS_DEEP_LINK, false), equalTo(true));
     assertThat(launchedIntent.getStringExtra("foo"), equalTo("bar"));
+    assertThat(launchedIntent.getAction(), equalTo(Intent.ACTION_VIEW));
     assertThat(launchedIntent.getStringExtra(DeepLink.URI),
         equalTo("dld://classDeepLink?foo=bar"));
   }
