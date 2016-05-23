@@ -271,7 +271,6 @@ public class DeepLinkProcessor extends AbstractProcessor {
   }
 
   private void generateDeepLinkDelegate() throws IOException {
-
     MethodSpec notifyListenerMethod = MethodSpec.methodBuilder("notifyListener")
         .addModifiers(Modifier.PRIVATE, Modifier.STATIC)
         .returns(void.class)
@@ -420,6 +419,7 @@ public class DeepLinkProcessor extends AbstractProcessor {
         .addStatement("super.onCreate(savedInstanceState)")
         .addStatement("$T.dispatchFrom(this)",
             ClassName.get("com.airbnb.deeplinkdispatch", "DeepLinkDelegate"))
+        .addStatement("finish()")
         .build();
 
     TypeSpec deepLinkActivity = TypeSpec.classBuilder("DeepLinkActivity")

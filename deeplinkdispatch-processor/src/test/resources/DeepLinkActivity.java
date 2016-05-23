@@ -9,5 +9,6 @@ public class DeepLinkActivity extends Activity {
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     DeepLinkDelegate.dispatchFrom(this);
+    finish();
   }
 }
