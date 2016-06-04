@@ -1,3 +1,10 @@
+# 2.0.0 (06/04/2016)
+
+* [PR 71](https://github.com/airbnb/DeepLinkDispatch/pull/71) Fix: Allow quotes in param value
+* [PR 77](https://github.com/airbnb/DeepLinkDispatch/pull/77) New: Add support for activities launched with `startActivityForResult()` by forwarding results back to the caller.
+* [PR 84](https://github.com/airbnb/DeepLinkDispatch/pull/84) Fix: Do not fail on packages with uppercase
+* [PR 87](https://github.com/airbnb/DeepLinkDispatch/pull/87) New: `DeepLinkDelegate` and `@DeepLinkActivity` No longer require an Activity dedicated to deep link handling
+
 # 1.5.0 (11/16/2015)
 
 * [PR 64](https://github.com/airbnb/DeepLinkDispatch/pull/64) Fixed deeplinkdispatch project group
