@@ -64,6 +64,22 @@ public class DeepLinkEntryTest {
     assertThat(entry.getParameters("airbnb://test.com").isEmpty()).isTrue();
   }
 
+  @Test
+  public void testEmptyParametersDontMatch() throws Exception {
+    DeepLinkEntry entry = deepLinkEntry("dld://foo/{id}/bar");
+
+    assertThat(entry.matches("dld://foo//bar")).isFalse();
+  }
+
+  @Test
+  public void testEmptyPathPresentParams() throws Exception {
+    DeepLinkEntry entry = deepLinkEntry("dld://foo/{id}");
+    DeepLinkEntry entryNoParam = deepLinkEntry("dld://foo");
+
+    assertThat(entry.matches("dld://foo")).isFalse();
+    assertThat(entryNoParam.matches("dld://foo")).isTrue();
+  }
+
   @Test public void testWithQueryParam() {
     DeepLinkEntry entry = deepLinkEntry("airbnb://something");
 
