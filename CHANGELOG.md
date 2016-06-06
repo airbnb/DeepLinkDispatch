@@ -1,3 +1,7 @@
+# 2.0.1 (06/06/2016)
+
+* [PR 102](https://github.com/airbnb/DeepLinkDispatch/pull/102) Require a non-zero length param value
+
 # 2.0.0 (06/04/2016)
 
 * [PR 71](https://github.com/airbnb/DeepLinkDispatch/pull/71) Fix: Allow quotes in param value
