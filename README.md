@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/airbnb/DeepLinkDispatch.svg)](https://travis-ci.org/airbnb/DeepLinkDispatch)
 
-DeepLinkDispatch provides a declarative, annotation-based API to declare application deep links.
+DeepLinkDispatch provides a declarative, annotation-based API to define application deep links.
 
 You can register an `Activity` to handle specific deep links by annotating it with `@DeepLink` and a URI.
 DeepLinkDispatch will parse the URI and dispatch the deep link to the appropriate `Activity`, along
@@ -19,12 +19,10 @@ parameter that we'll identify with `id`.
 public class MainActivity extends Activity {
   @Override protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-
-    if (getIntent().getBooleanExtra(DeepLink.IS_DEEP_LINK, false)) {
-      Bundle parameters = getIntent().getExtras();
-
+    Intent intent = getIntent();
+    if (intent.getBooleanExtra(DeepLink.IS_DEEP_LINK, false)) {
+      Bundle parameters = intent.getExtras();
       String idString = parameters.getString("id");
-
       // Do something with the ID...
     }
     ...
@@ -34,19 +32,17 @@ public class MainActivity extends Activity {
 
 ### Multiple Deep Links
 
-Sometimes you'll have an activity that should handle several kinds of deep links.
+Sometimes you'll have an Activity that handles several kinds of deep links:
 
 ```java
 @DeepLink({"foo://example.com/deepLink/{id}", "foo://example.com/anotherDeepLink"})
 public class MainActivity extends Activity {
   @Override protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-
-    if (getIntent().getBooleanExtra(DeepLink.IS_DEEP_LINK, false)) {
-      Bundle parameters = getIntent().getExtras();
-
+    Intent intent = getIntent();
+    if (intent.getBooleanExtra(DeepLink.IS_DEEP_LINK, false)) {
+      Bundle parameters = intent.getExtras();
       String idString = parameters.getString("id");
-
       // Do something with the ID...
     }
     ...
@@ -57,7 +53,7 @@ public class MainActivity extends Activity {
 ### Method Annotations
 
 You can also annotate static methods that take a `Context` and return an `Intent`. `DeepLinkDispatch` will call that
-method to create that `Intent` and use it when starting your activity via that registered deep link:
+method to create that `Intent` and use it when starting your Activity via that registered deep link:
 
 ```java
 @DeepLink("foo://example.com/methodDeepLink/{param1}")
@@ -77,13 +73,11 @@ other parameter. For example, we could retrieve the query parameter passed along
 public class MainActivity extends Activity {
   @Override protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-
-    if (getIntent().getBooleanExtra(DeepLink.IS_DEEP_LINK, false)) {
-      Bundle parameters = getIntent().getExtras();
-
+    Intent intent = getIntent();
+    if (intent.getBooleanExtra(DeepLink.IS_DEEP_LINK, false)) {
+      Bundle parameters = intent.getExtras();
       if (parameters != null && parameters.getString("qp") != null) {
         String queryParameter = parameters.getString("qp");
-
         // Do something with the query parameter...
       }
     }
@@ -136,15 +130,15 @@ Add to your project `build.gradle` file:
 ```groovy
 buildscript {
   dependencies {
-    classpath 'com.neenbedankt.gradle.plugins:android-apt:1.7'
+    classpath 'com.neenbedankt.gradle.plugins:android-apt:1.8'
   }
 }
 
 apply plugin: 'android-apt'
 
 dependencies {
-  compile 'com.airbnb:deeplinkdispatch:1.5.0'
-  apt 'com.airbnb:deeplinkdispatch-processor:1.5.0'
+  compile 'com.airbnb:deeplinkdispatch:2.0.0'
+  apt 'com.airbnb:deeplinkdispatch-processor:2.0.0'
 }
 ```
 
@@ -153,7 +147,7 @@ Register `DeepLinkActivity` with the scheme you'd like in your `AndroidManifest.
 
 ```xml
 <activity
-    android:name="com.airbnb.deeplinkdispatch.DeepLinkActivity"
+    android:name=".DeepLinkActivity"
     android:theme="@android:style/Theme.NoDisplay">
     <intent-filter>
         <action android:name="android.intent.action.VIEW" />
@@ -164,10 +158,32 @@ Register `DeepLinkActivity` with the scheme you'd like in your `AndroidManifest.
 </activity>
 ```
 
-Note: Intent filters may only contain a single data element for a URI pattern. Create separate intent filters to capture additional URI patterns.
-
+Note: Intent filters may only contain a single data element for a URI pattern. Create separate
+intent filters to capture additional URI patterns.
 
 That's it. The library will generate the class `DeepLinkActivity` during compilation.
+
+Starting with version 2.0.0, you no longer need to add the `DeepLinkActivity` to your manifest.
+Just annotate one of your existing activities with `@DeepLinkHandler`. If you do that, DeepLinkDispatch
+will not generate the `DeepLinkActivity` for you. Instead, you'll be responsible for handling the
+deep links yourself. This is useful if you want to do any custom handling before the deep link is
+launched, like logging, sign-up, etc. Example:
+
+```java
+@DeepLinkHandler
+public class CustomDeepLinkHandler extends Activity {
+  @Override
+  protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    // perform your application-specific logic (eg.: logging, launch sign-in, etc.)
+    // ...
+
+    // Let DeepLinkDispatch handle the Intent and finish this Activity
+    DeepLinkDelegate.dispatchFrom(this);
+    finish();
+  }
+}
+```
 
 Snapshots of the development version are available in
 [Sonatype's `snapshots` repository](https://oss.sonatype.org/content/repositories/snapshots/).
@@ -181,9 +197,9 @@ Snapshots of the development version are available in
 }
 ```
 
-## Testing the sample
+## Testing the sample app
 
-Use adb shell to launch deep links (in the terminal type: `adb shell`).
+Use adb to launch deep links (in the terminal type: `adb shell`).
 
 This fires a standard deep link. Source annotation `@DeepLink("dld://example.com/deepLink")`
 
