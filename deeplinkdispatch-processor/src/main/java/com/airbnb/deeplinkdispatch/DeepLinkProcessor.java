@@ -280,7 +280,7 @@ public class DeepLinkProcessor extends AbstractProcessor {
         .addParameter(String.class, "errorMessage")
         .addStatement("$T intent = new Intent()", ANDROID_INTENT)
         .addStatement("intent.setAction($T.ACTION)", DeepLinkHandler.class)
-        .addStatement("intent.putExtra($T.EXTRA_URI, uri.toString())", DeepLinkHandler.class)
+        .addStatement("intent.putExtra($T.EXTRA_URI, uri != null ? uri.toString() : $S)", DeepLinkHandler.class, "")
         .addStatement("intent.putExtra($T.EXTRA_SUCCESSFUL, !isError)", DeepLinkHandler.class)
         .beginControlFlow("if (isError)")
         .addStatement("intent.putExtra($T.EXTRA_ERROR_MESSAGE, errorMessage)",
