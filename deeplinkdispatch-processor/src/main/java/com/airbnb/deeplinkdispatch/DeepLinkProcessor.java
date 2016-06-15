@@ -320,7 +320,20 @@ public class DeepLinkProcessor extends AbstractProcessor {
         .beginControlFlow("if (activity == null)")
         .addStatement("throw new $T($S)", NullPointerException.class, "activity == null")
         .endControlFlow()
-        .addStatement("$T sourceIntent = activity.getIntent()", ANDROID_INTENT)
+        .addStatement("return dispatchFrom(activity, activity.getIntent())")
+        .build();
+
+    MethodSpec dispatchFromMethodWithIntent = MethodSpec.methodBuilder("dispatchFrom")
+        .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
+        .returns(DEEPLINKRESULT)
+        .addParameter(ClassName.get("android.app", "Activity"), "activity")
+        .addParameter(ClassName.get("android.content", "Intent"), "sourceIntent")
+        .beginControlFlow("if (activity == null)")
+        .addStatement("throw new $T($S)", NullPointerException.class, "activity == null")
+        .endControlFlow()
+        .beginControlFlow("if (sourceIntent == null)")
+        .addStatement("throw new $T($S)", NullPointerException.class, "sourceIntent == null")
+        .endControlFlow()
         .addStatement("$T uri = sourceIntent.getData()", ANDROID_URI)
         .beginControlFlow("if (uri == null)")
         .addStatement("return createResultAndNotify(activity, false, null, $S)",
@@ -402,6 +415,7 @@ public class DeepLinkProcessor extends AbstractProcessor {
         .addField(tag)
         .addMethod(constructor)
         .addMethod(dispatchFromMethod)
+        .addMethod(dispatchFromMethodWithIntent)
         .addMethod(createResultAndNotifyMethod)
         .addMethod(notifyListenerMethod)
         .build();

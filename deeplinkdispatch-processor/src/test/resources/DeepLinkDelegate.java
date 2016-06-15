@@ -25,7 +25,16 @@ public final class DeepLinkDelegate {
     if (activity == null) {
       throw new NullPointerException("activity == null");
     }
-    Intent sourceIntent = activity.getIntent();
+    return dispatchFrom(activity, activity.getIntent());
+  }
+
+  public static com.airbnb.deeplinkdispatch.DeepLinkResult dispatchFrom(Activity activity, Intent sourceIntent) {
+    if (activity == null) {
+      throw new NullPointerException("activity == null");
+    }
+    if (sourceIntent == null) {
+      throw new NullPointerException("sourceIntent == null");
+    }
     Uri uri = sourceIntent.getData();
     if (uri == null) {
       return createResultAndNotify(activity, false, null, "No Uri in given activity's intent.");
@@ -98,7 +107,7 @@ public final class DeepLinkDelegate {
   private static void notifyListener(Context context, boolean isError, Uri uri, String errorMessage) {
     Intent intent = new Intent();
     intent.setAction(DeepLinkHandler.ACTION);
-    intent.putExtra(DeepLinkHandler.EXTRA_URI, uri.toString());
+    intent.putExtra(DeepLinkHandler.EXTRA_URI, uri != null ? uri.toString() : "");
     intent.putExtra(DeepLinkHandler.EXTRA_SUCCESSFUL, !isError);
     if (isError) {
       intent.putExtra(DeepLinkHandler.EXTRA_ERROR_MESSAGE, errorMessage);
