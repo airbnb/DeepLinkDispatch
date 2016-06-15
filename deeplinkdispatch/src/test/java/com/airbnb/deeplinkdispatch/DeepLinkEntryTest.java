@@ -50,6 +50,13 @@ public class DeepLinkEntryTest {
     assertThat(parameters.get("param1")).isEqualTo("somename@gmail.com");
   }
 
+  @Test public void testParamForColon() {
+    DeepLinkEntry entry = deepLinkEntry("airbnb://test/{param1}");
+
+    Map<String, String> parameters = entry.getParameters("airbnb://test/a1:b2:c3");
+    assertThat(parameters.get("param1")).isEqualTo("a1:b2:c3");
+  }
+
   @Test public void testParamWithSlash() {
     DeepLinkEntry entry = deepLinkEntry("airbnb://test/{param1}");
 
