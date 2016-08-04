@@ -91,9 +91,9 @@ You can optionally register a `BroadcastReceiver` to be called on any incoming d
 app. `DeepLinkActivity` will use `LocalBroadcastManager` to broadcast an `Intent` with any success
 or failure when deep linking. The intent will be populated with these extras:
 
-* `DeepLinkActivity.EXTRA_URI`: The URI of the deep link.
-* `DeepLinkActivity.EXTRA_SUCCESSFUL`: Whether the deep link was fired successfully.
-* `DeepLinkActivity.EXTRA_ERROR_MESSAGE`: If there was an error, the appropriate error message.
+* `DeepLinkHandler.EXTRA_URI`: The URI of the deep link.
+* `DeepLinkHandler.EXTRA_SUCCESSFUL`: Whether the deep link was fired successfully.
+* `DeepLinkHandler.EXTRA_ERROR_MESSAGE`: If there was an error, the appropriate error message.
 
 You can register a receiver to receive this intent. An example of such a use is below:
 
@@ -103,12 +103,12 @@ public class DeepLinkReceiver extends BroadcastReceiver {
 
   @Override
   public void onReceive(Context context, Intent intent) {
-    String deepLinkUri = intent.getStringExtra(DeepLinkActivity.EXTRA_URI);
+    String deepLinkUri = intent.getStringExtra(DeepLinkHandler.EXTRA_URI);
 
-    if (intent.getBooleanExtra(DeepLinkActivity.EXTRA_SUCCESSFUL, false)) {
+    if (intent.getBooleanExtra(DeepLinkHandler.EXTRA_SUCCESSFUL, false)) {
       Log.i(TAG, "Success deep linking: " + deepLinkUri);
     } else {
-      String errorMessage = intent.getStringExtra(DeepLinkActivity.EXTRA_ERROR_MESSAGE);
+      String errorMessage = intent.getStringExtra(DeepLinkHandler.EXTRA_ERROR_MESSAGE);
       Log.e(TAG, "Error deep linking: " + deepLinkUri + " with error message +" + errorMessage);
     }
   }
@@ -117,7 +117,7 @@ public class DeepLinkReceiver extends BroadcastReceiver {
 public class YourApplication extends Application {
   @Override public void onCreate() {
     super.onCreate();
-    IntentFilter intentFilter = new IntentFilter(DeepLinkActivity.ACTION);
+    IntentFilter intentFilter = new IntentFilter(DeepLinkHandler.ACTION);
     LocalBroadcastManager.getInstance(this).registerReceiver(new DeepLinkReceiver(), intentFilter);
   }
 }
