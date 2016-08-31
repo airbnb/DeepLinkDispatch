@@ -170,15 +170,15 @@ public class DeepLinkProcessor extends AbstractProcessor {
                         .build())
                 .addMethod(MethodSpec.methodBuilder("uri")
                         .addModifiers(Modifier.PUBLIC)
-                        .addJavadoc("@return this result's uri," +
-                                " or {@code null} if there is none.\n")
+                        .addJavadoc("@return this result's uri,"
+                                + " or {@code null} if there is none.\n")
                         .returns(ANDROID_URI)
                         .addStatement("return uri")
                         .build())
                 .addMethod(MethodSpec.methodBuilder("error")
                         .addModifiers(Modifier.PUBLIC)
-                        .addJavadoc("@return this result's error message," +
-                                " or {@code null} if there is none.\n")
+                        .addJavadoc("@return this result's error message,"
+                                + " or {@code null} if there is none.\n")
                         .returns(ClassName.get(String.class))
                         .addStatement("return error")
                         .build())
@@ -197,8 +197,8 @@ public class DeepLinkProcessor extends AbstractProcessor {
                         .addCode("\n")
                         .addCode("if (successful != that.successful) { return false; }")
                         .addCode("\n")
-                        .addCode("if (uri != null ? !uri.equals(that.uri)" +
-                                " : that.uri != null) { return false; "
+                        .addCode("if (uri != null ? !uri.equals(that.uri)"
+                                + " : that.uri != null) { return false; "
                                 + "}")
                         .addCode("\n")
                         .addCode("return error != null ? error.equals(that.error) "
@@ -360,12 +360,12 @@ public class DeepLinkProcessor extends AbstractProcessor {
                         Map.class)
                 .beginControlFlow("for (String queryParameter : deepLinkUri.queryParameterNames())")
                 .beginControlFlow(
-                        "for (String queryParameterValue : " +
-                                "deepLinkUri.queryParameterValues(queryParameter))")
+                        "for (String queryParameterValue : "
+                                + "deepLinkUri.queryParameterValues(queryParameter))")
                 .beginControlFlow("if (parameterMap.containsKey(queryParameter))")
                 .addStatement(
-                        "$T.w(TAG, \"Duplicate parameter name " +
-                                "in path and query param: \" + queryParameter)",
+                        "$T.w(TAG, \"Duplicate parameter name "
+                                + "in path and query param: \" + queryParameter)",
                         ClassName.get("android.util", "Log"))
                 .endControlFlow()
                 .addStatement("parameterMap.put(queryParameter, queryParameterValue)")
@@ -379,10 +379,10 @@ public class DeepLinkProcessor extends AbstractProcessor {
                 .addStatement("parameters = new Bundle()")
                 .endControlFlow()
                 .beginControlFlow(
-                        "for (Map.Entry<String, String> parameterEntry :" +
-                                " parameterMap.entrySet())")
-                .addStatement("parameters.putString(parameterEntry.getKey(), " +
-                        "parameterEntry.getValue())")
+                        "for (Map.Entry<String, String> parameterEntry :"
+                                + " parameterMap.entrySet())")
+                .addStatement("parameters.putString(parameterEntry.getKey(), "
+                        + "parameterEntry.getValue())")
                 .endControlFlow()
                 .beginControlFlow("try")
                 .addStatement("Class<?> c = entry.getActivityClass()")
@@ -403,8 +403,8 @@ public class DeepLinkProcessor extends AbstractProcessor {
                 .addStatement("return createResultAndNotify(activity, false, uri, \"Could not deep "
                         + "link to method: \" + entry.getMethod() + \" intents length ==0\" )")
                 .endControlFlow()
-                .addStatement("newIntent = taskStackBuilder." +
-                        "editIntentAt(taskStackBuilder.getIntentCount()-1)")
+                .addStatement("newIntent = taskStackBuilder."
+                        + "editIntentAt(taskStackBuilder.getIntentCount()-1)")
                 .nextControlFlow("else")
                 .addStatement("newIntent = (Intent) method.invoke(c, activity)")
                 .endControlFlow()
@@ -414,14 +414,14 @@ public class DeepLinkProcessor extends AbstractProcessor {
                         ClassName.get("android.os", "Bundle"))
                 .beginControlFlow("if (method.getReturnType().equals($T.class))",
                         ClassName.get("android.support.v4.app", "TaskStackBuilder"))
-                .addStatement("taskStackBuilder = " +
-                        "(TaskStackBuilder) method.invoke(c, activity, parameters)")
+                .addStatement("taskStackBuilder = "
+                        + "(TaskStackBuilder) method.invoke(c, activity, parameters)")
                 .beginControlFlow("if (taskStackBuilder.getIntentCount() == 0)")
                 .addStatement("return createResultAndNotify(activity, false, uri, \"Could not deep "
                         + "link to method: \" + entry.getMethod() + \" intents length ==0\" )")
                 .endControlFlow()
-                .addStatement("newIntent = taskStackBuilder." +
-                        "editIntentAt(taskStackBuilder.getIntentCount()-1)")
+                .addStatement("newIntent = taskStackBuilder."
+                        + "editIntentAt(taskStackBuilder.getIntentCount()-1)")
                 .nextControlFlow("else")
                 .addStatement("newIntent = (Intent) method.invoke(c, activity, parameters)")
                 .endControlFlow()
