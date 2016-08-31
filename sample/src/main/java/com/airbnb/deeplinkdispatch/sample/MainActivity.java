@@ -66,7 +66,13 @@ public class MainActivity extends AppCompatActivity {
   }
 
 
-  @DeepLink("http://example.com/deepLink/{id}/{name}")
+  @DeepLink("dld://host/somePath/{arbitraryNumber}")
+  public static Intent intentForParamDeepLinkMethod(Context context) {
+    return new Intent(context, MainActivity.class).setAction(ACTION_DEEP_LINK_COMPLEX);
+  }
+
+
+  @DeepLink("http://example.com/deepLink/{id}/{name}/{place}")
   public static TaskStackBuilder intentForTaskStackBuilderMethods(Context context, Bundle bundle) {
     Log.d(TAG,"without query parameter :");
     if (bundle!=null && bundle.containsKey("qp")){
@@ -81,7 +87,7 @@ public class MainActivity extends AppCompatActivity {
 
   }
 
-  @DeepLink("dld://host/somePath/{arbitraryNumber}/otherPath")
+  @DeepLink("dld://host/somePathOne/{arbitraryNumber}/otherPath")
   public static Intent intentForComplexMethod(Context context, Bundle bundle) {
     if (bundle!=null && bundle.containsKey("qp")){
       Log.d(TAG,"found new parameter :with query parameter :" + bundle.getString("qp") );

@@ -32,7 +32,8 @@ public class MainActivityTest {
     assertThat(launchedIntent.getComponent(),
         equalTo(new ComponentName(deepLinkActivity, MainActivity.class)));
 
-    assertThat(launchedIntent.getBooleanExtra(DeepLink.IS_DEEP_LINK, false), equalTo(true));
+    assertThat(launchedIntent.getBooleanExtra(DeepLink.IS_DEEP_LINK, false), equalTo(
+            true));
     assertThat(launchedIntent.getStringExtra("arbitraryNumber"), equalTo("1234321"));
     assertThat(launchedIntent.getStringExtra("TEST_EXTRA"), equalTo("FOO"));
     assertThat(launchedIntent.getAction(), equalTo("deep_link_complex"));
