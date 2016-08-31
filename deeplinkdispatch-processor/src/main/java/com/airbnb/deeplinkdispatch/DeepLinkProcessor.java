@@ -109,7 +109,8 @@ public class DeepLinkProcessor extends AbstractProcessor {
                 try {
                     deepLinkElements.add(new DeepLinkAnnotatedElement(deepLink, element, type));
                 } catch (MalformedURLException e) {
-                    messager.printMessage(Diagnostic.Kind.ERROR, "Malformed Deep Link URL " + deepLink);
+                    messager.printMessage(Diagnostic.Kind.ERROR, "Malformed Deep Link URL "
+                            + deepLink);
                 }
             }
         }
@@ -130,7 +131,8 @@ public class DeepLinkProcessor extends AbstractProcessor {
                 messager.printMessage(Diagnostic.Kind.ERROR, "Error creating file");
             } catch (RuntimeException e) {
                 messager.printMessage(Diagnostic.Kind.ERROR,
-                        "Internal error during annotation processing: " + e.getClass().getSimpleName());
+                        "Internal error during annotation processing: "
+                                + e.getClass().getSimpleName());
             }
         }
 
@@ -168,13 +170,15 @@ public class DeepLinkProcessor extends AbstractProcessor {
                         .build())
                 .addMethod(MethodSpec.methodBuilder("uri")
                         .addModifiers(Modifier.PUBLIC)
-                        .addJavadoc("@return this result's uri, or {@code null} if there is none.\n")
+                        .addJavadoc("@return this result's uri," +
+                                " or {@code null} if there is none.\n")
                         .returns(ANDROID_URI)
                         .addStatement("return uri")
                         .build())
                 .addMethod(MethodSpec.methodBuilder("error")
                         .addModifiers(Modifier.PUBLIC)
-                        .addJavadoc("@return this result's error message, or {@code null} if there is none.\n")
+                        .addJavadoc("@return this result's error message," +
+                                " or {@code null} if there is none.\n")
                         .returns(ClassName.get(String.class))
                         .addStatement("return error")
                         .build())
@@ -193,7 +197,8 @@ public class DeepLinkProcessor extends AbstractProcessor {
                         .addCode("\n")
                         .addCode("if (successful != that.successful) { return false; }")
                         .addCode("\n")
-                        .addCode("if (uri != null ? !uri.equals(that.uri) : that.uri != null) { return false; "
+                        .addCode("if (uri != null ? !uri.equals(that.uri)" +
+                                " : that.uri != null) { return false; "
                                 + "}")
                         .addCode("\n")
                         .addCode("return error != null ? error.equals(that.error) "
@@ -285,7 +290,8 @@ public class DeepLinkProcessor extends AbstractProcessor {
                 .addStatement("intent.setAction($T.ACTION)", DeepLinkHandler.class)
                 .addStatement("intent.putExtra($T.EXTRA_URI, uri != null ? uri.toString() : $S)",
                         DeepLinkHandler.class, "")
-                .addStatement("intent.putExtra($T.EXTRA_SUCCESSFUL, !isError)", DeepLinkHandler.class)
+                .addStatement("intent.putExtra($T.EXTRA_SUCCESSFUL, !isError)",
+                        DeepLinkHandler.class)
                 .beginControlFlow("if (isError)")
                 .addStatement("intent.putExtra($T.EXTRA_ERROR_MESSAGE, errorMessage)",
                         DeepLinkHandler.class)
@@ -301,7 +307,8 @@ public class DeepLinkProcessor extends AbstractProcessor {
                 .addParameter(TypeName.BOOLEAN, "successful", Modifier.FINAL)
                 .addParameter(ANDROID_URI, "uri", Modifier.FINAL)
                 .addParameter(ClassName.get(String.class), "error", Modifier.FINAL)
-                .addStatement("$T result = new $T(successful, uri, error)", DEEPLINKRESULT, DEEPLINKRESULT)
+                .addStatement("$T result = new $T(successful, uri, error)",
+                        DEEPLINKRESULT, DEEPLINKRESULT)
                 .addStatement("notifyListener(context, !successful, uri, error)")
                 .addStatement("return result")
                 .build();
@@ -335,7 +342,8 @@ public class DeepLinkProcessor extends AbstractProcessor {
                 .addStatement("throw new $T($S)", NullPointerException.class, "activity == null")
                 .endControlFlow()
                 .beginControlFlow("if (sourceIntent == null)")
-                .addStatement("throw new $T($S)", NullPointerException.class, "sourceIntent == null")
+                .addStatement("throw new $T($S)", NullPointerException.class,
+                        "sourceIntent == null")
                 .endControlFlow()
                 .addStatement("$T uri = sourceIntent.getData()", ANDROID_URI)
                 .beginControlFlow("if (uri == null)")
@@ -348,13 +356,16 @@ public class DeepLinkProcessor extends AbstractProcessor {
                 .addStatement("DeepLinkEntry entry = loader.parseUri(uriString)")
                 .beginControlFlow("if (entry != null)")
                 .addStatement("DeepLinkUri deepLinkUri = DeepLinkUri.parse(uriString)")
-                .addStatement("$T<String, String> parameterMap = entry.getParameters(uriString)", Map.class)
+                .addStatement("$T<String, String> parameterMap = entry.getParameters(uriString)",
+                        Map.class)
                 .beginControlFlow("for (String queryParameter : deepLinkUri.queryParameterNames())")
                 .beginControlFlow(
-                        "for (String queryParameterValue : deepLinkUri.queryParameterValues(queryParameter))")
+                        "for (String queryParameterValue : " +
+                                "deepLinkUri.queryParameterValues(queryParameter))")
                 .beginControlFlow("if (parameterMap.containsKey(queryParameter))")
                 .addStatement(
-                        "$T.w(TAG, \"Duplicate parameter name in path and query param: \" + queryParameter)",
+                        "$T.w(TAG, \"Duplicate parameter name " +
+                                "in path and query param: \" + queryParameter)",
                         ClassName.get("android.util", "Log"))
                 .endControlFlow()
                 .addStatement("parameterMap.put(queryParameter, queryParameterValue)")
@@ -368,13 +379,16 @@ public class DeepLinkProcessor extends AbstractProcessor {
                 .addStatement("parameters = new Bundle()")
                 .endControlFlow()
                 .beginControlFlow(
-                        "for (Map.Entry<String, String> parameterEntry : parameterMap.entrySet())")
-                .addStatement("parameters.putString(parameterEntry.getKey(), parameterEntry.getValue())")
+                        "for (Map.Entry<String, String> parameterEntry :" +
+                                " parameterMap.entrySet())")
+                .addStatement("parameters.putString(parameterEntry.getKey(), " +
+                        "parameterEntry.getValue())")
                 .endControlFlow()
                 .beginControlFlow("try")
                 .addStatement("Class<?> c = entry.getActivityClass()")
                 .addStatement("$T newIntent", ANDROID_INTENT)
-                .addStatement("$T taskStackBuilder = null", ClassName.get("android.support.v4.app", "TaskStackBuilder"))
+                .addStatement("$T taskStackBuilder = null", ClassName.get("android.support.v4.app",
+                        "TaskStackBuilder"))
                 .beginControlFlow("if (entry.getType() == DeepLinkEntry.Type.CLASS)")
                 .addStatement("newIntent = new Intent(activity, c)")
                 .nextControlFlow("else")
@@ -382,26 +396,32 @@ public class DeepLinkProcessor extends AbstractProcessor {
                 .beginControlFlow("try")
                 .addStatement("method = c.getMethod(entry.getMethod(), $T.class)",
                         ClassName.get("android.content", "Context"))
-                .beginControlFlow("if (method.getReturnType().equals($T.class))", ClassName.get("android.support.v4.app", "TaskStackBuilder"))
+                .beginControlFlow("if (method.getReturnType().equals($T.class))",
+                        ClassName.get("android.support.v4.app", "TaskStackBuilder"))
                 .addStatement("taskStackBuilder = (TaskStackBuilder) method.invoke(c, activity)")
                 .beginControlFlow("if (taskStackBuilder.getIntentCount() == 0)")
                 .addStatement("return createResultAndNotify(activity, false, uri, \"Could not deep "
                         + "link to method: \" + entry.getMethod() + \" intents length ==0\" )")
                 .endControlFlow()
-                .addStatement("newIntent = taskStackBuilder.editIntentAt(taskStackBuilder.getIntentCount()-1)")
+                .addStatement("newIntent = taskStackBuilder." +
+                        "editIntentAt(taskStackBuilder.getIntentCount()-1)")
                 .nextControlFlow("else")
                 .addStatement("newIntent = (Intent) method.invoke(c, activity)")
                 .endControlFlow()
                 .nextControlFlow("catch ($T exception)", NoSuchMethodException.class)
                 .addStatement("method = c.getMethod(entry.getMethod(), $T.class, $T.class)",
-                        ClassName.get("android.content", "Context"), ClassName.get("android.os", "Bundle"))
-                .beginControlFlow("if (method.getReturnType().equals($T.class))", ClassName.get("android.support.v4.app", "TaskStackBuilder"))
-                .addStatement("taskStackBuilder = (TaskStackBuilder) method.invoke(c, activity, parameters)")
+                        ClassName.get("android.content", "Context"),
+                        ClassName.get("android.os", "Bundle"))
+                .beginControlFlow("if (method.getReturnType().equals($T.class))",
+                        ClassName.get("android.support.v4.app", "TaskStackBuilder"))
+                .addStatement("taskStackBuilder = " +
+                        "(TaskStackBuilder) method.invoke(c, activity, parameters)")
                 .beginControlFlow("if (taskStackBuilder.getIntentCount() == 0)")
                 .addStatement("return createResultAndNotify(activity, false, uri, \"Could not deep "
                         + "link to method: \" + entry.getMethod() + \" intents length ==0\" )")
                 .endControlFlow()
-                .addStatement("newIntent = taskStackBuilder.editIntentAt(taskStackBuilder.getIntentCount()-1)")
+                .addStatement("newIntent = taskStackBuilder." +
+                        "editIntentAt(taskStackBuilder.getIntentCount()-1)")
                 .nextControlFlow("else")
                 .addStatement("newIntent = (Intent) method.invoke(c, activity, parameters)")
                 .endControlFlow()
