@@ -68,15 +68,14 @@ method to create `Intent` from `TaskStackBuilder` last `Intent` and use it when 
 
 ```java
 @DeepLink("http://example.com/deepLink/{id}/{name}")
-  public static TaskStackBuilder intentForTaskStackBuilderMethods(Context context) {
-    Intent detailsIntent =  new Intent(context, SecondActivity.class).setAction(ACTION_DEEP_LINK_COMPLEX);
-    Intent parentIntent =  new Intent(context, MainActivity.class).setAction(ACTION_DEEP_LINK_COMPLEX);
-    TaskStackBuilder  taskStackBuilder = TaskStackBuilder.create(context);
-    taskStackBuilder.addNextIntent(parentIntent);
-    taskStackBuilder.addNextIntent(detailsIntent);
-    return taskStackBuilder;
-
-  }
+public static TaskStackBuilder intentForTaskStackBuilderMethods(Context context) {
+  Intent detailsIntent =  new Intent(context, SecondActivity.class).setAction(ACTION_DEEP_LINK_COMPLEX);
+  Intent parentIntent =  new Intent(context, MainActivity.class).setAction(ACTION_DEEP_LINK_COMPLEX);
+  TaskStackBuilder  taskStackBuilder = TaskStackBuilder.create(context);
+  taskStackBuilder.addNextIntent(parentIntent);
+  taskStackBuilder.addNextIntent(detailsIntent);
+  return taskStackBuilder;
+}
 ```
 ### Query Parameters
 
