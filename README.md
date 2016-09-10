@@ -62,7 +62,6 @@ public static Intent intentForDeepLinkMethod(Context context) {
 }
 ```
 
-
 You can also annotate static methods that take a `Context` and return a `TaskStackBuilder`. `DeepLinkDispatch` will call that
 method to create `Intent` from `TaskStackBuilder` last `Intent` and use it when starting your Activity via that registered deep link:
 
