@@ -18,13 +18,14 @@ package com.airbnb.deeplinkdispatch.sample;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v4.app.TaskStackBuilder;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.widget.Toast;
 
 import com.airbnb.deeplinkdispatch.DeepLink;
 
-@DeepLink({ "dld://classDeepLink", "http://example.com/foo{arg}", "dld://example.com/deepLink" })
+@DeepLink({ "dld://classDeepLink", "http://example.com/foo{arg}", "dld://example.com/deepLink"})
 public class MainActivity extends AppCompatActivity {
   private static final String ACTION_DEEP_LINK_METHOD = "deep_link_method";
   private static final String ACTION_DEEP_LINK_COMPLEX = "deep_link_complex";
@@ -64,8 +65,33 @@ public class MainActivity extends AppCompatActivity {
     return new Intent(context, MainActivity.class).setAction(ACTION_DEEP_LINK_METHOD);
   }
 
+
   @DeepLink("dld://host/somePath/{arbitraryNumber}")
-  public static Intent intentForComplexMethod(Context context) {
+  public static Intent intentForParamDeepLinkMethod(Context context) {
+    return new Intent(context, MainActivity.class).setAction(ACTION_DEEP_LINK_COMPLEX);
+  }
+
+
+  @DeepLink("http://example.com/deepLink/{id}/{name}/{place}")
+  public static TaskStackBuilder intentForTaskStackBuilderMethods(Context context, Bundle bundle) {
+    Log.d(TAG,"without query parameter :");
+    if (bundle!=null && bundle.containsKey("qp")){
+      Log.d(TAG,"found new parameter :with query parameter :" + bundle.getString("qp") );
+    }
+    Intent detailsIntent =  new Intent(context, SecondActivity.class).setAction(ACTION_DEEP_LINK_COMPLEX);
+    Intent parentIntent =  new Intent(context, MainActivity.class).setAction(ACTION_DEEP_LINK_COMPLEX);
+    TaskStackBuilder  taskStackBuilder = TaskStackBuilder.create(context);
+    taskStackBuilder.addNextIntent(parentIntent);
+    taskStackBuilder.addNextIntent(detailsIntent);
+    return taskStackBuilder;
+
+  }
+
+  @DeepLink("dld://host/somePathOne/{arbitraryNumber}/otherPath")
+  public static Intent intentForComplexMethod(Context context, Bundle bundle) {
+    if (bundle!=null && bundle.containsKey("qp")){
+      Log.d(TAG,"found new parameter :with query parameter :" + bundle.getString("qp") );
+    }
     return new Intent(context, MainActivity.class).setAction(ACTION_DEEP_LINK_COMPLEX);
   }
 

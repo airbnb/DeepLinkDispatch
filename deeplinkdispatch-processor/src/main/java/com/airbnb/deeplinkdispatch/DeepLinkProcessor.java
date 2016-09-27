@@ -371,6 +371,8 @@ public class DeepLinkProcessor extends AbstractProcessor {
         .beginControlFlow("try")
         .addStatement("Class<?> c = entry.getActivityClass()")
         .addStatement("$T newIntent", ANDROID_INTENT)
+        .addStatement("$T taskStackBuilder = null", ClassName.get("android.support.v4.app",
+                    "TaskStackBuilder"))
         .beginControlFlow("if (entry.getType() == DeepLinkEntry.Type.CLASS)")
         .addStatement("newIntent = new Intent(activity, c)")
         .nextControlFlow("else")
@@ -378,11 +380,34 @@ public class DeepLinkProcessor extends AbstractProcessor {
         .beginControlFlow("try")
         .addStatement("method = c.getMethod(entry.getMethod(), $T.class)",
                 ClassName.get("android.content", "Context"))
+        .beginControlFlow("if (method.getReturnType().equals($T.class))",
+                ClassName.get("android.support.v4.app", "TaskStackBuilder"))
+        .addStatement("taskStackBuilder = (TaskStackBuilder) method.invoke(c, activity)")
+        .beginControlFlow("if (taskStackBuilder.getIntentCount() == 0)")
+        .addStatement("return createResultAndNotify(activity, false, uri, \"Could not deep "
+                + "link to method: \" + entry.getMethod() + \" intents length == 0\" )")
+        .endControlFlow()
+        .addStatement("newIntent = taskStackBuilder."
+                + "editIntentAt(taskStackBuilder.getIntentCount()-1)")
+        .nextControlFlow("else")
         .addStatement("newIntent = (Intent) method.invoke(c, activity)")
+        .endControlFlow()
         .nextControlFlow("catch ($T exception)", NoSuchMethodException.class)
         .addStatement("method = c.getMethod(entry.getMethod(), $T.class, $T.class)",
             ClassName.get("android.content", "Context"), ClassName.get("android.os", "Bundle"))
+        .beginControlFlow("if (method.getReturnType().equals($T.class))",
+            ClassName.get("android.support.v4.app", "TaskStackBuilder"))
+        .addStatement("taskStackBuilder = "
+            + "(TaskStackBuilder) method.invoke(c, activity, parameters)")
+        .beginControlFlow("if (taskStackBuilder.getIntentCount() == 0)")
+        .addStatement("return createResultAndNotify(activity, false, uri, \"Could not deep "
+            + "link to method: \" + entry.getMethod() + \" intents length == 0\" )")
+        .endControlFlow()
+        .addStatement("newIntent = taskStackBuilder."
+            + "editIntentAt(taskStackBuilder.getIntentCount()-1)")
+        .nextControlFlow("else")
         .addStatement("newIntent = (Intent) method.invoke(c, activity, parameters)")
+        .endControlFlow()
         .endControlFlow()
         .endControlFlow()
         .beginControlFlow("if (newIntent.getAction() == null)")
@@ -396,7 +421,11 @@ public class DeepLinkProcessor extends AbstractProcessor {
         .beginControlFlow("if (activity.getCallingActivity() != null)")
         .addStatement("newIntent.setFlags(Intent.FLAG_ACTIVITY_FORWARD_RESULT)")
         .endControlFlow()
+        .beginControlFlow("if (taskStackBuilder != null)")
+        .addStatement("taskStackBuilder.startActivities()")
+        .nextControlFlow("else")
         .addStatement("activity.startActivity(newIntent)")
+        .endControlFlow()
         .addStatement("return createResultAndNotify(activity, true, uri, null)")
         .nextControlFlow("catch (NoSuchMethodException exception)")
         .addStatement(
@@ -455,3 +484,4 @@ public class DeepLinkProcessor extends AbstractProcessor {
         .writeTo(filer);
   }
 }
+

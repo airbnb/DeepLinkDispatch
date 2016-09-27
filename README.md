@@ -62,6 +62,20 @@ public static Intent intentForDeepLinkMethod(Context context) {
 }
 ```
 
+You can also annotate static methods that take a `Context` and return a `TaskStackBuilder`. `DeepLinkDispatch` will call that
+method to create `Intent` from `TaskStackBuilder` last `Intent` and use it when starting your Activity via that registered deep link:
+
+```java
+@DeepLink("http://example.com/deepLink/{id}/{name}")
+public static TaskStackBuilder intentForTaskStackBuilderMethods(Context context) {
+  Intent detailsIntent =  new Intent(context, SecondActivity.class).setAction(ACTION_DEEP_LINK_COMPLEX);
+  Intent parentIntent =  new Intent(context, MainActivity.class).setAction(ACTION_DEEP_LINK_COMPLEX);
+  TaskStackBuilder  taskStackBuilder = TaskStackBuilder.create(context);
+  taskStackBuilder.addNextIntent(parentIntent);
+  taskStackBuilder.addNextIntent(detailsIntent);
+  return taskStackBuilder;
+}
+```
 ### Query Parameters
 
 Query parameters are parsed and passed along automatically, and are retrievable like any
