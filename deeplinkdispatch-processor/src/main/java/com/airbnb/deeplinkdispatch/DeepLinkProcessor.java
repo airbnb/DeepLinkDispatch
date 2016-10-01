@@ -16,6 +16,7 @@
 package com.airbnb.deeplinkdispatch;
 
 import com.google.auto.service.AutoService;
+
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.JavaFile;
@@ -57,7 +58,7 @@ public class DeepLinkProcessor extends AbstractProcessor {
   private static final ClassName ANDROID_CONTEXT = ClassName.get("android.content", "Context");
   private static final ClassName ANDROID_URI = ClassName.get("android.net", "Uri");
   private static final ClassName DEEPLINKRESULT
-          = ClassName.get("com.airbnb.deeplinkdispatch", "DeepLinkResult");
+      = ClassName.get("com.airbnb.deeplinkdispatch", "DeepLinkResult");
 
   private Filer filer;
   private Messager messager;
@@ -281,11 +282,11 @@ public class DeepLinkProcessor extends AbstractProcessor {
         .addStatement("$T intent = new Intent()", ANDROID_INTENT)
         .addStatement("intent.setAction($T.ACTION)", DeepLinkHandler.class)
         .addStatement("intent.putExtra($T.EXTRA_URI, uri != null ? uri.toString() : $S)",
-                DeepLinkHandler.class, "")
+            DeepLinkHandler.class, "")
         .addStatement("intent.putExtra($T.EXTRA_SUCCESSFUL, !isError)", DeepLinkHandler.class)
         .beginControlFlow("if (isError)")
         .addStatement("intent.putExtra($T.EXTRA_ERROR_MESSAGE, errorMessage)",
-                DeepLinkHandler.class)
+            DeepLinkHandler.class)
         .endControlFlow()
         .addStatement("$T.getInstance(context).sendBroadcast(intent)",
             ClassName.get("android.support.v4.content", "LocalBroadcastManager"))
@@ -365,30 +366,30 @@ public class DeepLinkProcessor extends AbstractProcessor {
         .addStatement("parameters = new Bundle()")
         .endControlFlow()
         .beginControlFlow(
-                "for (Map.Entry<String, String> parameterEntry : parameterMap.entrySet())")
+            "for (Map.Entry<String, String> parameterEntry : parameterMap.entrySet())")
         .addStatement("parameters.putString(parameterEntry.getKey(), parameterEntry.getValue())")
         .endControlFlow()
         .beginControlFlow("try")
         .addStatement("Class<?> c = entry.getActivityClass()")
         .addStatement("$T newIntent", ANDROID_INTENT)
         .addStatement("$T taskStackBuilder = null", ClassName.get("android.support.v4.app",
-                    "TaskStackBuilder"))
+            "TaskStackBuilder"))
         .beginControlFlow("if (entry.getType() == DeepLinkEntry.Type.CLASS)")
         .addStatement("newIntent = new Intent(activity, c)")
         .nextControlFlow("else")
         .addStatement("$T method", Method.class)
         .beginControlFlow("try")
         .addStatement("method = c.getMethod(entry.getMethod(), $T.class)",
-                ClassName.get("android.content", "Context"))
+            ClassName.get("android.content", "Context"))
         .beginControlFlow("if (method.getReturnType().equals($T.class))",
-                ClassName.get("android.support.v4.app", "TaskStackBuilder"))
+            ClassName.get("android.support.v4.app", "TaskStackBuilder"))
         .addStatement("taskStackBuilder = (TaskStackBuilder) method.invoke(c, activity)")
         .beginControlFlow("if (taskStackBuilder.getIntentCount() == 0)")
         .addStatement("return createResultAndNotify(activity, false, uri, \"Could not deep "
-                + "link to method: \" + entry.getMethod() + \" intents length == 0\" )")
+            + "link to method: \" + entry.getMethod() + \" intents length == 0\" )")
         .endControlFlow()
         .addStatement("newIntent = taskStackBuilder."
-                + "editIntentAt(taskStackBuilder.getIntentCount()-1)")
+            + "editIntentAt(taskStackBuilder.getIntentCount()-1)")
         .nextControlFlow("else")
         .addStatement("newIntent = (Intent) method.invoke(c, activity)")
         .endControlFlow()

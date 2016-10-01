@@ -17,13 +17,11 @@ import java.util.ArrayList;
 @Implements(TaskStackBuilder.class)
 public class ShadowTaskStackBuilder {
   private final ArrayList<Intent> mIntents = new ArrayList<>();
-  @RealObject
-  TaskStackBuilder realTaskStackBuilder;
+  @RealObject private TaskStackBuilder realTaskStackBuilder;
 
   @Implementation
   public static TaskStackBuilder create(Context context) {
-    TaskStackBuilder taskStackBuilder = Shadow.newInstanceOf(TaskStackBuilder.class);
-    return taskStackBuilder;
+    return Shadow.newInstanceOf(TaskStackBuilder.class);
   }
 
   @Implementation
@@ -36,12 +34,12 @@ public class ShadowTaskStackBuilder {
   public void startActivities() {
     if (mIntents.isEmpty()) {
       throw new IllegalStateException(
-                "No intents added to TaskStackBuilder; cannot startActivities");
+          "No intents added to TaskStackBuilder; cannot startActivities");
     }
     Intent[] intents = mIntents.toArray(new Intent[mIntents.size()]);
     intents[0] = new Intent(intents[0]).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK |
-            IntentCompat.FLAG_ACTIVITY_CLEAR_TASK |
-            IntentCompat.FLAG_ACTIVITY_TASK_ON_HOME);
+        IntentCompat.FLAG_ACTIVITY_CLEAR_TASK |
+        IntentCompat.FLAG_ACTIVITY_TASK_ON_HOME);
     RuntimeEnvironment.application.startActivities(intents);
   }
 
