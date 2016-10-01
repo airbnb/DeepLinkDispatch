@@ -21,20 +21,19 @@ import static org.robolectric.Shadows.shadowOf;
 @Config(sdk = 21, manifest = "../sample/src/main/AndroidManifest.xml")
 @RunWith(RobolectricTestRunner.class)
 public class SecondActivityTest {
-    @Test
-    public void testIntent() {
-        Intent intent = new Intent(Intent.ACTION_VIEW,
-                                   Uri.parse("http://example.com/deepLink/123/myname"));
-        DeepLinkActivity deepLinkActivity = Robolectric.buildActivity(DeepLinkActivity.class)
-            .withIntent(intent).create().get();
-        ShadowActivity shadowActivity = shadowOf(deepLinkActivity);
+  @Test public void testIntent() {
+    Intent intent = new Intent(Intent.ACTION_VIEW,
+        Uri.parse("http://example.com/deepLink/123/myname"));
+    DeepLinkActivity deepLinkActivity = Robolectric.buildActivity(DeepLinkActivity.class)
+        .withIntent(intent).create().get();
+    ShadowActivity shadowActivity = shadowOf(deepLinkActivity);
 
-        Intent launchedIntent = shadowActivity.peekNextStartedActivityForResult().intent;
-        assertThat(launchedIntent.getComponent(),
-                   equalTo(new ComponentName(deepLinkActivity, SecondActivity.class)));
+    Intent launchedIntent = shadowActivity.peekNextStartedActivityForResult().intent;
+    assertThat(launchedIntent.getComponent(),
+        equalTo(new ComponentName(deepLinkActivity, SecondActivity.class)));
 
-        assertThat(launchedIntent.getBooleanExtra(DeepLink.IS_DEEP_LINK, false), equalTo(true));
-        assertThat(launchedIntent.getStringExtra(DeepLink.URI),
-                   equalTo("http://example.com/deepLink/123/myname"));
-    }
+    assertThat(launchedIntent.getBooleanExtra(DeepLink.IS_DEEP_LINK, false), equalTo(true));
+    assertThat(launchedIntent.getStringExtra(DeepLink.URI),
+        equalTo("http://example.com/deepLink/123/myname"));
+  }
 }

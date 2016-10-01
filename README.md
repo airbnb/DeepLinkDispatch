@@ -161,7 +161,7 @@ Register `DeepLinkActivity` with the scheme you'd like in your `AndroidManifest.
 
 ```xml
 <activity
-    android:name=".DeepLinkActivity"
+    android:name="com.airbnb.deeplinkdispatch.DeepLinkActivity"
     android:theme="@android:style/Theme.NoDisplay">
     <intent-filter>
         <action android:name="android.intent.action.VIEW" />
