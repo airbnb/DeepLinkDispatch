@@ -23,7 +23,7 @@ import javax.lang.model.element.TypeElement;
 final class DeepLinkAnnotatedElement {
   private final String uri;
   private final DeepLinkEntry.Type annotationType;
-  private final TypeElement activityElement;
+  private final TypeElement annotatedElement;
   private final String method;
 
   DeepLinkAnnotatedElement(String annotation, Element element, DeepLinkEntry.Type type)
@@ -36,10 +36,10 @@ final class DeepLinkAnnotatedElement {
     annotationType = type;
 
     if (type == DeepLinkEntry.Type.METHOD) {
-      activityElement = (TypeElement) element.getEnclosingElement();
+      annotatedElement = (TypeElement) element.getEnclosingElement();
       method = element.getSimpleName().toString();
     } else {
-      activityElement = (TypeElement) element;
+      annotatedElement = (TypeElement) element;
       method = null;
     }
   }
@@ -52,8 +52,8 @@ final class DeepLinkAnnotatedElement {
     return annotationType;
   }
 
-  TypeElement getActivityElement() {
-    return activityElement;
+  TypeElement getAnnotatedElement() {
+    return annotatedElement;
   }
 
   String getMethod() {
