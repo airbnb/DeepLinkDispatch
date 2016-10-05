@@ -113,7 +113,8 @@ public class DeepLinkProcessor extends AbstractProcessor {
         = !roundEnv.getElementsAnnotatedWith(DeepLinkHandler.class).isEmpty();
 
     if (!deepLinkElements.isEmpty()) {
-      String packageName = deepLinkElements.get(0).getPackageName();
+      String packageName = processingEnv.getElementUtils().getPackageOf(
+          deepLinkElements.get(0).getAnnotatedElement()).getQualifiedName().toString();
       try {
         generateDeepLinkResult(packageName);
         generateDeepLinkLoader(packageName, deepLinkElements);

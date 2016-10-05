@@ -56,12 +56,6 @@ final class DeepLinkAnnotatedElement {
     return annotatedElement;
   }
 
-  /** Returns the package name for the annotated TypeElement. */
-  String getPackageName() {
-    String qualifiedName = annotatedElement.getQualifiedName().toString();
-    return qualifiedName.replace("." + annotatedElement.getSimpleName(), "");
-  }
-
   String getMethod() {
     return method;
   }
