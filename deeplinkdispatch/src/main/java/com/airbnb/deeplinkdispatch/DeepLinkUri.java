@@ -38,7 +38,7 @@ import okio.Buffer;
  * https.
  *https://github.com/square/okhttp/blob/master/okhttp/src/main/java/com/squareup/okhttp/HttpUri.java
  */
-final class DeepLinkUri {
+public final class DeepLinkUri {
   private static final char[] HEX_DIGITS =
       { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
   static final String USERNAME_ENCODE_SET = " \"':;<=>@[]^`{}|/\\?#";
@@ -313,7 +313,7 @@ final class DeepLinkUri {
     return null;
   }
 
-  Set<String> queryParameterNames() {
+  public Set<String> queryParameterNames() {
     if (queryNamesAndValues == null) return Collections.emptySet();
     Set<String> result = new LinkedHashSet<>();
     for (int i = 0, size = queryNamesAndValues.size(); i < size; i += 2) {
@@ -322,7 +322,7 @@ final class DeepLinkUri {
     return Collections.unmodifiableSet(result);
   }
 
-  List<String> queryParameterValues(String name) {
+  public List<String> queryParameterValues(String name) {
     if (queryNamesAndValues == null) return Collections.emptyList();
     List<String> result = new ArrayList<>();
     for (int i = 0, size = queryNamesAndValues.size(); i < size; i += 2) {
@@ -376,7 +376,7 @@ final class DeepLinkUri {
    * Returns a new {@code DeepLinkUri} representing {@code url} if it is a well-formed HTTP or HTTPS
    * URL, or null if it isn't.
    */
-  static DeepLinkUri parse(String url) {
+  public static DeepLinkUri parse(String url) {
     Builder builder = new Builder();
     Builder.ParseResult result = builder.parse(null, url);
     return result == Builder.ParseResult.SUCCESS ? builder.build() : null;

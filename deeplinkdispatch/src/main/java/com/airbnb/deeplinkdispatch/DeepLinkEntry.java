@@ -23,7 +23,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-final class DeepLinkEntry {
+public final class DeepLinkEntry {
   private static final String PARAM_VALUE = "([a-zA-Z0-9_#'!+%~,\\-\\.\\@\\$\\:]+)";
   private static final String PARAM = "([a-zA-Z][a-zA-Z0-9_-]*)";
   private static final String PARAM_REGEX = "%7B(" + PARAM + ")%7D";
@@ -34,12 +34,12 @@ final class DeepLinkEntry {
   private final Set<String> parameters;
   private final Pattern regex;
 
-  enum Type {
+  public enum Type {
     CLASS,
     METHOD
   }
 
-  DeepLinkEntry(String uri, Type type, Class<?> activityClass, String method) {
+  public DeepLinkEntry(String uri, Type type, Class<?> activityClass, String method) {
     DeepLinkUri parsedUri = DeepLinkUri.parse(uri);
     String schemeHostAndPath = schemeHostAndPath(parsedUri);
     this.type = type;
@@ -80,7 +80,7 @@ final class DeepLinkEntry {
    * @param inputUri the intent Uri used to launch the Activity
    * @return the map of parameter values, where all values will be strings.
    */
-  Map<String, String> getParameters(String inputUri) {
+  public Map<String, String> getParameters(String inputUri) {
     Iterator<String> paramsIterator = parameters.iterator();
     Map<String, String> paramsMap = new HashMap<>(parameters.size());
     DeepLinkUri deepLinkUri = DeepLinkUri.parse(inputUri);
@@ -102,7 +102,7 @@ final class DeepLinkEntry {
     return parsedUri.encodedPath();
   }
 
-  boolean matches(String inputUri) {
+  public boolean matches(String inputUri) {
     DeepLinkUri deepLinkUri = DeepLinkUri.parse(inputUri);
     return deepLinkUri != null && regex.matcher(schemeHostAndPath(deepLinkUri)).find();
   }

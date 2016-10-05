@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.net.Uri;
 
 import com.airbnb.deeplinkdispatch.DeepLink;
-import com.airbnb.deeplinkdispatch.DeepLinkActivity;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
