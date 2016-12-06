@@ -31,6 +31,7 @@ import java.lang.annotation.Target;
 public @interface DeepLink {
   String IS_DEEP_LINK = "is_deep_link_flag";
   String URI = "deep_link_uri";
+  String REFERRER_URI = "android.intent.extra.REFERRER";
 
   String[] value();
 }

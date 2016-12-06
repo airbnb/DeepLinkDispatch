@@ -30,16 +30,16 @@ public class MainActivityTest {
     DeepLinkActivity deepLinkActivity = Robolectric.buildActivity(DeepLinkActivity.class)
         .withIntent(intent).create().get();
     ShadowActivity shadowActivity = shadowOf(deepLinkActivity);
-
     Intent launchedIntent = shadowActivity.peekNextStartedActivityForResult().intent;
     assertThat(launchedIntent.getComponent(),
         equalTo(new ComponentName(deepLinkActivity, MainActivity.class)));
 
-    assertThat(launchedIntent.getBooleanExtra(DeepLink.IS_DEEP_LINK, false), equalTo(
-        true));
+    assertThat(launchedIntent.getBooleanExtra(DeepLink.IS_DEEP_LINK, false), equalTo(true));
     assertThat(launchedIntent.getStringExtra("arbitraryNumber"), equalTo("1234321"));
     assertThat(launchedIntent.getStringExtra("TEST_EXTRA"), equalTo("FOO"));
     assertThat(launchedIntent.getAction(), equalTo("deep_link_complex"));
+    assertThat(launchedIntent.<Uri>getParcelableExtra(DeepLink.REFERRER_URI).toString(),
+        equalTo("dld://host/somePath/1234321"));
     assertThat(launchedIntent.getData(), equalTo(Uri.parse("dld://host/somePath/1234321")));
     assertThat(launchedIntent.getStringExtra(DeepLink.URI),
         equalTo("dld://host/somePath/1234321"));
