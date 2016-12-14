@@ -1,4 +1,4 @@
-package com.airbnb.deeplinkdispatch;
+package com.example;
 
 import android.net.Uri;
 import java.lang.Object;
@@ -10,12 +10,12 @@ public final class DeepLinkResult {
 
   private final Uri uri;
 
-  private final String errorMessage;
+  private final String error;
 
-  DeepLinkResult(boolean successful, Uri uri, String errorMessage) {
+  DeepLinkResult(boolean successful, Uri uri, String error) {
     this.successful = successful;
     this.uri = uri;
-    this.errorMessage = errorMessage;
+    this.error = error;
   }
 
   /**
@@ -35,8 +35,8 @@ public final class DeepLinkResult {
   /**
    * @return this result's error message, or {@code null} if there is none.
    */
-  public String errorMessage() {
-    return errorMessage;
+  public String error() {
+    return error;
   }
 
   @Override
@@ -48,21 +48,21 @@ public final class DeepLinkResult {
 
     if (successful != that.successful) { return false; }
     if (uri != null ? !uri.equals(that.uri) : that.uri != null) { return false; }
-    return errorMessage != null ? errorMessage.equals(that.errorMessage) : that.errorMessage == null;}
+    return error != null ? error.equals(that.error) : that.error == null;}
 
   @Override
   public int hashCode() {
     int result = (successful ? 1 : 0);
     result = 31 * result + (uri != null ? uri.hashCode() : 0);
-    result = 31 * result + (errorMessage != null ? errorMessage.hashCode() : 0);
+    result = 31 * result + (error != null ? error.hashCode() : 0);
     return result;
   }
 
   @Override
   public String toString() {
     return "DeepLinkResult{" +
-            "successful=" + successful +
-            ", uri=" + uri +
-            ", errorMessage='" + errorMessage + '\'' +
-            '}';}
+        "successful=" + successful +
+        ", uri=" + uri +
+        ", error='" + error + '\'' +
+        '}';}
 }

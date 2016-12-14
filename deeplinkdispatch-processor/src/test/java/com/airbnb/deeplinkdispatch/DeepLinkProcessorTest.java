@@ -13,8 +13,12 @@ public class DeepLinkProcessorTest {
   @Test public void testProcessor() {
     JavaFileObject sampleActivity = JavaFileObjects
         .forSourceString("SampleActivity", "package com.example;"
-            + "import com.airbnb.deeplinkdispatch.DeepLink; "
-            + "@DeepLink(\"airbnb://example.com/deepLink\") public class SampleActivity {}");
+            + "import com.airbnb.deeplinkdispatch.DeepLink;\n"
+            + "import com.airbnb.deeplinkdispatch.DeepLinkHandler;\n\n"
+            + "@DeepLink(\"airbnb://example.com/deepLink\")\n"
+            + "@DeepLinkHandler\n"
+            + "public class SampleActivity {\n"
+            + "}");
 
     assert_().about(javaSource())
         .that(sampleActivity)
@@ -22,7 +26,8 @@ public class DeepLinkProcessorTest {
         .compilesWithoutError()
         .and()
         .generatesSources(
-            JavaFileObjects.forResource("DeepLinkActivity.java"),
+            JavaFileObjects.forResource("DeepLinkDelegate.java"),
+            JavaFileObjects.forResource("DeepLinkResult.java"),
             JavaFileObjects.forSourceString("/SOURCE_OUTPUT.com.example.DeepLinkLoader",
                 "package com.example;\n"
                     + "\n"
@@ -53,8 +58,12 @@ public class DeepLinkProcessorTest {
   @Test public void uppercasePackage() {
     JavaFileObject activityWithUppercasePackage = JavaFileObjects
         .forSourceString("SampleActivity", "package com.Example;"
-            + "import com.airbnb.deeplinkdispatch.DeepLink; "
-            + "@DeepLink(\"airbnb://example.com/deepLink\") public class SampleActivity {}");
+            + "import com.airbnb.deeplinkdispatch.DeepLink;\n"
+            + "import com.airbnb.deeplinkdispatch.DeepLinkHandler;\n\n"
+            + "@DeepLink(\"airbnb://example.com/deepLink\")"
+            + "@DeepLinkHandler\n"
+            + "public class SampleActivity {\n"
+            + "}");
 
     assert_().about(javaSource())
         .that(activityWithUppercasePackage)
@@ -62,7 +71,6 @@ public class DeepLinkProcessorTest {
         .compilesWithoutError()
         .and()
         .generatesSources(
-            JavaFileObjects.forResource("DeepLinkActivityUppercase.java"),
             JavaFileObjects.forSourceString("/SOURCE_OUTPUT.com.example.DeepLinkLoader",
                 "package com.Example;\n"
                     + "\n"
@@ -93,13 +101,13 @@ public class DeepLinkProcessorTest {
   @Test public void testNonStaticMethodCompileFail() {
     JavaFileObject sampleActivity = JavaFileObjects
         .forSourceString("SampleActivity", "package com.example;"
-                + "import com.airbnb.deeplinkdispatch.DeepLink; "
-                + "public class SampleActivity {"
-                + "  @DeepLink(\"airbnb://host/{arbitraryNumber}\")"
-                + "  public Intent intentFromNoStatic(Context context){"
-                + "    return new Intent();"
-                + "  }"
-                + "}"
+            + "import com.airbnb.deeplinkdispatch.DeepLink; "
+            + "public class SampleActivity {"
+            + "  @DeepLink(\"airbnb://host/{arbitraryNumber}\")"
+            + "  public Intent intentFromNoStatic(Context context){"
+            + "    return new Intent();"
+            + "  }"
+            + "}"
         );
 
     assert_().about(javaSource())

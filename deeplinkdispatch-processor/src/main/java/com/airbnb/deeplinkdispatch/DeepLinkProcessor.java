@@ -16,6 +16,8 @@
 package com.airbnb.deeplinkdispatch;
 
 import com.google.auto.service.AutoService;
+import com.google.common.collect.Sets;
+
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.JavaFile;
@@ -30,8 +32,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -52,7 +52,6 @@ import javax.tools.Diagnostic;
 
 @AutoService(Processor.class)
 public class DeepLinkProcessor extends AbstractProcessor {
-
   private static final ClassName ANDROID_INTENT = ClassName.get("android.content", "Intent");
   private static final ClassName ANDROID_CONTEXT = ClassName.get("android.content", "Context");
   private static final ClassName ANDROID_URI = ClassName.get("android.net", "Uri");
@@ -67,10 +66,9 @@ public class DeepLinkProcessor extends AbstractProcessor {
   }
 
   @Override public Set<String> getSupportedAnnotationTypes() {
-    return new HashSet<>(
-        Arrays.asList(
-            DeepLink.class.getCanonicalName(),
-            DeepLinkHandler.class.getCanonicalName()));
+    return Sets.newHashSet(
+        DeepLink.class.getCanonicalName(),
+        DeepLinkHandler.class.getCanonicalName());
   }
 
   @Override public SourceVersion getSupportedSourceVersion() {
@@ -80,7 +78,6 @@ public class DeepLinkProcessor extends AbstractProcessor {
   @Override
   public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
     List<DeepLinkAnnotatedElement> deepLinkElements = new ArrayList<>();
-
     Class<DeepLink> deepLinkClass = DeepLink.class;
     for (Element element : roundEnv.getElementsAnnotatedWith(deepLinkClass)) {
       ElementKind kind = element.getKind();
@@ -108,21 +105,15 @@ public class DeepLinkProcessor extends AbstractProcessor {
         }
       }
     }
-
-    boolean hasSpecifiedDeepLinkActivity
-        = !roundEnv.getElementsAnnotatedWith(DeepLinkHandler.class).isEmpty();
-
-    if (!deepLinkElements.isEmpty()) {
+    Set<? extends Element> deepLinkHandlerElements =
+        roundEnv.getElementsAnnotatedWith(DeepLinkHandler.class);
+    if (!deepLinkHandlerElements.isEmpty() && deepLinkHandlerElements.size() == 1) {
       String packageName = processingEnv.getElementUtils().getPackageOf(
-          deepLinkElements.get(0).getAnnotatedElement()).getQualifiedName().toString();
+          deepLinkHandlerElements.iterator().next()).getQualifiedName().toString();
       try {
         generateDeepLinkResult(packageName);
         generateDeepLinkLoader(packageName, deepLinkElements);
         generateDeepLinkDelegate(packageName);
-
-        if (!hasSpecifiedDeepLinkActivity) {
-          generateDeepLinkActivity(packageName);
-        }
       } catch (IOException e) {
         messager.printMessage(Diagnostic.Kind.ERROR, "Error creating file");
       } catch (RuntimeException e) {
@@ -471,28 +462,6 @@ public class DeepLinkProcessor extends AbstractProcessor {
         .build();
 
     JavaFile.builder(packageName, deepLinkDelegate)
-        .build()
-        .writeTo(filer);
-  }
-
-  private void generateDeepLinkActivity(String packageName) throws IOException {
-    MethodSpec onCreateMethod = MethodSpec.methodBuilder("onCreate")
-        .addModifiers(Modifier.PROTECTED)
-        .addAnnotation(Override.class)
-        .returns(void.class)
-        .addParameter(ClassName.get("android.os", "Bundle"), "savedInstanceState")
-        .addStatement("super.onCreate(savedInstanceState)")
-        .addStatement("$T.dispatchFrom(this)", ClassName.get(packageName, "DeepLinkDelegate"))
-        .addStatement("finish()")
-        .build();
-
-    TypeSpec deepLinkActivity = TypeSpec.classBuilder("DeepLinkActivity")
-        .addModifiers(Modifier.PUBLIC)
-        .superclass(ClassName.get("android.app", "Activity"))
-        .addMethod(onCreateMethod)
-        .build();
-
-    JavaFile.builder(packageName, deepLinkActivity)
         .build()
         .writeTo(filer);
   }
