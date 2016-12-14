@@ -2,35 +2,35 @@ apply plugin: 'com.android.application'
 apply plugin: 'checkstyle'
 
 checkstyle {
-    configFile rootProject.file('checkstyle.xml')
-    showViolations true
-    configProperties = ['checkstyle.cache.file': rootProject.file('build/checkstyle.cache')]
+  configFile rootProject.file('checkstyle.xml')
+  showViolations true
+  configProperties = ['checkstyle.cache.file': rootProject.file('build/checkstyle.cache')]
 }
 
 android {
-    compileSdkVersion 25
-    buildToolsVersion "25.0.1"
+  compileSdkVersion 25
+  buildToolsVersion "25.0.1"
 
-    defaultConfig {
-        applicationId "com.airbnb.deeplinkdispatch.sample"
-        minSdkVersion 15
-        targetSdkVersion 25
-        versionCode 1
-        versionName "1.0"
-    }
-    packagingOptions {
-        exclude 'META-INF/services/javax.annotation.processing.Processor'
-    }
-    lintOptions {
-        disable 'InvalidPackage'
-    }
+  defaultConfig {
+    applicationId "com.airbnb.deeplinkdispatch.sample"
+    minSdkVersion 15
+    targetSdkVersion 25
+    versionCode 1
+    versionName "1.0"
+  }
+  packagingOptions {
+    exclude 'META-INF/services/javax.annotation.processing.Processor'
+  }
+  lintOptions {
+    disable 'InvalidPackage'
+  }
 }
 
 dependencies {
-    compile project(':deeplinkdispatch')
-    annotationProcessor project(':deeplinkdispatch-processor')
-    compile 'com.android.support:appcompat-v7:25.0.1'
+  compile project(':deeplinkdispatch')
+  annotationProcessor project(':deeplinkdispatch-processor')
+  compile 'com.android.support:appcompat-v7:25.0.1'
 
-    testCompile 'org.robolectric:robolectric:3.1.2'
-    testCompile 'junit:junit:4.12'
+  testCompile 'org.robolectric:robolectric:3.1.2'
+  testCompile 'junit:junit:4.12'
 }

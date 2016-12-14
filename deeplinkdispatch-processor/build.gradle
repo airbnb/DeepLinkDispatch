@@ -6,70 +6,70 @@ apply plugin: 'com.bmuschko.nexus'
 apply plugin: 'checkstyle'
 
 dependencies {
-    compile project(':deeplinkdispatch')
-    compile 'com.google.auto.service:auto-service:1.0-rc2'
-    compile 'com.squareup:javapoet:1.8.0'
+  compile project(':deeplinkdispatch')
+  compile 'com.google.auto.service:auto-service:1.0-rc2'
+  compile 'com.squareup:javapoet:1.8.0'
 
-    testCompile 'junit:junit:4.12'
-    testCompile 'org.assertj:assertj-core:1.7.0'
-    testCompile 'com.google.android:android:4.1.1.4'
-    testCompile fileTree(dir: 'libs', include: ['android-support-v4.jar'])
-    testCompile 'com.google.testing.compile:compile-testing:0.6'
-    testCompile 'org.mockito:mockito-core:1.10.19'
-    testCompile files(org.gradle.internal.jvm.Jvm.current().getToolsJar())
+  testCompile 'junit:junit:4.12'
+  testCompile 'org.assertj:assertj-core:1.7.0'
+  testCompile 'com.google.android:android:4.1.1.4'
+  testCompile fileTree(dir: 'libs', include: ['android-support-v4.jar'])
+  testCompile 'com.google.testing.compile:compile-testing:0.6'
+  testCompile 'org.mockito:mockito-core:1.10.19'
+  testCompile files(org.gradle.internal.jvm.Jvm.current().getToolsJar())
 }
 
 checkstyle {
-    configFile rootProject.file('checkstyle.xml')
-    showViolations true
-    configProperties = ['checkstyle.cache.file': rootProject.file('build/checkstyle.cache')]
+  configFile rootProject.file('checkstyle.xml')
+  showViolations true
+  configProperties = ['checkstyle.cache.file': rootProject.file('build/checkstyle.cache')]
 }
 
 project.group = PROJECT_GROUP_ID
 project.version = PROJECT_VERSION
 
 modifyPom {
-    project {
-        name 'DeepLinkDispatch processor'
-        description PROJECT_DESCRIPTION
-        url PROJECT_URL
-        inceptionYear '2015'
-        version PROJECT_VERSION
-        groupId PROJECT_GROUP_ID
-        artifactId 'deeplinkdispatch-processor'
+  project {
+    name 'DeepLinkDispatch processor'
+    description PROJECT_DESCRIPTION
+    url PROJECT_URL
+    inceptionYear '2015'
+    version PROJECT_VERSION
+    groupId PROJECT_GROUP_ID
+    artifactId 'deeplinkdispatch-processor'
 
-        scm {
-            url PROJECT_URL
-            connection 'scm:https://gitub.com/airbnb/DeepLinkDispatch.git'
-            developerConnection 'scm:git@gitub.com:airbnb/DeepLinkDispatch.git'
-        }
-
-        licenses {
-            license {
-                name 'The Apache Software License, Version 2.0'
-                url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-                distribution 'repo'
-            }
-        }
-
-        developers {
-            developer {
-                id 'airbnb'
-                name 'Airbnb'
-                email 'android@airbnb.com'
-            }
-        }
+    scm {
+      url PROJECT_URL
+      connection 'scm:https://gitub.com/airbnb/DeepLinkDispatch.git'
+      developerConnection 'scm:git@gitub.com:airbnb/DeepLinkDispatch.git'
     }
+
+    licenses {
+      license {
+        name 'The Apache Software License, Version 2.0'
+        url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+        distribution 'repo'
+      }
+    }
+
+    developers {
+      developer {
+        id 'airbnb'
+        name 'Airbnb'
+        email 'android@airbnb.com'
+      }
+    }
+  }
 }
 
 extraArchive {
-    sources = true
-    tests = false
-    javadoc = true
+  sources = true
+  tests = false
+  javadoc = true
 }
 
 nexus {
-    sign = !isCi()
-    repositoryUrl = 'https://oss.sonatype.org/service/local/staging/deploy/maven2/'
-    snapshotRepositoryUrl = 'https://oss.sonatype.org/content/repositories/snapshots/'
+  sign = !isCi()
+  repositoryUrl = 'https://oss.sonatype.org/service/local/staging/deploy/maven2/'
+  snapshotRepositoryUrl = 'https://oss.sonatype.org/content/repositories/snapshots/'
 }
