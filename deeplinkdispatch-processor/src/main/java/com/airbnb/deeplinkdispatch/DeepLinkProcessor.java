@@ -313,6 +313,15 @@ public class DeepLinkProcessor extends AbstractProcessor {
         .addStatement("throw new $T($S)", AssertionError.class, "No instances.")
         .build();
 
+    MethodSpec supportsUri = MethodSpec.methodBuilder("supportsUri")
+        .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
+        .returns(TypeName.BOOLEAN)
+        .addParameter(String.class, "uriString")
+        .addStatement("DeepLinkLoader loader = new DeepLinkLoader()")
+        .addStatement("loader.load()")
+        .addStatement("return loader.parseUri(uriString) != null")
+        .build();
+
     MethodSpec dispatchFromMethod = MethodSpec.methodBuilder("dispatchFrom")
         .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
         .returns(deepLinkResult)
@@ -458,6 +467,7 @@ public class DeepLinkProcessor extends AbstractProcessor {
         .addMethod(dispatchFromMethodWithIntent)
         .addMethod(createResultAndNotifyMethod)
         .addMethod(notifyListenerMethod)
+        .addMethod(supportsUri)
         .build();
 
     JavaFile.builder(packageName, deepLinkDelegate)
