@@ -11,6 +11,7 @@ import android.util.Log;
 import com.airbnb.deeplinkdispatch.DeepLink;
 import com.airbnb.deeplinkdispatch.DeepLinkEntry;
 import com.airbnb.deeplinkdispatch.DeepLinkHandler;
+import com.airbnb.deeplinkdispatch.DeepLinkResult;
 import com.airbnb.deeplinkdispatch.DeepLinkUri;
 import java.lang.AssertionError;
 import java.lang.NoSuchMethodException;
@@ -45,10 +46,8 @@ public final class DeepLinkDelegate {
     if (uri == null) {
       return createResultAndNotify(activity, false, null, "No Uri in given activity's intent.");
     }
-    DeepLinkLoader loader = new DeepLinkLoader();
-    loader.load();
     String uriString = uri.toString();
-    DeepLinkEntry entry = loader.parseUri(uriString);
+    DeepLinkEntry entry = DeepLinkLoader.parseUri(uriString);
     if (entry != null) {
       DeepLinkUri deepLinkUri = DeepLinkUri.parse(uriString);
       Map<String, String> parameterMap = entry.getParameters(uriString);
@@ -134,7 +133,7 @@ public final class DeepLinkDelegate {
 
   private static DeepLinkResult createResultAndNotify(Context context, final boolean successful,
       final Uri uri, final String error) {
-    DeepLinkResult result = new DeepLinkResult(successful, uri, error);
+    DeepLinkResult result = new DeepLinkResult(successful, uri.toString(), error);
     notifyListener(context, !successful, uri, error);
     return result;
   }
@@ -152,8 +151,6 @@ public final class DeepLinkDelegate {
   }
 
   public static boolean supportsUri(String uriString) {
-    DeepLinkLoader loader = new DeepLinkLoader();
-    loader.load();
-    return loader.parseUri(uriString) != null;
+    return DeepLinkLoader.parseUri(uriString) != null;
   }
 }

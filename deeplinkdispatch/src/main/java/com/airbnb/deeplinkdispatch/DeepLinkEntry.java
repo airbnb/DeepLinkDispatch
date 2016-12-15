@@ -27,6 +27,7 @@ public final class DeepLinkEntry {
   private static final String PARAM_VALUE = "([a-zA-Z0-9_#'!+%~,\\-\\.\\@\\$\\:]+)";
   private static final String PARAM = "([a-zA-Z][a-zA-Z0-9_-]*)";
   private static final String PARAM_REGEX = "%7B(" + PARAM + ")%7D";
+  private static final Pattern PARAM_PATTERN = Pattern.compile(PARAM_REGEX);
 
   private final Type type;
   private final Class<?> activityClass;
@@ -66,7 +67,7 @@ public final class DeepLinkEntry {
    * in the URI, it will only show up once in the set.
    */
   private static Set<String> parseParameters(DeepLinkUri uri) {
-    Matcher matcher = Pattern.compile(PARAM_REGEX).matcher(uri.encodedHost() + uri.encodedPath());
+    Matcher matcher = PARAM_PATTERN.matcher(uri.encodedHost() + uri.encodedPath());
     Set<String> patterns = new LinkedHashSet<>();
     while (matcher.find()) {
       patterns.add(matcher.group(1));
