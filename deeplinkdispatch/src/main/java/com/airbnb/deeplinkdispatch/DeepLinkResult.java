@@ -60,10 +60,10 @@ public final class DeepLinkResult {
 
   @Override
   public String toString() {
-    return "DeepLinkResult{" +
-        "successful=" + successful +
-        ", uriString=" + uriString +
-        ", error='" + error + '\'' +
-        '}';
+    return "DeepLinkResult{"
+        + "successful=" + successful
+        + ", uriString=" + uriString
+        + ", error='" + error + '\''
+        + '}';
   }
 }

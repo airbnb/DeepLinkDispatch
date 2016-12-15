@@ -37,8 +37,8 @@ public class DeepLinkProcessorTest {
                     + "\n"
                     + "public final class DeepLinkLoader {\n"
                     + "  private static final List<DeepLinkEntry> REGISTRY = Arrays.asList("
-                    + "new DeepLinkEntry(\"airbnb://example.com/deepLink\", DeepLinkEntry.Type" +
-                    ".CLASS, SampleActivity.class, null));\n"
+                    + "new DeepLinkEntry(\"airbnb://example.com/deepLink\", DeepLinkEntry.Type"
+                    + ".CLASS, SampleActivity.class, null));\n"
                     + "\n"
                     + "  static DeepLinkEntry parseUri(String uri) {\n"
                     + "    for (DeepLinkEntry entry : REGISTRY) {\n"
@@ -77,8 +77,8 @@ public class DeepLinkProcessorTest {
                     + "\n"
                     + "public final class DeepLinkLoader {\n"
                     + "  private static final List<DeepLinkEntry> REGISTRY = Arrays.asList("
-                    + "new DeepLinkEntry(\"airbnb://example.com/deepLink\", DeepLinkEntry.Type" +
-                    ".CLASS, SampleActivity.class, null));\n"
+                    + "new DeepLinkEntry(\"airbnb://example.com/deepLink\", DeepLinkEntry.Type"
+                    + ".CLASS, SampleActivity.class, null));\n"
                     + "\n"
                     + "  static DeepLinkEntry parseUri(String uri) {\n"
                     + "    for (DeepLinkEntry entry : REGISTRY) {\n"
