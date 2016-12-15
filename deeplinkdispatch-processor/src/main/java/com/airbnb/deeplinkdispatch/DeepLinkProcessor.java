@@ -200,10 +200,9 @@ public class DeepLinkProcessor extends AbstractProcessor {
         .addParameter(TypeName.BOOLEAN, "successful", Modifier.FINAL)
         .addParameter(ANDROID_URI, "uri", Modifier.FINAL)
         .addParameter(ClassName.get(String.class), "error", Modifier.FINAL)
-        .addStatement("$T result = new $T(successful, uri.toString(), error)", deepLinkResult,
-            deepLinkResult)
         .addStatement("notifyListener(context, !successful, uri, error)")
-        .addStatement("return result")
+        .addStatement("return new $T(successful, uri != null ? uri.toString() : null, error)",
+            deepLinkResult)
         .build();
 
     FieldSpec tag = FieldSpec

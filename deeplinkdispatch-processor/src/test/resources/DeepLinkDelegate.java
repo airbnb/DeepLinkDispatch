@@ -133,9 +133,8 @@ public final class DeepLinkDelegate {
 
   private static DeepLinkResult createResultAndNotify(Context context, final boolean successful,
       final Uri uri, final String error) {
-    DeepLinkResult result = new DeepLinkResult(successful, uri.toString(), error);
     notifyListener(context, !successful, uri, error);
-    return result;
+    return new DeepLinkResult(successful, uri != null ? uri.toString() : null, error);
   }
 
   private static void notifyListener(Context context, boolean isError, Uri uri,
