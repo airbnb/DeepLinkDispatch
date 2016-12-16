@@ -21,16 +21,22 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Indicates that this a given type will receive deep links and handle them, so the processor
- * knows not to generate a separate activity.
+ * Indicates that the annotated {@code Activity} will receive deep links and handle them. This
+ * will tell DeepLinkDispatch to generate a {@code DeepLinkDelegate} class that forwards the
+ * incoming {@code Intent} to the correct Activities annotated with {@link DeepLink}.
  */
 @Target({ ElementType.TYPE })
 @Retention(RetentionPolicy.CLASS)
 public @interface DeepLinkHandler {
-    Class<?>[] value();
+  /**
+   * A list of {@link DeepLinkModule} annotated classes used for collecting all the deep links in
+   * an application. The generated {@code DeepLinkDelegate} class will query the provided modules
+   * in order to decide which {@code Activity} should receive the incoming deep link.
+   */
+  Class<?>[] value();
 
-    String ACTION = "com.airbnb.deeplinkdispatch.DEEPLINK_ACTION";
-    String EXTRA_SUCCESSFUL = "com.airbnb.deeplinkdispatch.EXTRA_SUCCESSFUL";
-    String EXTRA_URI = "com.airbnb.deeplinkdispatch.EXTRA_URI";
-    String EXTRA_ERROR_MESSAGE = "com.airbnb.deeplinkdispatch.EXTRA_ERROR_MESSAGE";
+  String ACTION = "com.airbnb.deeplinkdispatch.DEEPLINK_ACTION";
+  String EXTRA_SUCCESSFUL = "com.airbnb.deeplinkdispatch.EXTRA_SUCCESSFUL";
+  String EXTRA_URI = "com.airbnb.deeplinkdispatch.EXTRA_URI";
+  String EXTRA_ERROR_MESSAGE = "com.airbnb.deeplinkdispatch.EXTRA_ERROR_MESSAGE";
 }
