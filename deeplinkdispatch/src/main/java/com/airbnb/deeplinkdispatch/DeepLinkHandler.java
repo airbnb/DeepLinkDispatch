@@ -27,6 +27,8 @@ import java.lang.annotation.Target;
 @Target({ ElementType.TYPE })
 @Retention(RetentionPolicy.CLASS)
 public @interface DeepLinkHandler {
+    Class<?>[] value();
+
     String ACTION = "com.airbnb.deeplinkdispatch.DEEPLINK_ACTION";
     String EXTRA_SUCCESSFUL = "com.airbnb.deeplinkdispatch.EXTRA_SUCCESSFUL";
     String EXTRA_URI = "com.airbnb.deeplinkdispatch.EXTRA_URI";

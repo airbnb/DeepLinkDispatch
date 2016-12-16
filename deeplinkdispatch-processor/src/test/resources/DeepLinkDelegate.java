@@ -13,29 +13,44 @@ import com.airbnb.deeplinkdispatch.DeepLinkEntry;
 import com.airbnb.deeplinkdispatch.DeepLinkHandler;
 import com.airbnb.deeplinkdispatch.DeepLinkResult;
 import com.airbnb.deeplinkdispatch.DeepLinkUri;
-import java.lang.AssertionError;
+import com.airbnb.deeplinkdispatch.Parser;
 import java.lang.NoSuchMethodException;
 import java.lang.NullPointerException;
 import java.lang.String;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 public final class DeepLinkDelegate {
   private static final String TAG = DeepLinkDelegate.class.getSimpleName();
 
-  private DeepLinkDelegate() {
-    throw new AssertionError("No instances.");
+  private final List<? extends Parser> loaders;
+
+  public DeepLinkDelegate(SampleModuleLoader sampleModuleLoader) {
+    this.loaders = Arrays.asList(
+        sampleModuleLoader);
   }
 
-  public static DeepLinkResult dispatchFrom(Activity activity) {
+  private DeepLinkEntry findEntry(String uriString) {
+    for (Parser loader : loaders) {
+      DeepLinkEntry entry = loader.parseUri(uriString);
+      if (entry != null) {
+        return entry;
+      }
+    }
+    return null;
+  }
+
+  public DeepLinkResult dispatchFrom(Activity activity) {
     if (activity == null) {
       throw new NullPointerException("activity == null");
     }
     return dispatchFrom(activity, activity.getIntent());
   }
 
-  public static DeepLinkResult dispatchFrom(Activity activity, Intent sourceIntent) {
+  public DeepLinkResult dispatchFrom(Activity activity, Intent sourceIntent) {
     if (activity == null) {
       throw new NullPointerException("activity == null");
     }
@@ -47,7 +62,7 @@ public final class DeepLinkDelegate {
       return createResultAndNotify(activity, false, null, "No Uri in given activity's intent.");
     }
     String uriString = uri.toString();
-    DeepLinkEntry entry = DeepLinkLoader.parseUri(uriString);
+    DeepLinkEntry entry = findEntry(uriString);
     if (entry != null) {
       DeepLinkUri deepLinkUri = DeepLinkUri.parse(uriString);
       Map<String, String> parameterMap = entry.getParameters(uriString);
@@ -149,7 +164,7 @@ public final class DeepLinkDelegate {
     LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
   }
 
-  public static boolean supportsUri(String uriString) {
-    return DeepLinkLoader.parseUri(uriString) != null;
+  public boolean supportsUri(String uriString) {
+    return findEntry(uriString) != null;
   }
 }

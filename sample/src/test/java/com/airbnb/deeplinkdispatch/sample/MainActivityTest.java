@@ -126,7 +126,8 @@ public class MainActivityTest {
 
   @Test
   public void testSupportsUri() throws Exception {
-    assertThat(DeepLinkDelegate.supportsUri("dld://classDeepLink"), equalTo(true));
-    assertThat(DeepLinkDelegate.supportsUri("some://weirdNonExistentUri"), equalTo(false));
+    DeepLinkDelegate deepLinkDelegate = new DeepLinkDelegate(new SampleModuleLoader());
+    assertThat(deepLinkDelegate.supportsUri("dld://classDeepLink"), equalTo(true));
+    assertThat(deepLinkDelegate.supportsUri("some://weirdNonExistentUri"), equalTo(false));
   }
 }
