@@ -13,8 +13,12 @@ public class DeepLinkProcessorTest {
   @Test public void testProcessor() {
     JavaFileObject sampleActivity = JavaFileObjects
         .forSourceString("SampleActivity", "package com.example;"
-            + "import com.airbnb.deeplinkdispatch.DeepLink; "
-            + "@DeepLink(\"airbnb://example.com/deepLink\") public class SampleActivity {}");
+            + "import com.airbnb.deeplinkdispatch.DeepLink;\n"
+            + "import com.airbnb.deeplinkdispatch.DeepLinkHandler;\n\n"
+            + "@DeepLink(\"airbnb://example.com/deepLink\")\n"
+            + "@DeepLinkHandler\n"
+            + "public class SampleActivity {\n"
+            + "}");
 
     assert_().about(javaSource())
         .that(sampleActivity)
@@ -22,25 +26,22 @@ public class DeepLinkProcessorTest {
         .compilesWithoutError()
         .and()
         .generatesSources(
-            JavaFileObjects.forResource("DeepLinkActivity.java"),
+            JavaFileObjects.forResource("DeepLinkDelegate.java"),
             JavaFileObjects.forSourceString("/SOURCE_OUTPUT.com.example.DeepLinkLoader",
                 "package com.example;\n"
                     + "\n"
                     + "import com.airbnb.deeplinkdispatch.DeepLinkEntry;\n"
                     + "import java.lang.String;\n"
-                    + "import java.util.LinkedList;\n"
+                    + "import java.util.Arrays;\n"
                     + "import java.util.List;\n"
                     + "\n"
                     + "public final class DeepLinkLoader {\n"
-                    + "  private final List<DeepLinkEntry> registry = new LinkedList<>();\n"
+                    + "  private static final List<DeepLinkEntry> REGISTRY = Arrays.asList("
+                    + "new DeepLinkEntry(\"airbnb://example.com/deepLink\", DeepLinkEntry.Type"
+                    + ".CLASS, SampleActivity.class, null));\n"
                     + "\n"
-                    + "  void load() {\n"
-                    + "    registry.add(new DeepLinkEntry(\"airbnb://example.com/deepLink\", "
-                    + "DeepLinkEntry.Type.CLASS, SampleActivity.class, null));\n"
-                    + "  }\n"
-                    + "\n"
-                    + "  DeepLinkEntry parseUri(String uri) {\n"
-                    + "    for (DeepLinkEntry entry : registry) {\n"
+                    + "  static DeepLinkEntry parseUri(String uri) {\n"
+                    + "    for (DeepLinkEntry entry : REGISTRY) {\n"
                     + "      if (entry.matches(uri)) {\n"
                     + "        return entry;\n"
                     + "      }\n"
@@ -53,8 +54,12 @@ public class DeepLinkProcessorTest {
   @Test public void uppercasePackage() {
     JavaFileObject activityWithUppercasePackage = JavaFileObjects
         .forSourceString("SampleActivity", "package com.Example;"
-            + "import com.airbnb.deeplinkdispatch.DeepLink; "
-            + "@DeepLink(\"airbnb://example.com/deepLink\") public class SampleActivity {}");
+            + "import com.airbnb.deeplinkdispatch.DeepLink;\n"
+            + "import com.airbnb.deeplinkdispatch.DeepLinkHandler;\n\n"
+            + "@DeepLink(\"airbnb://example.com/deepLink\")"
+            + "@DeepLinkHandler\n"
+            + "public class SampleActivity {\n"
+            + "}");
 
     assert_().about(javaSource())
         .that(activityWithUppercasePackage)
@@ -62,25 +67,21 @@ public class DeepLinkProcessorTest {
         .compilesWithoutError()
         .and()
         .generatesSources(
-            JavaFileObjects.forResource("DeepLinkActivityUppercase.java"),
             JavaFileObjects.forSourceString("/SOURCE_OUTPUT.com.example.DeepLinkLoader",
                 "package com.Example;\n"
                     + "\n"
                     + "import com.airbnb.deeplinkdispatch.DeepLinkEntry;\n"
                     + "import java.lang.String;\n"
-                    + "import java.util.LinkedList;\n"
+                    + "import java.util.Arrays;\n"
                     + "import java.util.List;\n"
                     + "\n"
                     + "public final class DeepLinkLoader {\n"
-                    + "  private final List<DeepLinkEntry> registry = new LinkedList<>();\n"
+                    + "  private static final List<DeepLinkEntry> REGISTRY = Arrays.asList("
+                    + "new DeepLinkEntry(\"airbnb://example.com/deepLink\", DeepLinkEntry.Type"
+                    + ".CLASS, SampleActivity.class, null));\n"
                     + "\n"
-                    + "  void load() {\n"
-                    + "    registry.add(new DeepLinkEntry(\"airbnb://example.com/deepLink\", "
-                    + "DeepLinkEntry.Type.CLASS, SampleActivity.class, null));\n"
-                    + "  }\n"
-                    + "\n"
-                    + "  DeepLinkEntry parseUri(String uri) {\n"
-                    + "    for (DeepLinkEntry entry : registry) {\n"
+                    + "  static DeepLinkEntry parseUri(String uri) {\n"
+                    + "    for (DeepLinkEntry entry : REGISTRY) {\n"
                     + "      if (entry.matches(uri)) {\n"
                     + "        return entry;\n"
                     + "      }\n"
@@ -93,13 +94,13 @@ public class DeepLinkProcessorTest {
   @Test public void testNonStaticMethodCompileFail() {
     JavaFileObject sampleActivity = JavaFileObjects
         .forSourceString("SampleActivity", "package com.example;"
-                + "import com.airbnb.deeplinkdispatch.DeepLink; "
-                + "public class SampleActivity {"
-                + "  @DeepLink(\"airbnb://host/{arbitraryNumber}\")"
-                + "  public Intent intentFromNoStatic(Context context){"
-                + "    return new Intent();"
-                + "  }"
-                + "}"
+            + "import com.airbnb.deeplinkdispatch.DeepLink; "
+            + "public class SampleActivity {"
+            + "  @DeepLink(\"airbnb://host/{arbitraryNumber}\")"
+            + "  public Intent intentFromNoStatic(Context context){"
+            + "    return new Intent();"
+            + "  }"
+            + "}"
         );
 
     assert_().about(javaSource())

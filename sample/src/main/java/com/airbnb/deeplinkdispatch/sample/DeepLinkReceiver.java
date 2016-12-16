@@ -7,7 +7,6 @@ import android.util.Log;
 
 import com.airbnb.deeplinkdispatch.DeepLinkHandler;
 
-
 public class DeepLinkReceiver extends BroadcastReceiver {
   private static final String TAG = DeepLinkReceiver.class.getSimpleName();
 
