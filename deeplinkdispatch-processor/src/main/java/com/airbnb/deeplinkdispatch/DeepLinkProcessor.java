@@ -88,6 +88,7 @@ public class DeepLinkProcessor extends AbstractProcessor {
   @Override public Set<String> getSupportedAnnotationTypes() {
     return Sets.newHashSet(
         DeepLink.class.getCanonicalName(),
+        DeepLinkModule.class.getCanonicalName(),
         DeepLinkHandler.class.getCanonicalName());
   }
 
