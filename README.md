@@ -67,7 +67,6 @@ If you need access to the `Intent` extras, just add a `Bundle` parameter to your
 @DeepLink("foo://example.com/methodDeepLink/{param1}")
 public static Intent intentForDeepLinkMethod(Context context, Bundle extras) {
   Uri.Builder uri = Uri.parse(extras.getString(DeepLink.URI)).buildUpon();
-  extras.putString(EXTRA_FOO, "foo");
   return new Intent(context, MainActivity.class)
       .setData(uri.appendQueryParameter("bar", "baz").build())
       .setAction(ACTION_DEEP_LINK_METHOD);
@@ -93,7 +92,7 @@ public static TaskStackBuilder intentForTaskStackBuilderMethods(Context context)
 Query parameters are parsed and passed along automatically, and are retrievable like any other parameter. For example, we could retrieve the query parameter passed along in the URI `example://example.com/deepLink?qp=123`:
 
 ```java
-@DeepLink("foo://example.com/deepLink")
+@DeepLink("foo://example.com/deepLink?qp=123")
 public class MainActivity extends Activity {
   @Override protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
