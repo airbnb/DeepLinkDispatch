@@ -192,7 +192,7 @@ Create any `Activity` (eg. `DeepLinkActivity`) with the scheme you'd like to han
 Annotate your `DeepLinkActivity` with `@DeepLinkHandler` and provide it a list of `@DeepLinkModule` annotated class(es):
 
 ```java
-@DeepLinkHandler({ FooModule.class, BarModule.class })
+@DeepLinkHandler({ AppDeepLinkModule.class, LibraryDeepLinkModule.class })
 public class DeepLinkActivity extends Activity {
   @Override protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
