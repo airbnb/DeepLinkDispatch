@@ -33,6 +33,6 @@ dependencies {
   compile project(':sample-library')
   compile 'com.android.support:appcompat-v7:25.1.0'
 
-  testCompile 'org.robolectric:robolectric:3.1.2'
+  testCompile 'org.robolectric:robolectric:3.2'
   testCompile 'junit:junit:4.12'
 }
