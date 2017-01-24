@@ -15,4 +15,13 @@ final class Utils {
       return str;
     }
   }
+
+  static boolean hasEmptyOrNullString(String[] strings) {
+    for (String s : strings) {
+      if (s == null || s.isEmpty()) {
+        return true;
+      }
+    }
+    return false;
+  }
 }
