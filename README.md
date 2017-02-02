@@ -156,13 +156,17 @@ annotation. A popular use case for this is with web versus app deep links:
 public @interface AppDeepLink {
   String[] value();
 }
+```
 
+```java
 // Prefix all web deep links with "http://airbnb.com" and "https://airbnb.com"
 @DeepLinkSpec(prefix = { "http://airbnb.com", "https://airbnb.com" })
 public @interface WebDeepLink {
   String[] value();
 }
+```
 
+```java
 // This activity is gonna hanndle the following deep links:
 // "app://airbnb/view_users"
 // "http://airbnb.com/users"
