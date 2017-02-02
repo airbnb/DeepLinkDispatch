@@ -113,7 +113,7 @@ public class DeepLinkProcessor extends AbstractProcessor {
       ElementKind kind = customAnnotation.getKind();
       if (kind != ElementKind.ANNOTATION_TYPE) {
         error(customAnnotation, "Only annotation types can be annotated with @%s",
-                DEEP_LINK_SPEC_CLASS.getSimpleName());
+            DEEP_LINK_SPEC_CLASS.getSimpleName());
       }
       String[] prefix = customAnnotation.getAnnotation(DEEP_LINK_SPEC_CLASS).prefix();
       if (Utils.hasEmptyOrNullString(prefix)) {
@@ -124,7 +124,7 @@ public class DeepLinkProcessor extends AbstractProcessor {
       }
       prefixes.put(customAnnotation, prefix);
       for (Element customAnnotatedElement
-              : roundEnv.getElementsAnnotatedWith(MoreElements.asType(customAnnotation))) {
+          : roundEnv.getElementsAnnotatedWith(MoreElements.asType(customAnnotation))) {
         customAnnotatedElements.add(customAnnotatedElement);
       }
     }
@@ -211,14 +211,14 @@ public class DeepLinkProcessor extends AbstractProcessor {
     return true;
   }
 
-  private static List<String> enumerateCustomDeepLinks(
-          Element element, Map<Element, String[]> prefixesMap) {
+  private static List<String> enumerateCustomDeepLinks(Element element,
+      Map<Element, String[]> prefixesMap) {
     Set<? extends AnnotationMirror> annotationMirrors =
-            AnnotationMirrors.getAnnotatedAnnotations(element, DEEP_LINK_SPEC_CLASS);
+        AnnotationMirrors.getAnnotatedAnnotations(element, DEEP_LINK_SPEC_CLASS);
     final List<String> deepLinks = new ArrayList<>();
     for (AnnotationMirror customAnnotation : annotationMirrors) {
       List<? extends AnnotationValue> suffixes =
-              asAnnotationValues(AnnotationMirrors.getAnnotationValue(customAnnotation, "value"));
+          asAnnotationValues(AnnotationMirrors.getAnnotationValue(customAnnotation, "value"));
       String[] prefixes = prefixesMap.get(customAnnotation.getAnnotationType().asElement());
       for (String prefix : prefixes) {
         for (AnnotationValue suffix : suffixes) {
@@ -426,7 +426,7 @@ public class DeepLinkProcessor extends AbstractProcessor {
         .endControlFlow()
         .addStatement("parameterMap.put($T.URI, uri.toString())",
             ClassName.get(DLD_PACKAGE_NAME, "DeepLink"))
-        .addStatement("$T parameters",  ANDROID_BUNDLE)
+        .addStatement("$T parameters", ANDROID_BUNDLE)
         .beginControlFlow("if (sourceIntent.getExtras() != null)")
         .addStatement("parameters = new Bundle(sourceIntent.getExtras())")
         .nextControlFlow("else")
