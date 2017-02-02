@@ -13,6 +13,22 @@ import static com.google.testing.compile.JavaSourceSubjectFactory.javaSource;
 import static com.google.testing.compile.JavaSourcesSubjectFactory.javaSources;
 
 public class DeepLinkProcessorTest {
+  private static final JavaFileObject SIMPLE_DEEPLINK_ACTIVITY = JavaFileObjects
+          .forSourceString("SampleActivity", "package com.example;"
+                  + "import com.airbnb.deeplinkdispatch.DeepLink;\n"
+                  + "import com.airbnb.deeplinkdispatch.DeepLinkHandler;\n\n"
+                  + "import com.example.SampleModule;\n\n"
+                  + "@MyDeepLink({\"example.com/deepLink\",\"example.com/another\"})\n"
+                  + "public class SampleActivity {\n"
+                  + "}");
+
+  private static final JavaFileObject SIMPLE_DEEPLINK_MODULE = JavaFileObjects.forSourceString(
+          "SampleModule", "package com.example;"
+                  + "import com.airbnb.deeplinkdispatch.DeepLinkModule;\n\n"
+                  + "@DeepLinkModule\n"
+                  + "public class SampleModule {\n"
+                  + "}");
+
   @Test public void testProcessor() {
     JavaFileObject sampleActivity = JavaFileObjects
         .forSourceString("SampleActivity", "package com.example;"
@@ -214,5 +230,38 @@ public class DeepLinkProcessorTest {
         .processedWith(new DeepLinkProcessor())
         .failsToCompile()
         .withErrorContaining("Only static methods can be annotated");
+  }
+
+  @Test public void testProcessorWithEmptyCustomPrefixFail() {
+    JavaFileObject emptyPrefixLink = JavaFileObjects
+            .forSourceString("MyDeepLink", "package com.example;\n"
+                    + "import com.airbnb.deeplinkdispatch.DeepLinkSpec;\n"
+                    + "@DeepLinkSpec(prefix = { \"http://\", \"\" })\n"
+                    + "public @interface MyDeepLink {\n"
+                    + "    String[] value();\n"
+                    + "}");
+
+    assertAbout(javaSources())
+            .that(Arrays.asList(emptyPrefixLink, SIMPLE_DEEPLINK_ACTIVITY, SIMPLE_DEEPLINK_MODULE))
+            .processedWith(new DeepLinkProcessor())
+            .failsToCompile()
+            .withErrorContaining("Prefix property cannot have null or empty strings");
+  }
+
+  @Test public void testProcessorWithEmptyDeepLinkSpecPrefixesFail() {
+    JavaFileObject emptyPrefixArrayLink = JavaFileObjects
+            .forSourceString("MyDeepLink", "package com.example;\n"
+                    + "import com.airbnb.deeplinkdispatch.DeepLinkSpec;\n"
+                    + "@DeepLinkSpec(prefix = { })\n"
+                    + "public @interface MyDeepLink {\n"
+                    + "    String[] value();\n"
+                    + "}");
+
+    assertAbout(javaSources())
+            .that(Arrays.asList(emptyPrefixArrayLink, SIMPLE_DEEPLINK_ACTIVITY,
+                    SIMPLE_DEEPLINK_MODULE))
+            .processedWith(new DeepLinkProcessor())
+            .failsToCompile()
+            .withErrorContaining("Prefix property cannot be empty");
   }
 }
