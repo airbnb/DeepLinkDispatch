@@ -57,7 +57,7 @@ final class MoreAnnotationMirrors {
    *
    * @throws IllegalArgumentException unless {@code annotationValue} represents an array
    */
-  private static ImmutableList<AnnotationValue> asAnnotationValues(
+  static ImmutableList<AnnotationValue> asAnnotationValues(
       AnnotationValue annotationValue) {
     return annotationValue.accept(AS_ANNOTATION_VALUES, null);
   }

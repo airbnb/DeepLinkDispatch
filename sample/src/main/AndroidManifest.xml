@@ -21,6 +21,10 @@
             android:label="@string/title_second"
             />
         <activity
+            android:name="com.airbnb.deeplinkdispatch.sample.CustomPrefixesActivity"
+            android:label="@string/title_custom_prefixes"
+            />
+        <activity
             android:name="com.airbnb.deeplinkdispatch.sample.DeepLinkActivity"
             android:theme="@android:style/Theme.NoDisplay">
             <intent-filter>
@@ -35,6 +39,22 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="dld" />
+            </intent-filter>
+
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="http"/>
+                <data android:scheme="https"/>
+                <data android:host="airbnb.com"/>
+            </intent-filter>
+
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="app" android:host="airbnb"/>
             </intent-filter>
         </activity>
     </application>

@@ -15,6 +15,8 @@
  */
 package com.airbnb.deeplinkdispatch;
 
+import com.google.auto.common.AnnotationMirrors;
+import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.auto.service.AutoService;
 import com.google.common.base.Function;
@@ -39,6 +41,8 @@ import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -51,6 +55,7 @@ import javax.annotation.processing.Processor;
 import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.AnnotationMirror;
+import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.Modifier;
@@ -59,6 +64,7 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
 import javax.tools.Diagnostic;
 
+import static com.airbnb.deeplinkdispatch.MoreAnnotationMirrors.asAnnotationValues;
 import static com.airbnb.deeplinkdispatch.MoreAnnotationMirrors.getTypeValue;
 import static com.airbnb.deeplinkdispatch.Utils.decapitalize;
 import static com.google.auto.common.MoreElements.getAnnotationMirror;
@@ -75,6 +81,8 @@ public class DeepLinkProcessor extends AbstractProcessor {
   private static final ClassName ANDROID_URI = ClassName.get("android.net", "Uri");
   private static final ClassName CLASS_DLD_ENTRY = ClassName.get(DeepLinkEntry.class);
   private static final ClassName CLASS_DLD_URI = ClassName.get(DeepLinkUri.class);
+  private static final Class<DeepLink> DEEP_LINK_CLASS = DeepLink.class;
+  private static final Class<DeepLinkSpec> DEEP_LINK_SPEC_CLASS = DeepLinkSpec.class;
 
   private Filer filer;
   private Messager messager;
@@ -88,6 +96,7 @@ public class DeepLinkProcessor extends AbstractProcessor {
   @Override public Set<String> getSupportedAnnotationTypes() {
     return Sets.newHashSet(
         DeepLink.class.getCanonicalName(),
+        DeepLinkSpec.class.getCanonicalName(),
         DeepLinkModule.class.getCanonicalName(),
         DeepLinkHandler.class.getCanonicalName());
   }
@@ -98,24 +107,55 @@ public class DeepLinkProcessor extends AbstractProcessor {
 
   @Override
   public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+    Map<Element, String[]> prefixes = new HashMap<>();
+    Set<Element> customAnnotatedElements = new HashSet<>();
+    for (Element customAnnotation : roundEnv.getElementsAnnotatedWith(DEEP_LINK_SPEC_CLASS)) {
+      ElementKind kind = customAnnotation.getKind();
+      if (kind != ElementKind.ANNOTATION_TYPE) {
+        error(customAnnotation, "Only annotation types can be annotated with @%s",
+                DEEP_LINK_SPEC_CLASS.getSimpleName());
+      }
+      String[] prefix = customAnnotation.getAnnotation(DEEP_LINK_SPEC_CLASS).prefix();
+      if (Utils.hasEmptyOrNullString(prefix)) {
+        error(customAnnotation, "Prefix property cannot have null or empty strings");
+      }
+      if (prefix.length == 0) {
+        error(customAnnotation, "Prefix property cannot be empty");
+      }
+      prefixes.put(customAnnotation, prefix);
+      for (Element customAnnotatedElement
+              : roundEnv.getElementsAnnotatedWith(MoreElements.asType(customAnnotation))) {
+        customAnnotatedElements.add(customAnnotatedElement);
+      }
+    }
+
+    Set<Element> elementsToProcess = new HashSet<>(customAnnotatedElements);
+    elementsToProcess.addAll(roundEnv.getElementsAnnotatedWith(DEEP_LINK_CLASS));
+
     List<DeepLinkAnnotatedElement> deepLinkElements = new ArrayList<>();
-    Class<DeepLink> deepLinkClass = DeepLink.class;
-    for (Element element : roundEnv.getElementsAnnotatedWith(deepLinkClass)) {
+    for (Element element : elementsToProcess) {
       ElementKind kind = element.getKind();
       if (kind != ElementKind.METHOD && kind != ElementKind.CLASS) {
         error(element, "Only classes and methods can be annotated with @%s",
-            deepLinkClass.getSimpleName());
+            DEEP_LINK_CLASS.getSimpleName());
       }
 
       if (kind == ElementKind.METHOD) {
         Set<Modifier> methodModifiers = element.getModifiers();
         if (!methodModifiers.contains(Modifier.STATIC)) {
           error(element, "Only static methods can be annotated with @%s",
-              deepLinkClass.getSimpleName());
+              DEEP_LINK_CLASS.getSimpleName());
         }
       }
 
-      String[] deepLinks = element.getAnnotation(deepLinkClass).value();
+      DeepLink deepLinkAnnotation = element.getAnnotation(DEEP_LINK_CLASS);
+      List<String> deepLinks = new ArrayList<>();
+      if (deepLinkAnnotation != null) {
+        deepLinks.addAll(Arrays.asList(deepLinkAnnotation.value()));
+      }
+      if (customAnnotatedElements.contains(element)) {
+        deepLinks.addAll(enumerateCustomDeepLinks(element, prefixes));
+      }
       DeepLinkEntry.Type type = kind == ElementKind.CLASS
           ? DeepLinkEntry.Type.CLASS : DeepLinkEntry.Type.METHOD;
       for (String deepLink : deepLinks) {
@@ -169,6 +209,24 @@ public class DeepLinkProcessor extends AbstractProcessor {
     }
 
     return true;
+  }
+
+  private static List<String> enumerateCustomDeepLinks(
+          Element element, Map<Element, String[]> prefixesMap) {
+    Set<? extends AnnotationMirror> annotationMirrors =
+            AnnotationMirrors.getAnnotatedAnnotations(element, DEEP_LINK_SPEC_CLASS);
+    final List<String> deepLinks = new ArrayList<>();
+    for (AnnotationMirror customAnnotation : annotationMirrors) {
+      List<? extends AnnotationValue> suffixes =
+              asAnnotationValues(AnnotationMirrors.getAnnotationValue(customAnnotation, "value"));
+      String[] prefixes = prefixesMap.get(customAnnotation.getAnnotationType().asElement());
+      for (String prefix : prefixes) {
+        for (AnnotationValue suffix : suffixes) {
+          deepLinks.add(prefix + suffix.getValue());
+        }
+      }
+    }
+    return deepLinks;
   }
 
   private void error(Element e, String msg, Object... args) {
@@ -471,4 +529,3 @@ public class DeepLinkProcessor extends AbstractProcessor {
         .writeTo(filer);
   }
 }
-
