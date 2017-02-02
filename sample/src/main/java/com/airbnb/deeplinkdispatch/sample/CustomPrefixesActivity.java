@@ -33,7 +33,6 @@ public class CustomPrefixesActivity extends AppCompatActivity {
         }
     }
 
-
     private void showToast(String message) {
         Toast.makeText(this, "Deep Link: " + message, Toast.LENGTH_SHORT).show();
     }

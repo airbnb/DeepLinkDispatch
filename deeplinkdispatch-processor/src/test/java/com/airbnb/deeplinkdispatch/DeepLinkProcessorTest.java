@@ -144,8 +144,7 @@ public class DeepLinkProcessorTest {
               + "    return null;\n"
               + "  }\n"
               + "}"));
-}
-
+  }
 
   @Test public void uppercasePackage() {
     JavaFileObject activityWithUppercasePackage = JavaFileObjects
