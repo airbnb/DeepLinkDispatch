@@ -62,6 +62,29 @@ public class CustomPrefixesActivityTest {
         }
     }
 
+    @Test
+    public void testLibraryDeepLinkIntent() {
+        String uri = "library://dld/library_deeplink";
+        Intent launchedIntent = getLaunchedIntent(uri);
+        assertThat(launchedIntent.getComponent(),
+                equalTo(new ComponentName(RuntimeEnvironment.application, CustomPrefixesActivity.class)));
+
+        assertThat(launchedIntent.getBooleanExtra(DeepLink.IS_DEEP_LINK, false), equalTo(true));
+        assertThat(launchedIntent.getStringExtra(DeepLink.URI), equalTo(uri));
+    }
+
+    @Test
+    public void testLibraryDeepLinkIntentWithId() {
+        String uri = "library://dld/library_deeplink/456";
+        Intent launchedIntent = getLaunchedIntent(uri);
+        assertThat(launchedIntent.getComponent(),
+                equalTo(new ComponentName(RuntimeEnvironment.application, CustomPrefixesActivity.class)));
+
+        assertThat(launchedIntent.getBooleanExtra(DeepLink.IS_DEEP_LINK, false), equalTo(true));
+        assertThat(launchedIntent.getStringExtra(DeepLink.URI), equalTo(uri));
+        assertThat(launchedIntent.getExtras().getString("lib_id"), equalTo("456"));
+    }
+
     private Intent getLaunchedIntent(String uri) {
         Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(uri));
         DeepLinkActivity deepLinkActivity = Robolectric.buildActivity(DeepLinkActivity.class)
