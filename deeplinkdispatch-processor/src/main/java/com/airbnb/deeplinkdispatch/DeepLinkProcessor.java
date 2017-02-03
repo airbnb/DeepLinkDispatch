@@ -94,11 +94,7 @@ public class DeepLinkProcessor extends AbstractProcessor {
   }
 
   @Override public Set<String> getSupportedAnnotationTypes() {
-    return Sets.newHashSet(
-        DeepLink.class.getCanonicalName(),
-        DeepLinkSpec.class.getCanonicalName(),
-        DeepLinkModule.class.getCanonicalName(),
-        DeepLinkHandler.class.getCanonicalName());
+    return Sets.newHashSet("*");
   }
 
   @Override public SourceVersion getSupportedSourceVersion() {
@@ -107,9 +103,16 @@ public class DeepLinkProcessor extends AbstractProcessor {
 
   @Override
   public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+    Set<Element> customAnnotations = new HashSet<>();
+    for (Element annotation : annotations) {
+      if (annotation.getAnnotation(DEEP_LINK_SPEC_CLASS) != null) {
+        customAnnotations.add(annotation);
+      }
+    }
+
     Map<Element, String[]> prefixes = new HashMap<>();
     Set<Element> customAnnotatedElements = new HashSet<>();
-    for (Element customAnnotation : roundEnv.getElementsAnnotatedWith(DEEP_LINK_SPEC_CLASS)) {
+    for (Element customAnnotation : customAnnotations) {
       ElementKind kind = customAnnotation.getKind();
       if (kind != ElementKind.ANNOTATION_TYPE) {
         error(customAnnotation, "Only annotation types can be annotated with @%s",
@@ -208,7 +211,7 @@ public class DeepLinkProcessor extends AbstractProcessor {
       }
     }
 
-    return true;
+    return false;
   }
 
   private static List<String> enumerateCustomDeepLinks(

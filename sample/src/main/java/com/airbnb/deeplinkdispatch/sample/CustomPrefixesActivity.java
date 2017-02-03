@@ -7,9 +7,11 @@ import android.util.Log;
 import android.widget.Toast;
 
 import com.airbnb.deeplinkdispatch.DeepLink;
+import com.airbnb.deeplinkdispatch.sample.library.LibraryDeepLink;
 
 @AppDeepLink({ "/view_users" })
 @WebDeepLink({ "/users", "/user/{id}" })
+@LibraryDeepLink({ "/library_deeplink", "/library_deeplink/{lib_id}" })
 public class CustomPrefixesActivity extends AppCompatActivity {
     private String TAG = SecondActivity.class.getSimpleName();
 
