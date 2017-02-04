@@ -91,7 +91,4 @@ public class CustomPrefixesActivityTest {
 
     return shadowActivity.peekNextStartedActivityForResult().intent;
   }
-
-  return shadowActivity.peekNextStartedActivityForResult().intent;
-}
 }
