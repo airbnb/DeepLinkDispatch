@@ -29,17 +29,17 @@ import java.lang.annotation.Target;
  *    String[] value();
  *  }
  * </code></pre>
- *
+ * <p>
  * <code>{@literal @}WebDeepLink({ "/foo", "/bar" })</code> will match any of
  * <ul>
- *     <li>http://example.com/foo</li>
- *     <li>https://example.com/foo</li>
- *     <li>http://example.com/bar</li>
- *     <li>https://example.com/bar</li>
+ * <li>http://example.com/foo</li>
+ * <li>https://example.com/foo</li>
+ * <li>http://example.com/bar</li>
+ * <li>https://example.com/bar</li>
  * </ul>
  */
 @Target({ ElementType.ANNOTATION_TYPE })
 @Retention(RetentionPolicy.CLASS)
 public @interface DeepLinkSpec {
-    String[] prefix();
+  String[] prefix();
 }

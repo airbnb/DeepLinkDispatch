@@ -144,14 +144,50 @@ public class YourApplication extends Application {
 }
 ```
 
+### Custom Annotations
+
+You can reduce the repetition in your deep links by creating custom annotations that provide
+common prefixes that are automatically applied to every class or method annotated with your custom
+annotation. A popular use case for this is with web versus app deep links:
+
+```java
+// Prefix all app deep link URIs with "app://airbnb"
+@DeepLinkSpec(prefix = { "app://airbnb" })
+public @interface AppDeepLink {
+  String[] value();
+}
+```
+
+```java
+// Prefix all web deep links with "http://airbnb.com" and "https://airbnb.com"
+@DeepLinkSpec(prefix = { "http://airbnb.com", "https://airbnb.com" })
+public @interface WebDeepLink {
+  String[] value();
+}
+```
+
+```java
+// This activity is gonna hanndle the following deep links:
+// "app://airbnb/view_users"
+// "http://airbnb.com/users"
+// "http://airbnb.com/user/{id}"
+// "https://airbnb.com/users"
+// "https://airbnb.com/user/{id}"
+@AppDeepLink({ "/view_users" })
+@WebDeepLink({ "/users", "/user/{id}" })
+public class CustomPrefixesActivity extends AppCompatActivity {
+    //...
+}
+```
+
 ## Usage
 
 Add to your project `build.gradle` file:
 
 ```groovy
 dependencies {
-  compile 'com.airbnb:deeplinkdispatch:3.0.0-rc1'
-  annotationProcessor 'com.airbnb:deeplinkdispatch-processor:3.0.0-rc1'
+  compile 'com.airbnb:deeplinkdispatch:3.0.0-rc3'
+  annotationProcessor 'com.airbnb:deeplinkdispatch-processor:3.0.0-rc3'
 }
 ```
 

@@ -13,29 +13,28 @@ import com.airbnb.deeplinkdispatch.sample.library.LibraryDeepLink;
 @WebDeepLink({ "/users", "/user/{id}" })
 @LibraryDeepLink({ "/library_deeplink", "/library_deeplink/{lib_id}" })
 public class CustomPrefixesActivity extends AppCompatActivity {
-    private String TAG = SecondActivity.class.getSimpleName();
+  private static final String TAG = SecondActivity.class.getSimpleName();
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+  @Override protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_main);
 
-        if (getIntent().getBooleanExtra(DeepLink.IS_DEEP_LINK, false)) {
-            Bundle parameters = getIntent().getExtras();
-            Log.d(TAG, "Deeplink params: " + parameters);
+    if (getIntent().getBooleanExtra(DeepLink.IS_DEEP_LINK, false)) {
+      Bundle parameters = getIntent().getExtras();
+      Log.d(TAG, "Deeplink params: " + parameters);
 
-            String idString = parameters.getString("id");
-            if (!TextUtils.isEmpty(idString)) {
-                showToast("class id== " + idString);
-            } else {
-                showToast("no id in the deeplink");
-            }
-        } else {
-            showToast("no deep link :( ");
-        }
+      String idString = parameters.getString("id");
+      if (!TextUtils.isEmpty(idString)) {
+        showToast("class id== " + idString);
+      } else {
+        showToast("no id in the deeplink");
+      }
+    } else {
+      showToast("no deep link :( ");
     }
+  }
 
-    private void showToast(String message) {
-        Toast.makeText(this, "Deep Link: " + message, Toast.LENGTH_SHORT).show();
-    }
+  private void showToast(String message) {
+    Toast.makeText(this, "Deep Link: " + message, Toast.LENGTH_SHORT).show();
+  }
 }
