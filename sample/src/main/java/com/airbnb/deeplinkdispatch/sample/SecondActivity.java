@@ -12,7 +12,7 @@ import com.airbnb.deeplinkdispatch.DeepLink;
 @DeepLink("http://example.com/deepLink/{id}/{name}")
 public class SecondActivity extends AppCompatActivity {
 
-  private String TAG = SecondActivity.class.getSimpleName();
+  private static final String TAG = SecondActivity.class.getSimpleName();
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {

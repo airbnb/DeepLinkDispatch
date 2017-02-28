@@ -31,7 +31,7 @@ import com.airbnb.deeplinkdispatch.DeepLink;
 public class MainActivity extends AppCompatActivity {
   private static final String ACTION_DEEP_LINK_METHOD = "deep_link_method";
   private static final String ACTION_DEEP_LINK_COMPLEX = "deep_link_complex";
-  private static final String TAG = SecondActivity.class.getSimpleName();
+  private static final String TAG = MainActivity.class.getSimpleName();
 
   @Override protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
