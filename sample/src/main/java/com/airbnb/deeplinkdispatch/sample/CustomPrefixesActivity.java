@@ -13,7 +13,7 @@ import com.airbnb.deeplinkdispatch.sample.library.LibraryDeepLink;
 @WebDeepLink({ "/users", "/user/{id}" })
 @LibraryDeepLink({ "/library_deeplink", "/library_deeplink/{lib_id}" })
 public class CustomPrefixesActivity extends AppCompatActivity {
-  private static final String TAG = SecondActivity.class.getSimpleName();
+  private static final String TAG = CustomPrefixesActivity.class.getSimpleName();
 
   @Override protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
