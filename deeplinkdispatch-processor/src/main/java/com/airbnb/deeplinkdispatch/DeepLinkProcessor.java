@@ -41,6 +41,7 @@ import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -81,6 +82,8 @@ public class DeepLinkProcessor extends AbstractProcessor {
   private static final ClassName ANDROID_URI = ClassName.get("android.net", "Uri");
   private static final ClassName CLASS_DLD_ENTRY = ClassName.get(DeepLinkEntry.class);
   private static final ClassName CLASS_DLD_URI = ClassName.get(DeepLinkUri.class);
+  private static final ClassName CLASS_ARRAYS = ClassName.get(Arrays.class);
+  private static final ClassName CLASS_COLLECTIONS = ClassName.get(Collections.class);
   private static final Class<DeepLink> DEEP_LINK_CLASS = DeepLink.class;
   private static final Class<DeepLinkSpec> DEEP_LINK_SPEC_CLASS = DeepLinkSpec.class;
 
@@ -240,7 +243,7 @@ public class DeepLinkProcessor extends AbstractProcessor {
       List<DeepLinkAnnotatedElement> elements)
       throws IOException {
     CodeBlock.Builder initializer = CodeBlock.builder()
-        .add("$T.asList(\n", ClassName.get(Arrays.class))
+        .add("$T.unmodifiableList($T.asList(\n", CLASS_COLLECTIONS, CLASS_ARRAYS)
         .indent();
     int totalElements = elements.size();
     for (int i = 0; i < totalElements; i++) {
@@ -254,8 +257,8 @@ public class DeepLinkProcessor extends AbstractProcessor {
     }
     FieldSpec registry = FieldSpec
         .builder(ParameterizedTypeName.get(List.class, DeepLinkEntry.class), "REGISTRY",
-            Modifier.PRIVATE, Modifier.FINAL, Modifier.STATIC)
-        .initializer(initializer.unindent().add(")").build())
+            Modifier.PUBLIC, Modifier.FINAL, Modifier.STATIC)
+        .initializer(initializer.unindent().add("))").build())
         .build();
 
     MethodSpec parseMethod = MethodSpec.methodBuilder("parseUri")
