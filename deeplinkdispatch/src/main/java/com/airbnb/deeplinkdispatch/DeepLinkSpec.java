@@ -39,7 +39,7 @@ import java.lang.annotation.Target;
  * </ul>
  */
 @Target({ ElementType.ANNOTATION_TYPE })
-@Retention(RetentionPolicy.CLASS)
+@Retention(RetentionPolicy.SOURCE)
 public @interface DeepLinkSpec {
   String[] prefix();
 }
