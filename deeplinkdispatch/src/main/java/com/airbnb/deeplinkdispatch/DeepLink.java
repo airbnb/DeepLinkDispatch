@@ -27,7 +27,7 @@ import java.lang.annotation.Target;
  * </code></pre>
  */
 @Target({ ElementType.TYPE, ElementType.METHOD })
-@Retention(RetentionPolicy.CLASS)
+@Retention(RetentionPolicy.SOURCE)
 public @interface DeepLink {
   String IS_DEEP_LINK = "is_deep_link_flag";
   String URI = "deep_link_uri";
