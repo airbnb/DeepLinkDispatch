@@ -262,6 +262,14 @@ Snapshots of the development version are available in
      @com.airbnb.deeplinkdispatch.DeepLink <methods>;
 }
 ```
+**Note:** remember to include Proguard rules to keep Custom annotations you have used, for example by package:
+
+```
+-keep @interface your.package.path.deeplink.** { *; }
+-keepclasseswithmembers class * {
+    @your.package.path.deeplink.* <methods>;
+}
+```
 
 ## Testing the sample app
 
