@@ -21,21 +21,21 @@ public class DeepLinkAnnotatedElementTest {
 
   @Test public void testValidUri() throws MalformedURLException {
     DeepLinkAnnotatedElement annotatedElement = new DeepLinkAnnotatedElement(
-        "airbnb://example.com/{foo}/bar", element, DeepLinkEntry.Type.CLASS);
+        "airbnb://example.com/{foo}/bar", element, DeepLinkEntry.Type.CLASS, null);
 
     assertThat(annotatedElement.getUri()).isEqualTo("airbnb://example.com/{foo}/bar");
   }
 
   @Test public void testQueryParam() throws MalformedURLException {
     DeepLinkAnnotatedElement annotatedElement = new DeepLinkAnnotatedElement(
-        "airbnb://classDeepLink?foo=bar", element, DeepLinkEntry.Type.CLASS);
+        "airbnb://classDeepLink?foo=bar", element, DeepLinkEntry.Type.CLASS, null);
 
     assertThat(annotatedElement.getUri()).isEqualTo("airbnb://classDeepLink?foo=bar");
   }
 
   @Test public void testInvalidUri() {
     try {
-      new DeepLinkAnnotatedElement("http", element, DeepLinkEntry.Type.CLASS);
+      new DeepLinkAnnotatedElement("http", element, DeepLinkEntry.Type.CLASS, null);
       fail();
     } catch (MalformedURLException ignored) {
     }
@@ -43,7 +43,25 @@ public class DeepLinkAnnotatedElementTest {
 
   @Test public void testMissingScheme() {
     try {
-      new DeepLinkAnnotatedElement("example.com/something", element, DeepLinkEntry.Type.CLASS);
+      new DeepLinkAnnotatedElement("example.com/something", element, DeepLinkEntry.Type.CLASS, null);
+      fail();
+    } catch (MalformedURLException ignored) {
+    }
+  }
+
+  @Test public void testPrefixes() throws MalformedURLException {
+    DeepLinkAnnotatedElement annotatedElement = new DeepLinkAnnotatedElement(
+            "example.com/{foo}/bar", element, DeepLinkEntry.Type.CLASS, new String[]{"ex://",
+            "ex://d/"});
+    String[] prefixes = annotatedElement.getPrefixes();
+    assertThat((prefixes[0] + annotatedElement.getUri()).equals("ex://example.com/{foo}/bar"));
+    assertThat((prefixes[0] + annotatedElement.getUri()).equals("ex://d/example.com/{foo}/bar"));
+  }
+
+  @Test public void testInvalidPrefixes() {
+    try {
+      new DeepLinkAnnotatedElement("example.com/{foo}/bar", element, DeepLinkEntry.Type.CLASS,
+              new String[]{"airbnb://", "invalid prefix"});
       fail();
     } catch (MalformedURLException ignored) {
     }

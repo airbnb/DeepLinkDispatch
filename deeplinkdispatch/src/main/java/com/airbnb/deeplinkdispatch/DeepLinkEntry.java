@@ -15,13 +15,18 @@
  */
 package com.airbnb.deeplinkdispatch;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import javax.annotation.Nullable;
 
 public final class DeepLinkEntry {
   private static final String PARAM_VALUE = "([a-zA-Z0-9_#'!+%~,\\-\\.\\@\\$\\:]+)";
@@ -33,21 +38,41 @@ public final class DeepLinkEntry {
   private final Class<?> activityClass;
   private final String method;
   private final Set<String> parameters;
-  private final Pattern regex;
+  private final List<Pattern> regexes;
 
   public enum Type {
     CLASS,
     METHOD
   }
 
-  public DeepLinkEntry(String uri, Type type, Class<?> activityClass, String method) {
-    DeepLinkUri parsedUri = DeepLinkUri.parse(uri);
-    String schemeHostAndPath = schemeHostAndPath(parsedUri);
+  public DeepLinkEntry(String uri, Type type, Class<?> activityClass, String method,
+                       @Nullable String[] prefixes) {
+    DeepLinkUri parsedUri;
+    String uriString;
+    if (prefixes == null) {
+      parsedUri = DeepLinkUri.parse(uri);
+      uriString = schemeHostAndPath(parsedUri);
+    } else {
+      parsedUri = DeepLinkUri.parse(prefixes[0] + uri);
+      uriString = hostAndPath(parsedUri);
+    }
     this.type = type;
     this.activityClass = activityClass;
     this.method = method;
     this.parameters = parseParameters(parsedUri);
-    this.regex = Pattern.compile(schemeHostAndPath.replaceAll(PARAM_REGEX, PARAM_VALUE) + "$");
+    String replacedUriString = uriString.replaceAll(PARAM_REGEX, PARAM_VALUE);
+    this.regexes = prefixes == null ? Collections.singletonList(Pattern.compile(replacedUriString))
+            : createRegexForPrefixes(replacedUriString+ "$", prefixes);
+  }
+
+  private List<Pattern> createRegexForPrefixes(String uri, String[] prefixes) {
+    List<Pattern> regexes = new ArrayList<>();
+
+    for (String prefix : prefixes) {
+      regexes.add(Pattern.compile(prefix + uri));
+    }
+
+    return regexes;
   }
 
   public Type getType() {
@@ -85,14 +110,17 @@ public final class DeepLinkEntry {
     Iterator<String> paramsIterator = parameters.iterator();
     Map<String, String> paramsMap = new HashMap<>(parameters.size());
     DeepLinkUri deepLinkUri = DeepLinkUri.parse(inputUri);
-    Matcher matcher = regex.matcher(schemeHostAndPath(deepLinkUri));
-    int i = 1;
-    if (matcher.matches()) {
-      while (paramsIterator.hasNext()) {
-        String key = paramsIterator.next();
-        String value = matcher.group(i++);
-        if (value != null && !"".equals(value.trim())) {
-          paramsMap.put(key, value);
+    String schemeHostAndPath = schemeHostAndPath(deepLinkUri);
+    for (Pattern regex : regexes) {
+      Matcher matcher = regex.matcher(schemeHostAndPath);
+      int i = 1;
+      if (matcher.matches()) {
+        while (paramsIterator.hasNext()) {
+          String key = paramsIterator.next();
+          String value = matcher.group(i++);
+          if (value != null && !"".equals(value.trim())) {
+            paramsMap.put(key, value);
+          }
         }
       }
     }
@@ -105,10 +133,22 @@ public final class DeepLinkEntry {
 
   public boolean matches(String inputUri) {
     DeepLinkUri deepLinkUri = DeepLinkUri.parse(inputUri);
-    return deepLinkUri != null && regex.matcher(schemeHostAndPath(deepLinkUri)).find();
+    if (deepLinkUri == null) {
+      return false;
+    }
+    for (Pattern regex : regexes) {
+      if (regex.matcher(schemeHostAndPath(deepLinkUri)).find()) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private String schemeHostAndPath(DeepLinkUri uri) {
     return uri.scheme() + "://" + uri.encodedHost() + parsePath(uri);
+  }
+
+  private String hostAndPath(DeepLinkUri uri) {
+    return uri.encodedHost() + parsePath(uri);
   }
 }

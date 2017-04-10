@@ -71,6 +71,21 @@ public class DeepLinkEntryTest {
     assertThat(entry.getParameters("airbnb://test.com").isEmpty()).isTrue();
   }
 
+  @Test public void testPrefixes() {
+    DeepLinkEntry entry = deepLinkEntry("foo/{bar}", new String[]{"airbnb://", "air://"});
+
+    assertThat(entry.matches("airbnb://foo/123")).isTrue();
+    assertThat(entry.getParameters("airbnb://foo/123").isEmpty()).isFalse();
+
+    assertThat(entry.matches("air://foo/123")).isTrue();
+    assertThat(entry.getParameters("air://foo/123").isEmpty()).isFalse();
+
+    assertThat(entry.matches("foo/123")).isFalse();
+    assertThat(entry.matches("airbnbfoo/123")).isFalse();
+
+    assertThat(entry.matches("airbnb://foo")).isFalse();
+  }
+
   @Test
   public void testEmptyParametersDontMatch() throws Exception {
     DeepLinkEntry entry = deepLinkEntry("dld://foo/{id}/bar");
@@ -146,6 +161,10 @@ public class DeepLinkEntryTest {
   }
 
   private static DeepLinkEntry deepLinkEntry(String uri) {
-    return new DeepLinkEntry(uri, DeepLinkEntry.Type.CLASS, String.class, null);
+    return new DeepLinkEntry(uri, DeepLinkEntry.Type.CLASS, String.class, null, null);
+  }
+
+  private static DeepLinkEntry deepLinkEntry(String uri, String[] prefixes) {
+    return new DeepLinkEntry(uri, DeepLinkEntry.Type.CLASS, String.class, null, prefixes);
   }
 }

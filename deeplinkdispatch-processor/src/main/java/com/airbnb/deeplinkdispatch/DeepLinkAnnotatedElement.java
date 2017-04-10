@@ -17,6 +17,7 @@ package com.airbnb.deeplinkdispatch;
 
 import java.net.MalformedURLException;
 
+import javax.annotation.Nullable;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 
@@ -26,13 +27,15 @@ final class DeepLinkAnnotatedElement {
   private final TypeElement annotatedElement;
   private final String method;
   private final Element element;
+  private final String[] prefixes;
 
-  DeepLinkAnnotatedElement(String annotation, Element element, DeepLinkEntry.Type type)
-      throws MalformedURLException {
-    DeepLinkUri url = DeepLinkUri.parse(annotation);
-    if (url == null) {
-      throw new MalformedURLException("Malformed Uri " + annotation);
-    }
+  DeepLinkAnnotatedElement(String annotation, Element element, DeepLinkEntry.Type type,
+                           @Nullable String[] prefixes)
+          throws MalformedURLException {
+    this.prefixes = prefixes;
+
+    validateAnnotation(annotation);
+
     uri = annotation;
     annotationType = type;
 
@@ -44,6 +47,25 @@ final class DeepLinkAnnotatedElement {
       method = null;
     }
     this.element = element;
+  }
+
+  private void validateAnnotation(String annotation) throws MalformedURLException {
+    DeepLinkUri url;
+
+    if (prefixes == null) {
+      url = DeepLinkUri.parse(annotation);
+      if (url == null) {
+        throw new MalformedURLException("Malformed Uri " + annotation);
+      }
+    } else {
+      for (String prefix : prefixes) {
+        String fullAnnotation = prefix + annotation;
+        url = DeepLinkUri.parse(fullAnnotation);
+        if (url == null) {
+          throw new MalformedURLException("Malformed Uri " + fullAnnotation);
+        }
+      }
+    }
   }
 
   String getUri() {
@@ -64,5 +86,9 @@ final class DeepLinkAnnotatedElement {
 
   Element getElement() {
     return element;
+  }
+
+  String[] getPrefixes() {
+    return prefixes;
   }
 }

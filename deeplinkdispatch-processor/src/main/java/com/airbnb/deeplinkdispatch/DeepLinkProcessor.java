@@ -117,7 +117,7 @@ public class DeepLinkProcessor extends AbstractProcessor {
       }
     }
 
-    Map<Element, String[]> prefixes = new HashMap<>();
+    Map<Element, String[]> prefixesMap = new HashMap<>();
     Set<Element> customAnnotatedElements = new HashSet<>();
     for (Element customAnnotation : customAnnotations) {
       ElementKind kind = customAnnotation.getKind();
@@ -128,13 +128,17 @@ public class DeepLinkProcessor extends AbstractProcessor {
       String[] prefix = customAnnotation.getAnnotation(DEEP_LINK_SPEC_CLASS).prefix();
       if (Utils.hasEmptyOrNullString(prefix)) {
         error(customAnnotation, "Prefix property cannot have null or empty strings");
+        return false;
       }
       if (prefix.length == 0) {
         error(customAnnotation, "Prefix property cannot be empty");
+        return false;
       }
-      prefixes.put(customAnnotation, prefix);
-      customAnnotatedElements.addAll(
-          roundEnv.getElementsAnnotatedWith(MoreElements.asType(customAnnotation)));
+      prefixesMap.put(customAnnotation, prefix);
+      for (Element customAnnotatedElement
+          : roundEnv.getElementsAnnotatedWith(MoreElements.asType(customAnnotation))) {
+        customAnnotatedElements.add(customAnnotatedElement);
+      }
     }
 
     Set<Element> elementsToProcess = new HashSet<>(customAnnotatedElements);
@@ -163,25 +167,26 @@ public class DeepLinkProcessor extends AbstractProcessor {
                   + " Please double check your imports and try again.");
         }
       }
-
       DeepLink deepLinkAnnotation = element.getAnnotation(DEEP_LINK_CLASS);
       List<String> deepLinks = new ArrayList<>();
       if (deepLinkAnnotation != null) {
         deepLinks.addAll(Arrays.asList(deepLinkAnnotation.value()));
       }
-      if (customAnnotatedElements.contains(element)) {
-        deepLinks.addAll(enumerateCustomDeepLinks(element, prefixes));
-      }
       DeepLinkEntry.Type type = kind == ElementKind.CLASS
-          ? DeepLinkEntry.Type.CLASS : DeepLinkEntry.Type.METHOD;
+              ? DeepLinkEntry.Type.CLASS : DeepLinkEntry.Type.METHOD;
       for (String deepLink : deepLinks) {
         try {
-          deepLinkElements.add(new DeepLinkAnnotatedElement(deepLink, element, type));
+          deepLinkElements.add(new DeepLinkAnnotatedElement(deepLink, element, type, null));
         } catch (MalformedURLException e) {
           messager.printMessage(Diagnostic.Kind.ERROR, "Malformed Deep Link URL " + deepLink);
         }
       }
+
+      if (customAnnotatedElements.contains(element)) {
+        deepLinkElements.addAll(generateCustomDeepLinkAnnotatedElements(element, type, prefixesMap));
+      }
     }
+
     Set<? extends Element> deepLinkHandlerElements =
         roundEnv.getElementsAnnotatedWith(DeepLinkHandler.class);
     for (Element deepLinkHandlerElement : deepLinkHandlerElements) {
@@ -227,22 +232,28 @@ public class DeepLinkProcessor extends AbstractProcessor {
     return false;
   }
 
-  private static List<String> enumerateCustomDeepLinks(Element element,
-      Map<Element, String[]> prefixesMap) {
+  private List<DeepLinkAnnotatedElement> generateCustomDeepLinkAnnotatedElements(Element element,
+      DeepLinkEntry.Type type, Map<Element, String[]> prefixesMap) {
+
+    List<DeepLinkAnnotatedElement> deepLinkElements = new ArrayList<>();
     Set<? extends AnnotationMirror> annotationMirrors =
-        AnnotationMirrors.getAnnotatedAnnotations(element, DEEP_LINK_SPEC_CLASS);
-    final List<String> deepLinks = new ArrayList<>();
+            AnnotationMirrors.getAnnotatedAnnotations(element, DEEP_LINK_SPEC_CLASS);
     for (AnnotationMirror customAnnotation : annotationMirrors) {
+
       List<? extends AnnotationValue> suffixes =
-          asAnnotationValues(AnnotationMirrors.getAnnotationValue(customAnnotation, "value"));
-      String[] prefixes = prefixesMap.get(customAnnotation.getAnnotationType().asElement());
-      for (String prefix : prefixes) {
+              asAnnotationValues(AnnotationMirrors.getAnnotationValue(customAnnotation, "value"));
+      String[] prefixesArray = prefixesMap.get(customAnnotation.getAnnotationType().asElement());
+      try {
         for (AnnotationValue suffix : suffixes) {
-          deepLinks.add(prefix + suffix.getValue());
+          deepLinkElements.add(new DeepLinkAnnotatedElement(suffix.getValue().toString(),
+                  element, type, prefixesArray));
         }
+      } catch (MalformedURLException e) {
+        e.printStackTrace();
       }
     }
-    return deepLinks;
+
+    return deepLinkElements;
   }
 
   private void error(Element e, String msg, Object... args) {
@@ -279,8 +290,26 @@ public class DeepLinkProcessor extends AbstractProcessor {
       ClassName activity = ClassName.get(element.getAnnotatedElement());
       Object method = element.getMethod();
       String uri = element.getUri();
-      initializer.add("new DeepLinkEntry($S, $L, $T.class, $S)$L\n",
-          uri, type, activity, method, (i < totalElements - 1) ? "," : "");
+      String[] prefixes = element.getPrefixes();
+      String prefixString = null;
+      if (prefixes != null) {
+        StringBuilder prefixArgumentBuilder = new StringBuilder("new String[]{");
+        for (int j = 0; j < prefixes.length; j++) {
+          String prefix = prefixes[j];
+          prefixArgumentBuilder
+                  .append("\"")
+                  .append(prefix)
+                  .append("\"");
+
+          if (j < prefixes.length - 1) {
+            prefixArgumentBuilder.append(", ");
+          }
+        }
+        prefixArgumentBuilder.append("}");
+        prefixString = prefixArgumentBuilder.toString();
+      }
+
+      initializer.add("new DeepLinkEntry($S, $L, $T.class, $S, $L)$L\n", uri, type, activity, method, prefixString, (i < totalElements - 1) ? "," : "");
     }
     FieldSpec registry = FieldSpec
         .builder(ParameterizedTypeName.get(List.class, DeepLinkEntry.class), "REGISTRY",
