@@ -257,11 +257,9 @@ public class DeepLinkProcessor extends AbstractProcessor {
           if (uri1.queryParameterNames().size() != uri2.queryParameterNames().size()) {
             return uri2.queryParameterNames().size() - uri1.queryParameterNames().size();
           } else {
-            if (uri1.encodedPath().contains("{") && uri2.encodedPath().contains("{")) {
-              return uri2.pathSegments().size() - uri1.pathSegments().size();
-            } else if (!uri1.encodedPath().contains("{") && uri2.encodedPath().contains("{")) {
+            if (!uri1.encodedPath().contains("%7B") && uri2.encodedPath().contains("%7B")) {
               return -1;
-            } else if (uri1.encodedPath().contains("{") && !uri2.encodedPath().contains("{")) {
+            } else if (uri1.encodedPath().contains("%7B") && !uri2.encodedPath().contains("%7B")) {
               return 1;
             }
           }
