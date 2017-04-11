@@ -35,7 +35,10 @@ import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import com.squareup.javapoet.WildcardTypeName;
 
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
@@ -86,7 +89,9 @@ public class DeepLinkProcessor extends AbstractProcessor {
   private static final ClassName CLASS_COLLECTIONS = ClassName.get(Collections.class);
   private static final Class<DeepLink> DEEP_LINK_CLASS = DeepLink.class;
   private static final Class<DeepLinkSpec> DEEP_LINK_SPEC_CLASS = DeepLinkSpec.class;
+  private static final String DOC_OUTPUT_PROPERTY_NAME = "deepLinkDoc.output";
 
+  private File deepLinkDocFile;
   private Filer filer;
   private Messager messager;
 
@@ -94,6 +99,7 @@ public class DeepLinkProcessor extends AbstractProcessor {
     super.init(processingEnv);
     filer = processingEnv.getFiler();
     messager = processingEnv.getMessager();
+    initDocFile();
   }
 
   @Override public Set<String> getSupportedAnnotationTypes() {
@@ -245,6 +251,7 @@ public class DeepLinkProcessor extends AbstractProcessor {
     CodeBlock.Builder initializer = CodeBlock.builder()
         .add("$T.unmodifiableList($T.asList(\n", CLASS_COLLECTIONS, CLASS_ARRAYS)
         .indent();
+    generateDeepLinkDoc(elements);
     int totalElements = elements.size();
     for (int i = 0; i < totalElements; i++) {
       DeepLinkAnnotatedElement element = elements.get(i);
@@ -533,5 +540,52 @@ public class DeepLinkProcessor extends AbstractProcessor {
     JavaFile.builder(packageName, deepLinkDelegate)
         .build()
         .writeTo(filer);
+  }
+
+  private void generateDeepLinkDoc(List<DeepLinkAnnotatedElement> elements) {
+    if (deepLinkDocFile == null) {
+      messager.printMessage(Diagnostic.Kind.WARNING,
+          "Output file is null, DeepLink doc is not going to be generated.");
+      return;
+    }
+    PrintWriter writer;
+    try {
+      writer = new PrintWriter(new FileWriter(deepLinkDocFile), true);
+      for (DeepLinkAnnotatedElement element : elements) {
+        writer.print(element.getAnnotatedElement().getSimpleName());
+        if (element.getAnnotationType().equals(DeepLinkEntry.Type.METHOD)) {
+          writer.print("#");
+          writer.print(element.getMethod());
+        }
+        writer.print(": " + element.getUri());
+        writer.print(System.lineSeparator());
+      }
+      writer.flush();
+      writer.close();
+    } catch (IOException e) {
+      messager.printMessage(Diagnostic.Kind.WARNING, "DeepLink doc not generated, ");
+    }
+    messager.printMessage(Diagnostic.Kind.NOTE,
+        "DeepLink doc generated at: " + deepLinkDocFile.getPath());
+  }
+
+  private void initDocFile() {
+    String path = processingEnv.getOptions().get(DOC_OUTPUT_PROPERTY_NAME);
+    if (path != null && path.trim().length() > 0) {
+      deepLinkDocFile = new File(path);
+      if (deepLinkDocFile.isDirectory()) {
+        messager.printMessage(Diagnostic.Kind.WARNING,
+            String.format("Specify a file path at %s to generate deep link doc.",
+                DOC_OUTPUT_PROPERTY_NAME));
+      } else {
+        final File parentDir = deepLinkDocFile.getParentFile();
+        if (!parentDir.exists() && !parentDir.mkdirs()) {
+          messager.printMessage(Diagnostic.Kind.WARNING,
+              String.format("Cannot create file specified at %s.", deepLinkDocFile));
+        }
+      }
+    } else {
+      messager.printMessage(Diagnostic.Kind.WARNING, "DeepLink doc is not going to be generated.");
+    }
   }
 }
