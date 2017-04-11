@@ -42,6 +42,7 @@ import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -246,6 +247,28 @@ public class DeepLinkProcessor extends AbstractProcessor {
         .add("$T.unmodifiableList($T.asList(\n", CLASS_COLLECTIONS, CLASS_ARRAYS)
         .indent();
     int totalElements = elements.size();
+    Collections.sort(elements, new Comparator<DeepLinkAnnotatedElement>() {
+      @Override public int compare(DeepLinkAnnotatedElement element1, DeepLinkAnnotatedElement element2) {
+        DeepLinkUri uri1 = DeepLinkUri.parse(element1.getUri());
+        DeepLinkUri uri2 = DeepLinkUri.parse(element2.getUri());
+        if (uri1.pathSegments().size() != uri2.pathSegments().size()) {
+          return uri2.pathSegments().size() - uri1.pathSegments().size();
+        } else {
+          if (uri1.queryParameterNames().size() != uri2.queryParameterNames().size()) {
+            return uri2.queryParameterNames().size() - uri1.queryParameterNames().size();
+          } else {
+            if (uri1.encodedPath().contains("{") && uri2.encodedPath().contains("{")) {
+              return uri2.pathSegments().size() - uri1.pathSegments().size();
+            } else if (!uri1.encodedPath().contains("{") && uri2.encodedPath().contains("{")) {
+              return -1;
+            } else if (uri1.encodedPath().contains("{") && !uri2.encodedPath().contains("{")) {
+              return 1;
+            }
+          }
+        }
+        return 0;
+      }
+    });
     for (int i = 0; i < totalElements; i++) {
       DeepLinkAnnotatedElement element = elements.get(i);
       String type = "DeepLinkEntry.Type." + element.getAnnotationType().toString();
