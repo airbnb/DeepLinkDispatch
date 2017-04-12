@@ -30,7 +30,7 @@ final class DeepLinkAnnotatedElement {
   private final String[] prefixes;
 
   DeepLinkAnnotatedElement(String annotation, Element element, DeepLinkEntry.Type type,
-                           @Nullable String[] prefixes)
+                           String[] prefixes)
           throws MalformedURLException {
     this.prefixes = prefixes;
 
@@ -49,10 +49,15 @@ final class DeepLinkAnnotatedElement {
     this.element = element;
   }
 
+  DeepLinkAnnotatedElement(String annotation, Element element, DeepLinkEntry.Type type)
+          throws MalformedURLException {
+    this(annotation, element, type, new String[]{});
+  }
+
   private void validateAnnotation(String annotation) throws MalformedURLException {
     DeepLinkUri url;
 
-    if (prefixes == null) {
+    if (prefixes.length == 0) {
       url = DeepLinkUri.parse(annotation);
       if (url == null) {
         throw new MalformedURLException("Malformed Uri " + annotation);

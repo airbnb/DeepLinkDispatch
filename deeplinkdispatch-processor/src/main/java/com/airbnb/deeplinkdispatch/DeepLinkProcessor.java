@@ -176,7 +176,7 @@ public class DeepLinkProcessor extends AbstractProcessor {
               ? DeepLinkEntry.Type.CLASS : DeepLinkEntry.Type.METHOD;
       for (String deepLink : deepLinks) {
         try {
-          deepLinkElements.add(new DeepLinkAnnotatedElement(deepLink, element, type, null));
+          deepLinkElements.add(new DeepLinkAnnotatedElement(deepLink, element, type));
         } catch (MalformedURLException e) {
           messager.printMessage(Diagnostic.Kind.ERROR, "Malformed Deep Link URL " + deepLink);
         }
@@ -243,16 +243,15 @@ public class DeepLinkProcessor extends AbstractProcessor {
       List<? extends AnnotationValue> suffixes =
               asAnnotationValues(AnnotationMirrors.getAnnotationValue(customAnnotation, "value"));
       String[] prefixesArray = prefixesMap.get(customAnnotation.getAnnotationType().asElement());
-      try {
         for (AnnotationValue suffix : suffixes) {
-          deepLinkElements.add(new DeepLinkAnnotatedElement(suffix.getValue().toString(),
+          try {
+            deepLinkElements.add(new DeepLinkAnnotatedElement(suffix.getValue().toString(),
                   element, type, prefixesArray));
+          } catch (MalformedURLException e) {
+            messager.printMessage(Diagnostic.Kind.ERROR, "Malformed Deep Link URL " + suffix.getValue());
+          }
         }
-      } catch (MalformedURLException e) {
-        e.printStackTrace();
-      }
     }
-
     return deepLinkElements;
   }
 
@@ -292,7 +291,7 @@ public class DeepLinkProcessor extends AbstractProcessor {
       String uri = element.getUri();
       String[] prefixes = element.getPrefixes();
       String prefixString = null;
-      if (prefixes != null) {
+      if (prefixes.length != 0) {
         StringBuilder prefixArgumentBuilder = new StringBuilder("new String[]{");
         for (int j = 0; j < prefixes.length; j++) {
           String prefix = prefixes[j];
