@@ -248,7 +248,8 @@ public class DeepLinkProcessor extends AbstractProcessor {
         .indent();
     int totalElements = elements.size();
     Collections.sort(elements, new Comparator<DeepLinkAnnotatedElement>() {
-      @Override public int compare(DeepLinkAnnotatedElement element1, DeepLinkAnnotatedElement element2) {
+      @Override
+      public int compare(DeepLinkAnnotatedElement element1, DeepLinkAnnotatedElement element2) {
         DeepLinkUri uri1 = DeepLinkUri.parse(element1.getUri());
         DeepLinkUri uri2 = DeepLinkUri.parse(element2.getUri());
         if (uri1.pathSegments().size() != uri2.pathSegments().size()) {
