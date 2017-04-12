@@ -183,7 +183,8 @@ public class DeepLinkProcessor extends AbstractProcessor {
       }
 
       if (customAnnotatedElements.contains(element)) {
-        deepLinkElements.addAll(generateCustomDeepLinkAnnotatedElements(element, type, prefixesMap));
+        deepLinkElements.addAll(
+                generateCustomDeepLinkAnnotatedElements(element, type, prefixesMap));
       }
     }
 
@@ -248,7 +249,8 @@ public class DeepLinkProcessor extends AbstractProcessor {
             deepLinkElements.add(new DeepLinkAnnotatedElement(suffix.getValue().toString(),
                   element, type, prefixesArray));
           } catch (MalformedURLException e) {
-            messager.printMessage(Diagnostic.Kind.ERROR, "Malformed Deep Link URL " + suffix.getValue());
+            messager.printMessage(Diagnostic.Kind.ERROR, "Malformed Deep Link URL "
+                    + suffix.getValue());
           }
         }
     }
@@ -307,8 +309,8 @@ public class DeepLinkProcessor extends AbstractProcessor {
         prefixArgumentBuilder.append("}");
         prefixString = prefixArgumentBuilder.toString();
       }
-
-      initializer.add("new DeepLinkEntry($S, $L, $T.class, $S, $L)$L\n", uri, type, activity, method, prefixString, (i < totalElements - 1) ? "," : "");
+      initializer.add("new DeepLinkEntry($S, $L, $T.class, $S, $L)$L\n", uri, type, activity,
+              method, prefixString, (i < totalElements - 1) ? "," : "");
     }
     FieldSpec registry = FieldSpec
         .builder(ParameterizedTypeName.get(List.class, DeepLinkEntry.class), "REGISTRY",

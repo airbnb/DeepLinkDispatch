@@ -17,7 +17,6 @@ package com.airbnb.deeplinkdispatch;
 
 import java.net.MalformedURLException;
 
-import javax.annotation.Nullable;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 
