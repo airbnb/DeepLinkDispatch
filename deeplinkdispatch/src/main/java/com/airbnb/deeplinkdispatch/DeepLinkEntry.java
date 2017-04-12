@@ -62,7 +62,7 @@ public final class DeepLinkEntry {
     this.parameters = parseParameters(parsedUri);
     String replacedUriString = uriString.replaceAll(PARAM_REGEX, PARAM_VALUE);
     this.regexes = prefixes == null ? Collections.singletonList(Pattern.compile(replacedUriString))
-            : createRegexForPrefixes(replacedUriString+ "$", prefixes);
+            : createRegexForPrefixes(replacedUriString + "$", prefixes);
   }
 
   private List<Pattern> createRegexForPrefixes(String uri, String[] prefixes) {
