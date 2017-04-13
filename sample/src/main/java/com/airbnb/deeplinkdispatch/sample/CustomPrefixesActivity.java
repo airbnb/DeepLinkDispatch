@@ -9,6 +9,9 @@ import android.widget.Toast;
 import com.airbnb.deeplinkdispatch.DeepLink;
 import com.airbnb.deeplinkdispatch.sample.library.LibraryDeepLink;
 
+/**
+ * Main airbnb activity to show case {@link AppDeepLink}, {@link WebDeepLink} and {@link LibraryDeepLink}.
+ */
 @AppDeepLink({ "/view_users" })
 @WebDeepLink({ "/users", "/user/{id}" })
 @LibraryDeepLink({ "/library_deeplink", "/library_deeplink/{lib_id}" })

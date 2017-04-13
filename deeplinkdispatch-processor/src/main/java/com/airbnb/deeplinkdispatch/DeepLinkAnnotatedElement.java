@@ -25,6 +25,7 @@ final class DeepLinkAnnotatedElement {
   private final DeepLinkEntry.Type annotationType;
   private final TypeElement annotatedElement;
   private final String method;
+  private final Element element;
 
   DeepLinkAnnotatedElement(String annotation, Element element, DeepLinkEntry.Type type)
       throws MalformedURLException {
@@ -42,6 +43,7 @@ final class DeepLinkAnnotatedElement {
       annotatedElement = (TypeElement) element;
       method = null;
     }
+    this.element = element;
   }
 
   String getUri() {
@@ -58,5 +60,9 @@ final class DeepLinkAnnotatedElement {
 
   String getMethod() {
     return method;
+  }
+
+  Element getElement() {
+    return element;
   }
 }

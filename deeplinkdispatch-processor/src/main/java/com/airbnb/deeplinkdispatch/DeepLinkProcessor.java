@@ -552,12 +552,18 @@ public class DeepLinkProcessor extends AbstractProcessor {
     try {
       writer = new PrintWriter(new FileWriter(deepLinkDocFile), true);
       for (DeepLinkAnnotatedElement element : elements) {
+        writer.print(element.getUri() + "|#|");
+        String doc = Utils.formatJavaDoc(
+                processingEnv.getElementUtils().getDocComment(element.getElement()));
+        if (doc != null) {
+          writer.print(doc);
+        }
+        writer.print("|#|");
         writer.print(element.getAnnotatedElement().getSimpleName());
         if (element.getAnnotationType().equals(DeepLinkEntry.Type.METHOD)) {
           writer.print("#");
           writer.print(element.getMethod());
         }
-        writer.print(": " + element.getUri());
         writer.print(System.lineSeparator());
       }
       writer.flush();
