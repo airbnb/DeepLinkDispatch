@@ -52,17 +52,21 @@ public final class DeepLinkEntry {
     if (prefixes == null) {
       parsedUri = DeepLinkUri.parse(uri);
       uriString = schemeHostAndPath(parsedUri);
+      String replacedUriString = uriString.replaceAll(PARAM_REGEX, PARAM_VALUE);
+      this.regexes = Collections.singletonList(Pattern.compile(replacedUriString));
     } else {
-      parsedUri = DeepLinkUri.parse(prefixes[0] + uri);
-      uriString = hostAndPath(parsedUri);
+      regexes = new ArrayList<>();
+      for (String prefix : prefixes) {
+        parsedUri = DeepLinkUri.parse(prefix + uri);
+        uriString = schemeHostAndPath(parsedUri);
+        String replacedUriString = uriString.replaceAll(PARAM_REGEX, PARAM_VALUE);
+        regexes.add(Pattern.compile(replacedUriString));
+      }
     }
     this.type = type;
     this.activityClass = activityClass;
     this.method = method;
     this.parameters = parseParameters(parsedUri);
-    String replacedUriString = uriString.replaceAll(PARAM_REGEX, PARAM_VALUE);
-    this.regexes = prefixes == null ? Collections.singletonList(Pattern.compile(replacedUriString))
-            : createRegexForPrefixes(replacedUriString + "$", prefixes);
   }
 
   private List<Pattern> createRegexForPrefixes(String uri, String[] prefixes) {

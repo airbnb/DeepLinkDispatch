@@ -71,19 +71,31 @@ public class DeepLinkEntryTest {
     assertThat(entry.getParameters("airbnb://test.com").isEmpty()).isTrue();
   }
 
+  @Test public void testPrefixWithParameters() {
+    DeepLinkEntry entry = deepLinkEntry("foo/{bar}", new String[]{"airbnb://", "air://a/{b}/"});
+
+    assertThat(entry.getParameters("air://123/foo/456").size() == 2).isTrue();
+  }
+
   @Test public void testPrefixes() {
-    DeepLinkEntry entry = deepLinkEntry("foo/{bar}", new String[]{"airbnb://", "air://"});
+    DeepLinkEntry entry = deepLinkEntry("foo/{bar}", new String[]{"airbnb://", "air://bnb/"});
 
     assertThat(entry.matches("airbnb://foo/123")).isTrue();
     assertThat(entry.getParameters("airbnb://foo/123").isEmpty()).isFalse();
 
-    assertThat(entry.matches("air://foo/123")).isTrue();
-    assertThat(entry.getParameters("air://foo/123").isEmpty()).isFalse();
+    assertThat(entry.matches("air://bnb/foo/123")).isTrue();
+    assertThat(entry.getParameters("air://bnb/foo/123").isEmpty()).isFalse();
 
     assertThat(entry.matches("foo/123")).isFalse();
     assertThat(entry.matches("airbnbfoo/123")).isFalse();
 
     assertThat(entry.matches("airbnb://foo")).isFalse();
+
+    DeepLinkEntry entry2 = deepLinkEntry("foo/bar", new String[]{"airbnb://bnb/", "air://"});
+
+    assertThat(entry2.matches("airbnb://bnb/foo/bar")).isTrue();
+    assertThat(entry2.matches("air://foo/bar")).isTrue();
+    assertThat(entry2.matches("air://foo")).isFalse();
   }
 
   @Test
