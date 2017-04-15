@@ -38,5 +38,5 @@ dependencies {
 }
 
 tasks.withType(JavaCompile) {
-  options.compilerArgs << "-AdeepLinkDoc.output=${buildDir}/doc/deeplinks.md"
+  options.compilerArgs << "-AdeepLinkDoc.output=${buildDir}/doc/deeplinks.txt"
 }
