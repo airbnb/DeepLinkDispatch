@@ -35,8 +35,7 @@ final class Documentor {
   private final ProcessingEnvironment processingEnv;
   private final Messager messager;
 
-  @Nullable
-  private File file;
+  @Nullable private File file;
 
   Documentor(ProcessingEnvironment processingEnv) {
     this.processingEnv = processingEnv;
@@ -55,9 +54,7 @@ final class Documentor {
           "No deep link, DeepLink doc not generated.");
       return;
     }
-    PrintWriter writer;
-    try {
-      writer = new PrintWriter(new FileWriter(file), true);
+    try (PrintWriter writer = new PrintWriter(new FileWriter(file), true)) {
       for (DeepLinkAnnotatedElement element : elements) {
         writer.print(element.getUri() + PROPERTY_DELIMITER);
         String doc = formatJavaDoc(
@@ -74,32 +71,33 @@ final class Documentor {
         writer.print(ELEMENT_DELIMITER);
       }
       writer.flush();
-      writer.close();
     } catch (IOException e) {
-      e.printStackTrace();
-      messager.printMessage(Diagnostic.Kind.NOTE, "DeepLink doc not generated, ");
+      messager.printMessage(Diagnostic.Kind.ERROR,
+          "DeepLink doc not generated: " + e.getMessage());
     }
     messager.printMessage(Diagnostic.Kind.NOTE, "DeepLink doc generated at: " + file.getPath());
-
   }
 
   private void initFile() {
     String path = processingEnv.getOptions().get(DOC_OUTPUT_PROPERTY_NAME);
-    if (path != null && path.trim().length() > 0) {
-      file = new File(path);
-      if (file.isDirectory()) {
-        messager.printMessage(Diagnostic.Kind.NOTE,
-            String.format("Specify a file path at %s to generate deep link doc.",
-                DOC_OUTPUT_PROPERTY_NAME));
-      } else {
-        final File parentDir = file.getParentFile();
-        if (!parentDir.exists() && !parentDir.mkdirs()) {
-          messager.printMessage(Diagnostic.Kind.NOTE,
-              String.format("Cannot create file specified at %s.", file));
-        }
-      }
-    } else {
-      messager.printMessage(Diagnostic.Kind.NOTE, "DeepLink doc is not going to be generated.");
+    if (path == null || path.trim().isEmpty()) {
+      messager.printMessage(Diagnostic.Kind.NOTE,
+          "Output path not specified, DeepLink doc is not going to be generated.");
+      return;
+    }
+
+    file = new File(path);
+    if (file.isDirectory()) {
+      messager.printMessage(Diagnostic.Kind.NOTE,
+          String.format("Specify a file path at %s to generate deep link doc.",
+              DOC_OUTPUT_PROPERTY_NAME));
+      return;
+    }
+
+    File parentDir = file.getParentFile();
+    if (!parentDir.exists() && !parentDir.mkdirs()) {
+      messager.printMessage(Diagnostic.Kind.NOTE,
+          String.format("Cannot create file specified at %s.", file));
     }
   }
 
