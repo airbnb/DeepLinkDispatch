@@ -1,7 +1,6 @@
 package com.airbnb.deeplinkdispatch;
 
 final class Utils {
-
   static String decapitalize(String str) {
     if (str != null && str.length() != 0) {
       if (str.length() > 1 && Character.isUpperCase(str.charAt(1))
