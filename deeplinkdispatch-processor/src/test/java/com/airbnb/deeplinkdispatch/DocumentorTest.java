@@ -1,6 +1,5 @@
 package com.airbnb.deeplinkdispatch;
 
-
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.Files;
@@ -58,15 +57,16 @@ public final class DocumentorTest {
     documentor.write(getElements());
 
     String actual = Files.toString(new File(FILE_PATH), Charsets.UTF_8);
-    String expected = "airbnb://example.com/{foo}/bar\\n|#|\\nSample doc\\n|#|\\nDocClass\\n|##|\\n" +
-        "airbnb://example.com/{foo}/bar\\n|#|\\n\\n|#|\\nDocClass#DocMethod\\n|##|\\n";
+    String expected = "airbnb://example.com/{foo}/bar\\n|#|\\nSample doc\\n|#|\\nDocClass\\n|##|\\n"
+        + "airbnb://example.com/{foo}/bar\\n|#|\\n\\n|#|\\nDocClass#DocMethod\\n|##|\\n";
     assertEquals(expected, actual);
   }
 
   private List<DeepLinkAnnotatedElement> getElements() throws MalformedURLException {
     TypeElement element1 = mock(TypeElement.class);
     Name name1 = mock(Name.class);
-    when(elements.getDocComment(element1)).thenReturn("Sample doc \n @param empty \n @return nothing");
+    when(elements.getDocComment(element1))
+        .thenReturn("Sample doc \n @param empty \n @return nothing");
     when(element1.getSimpleName()).thenReturn(name1);
     when(name1.toString()).thenReturn("DocClass");
 
@@ -81,9 +81,11 @@ public final class DocumentorTest {
     when(name2Enclosed.toString()).thenReturn("DocClass");
 
     DeepLinkAnnotatedElement deepLinkElement1 =
-        new DeepLinkAnnotatedElement("airbnb://example.com/{foo}/bar", element1, DeepLinkEntry.Type.CLASS);
+        new DeepLinkAnnotatedElement("airbnb://example.com/{foo}/bar",
+            element1, DeepLinkEntry.Type.CLASS);
     DeepLinkAnnotatedElement deepLinkElement2 =
-        new DeepLinkAnnotatedElement("airbnb://example.com/{foo}/bar", element2, DeepLinkEntry.Type.METHOD);
+        new DeepLinkAnnotatedElement("airbnb://example.com/{foo}/bar",
+            element2, DeepLinkEntry.Type.METHOD);
 
     return ImmutableList.of(deepLinkElement1, deepLinkElement2);
   }

@@ -1,0 +1,1 @@
+airbnb://example.com/{foo}/bar\n|#|\nSample doc\n|#|\nDocClass\n|##|\nairbnb://example.com/{foo}/bar\n|#|\n\n|#|\nDocClass#DocMethod\n|##|\n
