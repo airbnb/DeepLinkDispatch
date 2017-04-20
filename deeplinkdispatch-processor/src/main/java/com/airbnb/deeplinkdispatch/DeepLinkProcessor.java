@@ -89,11 +89,13 @@ public class DeepLinkProcessor extends AbstractProcessor {
 
   private Filer filer;
   private Messager messager;
+  private Documentor documentor;
 
   @Override public synchronized void init(ProcessingEnvironment processingEnv) {
     super.init(processingEnv);
     filer = processingEnv.getFiler();
     messager = processingEnv.getMessager();
+    documentor = new Documentor(processingEnv);
   }
 
   @Override public Set<String> getSupportedAnnotationTypes() {
@@ -245,6 +247,7 @@ public class DeepLinkProcessor extends AbstractProcessor {
     CodeBlock.Builder initializer = CodeBlock.builder()
         .add("$T.unmodifiableList($T.asList(\n", CLASS_COLLECTIONS, CLASS_ARRAYS)
         .indent();
+    documentor.write(elements);
     int totalElements = elements.size();
     for (int i = 0; i < totalElements; i++) {
       DeepLinkAnnotatedElement element = elements.get(i);

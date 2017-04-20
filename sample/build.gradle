@@ -36,3 +36,7 @@ dependencies {
   testCompile 'org.robolectric:robolectric:3.2'
   testCompile 'junit:junit:4.12'
 }
+
+tasks.withType(JavaCompile) {
+  options.compilerArgs << "-AdeepLinkDoc.output=${buildDir}/doc/deeplinks.txt"
+}

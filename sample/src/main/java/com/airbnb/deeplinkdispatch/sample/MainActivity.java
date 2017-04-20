@@ -67,6 +67,10 @@ public class MainActivity extends AppCompatActivity {
     }
   }
 
+  /**
+   * Handles deep link with one param, doc does not contain "param"
+   * @return A intent to start {@link MainActivity}
+   */
   @DeepLink("dld://methodDeepLink/{param1}")
   public static Intent intentForDeepLinkMethod(Context context) {
     return new Intent(context, MainActivity.class).setAction(ACTION_DEEP_LINK_METHOD);
@@ -78,6 +82,13 @@ public class MainActivity extends AppCompatActivity {
     return new Intent(context, MainActivity.class).setAction(ACTION_DEEP_LINK_COMPLEX);
   }
 
+  /**
+   * Handles deep link with params.
+   * @param context of the activity
+   * @param bundle expected to contain the key {@code qp}.
+   * @return TaskStackBuilder set with first intent to start {@link MainActivity} and second intent
+   * to start {@link SecondActivity}.
+   */
   @DeepLink("http://example.com/deepLink/{id}/{name}/{place}")
   public static TaskStackBuilder intentForTaskStackBuilderMethods(Context context, Bundle bundle) {
     Log.d(TAG, "without query parameter :");
