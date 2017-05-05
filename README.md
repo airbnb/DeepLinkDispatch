@@ -186,8 +186,8 @@ Add to your project `build.gradle` file:
 
 ```groovy
 dependencies {
-  compile 'com.airbnb:deeplinkdispatch:3.0.0'
-  annotationProcessor 'com.airbnb:deeplinkdispatch-processor:3.0.0'
+  compile 'com.airbnb:deeplinkdispatch:3.1.0'
+  annotationProcessor 'com.airbnb:deeplinkdispatch-processor:3.1.0'
 }
 ```
 
@@ -253,6 +253,22 @@ public class DeepLinkActivity extends Activity {
 
 Snapshots of the development version are available in
 [Sonatype's `snapshots` repository](https://oss.sonatype.org/content/repositories/snapshots/).
+
+
+### Generated deep links Documentation
+
+You can tell DeepLinkDispatch to generate text a document with all your deep link annotations, which you can use for further processing and/or reference.
+In order to do that, add to your `build.gradle` file:
+```groovy
+tasks.withType(JavaCompile) {
+  options.compilerArgs << "-AdeepLinkDoc.output=${buildDir}/doc/deeplinks.txt"
+}
+```
+The documentation will be generated in the following format:
+```
+* {DeepLink1}\n|#|\n[Description part of javadoc]\n|#|\n{ClassName}#[MethodName]\n|##|\n
+* {DeepLink2}\n|#|\n[Description part of javadoc]\n|#|\n{ClassName}#[MethodName]\n|##|\n
+```
 
 ## Proguard Rules
 

@@ -1,3 +1,5 @@
+For newer releases, check the Github [releases tab](https://github.com/airbnb/DeepLinkDispatch/releases).
+
 # 2.0.1 (06/06/2016)
 
 * [PR 102](https://github.com/airbnb/DeepLinkDispatch/pull/102) Require a non-zero length param value
