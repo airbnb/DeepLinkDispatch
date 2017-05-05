@@ -60,6 +60,7 @@ import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
+import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
@@ -132,10 +133,8 @@ public class DeepLinkProcessor extends AbstractProcessor {
         error(customAnnotation, "Prefix property cannot be empty");
       }
       prefixes.put(customAnnotation, prefix);
-      for (Element customAnnotatedElement
-          : roundEnv.getElementsAnnotatedWith(MoreElements.asType(customAnnotation))) {
-        customAnnotatedElements.add(customAnnotatedElement);
-      }
+      customAnnotatedElements.addAll(
+          roundEnv.getElementsAnnotatedWith(MoreElements.asType(customAnnotation)));
     }
 
     Set<Element> elementsToProcess = new HashSet<>(customAnnotatedElements);
@@ -154,6 +153,14 @@ public class DeepLinkProcessor extends AbstractProcessor {
         if (!methodModifiers.contains(Modifier.STATIC)) {
           error(element, "Only static methods can be annotated with @%s",
               DEEP_LINK_CLASS.getSimpleName());
+        }
+        ExecutableElement executableElement = MoreElements.asExecutable(element);
+        TypeElement returnType = MoreTypes.asTypeElement(executableElement.getReturnType());
+        String qualifiedName = returnType.getQualifiedName().toString();
+        if (!qualifiedName.equals("android.content.Intent")
+            && !qualifiedName.equals("android.support.v4.app.TaskStackBuilder")) {
+          error(element, "Only `Intent` or `android.support.v4.app.TaskStackBuilder` are supported."
+                  + " Please double check your imports and try again.");
         }
       }
 
@@ -270,7 +277,7 @@ public class DeepLinkProcessor extends AbstractProcessor {
       DeepLinkAnnotatedElement element = elements.get(i);
       String type = "DeepLinkEntry.Type." + element.getAnnotationType().toString();
       ClassName activity = ClassName.get(element.getAnnotatedElement());
-      Object method = element.getMethod() == null ? null : element.getMethod();
+      Object method = element.getMethod();
       String uri = element.getUri();
       initializer.add("new DeepLinkEntry($S, $L, $T.class, $S)$L\n",
           uri, type, activity, method, (i < totalElements - 1) ? "," : "");
@@ -494,7 +501,7 @@ public class DeepLinkProcessor extends AbstractProcessor {
             + "link to method: \" + entry.getMethod() + \" intents length == 0\" )")
         .endControlFlow()
         .addStatement("newIntent = taskStackBuilder."
-            + "editIntentAt(taskStackBuilder.getIntentCount()-1)")
+            + "editIntentAt(taskStackBuilder.getIntentCount() - 1)")
         .nextControlFlow("else")
         .addStatement("newIntent = (Intent) method.invoke(c, activity, parameters)")
         .endControlFlow()
