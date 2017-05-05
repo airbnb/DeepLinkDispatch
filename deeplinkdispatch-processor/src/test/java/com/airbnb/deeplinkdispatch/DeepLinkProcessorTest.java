@@ -225,7 +225,7 @@ public class DeepLinkProcessorTest {
             + "import com.airbnb.deeplinkdispatch.DeepLink; "
             + "public class SampleActivity {"
             + "  @DeepLink(\"airbnb://host/{arbitraryNumber}\")"
-            + "  public Intent intentFromNoStatic(Context context){"
+            + "  public Intent intentFromNoStatic(Context context) {"
             + "    return new Intent();"
             + "  }"
             + "}"
@@ -359,5 +359,29 @@ public class DeepLinkProcessorTest {
                     + "    return null;\n"
                     + "  }"
                     + "}"));
+  }
+
+  @Test public void testNonAppCompatTaskStackBuilderClassErrorMessage() {
+    JavaFileObject sampleActivity = JavaFileObjects
+        .forSourceString("SampleActivity", "package com.example;"
+            + "import com.airbnb.deeplinkdispatch.DeepLink; "
+            + "import android.content.Context;\n"
+            + "import android.app.TaskStackBuilder;\n"
+            + "import android.content.Intent;\n"
+            + "public class SampleActivity {"
+            + "  @DeepLink(\"airbnb://host/{arbitraryNumber}\")"
+            + "  public static TaskStackBuilder intentFromNoStatic(Context context) {"
+            + "    return TaskStackBuilder.create(context);"
+            + "  }"
+            + "}"
+        );
+
+    assertAbout(javaSource())
+        .that(sampleActivity)
+        .processedWith(new DeepLinkProcessor())
+        .failsToCompile()
+        .withErrorContaining(
+            "Only `Intent` or `android.support.v4.app.TaskStackBuilder` are supported."
+                + " Please double check your imports and try again.");
   }
 }
