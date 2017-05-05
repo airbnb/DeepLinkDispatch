@@ -186,8 +186,8 @@ Add to your project `build.gradle` file:
 
 ```groovy
 dependencies {
-  compile 'com.airbnb:deeplinkdispatch:3.0.0'
-  annotationProcessor 'com.airbnb:deeplinkdispatch-processor:3.0.0'
+  compile 'com.airbnb:deeplinkdispatch:3.1.0'
+  annotationProcessor 'com.airbnb:deeplinkdispatch-processor:3.1.0'
 }
 ```
 
