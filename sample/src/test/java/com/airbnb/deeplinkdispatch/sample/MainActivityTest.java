@@ -98,29 +98,28 @@ public class MainActivityTest {
         equalTo("http://example.com/fooball?baz=something"));
   }
 
-
   @Test public void testTaskStackBuilderIntents() {
     Intent intent = new Intent(Intent.ACTION_VIEW,
-        Uri.parse("http://example.com/deepLink/testid/testname/testplace"));
+            Uri.parse("http://example.com/deepLink/testid/testname/testplace"));
     DeepLinkActivity deepLinkActivity = Robolectric.buildActivity(DeepLinkActivity.class)
-        .withIntent(intent).create().get();
+            .withIntent(intent).create().get();
     ShadowApplication shadowApplication = shadowOf(RuntimeEnvironment.application);
     Intent launchedIntent = shadowApplication.getNextStartedActivity();
     assertNotNull(launchedIntent);
     assertThat(launchedIntent.getComponent(),
-        equalTo(new ComponentName(deepLinkActivity, SecondActivity.class)));
+            equalTo(new ComponentName(deepLinkActivity, SecondActivity.class)));
 
     assertThat(launchedIntent.getBooleanExtra(DeepLink.IS_DEEP_LINK, false), equalTo(true));
     assertThat(launchedIntent.getStringExtra("id"), equalTo("testid"));
     assertThat(launchedIntent.getStringExtra("name"), equalTo("testname"));
     assertThat(launchedIntent.getStringExtra("place"), equalTo("testplace"));
     assertThat(launchedIntent.getStringExtra(DeepLink.URI),
-        equalTo("http://example.com/deepLink/testid/testname/testplace"));
+            equalTo("http://example.com/deepLink/testid/testname/testplace"));
 
     Intent parentIntent = shadowApplication.getNextStartedActivity();
     assertNotNull(parentIntent);
     assertThat(parentIntent.getComponent(),
-        equalTo(new ComponentName(deepLinkActivity, MainActivity.class)));
+            equalTo(new ComponentName(deepLinkActivity, MainActivity.class)));
     Intent nextNullIntent = shadowApplication.getNextStartedActivity();
     assertNull(nextNullIntent);
   }

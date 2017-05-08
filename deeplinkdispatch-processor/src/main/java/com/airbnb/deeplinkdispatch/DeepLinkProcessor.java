@@ -116,7 +116,6 @@ public class DeepLinkProcessor extends AbstractProcessor {
         customAnnotations.add(annotation);
       }
     }
-
     Map<Element, String[]> prefixesMap = new HashMap<>();
     Set<Element> customAnnotatedElements = new HashSet<>();
     for (Element customAnnotation : customAnnotations) {
@@ -167,6 +166,7 @@ public class DeepLinkProcessor extends AbstractProcessor {
                   + " Please double check your imports and try again.");
         }
       }
+
       DeepLink deepLinkAnnotation = element.getAnnotation(DEEP_LINK_CLASS);
       List<String> deepLinks = new ArrayList<>();
       if (deepLinkAnnotation != null) {
@@ -187,7 +187,6 @@ public class DeepLinkProcessor extends AbstractProcessor {
                 generateCustomDeepLinkAnnotatedElements(element, type, prefixesMap));
       }
     }
-
     Set<? extends Element> deepLinkHandlerElements =
         roundEnv.getElementsAnnotatedWith(DeepLinkHandler.class);
     for (Element deepLinkHandlerElement : deepLinkHandlerElements) {
@@ -213,13 +212,13 @@ public class DeepLinkProcessor extends AbstractProcessor {
         }
       }
     }
-
     Set<? extends Element> deepLinkModuleElements =
         roundEnv.getElementsAnnotatedWith(DeepLinkModule.class);
     for (Element deepLinkModuleElement : deepLinkModuleElements) {
       String packageName = processingEnv.getElementUtils()
           .getPackageOf(deepLinkModuleElement).getQualifiedName().toString();
       try {
+        messager.printMessage(Diagnostic.Kind.WARNING, packageName);
         generateDeepLinkLoader(packageName, deepLinkModuleElement.getSimpleName().toString(),
             deepLinkElements);
       } catch (IOException e) {
@@ -229,7 +228,6 @@ public class DeepLinkProcessor extends AbstractProcessor {
             "Internal error during annotation processing: " + e.getClass().getSimpleName());
       }
     }
-
     return false;
   }
 
@@ -290,24 +288,11 @@ public class DeepLinkProcessor extends AbstractProcessor {
       String type = "DeepLinkEntry.Type." + element.getAnnotationType().toString();
       ClassName activity = ClassName.get(element.getAnnotatedElement());
       Object method = element.getMethod();
-      String uri = element.getUri();
+      String uri = element.getUriForDeepLinkEntry();
       String[] prefixes = element.getPrefixes();
       String prefixString = null;
       if (prefixes.length != 0) {
-        StringBuilder prefixArgumentBuilder = new StringBuilder("new String[]{");
-        for (int j = 0; j < prefixes.length; j++) {
-          String prefix = prefixes[j];
-          prefixArgumentBuilder
-                  .append("\"")
-                  .append(prefix)
-                  .append("\"");
-
-          if (j < prefixes.length - 1) {
-            prefixArgumentBuilder.append(", ");
-          }
-        }
-        prefixArgumentBuilder.append("}");
-        prefixString = prefixArgumentBuilder.toString();
+        prefixString = buildPrefixString(prefixes);
       }
       initializer.add("new DeepLinkEntry($S, $L, $T.class, $S, $L)$L\n", uri, type, activity,
               method, prefixString, (i < totalElements - 1) ? "," : "");
@@ -337,10 +322,26 @@ public class DeepLinkProcessor extends AbstractProcessor {
         .addField(registry)
         .addMethod(parseMethod)
         .build();
-
     JavaFile.builder(packageName, deepLinkLoader)
         .build()
         .writeTo(filer);
+  }
+
+  private String buildPrefixString(String[] prefixes) {
+    StringBuilder prefixArgumentBuilder = new StringBuilder("new String[]{");
+    for (int j = 0; j < prefixes.length; j++) {
+      String prefix = prefixes[j];
+      prefixArgumentBuilder
+              .append("\"")
+              .append(prefix)
+              .append("\"");
+
+      if (j < prefixes.length - 1) {
+        prefixArgumentBuilder.append(", ");
+      }
+    }
+    prefixArgumentBuilder.append("}");
+    return prefixArgumentBuilder.toString();
   }
 
   private static String moduleNameToLoaderName(TypeElement typeElement) {

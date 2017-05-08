@@ -14,7 +14,7 @@ import com.airbnb.deeplinkdispatch.sample.library.LibraryDeepLink;
  */
 @AppDeepLink({ "/view_users" })
 @WebDeepLink({ "/users", "/user/{id}" })
-@LibraryDeepLink({ "/library_deeplink", "/library_deeplink/{lib_id}" })
+@LibraryDeepLink({ "/library_deeplink/{lib_id}","/library_deeplink" })
 public class CustomPrefixesActivity extends AppCompatActivity {
   private static final String TAG = CustomPrefixesActivity.class.getSimpleName();
 

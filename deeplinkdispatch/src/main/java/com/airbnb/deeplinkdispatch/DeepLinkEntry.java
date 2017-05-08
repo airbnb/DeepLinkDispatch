@@ -37,7 +37,7 @@ public final class DeepLinkEntry {
   private final Type type;
   private final Class<?> activityClass;
   private final String method;
-  private final Set<String> parameters;
+  private final Map<Pattern, Set<String>> parametersMap;
   private final List<Pattern> regexes;
 
   public enum Type {
@@ -53,20 +53,24 @@ public final class DeepLinkEntry {
       parsedUri = DeepLinkUri.parse(uri);
       uriString = schemeHostAndPath(parsedUri);
       String replacedUriString = uriString.replaceAll(PARAM_REGEX, PARAM_VALUE);
-      this.regexes = Collections.singletonList(Pattern.compile(replacedUriString));
+      Pattern pattern = Pattern.compile(replacedUriString);
+      this.regexes = Collections.singletonList(pattern);
+      parametersMap = Collections.singletonMap(pattern, parseParameters(parsedUri));
     } else {
       regexes = new ArrayList<>();
+      parametersMap = new HashMap<>();
       for (String prefix : prefixes) {
         parsedUri = DeepLinkUri.parse(prefix + uri);
         uriString = schemeHostAndPath(parsedUri);
         String replacedUriString = uriString.replaceAll(PARAM_REGEX, PARAM_VALUE);
-        regexes.add(Pattern.compile(replacedUriString));
+        Pattern pattern = Pattern.compile(replacedUriString);
+        regexes.add(pattern);
+        parametersMap.put(pattern, parseParameters(parsedUri));
       }
     }
     this.type = type;
     this.activityClass = activityClass;
     this.method = method;
-    this.parameters = parseParameters(parsedUri);
   }
 
   private List<Pattern> createRegexForPrefixes(String uri, String[] prefixes) {
@@ -92,7 +96,7 @@ public final class DeepLinkEntry {
   }
 
   /**
-   * Gets the set of unique path parameters used in the given URI. If a parameter is used twice
+   * Gets the set of unique path parametersMap used in the given URI. If a parameter is used twice
    * in the URI, it will only show up once in the set.
    */
   private static Set<String> parseParameters(DeepLinkUri uri) {
@@ -105,27 +109,31 @@ public final class DeepLinkEntry {
   }
 
   /**
-   * Generates a map of parameters and the values from the given deep link.
+   * Generates a map of parametersMap and the values from the given deep link.
    *
    * @param inputUri the intent Uri used to launch the Activity
    * @return the map of parameter values, where all values will be strings.
    */
   public Map<String, String> getParameters(String inputUri) {
-    Iterator<String> paramsIterator = parameters.iterator();
-    Map<String, String> paramsMap = new HashMap<>(parameters.size());
+    Map<String, String> paramsMap = new HashMap<>(parametersMap.size());
     DeepLinkUri deepLinkUri = DeepLinkUri.parse(inputUri);
     String schemeHostAndPath = schemeHostAndPath(deepLinkUri);
     for (Pattern regex : regexes) {
-      Matcher matcher = regex.matcher(schemeHostAndPath);
-      int i = 1;
-      if (matcher.matches()) {
-        while (paramsIterator.hasNext()) {
-          String key = paramsIterator.next();
-          String value = matcher.group(i++);
-          if (value != null && !"".equals(value.trim())) {
-            paramsMap.put(key, value);
+      if (regex.matcher(schemeHostAndPath(deepLinkUri)).matches()) {
+        Matcher matcher = regex.matcher(schemeHostAndPath);
+        if (matcher.matches()) {
+          Set<String> paramsSet = parametersMap.get(regex);
+          Iterator<String> paramsIterator = paramsSet.iterator();
+          int i = 1;
+          while (paramsIterator.hasNext()) {
+            String key = paramsIterator.next();
+            String value = matcher.group(i++);
+            if (value != null && !"".equals(value.trim())) {
+              paramsMap.put(key, value);
+            }
           }
         }
+        return paramsMap;
       }
     }
     return paramsMap;
@@ -150,9 +158,5 @@ public final class DeepLinkEntry {
 
   private String schemeHostAndPath(DeepLinkUri uri) {
     return uri.scheme() + "://" + uri.encodedHost() + parsePath(uri);
-  }
-
-  private String hostAndPath(DeepLinkUri uri) {
-    return uri.encodedHost() + parsePath(uri);
   }
 }

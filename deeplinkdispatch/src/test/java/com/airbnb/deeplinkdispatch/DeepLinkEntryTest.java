@@ -74,7 +74,8 @@ public class DeepLinkEntryTest {
   @Test public void testPrefixWithParameters() {
     DeepLinkEntry entry = deepLinkEntry("foo/{bar}", new String[]{"airbnb://", "air://a/{b}/"});
 
-    assertThat(entry.getParameters("air://123/foo/456").size() == 2).isTrue();
+    assertThat(entry.getParameters("air://a/123/foo/456").size() == 2).isTrue();
+    assertThat(entry.getParameters("air://a/123/foo/456").containsKey("b")).isTrue();
   }
 
   @Test public void testPrefixes() {

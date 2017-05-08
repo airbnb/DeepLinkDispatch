@@ -49,13 +49,16 @@ public class DeepLinkAnnotatedElementTest {
     }
   }
 
-  @Test public void testPrefixes() throws MalformedURLException {
+  @Test public void testPrefixes() throws MalformedURLException{
     DeepLinkAnnotatedElement annotatedElement = new DeepLinkAnnotatedElement(
-            "example.com/{foo}/bar", element, DeepLinkEntry.Type.CLASS, new String[]{"ex://",
-            "ex://d/"});
-    String[] prefixes = annotatedElement.getPrefixes();
-    assertThat((prefixes[0] + annotatedElement.getUri()).equals("ex://example.com/{foo}/bar"));
-    assertThat((prefixes[0] + annotatedElement.getUri()).equals("ex://d/example.com/{foo}/bar"));
+              "example.com/{foo}/bar", element, DeepLinkEntry.Type.CLASS, new String[]{"ex://",
+              "ex://d/"});
+    String prefixes[] = annotatedElement.getPrefixes();
+    assertThat(prefixes[0] + annotatedElement.getUriForDeepLinkEntry())
+            .isEqualTo("ex://example.com/{foo}/bar");
+
+    assertThat(prefixes[1] + annotatedElement.getUriForDeepLinkEntry())
+            .isEqualTo("ex://d/example.com/{foo}/bar");
   }
 
   @Test public void testInvalidPrefixes() {

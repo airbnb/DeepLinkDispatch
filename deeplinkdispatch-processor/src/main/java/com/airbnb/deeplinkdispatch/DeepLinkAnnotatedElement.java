@@ -17,6 +17,7 @@ package com.airbnb.deeplinkdispatch;
 
 import java.net.MalformedURLException;
 
+import javax.annotation.Nullable;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 
@@ -72,7 +73,20 @@ final class DeepLinkAnnotatedElement {
     }
   }
 
+  /**
+   * If the element has prefixes, this will return the URI using the first prefix, otherwise it will
+   * return just {@link DeepLinkAnnotatedElement#uri}
+   * @return the URI represented by this element
+   */
   String getUri() {
+    if (prefixes.length > 0) {
+      return prefixes[0] + uri;
+    }
+    return uri;
+  }
+
+  @Nullable
+  String getUriForDeepLinkEntry() {
     return uri;
   }
 
