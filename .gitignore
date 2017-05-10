@@ -16,3 +16,5 @@ lib
 .DS_Store
 local.properties
 .gradle
+
+deeplink-processor/doc
