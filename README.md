@@ -270,6 +270,22 @@ The documentation will be generated in the following format:
 * {DeepLink2}\n|#|\n[Description part of javadoc]\n|#|\n{ClassName}#[MethodName]\n|##|\n
 ```
 
+#### Documentation can be generated in Markdown format
+
+Now we support different types of documentation composers/writers. Just added Markdown writer.
+To enable it you just need to change the extension of the output documentation file, like in example:
+
+ ```groovy
+ tasks.withType(JavaCompile) {
+   options.compilerArgs << "-AdeepLinkDoc.output=${buildDir}/doc/deeplinks.md"
+ }
+ ```
+
+`.md` extension triggers documentation creation in GitHub markdown syntax.
+
+![Preview of Output](http://i.imgur.com/V4qEGW0.png)
+
+
 ## Proguard Rules
 
 ```
