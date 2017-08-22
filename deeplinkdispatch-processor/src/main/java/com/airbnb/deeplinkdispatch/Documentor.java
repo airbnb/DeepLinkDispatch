@@ -38,8 +38,11 @@ final class Documentor {
   private static final String RETURN = "@return";
   @VisibleForTesting
   static final String DOC_OUTPUT_PROPERTY_NAME = "deepLinkDoc.output";
-  /**  */
-  private static final Map<String, DocumetationWriter> EXTENSIONS = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+  /**
+   * Known extensions.
+   */
+  private static final Map<String, DocumetationWriter> EXTENSIONS =
+      new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 
   private final ProcessingEnvironment processingEnv;
   private final Messager messager;
@@ -138,7 +141,8 @@ final class Documentor {
    */
   interface DocumetationWriter {
     /**
-     * Compose documentation with help of provided environment, writer and collection of found deeplink elements.
+     * Compose documentation with help of provided environment, writer and collection of
+     * found deeplink elements.
      */
     void write(@Nonnull final ProcessingEnvironment env,
                @Nonnull final PrintWriter writer,
@@ -149,21 +153,24 @@ final class Documentor {
    * GitHub markdown format.
    *
    * @see <a href="https://guides.github.com/features/mastering-markdown/">Mastering Markdown</a>
-   * @see <a href="https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet">Markdown Cheatsheet</a>
+   * @see <a href="https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet">Markdown
+   * Cheatsheet</a>
    * @see <a href="https://github.com/JFormDesigner/markdown-writer-fx">Markdown Writer FX</a>
    * @see <a href="https://stackedit.io/">Stack Edit</a>
    */
   static class MarkdownWriter implements DocumetationWriter {
 
     @Override
-    public void write(@Nonnull final ProcessingEnvironment env, @Nonnull final PrintWriter writer, @Nonnull final List<DeepLinkAnnotatedElement> elements) {
+    public void write(@Nonnull final ProcessingEnvironment env,
+                      @Nonnull final PrintWriter writer,
+                      @Nonnull final List<DeepLinkAnnotatedElement> elements) {
 
       final Elements utils = env.getElementUtils();
 
       // header
       writer.println("| URI | JavaDoc | Simple Name | Method |");
       writer.println("| --- | ------- | ----------- | ------ |");
-      final String FORMAT = "| %1$s | %2$s | %3$s | %4$s |";
+      final String format = "| %1$s | %2$s | %3$s | %4$s |";
 
       // publish lines
       for (DeepLinkAnnotatedElement element : elements) {
@@ -174,7 +181,8 @@ final class Documentor {
         final String methodName = isMethod ? element.getMethod() : "";
         final Name simpleName = element.getAnnotatedElement().getSimpleName();
 
-        final String line = String.format(Locale.US, FORMAT, uri, embeddedComments, simpleName, methodName);
+        final String line = String.format(Locale.US, format,
+            uri, embeddedComments, simpleName, methodName);
 
         writer.println(line);
       }
@@ -188,7 +196,9 @@ final class Documentor {
    */
   static class GenericWriter implements DocumetationWriter {
     @Override
-    public void write(@Nonnull final ProcessingEnvironment env, @Nonnull final PrintWriter writer, @Nonnull final List<DeepLinkAnnotatedElement> elements) {
+    public void write(@Nonnull final ProcessingEnvironment env,
+                      @Nonnull final PrintWriter writer,
+                      @Nonnull final List<DeepLinkAnnotatedElement> elements) {
       final Elements utils = env.getElementUtils();
 
       for (DeepLinkAnnotatedElement element : elements) {
