@@ -265,11 +265,14 @@ public class DeepLinkProcessor extends AbstractProcessor {
           comparisonResult = uri2.queryParameterNames().size() - uri1.queryParameterNames().size();
         }
         if (comparisonResult == 0) {
-          comparisonResult = uri1.encodedPath().split("%7B").length - uri2.encodedPath().split("%7B").length;
+          comparisonResult =
+                  uri1.encodedPath().split("%7B").length - uri2.encodedPath().split("%7B").length;
         }
         if (comparisonResult == 0) {
-          String element1Representation = element1.getUri() + element1.getMethod() + element1.getAnnotationType();
-          String element2Representation = element2.getUri() + element2.getMethod() + element2.getAnnotationType();
+          String element1Representation =
+                  element1.getUri() + element1.getMethod() + element1.getAnnotationType();
+          String element2Representation =
+                  element2.getUri() + element2.getMethod() + element2.getAnnotationType();
           comparisonResult = element1Representation.compareTo(element2Representation);
         }
         return comparisonResult;
