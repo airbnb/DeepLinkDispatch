@@ -73,6 +73,18 @@ public static Intent intentForDeepLinkMethod(Context context, Bundle extras) {
 }
 ```
 
+If you're using Kotlin, make sure you also annotate your method with `@JvmStatic`:
+
+```
+companion object {
+  @JvmStatic 
+  @DeepLink("https://example.com")
+  fun defaultIntent(context: Context, extras: Bundle): Intent {
+    return Intent(context, MyActivity::class.java)
+  }
+}
+```
+
 If you need to customize your `Activity` backstack, you can return a `TaskStackBuilder` instead of an `Intent`. DeepLinkDispatch will call that method to create the `Intent` from the `TaskStackBuilder` last `Intent` and use it when starting your `Activity` via that registered deep link:
 
 ```java
