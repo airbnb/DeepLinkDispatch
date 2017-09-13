@@ -42,8 +42,8 @@ modifyPom {
 
     scm {
       url PROJECT_URL
-      connection 'scm:https://gitub.com/airbnb/DeepLinkDispatch.git'
-      developerConnection 'scm:git@gitub.com:airbnb/DeepLinkDispatch.git'
+      connection 'scm:https://github.com/airbnb/DeepLinkDispatch.git'
+      developerConnection 'scm:git@github.com:airbnb/DeepLinkDispatch.git'
     }
 
     licenses {
