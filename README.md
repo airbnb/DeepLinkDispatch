@@ -73,10 +73,10 @@ public static Intent intentForDeepLinkMethod(Context context, Bundle extras) {
 }
 ```
 
-If you're using Kotlin, make sure you also annotate your method with `@JvmStatic`:
+If you're using Kotlin, make sure you also annotate your method with `@JvmStatic`. `companion objects` will *not work*, so you can use an `object declaration` instead:
 
 ```
-companion object {
+object DeeplinkIntents {
   @JvmStatic 
   @DeepLink("https://example.com")
   fun defaultIntent(context: Context, extras: Bundle): Intent {
