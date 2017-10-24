@@ -28,8 +28,8 @@ public class MainActivityTest {
   @Test public void testIntent() {
     Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("dld://host/somePath/1234321"))
         .putExtra("TEST_EXTRA", "FOO");
-    DeepLinkActivity deepLinkActivity = Robolectric.buildActivity(DeepLinkActivity.class)
-        .withIntent(intent).create().get();
+    DeepLinkActivity deepLinkActivity = Robolectric.buildActivity(DeepLinkActivity.class, intent)
+        .create().get();
     ShadowActivity shadowActivity = shadowOf(deepLinkActivity);
     Intent launchedIntent = shadowActivity.peekNextStartedActivityForResult().intent;
     assertThat(launchedIntent.getComponent(),
@@ -48,8 +48,8 @@ public class MainActivityTest {
 
   @Test public void testQueryParams() {
     Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("dld://classDeepLink?foo=bar"));
-    DeepLinkActivity deepLinkActivity = Robolectric.buildActivity(DeepLinkActivity.class)
-        .withIntent(intent).create().get();
+    DeepLinkActivity deepLinkActivity = Robolectric.buildActivity(DeepLinkActivity.class, intent)
+        .create().get();
     ShadowActivity shadowActivity = shadowOf(deepLinkActivity);
 
     Intent launchedIntent = shadowActivity.peekNextStartedActivityForResult().intent;
@@ -66,8 +66,8 @@ public class MainActivityTest {
   @Test public void testQueryParamsWithBracket() {
     Intent intent =
         new Intent(Intent.ACTION_VIEW, Uri.parse("dld://classDeepLink?foo[max]=123"));
-    DeepLinkActivity deepLinkActivity = Robolectric.buildActivity(DeepLinkActivity.class)
-        .withIntent(intent).create().get();
+    DeepLinkActivity deepLinkActivity = Robolectric.buildActivity(DeepLinkActivity.class, intent)
+        .create().get();
     ShadowActivity shadowActivity = shadowOf(deepLinkActivity);
 
     Intent launchedIntent = shadowActivity.peekNextStartedActivityForResult().intent;
@@ -83,8 +83,8 @@ public class MainActivityTest {
   @Test public void testHttpScheme() {
     Intent intent = new Intent(Intent.ACTION_VIEW,
         Uri.parse("http://example.com/fooball?baz=something"));
-    DeepLinkActivity deepLinkActivity = Robolectric.buildActivity(DeepLinkActivity.class)
-        .withIntent(intent).create().get();
+    DeepLinkActivity deepLinkActivity = Robolectric.buildActivity(DeepLinkActivity.class, intent)
+        .create().get();
     ShadowActivity shadowActivity = shadowOf(deepLinkActivity);
 
     Intent launchedIntent = shadowActivity.peekNextStartedActivityForResult().intent;
@@ -102,8 +102,8 @@ public class MainActivityTest {
   @Test public void testTaskStackBuilderIntents() {
     Intent intent = new Intent(Intent.ACTION_VIEW,
         Uri.parse("http://example.com/deepLink/testid/testname/testplace"));
-    DeepLinkActivity deepLinkActivity = Robolectric.buildActivity(DeepLinkActivity.class)
-        .withIntent(intent).create().get();
+    DeepLinkActivity deepLinkActivity = Robolectric.buildActivity(DeepLinkActivity.class, intent)
+        .create().get();
     ShadowApplication shadowApplication = shadowOf(RuntimeEnvironment.application);
     Intent launchedIntent = shadowApplication.getNextStartedActivity();
     assertNotNull(launchedIntent);
