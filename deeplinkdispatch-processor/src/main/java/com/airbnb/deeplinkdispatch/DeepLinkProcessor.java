@@ -55,6 +55,7 @@ import javax.annotation.processing.Messager;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.Processor;
 import javax.annotation.processing.RoundEnvironment;
+import javax.annotation.processing.SupportedOptions;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
@@ -73,6 +74,7 @@ import static com.airbnb.deeplinkdispatch.Utils.decapitalize;
 import static com.google.auto.common.MoreElements.getAnnotationMirror;
 
 @AutoService(Processor.class)
+@SupportedOptions(Documentor.DOC_OUTPUT_PROPERTY_NAME)
 public class DeepLinkProcessor extends AbstractProcessor {
   private static final ClassName ANDROID_BUNDLE = ClassName.get("android.os", "Bundle");
   private static final String DLD_PACKAGE_NAME = "com.airbnb.deeplinkdispatch";
@@ -106,6 +108,10 @@ public class DeepLinkProcessor extends AbstractProcessor {
 
   @Override public SourceVersion getSupportedSourceVersion() {
     return SourceVersion.latestSupported();
+  }
+
+  @Override public Set<String> getSupportedOptions() {
+    return Collections.singleton(Documentor.DOC_OUTPUT_PROPERTY_NAME);
   }
 
   @Override

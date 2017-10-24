@@ -1,12 +1,11 @@
 package com.airbnb.deeplinkdispatch.sample;
 
-import com.google.common.collect.ImmutableList;
-
 import android.content.ComponentName;
 import android.content.Intent;
 import android.net.Uri;
 
 import com.airbnb.deeplinkdispatch.DeepLink;
+import com.google.common.collect.ImmutableList;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -85,8 +84,8 @@ public class CustomPrefixesActivityTest {
 
   private Intent getLaunchedIntent(String uri) {
     Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(uri));
-    DeepLinkActivity deepLinkActivity = Robolectric.buildActivity(DeepLinkActivity.class)
-        .withIntent(intent).create().get();
+    DeepLinkActivity deepLinkActivity = Robolectric.buildActivity(DeepLinkActivity.class, intent)
+        .create().get();
     ShadowActivity shadowActivity = shadowOf(deepLinkActivity);
 
     return shadowActivity.peekNextStartedActivityForResult().intent;

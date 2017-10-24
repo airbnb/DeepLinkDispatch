@@ -8,13 +8,13 @@ checkstyle {
 }
 
 android {
-  compileSdkVersion 25
-  buildToolsVersion "25.0.2"
+  compileSdkVersion 26
+  buildToolsVersion "26.0.2"
 
   defaultConfig {
     applicationId "com.airbnb.deeplinkdispatch.sample"
     minSdkVersion 16
-    targetSdkVersion 25
+    targetSdkVersion 26
     versionCode 1
     versionName "1.0"
   }
@@ -31,9 +31,10 @@ dependencies {
   annotationProcessor project(':deeplinkdispatch-processor')
 
   compile project(':sample-library')
-  compile 'com.android.support:appcompat-v7:25.1.0'
+  compile 'com.android.support:appcompat-v7:26.1.0'
 
-  testCompile 'org.robolectric:robolectric:3.2'
+  testCompile 'org.robolectric:robolectric:3.5'
+  testCompile 'org.robolectric:shadows-supportv4:3.5'
   testCompile 'junit:junit:4.12'
 }
 

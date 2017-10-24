@@ -23,8 +23,8 @@ public class SecondActivityTest {
   @Test public void testIntent() {
     Intent intent = new Intent(Intent.ACTION_VIEW,
         Uri.parse("http://example.com/deepLink/123/myname"));
-    DeepLinkActivity deepLinkActivity = Robolectric.buildActivity(DeepLinkActivity.class)
-        .withIntent(intent).create().get();
+    DeepLinkActivity deepLinkActivity = Robolectric.buildActivity(DeepLinkActivity.class, intent)
+        .create().get();
     ShadowActivity shadowActivity = shadowOf(deepLinkActivity);
 
     Intent launchedIntent = shadowActivity.peekNextStartedActivityForResult().intent;
