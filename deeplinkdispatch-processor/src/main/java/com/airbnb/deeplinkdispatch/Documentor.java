@@ -31,31 +31,20 @@ import javax.tools.Diagnostic;
  * {@link ProcessingEnvironment}'s compiler argument options by deepLinkDoc.output.
  */
 final class Documentor {
-  private static final String PROPERTY_DELIMITER = "\\n|#|\\n";
-  private static final String ELEMENT_DELIMITER = "\\n|##|\\n";
-  private static final String CLASS_METHOD_NAME_DELIMITER = "#";
-  private static final String PARAM = "@param";
-  private static final String RETURN = "@return";
+  protected static final String PROPERTY_DELIMITER = "\\n|#|\\n";
+  protected static final String ELEMENT_DELIMITER = "\\n|##|\\n";
+  protected static final String CLASS_METHOD_NAME_DELIMITER = "#";
+  protected static final String PARAM = "@param";
+  protected static final String RETURN = "@return";
   @VisibleForTesting
   static final String DOC_OUTPUT_PROPERTY_NAME = "deepLinkDoc.output";
-  /**
-   * Known extensions.
-   */
-  private static final Map<String, DocumetationWriter> EXTENSIONS =
-      new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 
   private final ProcessingEnvironment processingEnv;
   private final Messager messager;
 
-  @Nullable
-  private File file;
+  @Nullable private File file;
 
-  static {
-    EXTENSIONS.put("md", new MarkdownWriter());
-    EXTENSIONS.put("", new GenericWriter());
-  }
-
-  Documentor(@Nonnull final ProcessingEnvironment processingEnv) {
+  Documentor(final ProcessingEnvironment processingEnv) {
     this.processingEnv = processingEnv;
     messager = processingEnv.getMessager();
     initFile();
@@ -73,17 +62,23 @@ final class Documentor {
       return;
     }
     try (PrintWriter writer = new PrintWriter(new FileWriter(file), true)) {
-      String key = "";
+
       final String fileName = file.getName();
       final int extIndex = fileName.lastIndexOf(".");
 
-      // find writer by file name extension
-      if (extIndex >= 0 && extIndex < fileName.length()) {
-        final String ext = fileName.substring(extIndex + 1);
-        key = EXTENSIONS.containsKey(ext) ? ext : "";
+      DocumetationWriter docWriter;
+
+      // markdown writer if .md file extension is used
+      if (extIndex >= 0 && extIndex < fileName.length()
+              && fileName.substring(extIndex + 1).equalsIgnoreCase("md")) {
+        docWriter = new MarkdownWriter();
+      } else {
+          // else default writer
+        docWriter = new GenericWriter();
       }
 
-      EXTENSIONS.get(key).write(processingEnv, writer, elements);
+      docWriter.write(processingEnv, writer, elements);
+
     } catch (IOException e) {
       messager.printMessage(Diagnostic.Kind.ERROR,
           "DeepLink doc not generated: " + e.getMessage());
@@ -115,7 +110,7 @@ final class Documentor {
   }
 
   /* Strips off {@link #PARAM} and {@link #RETURN}. */
-  private static String formatJavaDoc(String str) {
+  protected static String formatJavaDoc(String str) {
     if (str != null) {
       int paramPos = str.indexOf(PARAM);
       if (paramPos != -1) {
@@ -144,83 +139,9 @@ final class Documentor {
      * Compose documentation with help of provided environment, writer and collection of
      * found deeplink elements.
      */
-    void write(@Nonnull final ProcessingEnvironment env,
-               @Nonnull final PrintWriter writer,
-               @Nonnull final List<DeepLinkAnnotatedElement> elements);
+    void write(final ProcessingEnvironment env,
+               final PrintWriter writer,
+               final List<DeepLinkAnnotatedElement> elements);
   }
 
-  /**
-   * GitHub markdown format.
-   *
-   * @see <a href="https://guides.github.com/features/mastering-markdown/">Mastering Markdown</a>
-   * @see <a href="https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet">Markdown
-   * Cheatsheet</a>
-   * @see <a href="https://github.com/JFormDesigner/markdown-writer-fx">Markdown Writer FX</a>
-   * @see <a href="https://stackedit.io/">Stack Edit</a>
-   */
-  static class MarkdownWriter implements DocumetationWriter {
-
-    @Override
-    public void write(@Nonnull final ProcessingEnvironment env,
-                      @Nonnull final PrintWriter writer,
-                      @Nonnull final List<DeepLinkAnnotatedElement> elements) {
-
-      final Elements utils = env.getElementUtils();
-
-      // header
-      writer.println("| URI | JavaDoc | Simple Name | Method |");
-      writer.println("| --- | ------- | ----------- | ------ |");
-      final String format = "| %1$s | %2$s | %3$s | %4$s |";
-
-      // publish lines
-      for (DeepLinkAnnotatedElement element : elements) {
-        final String uri = element.getUri();
-        final String doc = formatJavaDoc(utils.getDocComment(element.getElement()));
-        final String embeddedComments = null == doc ? "" : doc;
-        final boolean isMethod = element.getAnnotationType().equals(DeepLinkEntry.Type.METHOD);
-        final String methodName = isMethod ? element.getMethod() : "";
-        final Name simpleName = element.getAnnotatedElement().getSimpleName();
-
-        final String line = String.format(Locale.US, format,
-            uri, embeddedComments, simpleName, methodName);
-
-        writer.println(line);
-      }
-
-      writer.flush();
-    }
-  }
-
-  /**
-   * Old documentation format.
-   */
-  static class GenericWriter implements DocumetationWriter {
-    @Override
-    public void write(@Nonnull final ProcessingEnvironment env,
-                      @Nonnull final PrintWriter writer,
-                      @Nonnull final List<DeepLinkAnnotatedElement> elements) {
-      final Elements utils = env.getElementUtils();
-
-      for (DeepLinkAnnotatedElement element : elements) {
-        writer.print(element.getUri() + PROPERTY_DELIMITER);
-
-        String doc = formatJavaDoc(utils.getDocComment(element.getElement()));
-        if (doc != null) {
-          writer.print(doc);
-        }
-
-        writer.print(PROPERTY_DELIMITER);
-        writer.print(element.getAnnotatedElement().getSimpleName());
-
-        if (element.getAnnotationType().equals(DeepLinkEntry.Type.METHOD)) {
-          writer.print(CLASS_METHOD_NAME_DELIMITER);
-          writer.print(element.getMethod());
-        }
-
-        writer.print(ELEMENT_DELIMITER);
-      }
-
-      writer.flush();
-    }
-  }
 }

@@ -73,6 +73,18 @@ public static Intent intentForDeepLinkMethod(Context context, Bundle extras) {
 }
 ```
 
+If you're using Kotlin, make sure you also annotate your method with `@JvmStatic`. `companion objects` will *not work*, so you can use an `object declaration` instead:
+
+```
+object DeeplinkIntents {
+  @JvmStatic
+  @DeepLink("https://example.com")
+  fun defaultIntent(context: Context, extras: Bundle): Intent {
+    return Intent(context, MyActivity::class.java)
+  }
+}
+```
+
 If you need to customize your `Activity` backstack, you can return a `TaskStackBuilder` instead of an `Intent`. DeepLinkDispatch will call that method to create the `Intent` from the `TaskStackBuilder` last `Intent` and use it when starting your `Activity` via that registered deep link:
 
 ```java
@@ -122,7 +134,7 @@ You can register a receiver to receive this intent. An example of such a use is 
 
 ```java
 public class DeepLinkReceiver extends BroadcastReceiver {
-  private static final String TAG = "DeepLinkReceiver";
+  private static final String TAG = "DeepLinkReceiver";
 
   @Override public void onReceive(Context context, Intent intent) {
     String deepLinkUri = intent.getStringExtra(DeepLinkHandler.EXTRA_URI);
@@ -186,8 +198,8 @@ Add to your project `build.gradle` file:
 
 ```groovy
 dependencies {
-  compile 'com.airbnb:deeplinkdispatch:3.1.0'
-  annotationProcessor 'com.airbnb:deeplinkdispatch-processor:3.1.0'
+  compile 'com.airbnb:deeplinkdispatch:3.1.1'
+  annotationProcessor 'com.airbnb:deeplinkdispatch-processor:3.1.1'
 }
 ```
 
@@ -234,9 +246,9 @@ public class DeepLinkActivity extends Activity {
     super.onCreate(savedInstanceState);
     // DeepLinkDelegate, LibraryDeepLinkModuleLoader and AppDeepLinkModuleLoader
     // are generated at compile-time.
-    DeepLinkDelegate deepLinkDelegate = 
+    DeepLinkDelegate deepLinkDelegate =
         new DeepLinkDelegate(new AppDeepLinkModuleLoader(), new LibraryDeepLinkModuleLoader());
-    // Delegate the deep link handling to DeepLinkDispatch. 
+    // Delegate the deep link handling to DeepLinkDispatch.
     // It will start the correct Activity based on the incoming Intent URI
     deepLinkDelegate.dispatchFrom(this);
     // Finish this Activity since the correct one has been just started
@@ -269,22 +281,6 @@ The documentation will be generated in the following format:
 * {DeepLink1}\n|#|\n[Description part of javadoc]\n|#|\n{ClassName}#[MethodName]\n|##|\n
 * {DeepLink2}\n|#|\n[Description part of javadoc]\n|#|\n{ClassName}#[MethodName]\n|##|\n
 ```
-
-#### Documentation can be generated in Markdown format
-
-Now we support different types of documentation composers/writers. Just added Markdown writer.
-To enable it you just need to change the extension of the output documentation file, like in example:
-
- ```groovy
- tasks.withType(JavaCompile) {
-   options.compilerArgs << "-AdeepLinkDoc.output=${buildDir}/doc/deeplinks.md"
- }
- ```
-
-`.md` extension triggers documentation creation in GitHub markdown syntax.
-
-![Preview of Output](http://i.imgur.com/V4qEGW0.png)
-
 
 ## Proguard Rules
 
