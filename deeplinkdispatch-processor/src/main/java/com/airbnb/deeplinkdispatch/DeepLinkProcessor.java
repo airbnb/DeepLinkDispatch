@@ -55,6 +55,7 @@ import javax.annotation.processing.Messager;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.Processor;
 import javax.annotation.processing.RoundEnvironment;
+import javax.annotation.processing.SupportedOptions;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
@@ -73,6 +74,7 @@ import static com.airbnb.deeplinkdispatch.Utils.decapitalize;
 import static com.google.auto.common.MoreElements.getAnnotationMirror;
 
 @AutoService(Processor.class)
+@SupportedOptions(Documentor.DOC_OUTPUT_PROPERTY_NAME)
 public class DeepLinkProcessor extends AbstractProcessor {
   private static final ClassName ANDROID_BUNDLE = ClassName.get("android.os", "Bundle");
   private static final String DLD_PACKAGE_NAME = "com.airbnb.deeplinkdispatch";
@@ -106,6 +108,10 @@ public class DeepLinkProcessor extends AbstractProcessor {
 
   @Override public SourceVersion getSupportedSourceVersion() {
     return SourceVersion.latestSupported();
+  }
+
+  @Override public Set<String> getSupportedOptions() {
+    return Collections.singleton(Documentor.DOC_OUTPUT_PROPERTY_NAME);
   }
 
   @Override
@@ -255,24 +261,31 @@ public class DeepLinkProcessor extends AbstractProcessor {
     CodeBlock.Builder initializer = CodeBlock.builder()
         .add("$T.unmodifiableList($T.asList(\n", CLASS_COLLECTIONS, CLASS_ARRAYS)
         .indent();
-    documentor.write(elements);
-    int totalElements = elements.size();
     Collections.sort(elements, new Comparator<DeepLinkAnnotatedElement>() {
       @Override
       public int compare(DeepLinkAnnotatedElement element1, DeepLinkAnnotatedElement element2) {
         DeepLinkUri uri1 = DeepLinkUri.parse(element1.getUri());
         DeepLinkUri uri2 = DeepLinkUri.parse(element2.getUri());
-        if (uri1.pathSegments().size() != uri2.pathSegments().size()) {
-          return uri2.pathSegments().size() - uri1.pathSegments().size();
-        } else {
-          if (uri1.queryParameterNames().size() != uri2.queryParameterNames().size()) {
-            return uri2.queryParameterNames().size() - uri1.queryParameterNames().size();
-          } else {
-            return uri1.encodedPath().split("%7B").length - uri2.encodedPath().split("%7B").length;
-          }
+        int comparisonResult = uri2.pathSegments().size() - uri1.pathSegments().size();
+        if (comparisonResult == 0) {
+          comparisonResult = uri2.queryParameterNames().size() - uri1.queryParameterNames().size();
         }
+        if (comparisonResult == 0) {
+          comparisonResult =
+                  uri1.encodedPath().split("%7B").length - uri2.encodedPath().split("%7B").length;
+        }
+        if (comparisonResult == 0) {
+          String element1Representation =
+                  element1.getUri() + element1.getMethod() + element1.getAnnotationType();
+          String element2Representation =
+                  element2.getUri() + element2.getMethod() + element2.getAnnotationType();
+          comparisonResult = element1Representation.compareTo(element2Representation);
+        }
+        return comparisonResult;
       }
     });
+    documentor.write(elements);
+    int totalElements = elements.size();
     for (int i = 0; i < totalElements; i++) {
       DeepLinkAnnotatedElement element = elements.get(i);
       String type = "DeepLinkEntry.Type." + element.getAnnotationType().toString();

@@ -77,7 +77,7 @@ If you're using Kotlin, make sure you also annotate your method with `@JvmStatic
 
 ```
 object DeeplinkIntents {
-  @JvmStatic
+  @JvmStatic 
   @DeepLink("https://example.com")
   fun defaultIntent(context: Context, extras: Bundle): Intent {
     return Intent(context, MyActivity::class.java)
