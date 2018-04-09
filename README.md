@@ -75,7 +75,7 @@ public static Intent intentForDeepLinkMethod(Context context, Bundle extras) {
 
 If you're using Kotlin, make sure you also annotate your method with `@JvmStatic`. `companion objects` will *not work*, so you can use an `object declaration` instead:
 
-```
+```kotlin
 object DeeplinkIntents {
   @JvmStatic 
   @DeepLink("https://example.com")
@@ -195,13 +195,13 @@ public class CustomPrefixesActivity extends AppCompatActivity {
 ## Usage
 
 Add to your project `build.gradle` file:
-
 ```groovy
 dependencies {
-  compile 'com.airbnb:deeplinkdispatch:3.1.1'
+  implementation 'com.airbnb:deeplinkdispatch:3.1.1'
   annotationProcessor 'com.airbnb:deeplinkdispatch-processor:3.1.1'
 }
 ```
+_For **Kotlin** you should use_ `kapt` _instead of_ `annotationProcessor`
 
 Create your deep link module(s) (**new on DeepLinkDispatch v3**). For every class you annotate with `@DeepLinkModule`, DeepLinkDispatch will generate a "Loader" class, which contains a registry of all your `@DeepLink` annotations.
 
