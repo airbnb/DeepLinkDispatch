@@ -165,6 +165,7 @@ annotation. A popular use case for this is with web versus app deep links:
 ```java
 // Prefix all app deep link URIs with "app://airbnb"
 @DeepLinkSpec(prefix = { "app://airbnb" })
+@Retention(RetentionPolicy.CLASS)
 public @interface AppDeepLink {
   String[] value();
 }
@@ -173,6 +174,7 @@ public @interface AppDeepLink {
 ```java
 // Prefix all web deep links with "http://airbnb.com" and "https://airbnb.com"
 @DeepLinkSpec(prefix = { "http://airbnb.com", "https://airbnb.com" })
+@Retention(RetentionPolicy.CLASS)
 public @interface WebDeepLink {
   String[] value();
 }
@@ -285,17 +287,17 @@ The documentation will be generated in the following format:
 ## Proguard Rules
 
 ```
--keep class com.airbnb.deeplinkdispatch.** { *; }
+-keep @interface com.airbnb.deeplinkdispatch.DeepLink
 -keepclasseswithmembers class * {
-     @com.airbnb.deeplinkdispatch.DeepLink <methods>;
+    @com.airbnb.deeplinkdispatch.DeepLink <methods>;
 }
 ```
 **Note:** remember to include Proguard rules to keep Custom annotations you have used, for example by package:
 
 ```
--keep @interface your.package.path.deeplink.** { *; }
+-keep @interface your.package.path.deeplink.<annotation class name>
 -keepclasseswithmembers class * {
-    @your.package.path.deeplink.* <methods>;
+    @your.package.path.deeplink.<annotation class name> <methods>;
 }
 ```
 
