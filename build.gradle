@@ -4,7 +4,6 @@ buildscript {
   apply from: rootProject.file("dependencies.gradle")
 
   repositories {
-    google()
     jcenter()
     google()
   }
@@ -18,7 +17,6 @@ allprojects {
   apply from: rootProject.file("dependencies.gradle")
 
   repositories {
-    google()
     jcenter()
     google()
   }
