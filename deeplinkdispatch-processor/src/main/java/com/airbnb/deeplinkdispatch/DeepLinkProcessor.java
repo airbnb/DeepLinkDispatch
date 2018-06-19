@@ -82,7 +82,7 @@ public class DeepLinkProcessor extends AbstractProcessor {
   private static final ClassName ANDROID_CONTEXT = ClassName.get("android.content", "Context");
   private static final ClassName ANDROID_ACTIVITY = ClassName.get("android.app", "Activity");
   private static final ClassName TASK_STACK_BUILDER = ClassName.get(
-      "android.support.v4.app", "TaskStackBuilder");
+      "androidx.core.app", "TaskStackBuilder");
   private static final ClassName ANDROID_URI = ClassName.get("android.net", "Uri");
   private static final ClassName CLASS_DLD_ENTRY = ClassName.get(DeepLinkEntry.class);
   private static final ClassName CLASS_DLD_URI = ClassName.get(DeepLinkUri.class);
@@ -164,8 +164,8 @@ public class DeepLinkProcessor extends AbstractProcessor {
         TypeElement returnType = MoreTypes.asTypeElement(executableElement.getReturnType());
         String qualifiedName = returnType.getQualifiedName().toString();
         if (!qualifiedName.equals("android.content.Intent")
-            && !qualifiedName.equals("android.support.v4.app.TaskStackBuilder")) {
-          error(element, "Only `Intent` or `android.support.v4.app.TaskStackBuilder` are supported."
+            && !qualifiedName.equals("androidx.core.app.TaskStackBuilder")) {
+          error(element, "Only `Intent` or `androidx.core.app.TaskStackBuilder` are supported."
                   + " Please double check your imports and try again.");
         }
       }
@@ -361,7 +361,7 @@ public class DeepLinkProcessor extends AbstractProcessor {
             DeepLinkHandler.class)
         .endControlFlow()
         .addStatement("$T.getInstance(context).sendBroadcast(intent)",
-            ClassName.get("android.support.v4.content", "LocalBroadcastManager"))
+            ClassName.get("androidx.localbroadcastmanager.content", "LocalBroadcastManager"))
         .build();
     ClassName deepLinkResult = ClassName.get(DLD_PACKAGE_NAME, "DeepLinkResult");
     MethodSpec createResultAndNotifyMethod = MethodSpec.methodBuilder("createResultAndNotify")
