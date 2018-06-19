@@ -33,6 +33,7 @@ dependencies {
   implementation deps.appCompat
 
   testImplementation deps.roboelectric
+  testImplementation deps.roboelectricShadowSupport
   testImplementation deps.junit
 }
 
