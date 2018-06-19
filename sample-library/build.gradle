@@ -1,18 +1,18 @@
 apply plugin: 'com.android.library'
 
 android {
-  compileSdkVersion 25
-  buildToolsVersion "25.0.2"
+  compileSdkVersion androidConfig.compileSdkVersion
+  buildToolsVersion androidConfig.buildToolsVersion
 
   defaultConfig {
-    minSdkVersion 16
-    targetSdkVersion 25
+    minSdkVersion androidConfig.minSdkVersion
+    targetSdkVersion androidConfig.compileSdkVersion
   }
 }
 
 dependencies {
-  compile project(':deeplinkdispatch')
+  implementation project(':deeplinkdispatch')
   annotationProcessor project(':deeplinkdispatch-processor')
-  compile 'com.android.support:appcompat-v7:25.1.0'
-  testCompile 'junit:junit:4.12'
+  implementation deps.appCompat
+  testImplementation deps.junit
 }

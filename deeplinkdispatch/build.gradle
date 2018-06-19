@@ -1,4 +1,4 @@
-apply plugin: 'java'
+apply plugin: 'com.android.library'
 
 sourceCompatibility = 1.7
 
@@ -6,16 +6,29 @@ apply plugin: 'com.bmuschko.nexus'
 apply plugin: 'checkstyle'
 
 dependencies {
-  compile 'com.squareup.okio:okio:1.13.0'
-  compile 'com.google.code.findbugs:jsr305:3.0.2'
-  testCompile 'junit:junit:4.12'
-  testCompile 'org.assertj:assertj-core:1.7.0'
+  api project(':deeplinkdispatchbase')
+  implementation deps.okio
+  implementation deps.jsr305
+  implementation deps.supportCoreUtils
+  testImplementation deps.junit
+  testImplementation deps.assertJ
 }
 
 checkstyle {
   configFile rootProject.file('checkstyle.xml')
   showViolations true
   configProperties = ['checkstyle.cache.file': rootProject.file('build/checkstyle.cache')]
+}
+
+android {
+  compileSdkVersion androidConfig.compileSdkVersion
+  buildToolsVersion androidConfig.buildToolsVersion
+
+  defaultConfig {
+    minSdkVersion androidConfig.minSdkVersion
+    targetSdkVersion androidConfig.compileSdkVersion
+    testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+  }
 }
 
 project.group = PROJECT_GROUP_ID
@@ -64,6 +77,6 @@ extraArchive {
 
 nexus {
   sign = !isCi()
-  repositoryUrl = 'https://oss.sonatype.org/service/local/staging/deploy/maven2/'
-  snapshotRepositoryUrl = 'https://oss.sonatype.org/content/repositories/snapshots/'
+  repositoryUrl = getReleaseRepositoryUrl()
+  snapshotRepositoryUrl = getSnapshotRepositoryUrl()
 }
