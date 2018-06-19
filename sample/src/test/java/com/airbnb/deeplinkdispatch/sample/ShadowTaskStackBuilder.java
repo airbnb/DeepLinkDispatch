@@ -2,8 +2,8 @@ package com.airbnb.deeplinkdispatch.sample;
 
 import android.content.Context;
 import android.content.Intent;
-import android.support.v4.app.TaskStackBuilder;
-import android.support.v4.content.IntentCompat;
+import androidx.core.app.TaskStackBuilder;
+import androidx.core.content.IntentCompat;
 
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Implementation;
