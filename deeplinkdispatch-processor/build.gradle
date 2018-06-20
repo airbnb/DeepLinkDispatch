@@ -5,20 +5,29 @@ sourceCompatibility = 1.7
 apply plugin: 'com.bmuschko.nexus'
 apply plugin: 'checkstyle'
 
-dependencies {
-  compile project(':deeplinkdispatch')
-  compile 'com.google.auto.service:auto-service:1.0-rc2'
-  compile 'com.squareup:javapoet:1.8.0'
-  compile 'com.google.auto:auto-common:0.6'
+sourceSets {
+  test {
+    java {
+      srcDir '../deeplinkdispatch/src/main/java' // In tests we need access to the runtime files from the dld library
+    }
+  }
+}
 
-  testCompile 'junit:junit:4.12'
-  testCompile 'org.assertj:assertj-core:1.7.0'
-  testCompile 'com.google.android:android:4.1.1.4'
-  testCompile fileTree(dir: 'libs', include: ['android-support-v4.jar'])
-  testCompile 'com.google.testing.compile:compile-testing:0.10'
-  testCompile 'com.google.truth:truth:0.30'
-  testCompile 'org.mockito:mockito-core:1.10.19'
-  testCompile files(org.gradle.internal.jvm.Jvm.current().getToolsJar())
+dependencies {
+  implementation project(':deeplinkdispatch-base')
+  implementation 'com.google.auto.service:auto-service:1.0-rc3'
+  implementation deps.jsr305
+  implementation deps.javaPoet
+  implementation deps.autoCommon
+
+  testImplementation deps.junit
+  testImplementation deps.assertJ
+  testImplementation deps.android
+  testImplementation fileTree(dir: 'libs', include: ['android-support-v4.jar'])
+  testImplementation deps.compileTesting
+  testImplementation deps.truth
+  testImplementation deps.mockito
+  testImplementation files(org.gradle.internal.jvm.Jvm.current().getToolsJar())
 }
 
 checkstyle {
@@ -72,6 +81,6 @@ extraArchive {
 
 nexus {
   sign = !isCi()
-  repositoryUrl = 'https://oss.sonatype.org/service/local/staging/deploy/maven2/'
-  snapshotRepositoryUrl = 'https://oss.sonatype.org/content/repositories/snapshots/'
+  repositoryUrl = getReleaseRepositoryUrl()
+  snapshotRepositoryUrl = getSnapshotRepositoryUrl()
 }

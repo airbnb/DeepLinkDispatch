@@ -1,4 +1,4 @@
-apply plugin: 'com.android.library'
+apply plugin: 'java'
 
 sourceCompatibility = 1.7
 
@@ -6,10 +6,8 @@ apply plugin: 'com.bmuschko.nexus'
 apply plugin: 'checkstyle'
 
 dependencies {
-  api project(':deeplinkdispatch-base')
   implementation deps.okio
   implementation deps.jsr305
-  implementation deps.supportCoreUtils
   testImplementation deps.junit
   testImplementation deps.assertJ
 }
@@ -18,17 +16,6 @@ checkstyle {
   configFile rootProject.file('checkstyle.xml')
   showViolations true
   configProperties = ['checkstyle.cache.file': rootProject.file('build/checkstyle.cache')]
-}
-
-android {
-  compileSdkVersion androidConfig.compileSdkVersion
-  buildToolsVersion androidConfig.buildToolsVersion
-
-  defaultConfig {
-    minSdkVersion androidConfig.minSdkVersion
-    targetSdkVersion androidConfig.compileSdkVersion
-    testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
-  }
 }
 
 project.group = PROJECT_GROUP_ID
@@ -42,7 +29,7 @@ modifyPom {
     inceptionYear '2015'
     version PROJECT_VERSION
     groupId PROJECT_GROUP_ID
-    artifactId 'deeplinkdispatch'
+    artifactId 'deeplinkdispatchbase'
 
     scm {
       url PROJECT_URL

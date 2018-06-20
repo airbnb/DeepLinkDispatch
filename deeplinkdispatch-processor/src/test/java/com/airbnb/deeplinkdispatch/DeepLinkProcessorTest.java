@@ -1,12 +1,10 @@
 package com.airbnb.deeplinkdispatch;
 
 import com.google.testing.compile.JavaFileObjects;
-
 import org.junit.Test;
 
-import java.util.Arrays;
-
 import javax.tools.JavaFileObject;
+import java.util.Arrays;
 
 import static com.google.common.truth.Truth.assertAbout;
 import static com.google.testing.compile.JavaSourceSubjectFactory.javaSource;
