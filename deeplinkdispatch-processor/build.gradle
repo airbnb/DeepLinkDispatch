@@ -14,7 +14,7 @@ sourceSets {
 }
 
 dependencies {
-  implementation project(':deeplinkdispatchbase')
+  implementation project(':deeplinkdispatch-base')
   implementation 'com.google.auto.service:auto-service:1.0-rc3'
   implementation deps.jsr305
   implementation deps.javaPoet

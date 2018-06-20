@@ -6,7 +6,7 @@ apply plugin: 'com.bmuschko.nexus'
 apply plugin: 'checkstyle'
 
 dependencies {
-  api project(':deeplinkdispatchbase')
+  api project(':deeplinkdispatch-base')
   implementation deps.okio
   implementation deps.jsr305
   implementation deps.supportCoreUtils

@@ -1,1 +1,1 @@
-include ':sample', ':deeplinkdispatch',':deeplinkdispatchbase', ':deeplinkdispatch-processor', ':sample-library'
+include ':sample', ':deeplinkdispatch', ':deeplinkdispatch-base', ':deeplinkdispatch-processor', ':sample-library'

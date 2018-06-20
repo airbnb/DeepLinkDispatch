@@ -1,13 +1,7 @@
 def versions = [
     kotlinVersion                : '1.2.21',
     supportLibVersion            : '27.1.1',
-    mockito                      : '1.9.5',
-    testRunner                   : '0.5',
-    espressoIdlingResourceVersion: '2.2.2',
     roboelectricVersion          : '3.5',
-    spekVersion                  : '1.1.5',
-    androidJunit5Version         : '1.0.12',
-    junitPlatformVersion         : '1.0.1',
 ]
 
 ext.versions = versions
