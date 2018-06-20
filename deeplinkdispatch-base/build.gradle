@@ -29,7 +29,7 @@ modifyPom {
     inceptionYear '2015'
     version PROJECT_VERSION
     groupId PROJECT_GROUP_ID
-    artifactId 'deeplinkdispatchbase'
+    artifactId 'deeplinkdispatch-base'
 
     scm {
       url PROJECT_URL
