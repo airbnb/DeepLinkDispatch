@@ -10,6 +10,7 @@ dependencies {
   implementation deps.okio
   implementation deps.jsr305
   implementation deps.supportCoreUtils
+  implementation deps.appCompat
   testImplementation deps.junit
   testImplementation deps.assertJ
 }
@@ -27,7 +28,7 @@ android {
   defaultConfig {
     minSdkVersion androidConfig.minSdkVersion
     targetSdkVersion androidConfig.compileSdkVersion
-    testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+    testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
   }
 }
 
