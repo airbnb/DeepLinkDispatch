@@ -5,29 +5,11 @@ sourceCompatibility = 1.7
 apply plugin: 'com.bmuschko.nexus'
 apply plugin: 'checkstyle'
 
-sourceSets {
-  test {
-    java {
-      srcDir '../deeplinkdispatch/src/main/java' // In tests we need access to the runtime files from the dld library
-    }
-  }
-}
-
 dependencies {
-  implementation project(':deeplinkdispatch-base')
-  implementation 'com.google.auto.service:auto-service:1.0-rc3'
+  implementation deps.okio
   implementation deps.jsr305
-  implementation deps.javaPoet
-  implementation deps.autoCommon
-
   testImplementation deps.junit
   testImplementation deps.assertJ
-  testImplementation deps.android
-  testImplementation fileTree(dir: 'libs', include: ['android-support-v4.jar'])
-  testImplementation deps.compileTesting
-  testImplementation deps.truth
-  testImplementation deps.mockito
-  testImplementation files(org.gradle.internal.jvm.Jvm.current().getToolsJar())
 }
 
 checkstyle {
@@ -41,13 +23,13 @@ project.version = PROJECT_VERSION
 
 modifyPom {
   project {
-    name 'DeepLinkDispatch processor'
+    name 'DeepLinkDispatch library'
     description PROJECT_DESCRIPTION
     url PROJECT_URL
     inceptionYear '2015'
     version PROJECT_VERSION
     groupId PROJECT_GROUP_ID
-    artifactId 'deeplinkdispatch-processor'
+    artifactId 'deeplinkdispatch-base'
 
     scm {
       url PROJECT_URL
@@ -72,6 +54,7 @@ modifyPom {
     }
   }
 }
+
 
 extraArchive {
   sources = true

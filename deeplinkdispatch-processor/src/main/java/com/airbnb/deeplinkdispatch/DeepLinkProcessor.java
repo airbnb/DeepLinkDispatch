@@ -31,13 +31,9 @@ import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
-import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
-import com.squareup.javapoet.WildcardTypeName;
 
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -76,16 +72,8 @@ import static com.google.auto.common.MoreElements.getAnnotationMirror;
 @AutoService(Processor.class)
 @SupportedOptions(Documentor.DOC_OUTPUT_PROPERTY_NAME)
 public class DeepLinkProcessor extends AbstractProcessor {
-  private static final ClassName ANDROID_BUNDLE = ClassName.get("android.os", "Bundle");
-  private static final String DLD_PACKAGE_NAME = "com.airbnb.deeplinkdispatch";
-  private static final ClassName ANDROID_INTENT = ClassName.get("android.content", "Intent");
-  private static final ClassName ANDROID_CONTEXT = ClassName.get("android.content", "Context");
-  private static final ClassName ANDROID_ACTIVITY = ClassName.get("android.app", "Activity");
-  private static final ClassName TASK_STACK_BUILDER = ClassName.get(
-      "androidx.core.app", "TaskStackBuilder");
-  private static final ClassName ANDROID_URI = ClassName.get("android.net", "Uri");
-  private static final ClassName CLASS_DLD_ENTRY = ClassName.get(DeepLinkEntry.class);
-  private static final ClassName CLASS_DLD_URI = ClassName.get(DeepLinkUri.class);
+  private static final ClassName CLASS_BASE_DEEP_LINK_DELEGATE
+          = ClassName.get("com.airbnb.deeplinkdispatch", "BaseDeepLinkDelegate");
   private static final ClassName CLASS_ARRAYS = ClassName.get(Arrays.class);
   private static final ClassName CLASS_COLLECTIONS = ClassName.get(Collections.class);
   private static final Class<DeepLink> DEEP_LINK_CLASS = DeepLink.class;
@@ -164,7 +152,7 @@ public class DeepLinkProcessor extends AbstractProcessor {
         TypeElement returnType = MoreTypes.asTypeElement(executableElement.getReturnType());
         String qualifiedName = returnType.getQualifiedName().toString();
         if (!qualifiedName.equals("android.content.Intent")
-            && !qualifiedName.equals("androidx.core.app.TaskStackBuilder")) {
+            && !qualifiedName.equals("android.support.v4.app.TaskStackBuilder")) {
           error(element, "Only `Intent` or `androidx.core.app.TaskStackBuilder` are supported."
                   + " Please double check your imports and try again.");
         }
@@ -344,58 +332,16 @@ public class DeepLinkProcessor extends AbstractProcessor {
 
   private void generateDeepLinkDelegate(String packageName, List<TypeElement> loaderClasses)
       throws IOException {
-    MethodSpec notifyListenerMethod = MethodSpec.methodBuilder("notifyListener")
-        .addModifiers(Modifier.PRIVATE, Modifier.STATIC)
-        .returns(void.class)
-        .addParameter(ANDROID_CONTEXT, "context")
-        .addParameter(boolean.class, "isError")
-        .addParameter(ClassName.get("android.net", "Uri"), "uri")
-        .addParameter(String.class, "errorMessage")
-        .addStatement("$T intent = new Intent()", ANDROID_INTENT)
-        .addStatement("intent.setAction($T.ACTION)", DeepLinkHandler.class)
-        .addStatement("intent.putExtra($T.EXTRA_URI, uri != null ? uri.toString() : $S)",
-            DeepLinkHandler.class, "")
-        .addStatement("intent.putExtra($T.EXTRA_SUCCESSFUL, !isError)", DeepLinkHandler.class)
-        .beginControlFlow("if (isError)")
-        .addStatement("intent.putExtra($T.EXTRA_ERROR_MESSAGE, errorMessage)",
-            DeepLinkHandler.class)
-        .endControlFlow()
-        .addStatement("$T.getInstance(context).sendBroadcast(intent)",
-            ClassName.get("androidx.localbroadcastmanager.content", "LocalBroadcastManager"))
-        .build();
-    ClassName deepLinkResult = ClassName.get(DLD_PACKAGE_NAME, "DeepLinkResult");
-    MethodSpec createResultAndNotifyMethod = MethodSpec.methodBuilder("createResultAndNotify")
-        .addModifiers(Modifier.PRIVATE, Modifier.STATIC)
-        .returns(deepLinkResult)
-        .addParameter(ANDROID_CONTEXT, "context")
-        .addParameter(TypeName.BOOLEAN, "successful", Modifier.FINAL)
-        .addParameter(ANDROID_URI, "uri", Modifier.FINAL)
-        .addParameter(ClassName.get(String.class), "error", Modifier.FINAL)
-        .addStatement("notifyListener(context, !successful, uri, error)")
-        .addStatement("return new $T(successful, uri != null ? uri.toString() : null, error)",
-            deepLinkResult)
-        .build();
-
-    FieldSpec tag = FieldSpec
-        .builder(String.class, "TAG", Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL)
-        .initializer("DeepLinkDelegate.class.getSimpleName()")
-        .build();
-
-    FieldSpec loaders = FieldSpec
-        .builder(ParameterizedTypeName.get(ClassName.get(List.class),
-            WildcardTypeName.subtypeOf(Parser.class)), "loaders", Modifier.PRIVATE,
-            Modifier.FINAL)
-        .build();
-
     CodeBlock.Builder loadersInitializer = CodeBlock.builder()
-        .add("this.loaders = $T.asList(\n", ClassName.get(Arrays.class))
+        .add("super($T.asList(\n", ClassName.get(Arrays.class))
         .indent();
     int totalElements = loaderClasses.size();
     for (int i = 0; i < totalElements; i++) {
       loadersInitializer.add("$L$L",
           decapitalize(moduleNameToLoaderName(loaderClasses.get(i))),
-          i < totalElements - 1 ? "," : "");
+          i < totalElements - 1 ? ",\n" : "\n");
     }
+
     MethodSpec constructor = MethodSpec.constructorBuilder()
         .addModifiers(Modifier.PUBLIC)
         .addParameters(FluentIterable.from(loaderClasses).transform(
@@ -405,169 +351,13 @@ public class DeepLinkProcessor extends AbstractProcessor {
                     decapitalize(moduleNameToLoaderName(typeElement))).build();
               }
             }).toList())
-        .addCode(loadersInitializer.unindent().add(");\n").build())
-        .build();
-
-    MethodSpec supportsUri = MethodSpec.methodBuilder("supportsUri")
-        .addModifiers(Modifier.PUBLIC)
-        .returns(TypeName.BOOLEAN)
-        .addParameter(String.class, "uriString")
-        .addStatement("return findEntry(uriString) != null")
-        .build();
-
-    MethodSpec findEntry = MethodSpec.methodBuilder("findEntry")
-        .addModifiers(Modifier.PRIVATE)
-        .returns(CLASS_DLD_ENTRY)
-        .addParameter(String.class, "uriString")
-        .beginControlFlow("for (Parser loader : loaders)")
-        .addStatement("$T entry = loader.parseUri(uriString)", CLASS_DLD_ENTRY)
-        .beginControlFlow("if (entry != null)")
-        .addStatement("return entry")
-        .endControlFlow()
-        .endControlFlow()
-        .addStatement("return null")
-        .build();
-
-    MethodSpec dispatchFromMethod = MethodSpec.methodBuilder("dispatchFrom")
-        .addModifiers(Modifier.PUBLIC)
-        .returns(deepLinkResult)
-        .addParameter(ANDROID_ACTIVITY, "activity")
-        .beginControlFlow("if (activity == null)")
-        .addStatement("throw new $T($S)", NullPointerException.class, "activity == null")
-        .endControlFlow()
-        .addStatement("return dispatchFrom(activity, activity.getIntent())")
-        .build();
-
-    MethodSpec dispatchFromMethodWithIntent = MethodSpec.methodBuilder("dispatchFrom")
-        .addModifiers(Modifier.PUBLIC)
-        .returns(deepLinkResult)
-        .addParameter(ANDROID_ACTIVITY, "activity")
-        .addParameter(ANDROID_INTENT, "sourceIntent")
-        .beginControlFlow("if (activity == null)")
-        .addStatement("throw new $T($S)", NullPointerException.class, "activity == null")
-        .endControlFlow()
-        .beginControlFlow("if (sourceIntent == null)")
-        .addStatement("throw new $T($S)", NullPointerException.class, "sourceIntent == null")
-        .endControlFlow()
-        .addStatement("$T uri = sourceIntent.getData()", ANDROID_URI)
-        .beginControlFlow("if (uri == null)")
-        .addStatement("return createResultAndNotify(activity, false, null, $S)",
-            "No Uri in given activity's intent.")
-        .endControlFlow()
-        .addStatement("String uriString = uri.toString()")
-        .addStatement("$T entry = findEntry(uriString)", CLASS_DLD_ENTRY)
-        .beginControlFlow("if (entry != null)")
-        .addStatement("$T deepLinkUri = DeepLinkUri.parse(uriString)", CLASS_DLD_URI)
-        .addStatement("$T<String, String> parameterMap = entry.getParameters(uriString)", Map.class)
-        .beginControlFlow("for (String queryParameter : deepLinkUri.queryParameterNames())")
-        .beginControlFlow(
-            "for (String queryParameterValue : deepLinkUri.queryParameterValues(queryParameter))")
-        .beginControlFlow("if (parameterMap.containsKey(queryParameter))")
-        .addStatement(
-            "$T.w(TAG, \"Duplicate parameter name in path and query param: \" + queryParameter)",
-            ClassName.get("android.util", "Log"))
-        .endControlFlow()
-        .addStatement("parameterMap.put(queryParameter, queryParameterValue)")
-        .endControlFlow()
-        .endControlFlow()
-        .addStatement("parameterMap.put($T.URI, uri.toString())",
-            ClassName.get(DLD_PACKAGE_NAME, "DeepLink"))
-        .addStatement("$T parameters", ANDROID_BUNDLE)
-        .beginControlFlow("if (sourceIntent.getExtras() != null)")
-        .addStatement("parameters = new Bundle(sourceIntent.getExtras())")
-        .nextControlFlow("else")
-        .addStatement("parameters = new Bundle()")
-        .endControlFlow()
-        .beginControlFlow(
-            "for (Map.Entry<String, String> parameterEntry : parameterMap.entrySet())")
-        .addStatement("parameters.putString(parameterEntry.getKey(), parameterEntry.getValue())")
-        .endControlFlow()
-        .beginControlFlow("try")
-        .addStatement("Class<?> c = entry.getActivityClass()")
-        .addStatement("$T newIntent", ANDROID_INTENT)
-        .addStatement("$T taskStackBuilder = null", TASK_STACK_BUILDER)
-        .beginControlFlow("if (entry.getType() == DeepLinkEntry.Type.CLASS)")
-        .addStatement("newIntent = new Intent(activity, c)")
-        .nextControlFlow("else")
-        .addStatement("$T method", Method.class)
-        .beginControlFlow("try")
-        .addStatement("method = c.getMethod(entry.getMethod(), $T.class)", ANDROID_CONTEXT)
-        .beginControlFlow("if (method.getReturnType().equals($T.class))", TASK_STACK_BUILDER)
-        .addStatement("taskStackBuilder = (TaskStackBuilder) method.invoke(c, activity)")
-        .beginControlFlow("if (taskStackBuilder.getIntentCount() == 0)")
-        .addStatement("return createResultAndNotify(activity, false, uri, \"Could not deep "
-            + "link to method: \" + entry.getMethod() + \" intents length == 0\" )")
-        .endControlFlow()
-        .addStatement("newIntent = taskStackBuilder."
-            + "editIntentAt(taskStackBuilder.getIntentCount()-1)")
-        .nextControlFlow("else")
-        .addStatement("newIntent = (Intent) method.invoke(c, activity)")
-        .endControlFlow()
-        .nextControlFlow("catch ($T exception)", NoSuchMethodException.class)
-        .addStatement("method = c.getMethod(entry.getMethod(), $T.class, $T.class)",
-            ANDROID_CONTEXT, ANDROID_BUNDLE)
-        .beginControlFlow("if (method.getReturnType().equals($T.class))", TASK_STACK_BUILDER)
-        .addStatement("taskStackBuilder = "
-            + "(TaskStackBuilder) method.invoke(c, activity, parameters)")
-        .beginControlFlow("if (taskStackBuilder.getIntentCount() == 0)")
-        .addStatement("return createResultAndNotify(activity, false, uri, \"Could not deep "
-            + "link to method: \" + entry.getMethod() + \" intents length == 0\" )")
-        .endControlFlow()
-        .addStatement("newIntent = taskStackBuilder."
-            + "editIntentAt(taskStackBuilder.getIntentCount() - 1)")
-        .nextControlFlow("else")
-        .addStatement("newIntent = (Intent) method.invoke(c, activity, parameters)")
-        .endControlFlow()
-        .endControlFlow()
-        .endControlFlow()
-        .beginControlFlow("if (newIntent.getAction() == null)")
-        .addStatement("newIntent.setAction(sourceIntent.getAction())")
-        .endControlFlow()
-        .beginControlFlow("if (newIntent.getData() == null)")
-        .addStatement("newIntent.setData(sourceIntent.getData())")
-        .endControlFlow()
-        .addStatement("newIntent.putExtras(parameters)")
-        .addStatement("newIntent.putExtra(DeepLink.IS_DEEP_LINK, true)")
-        .addStatement("newIntent.putExtra(DeepLink.REFERRER_URI, uri)")
-        .beginControlFlow("if (activity.getCallingActivity() != null)")
-        .addStatement("newIntent.setFlags(Intent.FLAG_ACTIVITY_FORWARD_RESULT)")
-        .endControlFlow()
-        .beginControlFlow("if (taskStackBuilder != null)")
-        .addStatement("taskStackBuilder.startActivities()")
-        .nextControlFlow("else")
-        .addStatement("activity.startActivity(newIntent)")
-        .endControlFlow()
-        .addStatement("return createResultAndNotify(activity, true, uri, null)")
-        .nextControlFlow("catch (NoSuchMethodException exception)")
-        .addStatement(
-            "return createResultAndNotify(activity, false, uri, \"Deep link to "
-                + "non-existent method: \" + entry.getMethod())")
-        .nextControlFlow("catch (IllegalAccessException exception)")
-        .addStatement(
-            "return createResultAndNotify(activity, false, uri, \"Could not deep "
-                + "link to method: \" + entry.getMethod())")
-        .nextControlFlow("catch ($T  exception)", InvocationTargetException.class)
-        .addStatement(
-            "return createResultAndNotify(activity, false, uri, \"Could not deep "
-                + "link to method: \" + entry.getMethod())")
-        .endControlFlow()
-        .nextControlFlow("else")
-        .addStatement("return createResultAndNotify(activity, false, uri, "
-            + "\"No registered entity to handle deep link: \" + uri.toString())")
-        .endControlFlow()
+        .addCode(loadersInitializer.unindent().add("));\n").build())
         .build();
 
     TypeSpec deepLinkDelegate = TypeSpec.classBuilder("DeepLinkDelegate")
         .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
-        .addField(tag)
-        .addField(loaders)
+        .superclass(CLASS_BASE_DEEP_LINK_DELEGATE)
         .addMethod(constructor)
-        .addMethod(findEntry)
-        .addMethod(dispatchFromMethod)
-        .addMethod(dispatchFromMethodWithIntent)
-        .addMethod(createResultAndNotifyMethod)
-        .addMethod(notifyListenerMethod)
-        .addMethod(supportsUri)
         .build();
 
     JavaFile.builder(packageName, deepLinkDelegate)

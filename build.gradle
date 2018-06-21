@@ -1,21 +1,35 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 
 buildscript {
+  apply from: rootProject.file("dependencies.gradle")
+
   repositories {
     jcenter()
     google()
   }
   dependencies {
-    classpath 'com.android.tools.build:gradle:3.2.0-alpha18'
-    classpath 'com.bmuschko:gradle-nexus-plugin:2.3.1'
+    classpath deps.androidPlugin
+    classpath deps.nexusPlugin
   }
 }
 
 allprojects {
+  apply from: rootProject.file("dependencies.gradle")
+
   repositories {
     jcenter()
     google()
   }
+}
+
+def getReleaseRepositoryUrl() {
+  return hasProperty('RELEASE_REPOSITORY_URL') ? RELEASE_REPOSITORY_URL
+          : "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
+}
+
+def getSnapshotRepositoryUrl() {
+  return hasProperty('SNAPSHOT_REPOSITORY_URL') ? SNAPSHOT_REPOSITORY_URL
+          : "https://oss.sonatype.org/content/repositories/snapshots/"
 }
 
 def isCi() {

@@ -381,7 +381,7 @@ public class DeepLinkProcessorTest {
         .processedWith(new DeepLinkProcessor())
         .failsToCompile()
         .withErrorContaining(
-            "Only `Intent` or `android.support.v4.app.TaskStackBuilder` are supported."
+            "Only `Intent` or `androidx.core.app.TaskStackBuilder` are supported."
                 + " Please double check your imports and try again.");
   }
 }
