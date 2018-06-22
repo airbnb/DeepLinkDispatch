@@ -152,7 +152,7 @@ public class DeepLinkProcessor extends AbstractProcessor {
         TypeElement returnType = MoreTypes.asTypeElement(executableElement.getReturnType());
         String qualifiedName = returnType.getQualifiedName().toString();
         if (!qualifiedName.equals("android.content.Intent")
-            && !qualifiedName.equals("android.support.v4.app.TaskStackBuilder")) {
+            && !qualifiedName.equals("androidx.core.app.TaskStackBuilder")) {
           error(element, "Only `Intent` or `androidx.core.app.TaskStackBuilder` are supported."
                   + " Please double check your imports and try again.");
         }
