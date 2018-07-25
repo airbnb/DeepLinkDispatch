@@ -23,7 +23,9 @@ dependencies {
   testImplementation deps.junit
   testImplementation deps.assertJ
   testImplementation deps.android
-  testImplementation fileTree(dir: 'libs', include: ['android-support-v4.jar'])
+  // For test compile we need a reference of the DeepLinkDelegate (which has android dependencies)
+  // Cannot depend on them from Maven as they are .aar and not .jar files (this is a java project)
+  testImplementation fileTree(dir: 'libs', include: ['androidx.localbroadcastmanager-1.0.0-beta1.jar','androidx.core-1.0.0-beta1.jar'])
   testImplementation deps.compileTesting
   testImplementation deps.truth
   testImplementation deps.mockito

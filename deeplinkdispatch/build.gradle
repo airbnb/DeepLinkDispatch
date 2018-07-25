@@ -9,7 +9,7 @@ dependencies {
   api project(':deeplinkdispatch-base')
   implementation deps.okio
   implementation deps.jsr305
-  implementation deps.supportCoreUtils
+  implementation deps.localBroadcastManager
   implementation deps.appCompat
   testImplementation deps.junit
   testImplementation deps.assertJ

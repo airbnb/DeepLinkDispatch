@@ -1,6 +1,6 @@
 def versions = [
     kotlinVersion                : '1.2.51',
-    supportLibVersion            : '1.0.0-beta01',
+    androixVersion               : '1.0.0-beta01',
     roboelectricVersion          : '3.5',
 ]
 
@@ -16,10 +16,9 @@ ext.androidConfig = [
 ext.deps = [
     autoCommon               : "com.google.auto:auto-common:0.8",
     androidPlugin            : "com.android.tools.build:gradle:$androidConfig.agpVersion",
-    appCompat                : "androidx.appcompat:appcompat:$versions.supportLibVersion",
-    supportCoreUtils         : "androidx.localbroadcastmanager:localbroadcastmanager:$versions.supportLibVersion",
+    appCompat                : "androidx.appcompat:appcompat:$versions.androixVersion",
+    localBroadcastManager    : "androidx.localbroadcastmanager:localbroadcastmanager:$versions.androixVersion",
     nexusPlugin              : 'com.bmuschko:gradle-nexus-plugin:2.3.1',
-    appcompat                : "com.android.support:appcompat-v7:$versions.supportLibVersion",
     kotlinStdLib             : "org.jetbrains.kotlin:kotlin-stdlib:$versions.kotlinVersion",
     kotlinGradlePlugin       : "org.jetbrains.kotlin:kotlin-gradle-plugin:$versions.kotlinVersion",
     javaPoet                 : 'com.squareup:javapoet:1.9.0',
