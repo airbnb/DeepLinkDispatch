@@ -4,8 +4,8 @@ buildscript {
   apply from: rootProject.file("dependencies.gradle")
 
   repositories {
-    jcenter()
     google()
+    jcenter()
   }
   dependencies {
     classpath deps.androidPlugin
@@ -17,8 +17,8 @@ allprojects {
   apply from: rootProject.file("dependencies.gradle")
 
   repositories {
-    jcenter()
     google()
+    jcenter()
   }
 }
 

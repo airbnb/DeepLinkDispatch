@@ -2,7 +2,7 @@ package com.airbnb.deeplinkdispatch.sample;
 
 import android.app.Application;
 import android.content.IntentFilter;
-import android.support.v4.content.LocalBroadcastManager;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.airbnb.deeplinkdispatch.DeepLinkHandler;
 

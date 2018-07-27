@@ -4,12 +4,16 @@ android:
   components:
     - tools
     - platform-tools
-    - build-tools-27.0.3
-    - android-27
+    - build-tools-28.0.1
+    - android-28
     - extra-google-google_play_services
     - extra-android-m2repository
     - extra-android-support
     - extra-google-m2repository
+  licenses:
+    - 'android-sdk-preview-license-.+'
+    - 'android-sdk-license-.+'
+    - 'google-gdk-license-.+'
 
 after_success:
   - .buildscript/deploy_snapshot.sh

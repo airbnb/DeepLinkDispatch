@@ -1,10 +1,12 @@
 package com.airbnb.deeplinkdispatch;
 
 import com.google.testing.compile.JavaFileObjects;
+
 import org.junit.Test;
 
-import javax.tools.JavaFileObject;
 import java.util.Arrays;
+
+import javax.tools.JavaFileObject;
 
 import static com.google.common.truth.Truth.assertAbout;
 import static com.google.testing.compile.JavaSourceSubjectFactory.javaSource;
@@ -379,7 +381,7 @@ public class DeepLinkProcessorTest {
         .processedWith(new DeepLinkProcessor())
         .failsToCompile()
         .withErrorContaining(
-            "Only `Intent` or `android.support.v4.app.TaskStackBuilder` are supported."
+            "Only `Intent` or `androidx.core.app.TaskStackBuilder` are supported."
                 + " Please double check your imports and try again.");
   }
 }
