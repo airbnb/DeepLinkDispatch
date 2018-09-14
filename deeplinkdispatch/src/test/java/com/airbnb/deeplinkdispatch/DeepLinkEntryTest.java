@@ -150,7 +150,7 @@ public class DeepLinkEntryTest {
     assertThat("airbnb://something".equals(entry.getUriTemplate())).isTrue();
   }
 
-  @Test public void templatewithParameters() {
+  @Test public void templateWithParameters() {
     DeepLinkEntry entry = deepLinkEntry("airbnb://test/{param1}/{param2}");
     assertThat("airbnb://test/{param1}/{param2}".equals(entry.getUriTemplate())).isTrue();
   }
