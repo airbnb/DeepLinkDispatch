@@ -51,7 +51,8 @@ public class BaseDeepLinkDelegate {
     }
     Uri uri = sourceIntent.getData();
     if (uri == null) {
-      return createResultAndNotify(activity, false, null, null, "No Uri in given activity's intent.");
+      return createResultAndNotify(activity, false, null,
+              null, "No Uri in given activity's intent.");
     }
     String uriString = uri.toString();
     DeepLinkEntry entry = findEntry(uriString);
@@ -89,8 +90,9 @@ public class BaseDeepLinkDelegate {
             if (method.getReturnType().equals(TaskStackBuilder.class)) {
               taskStackBuilder = (TaskStackBuilder) method.invoke(c, activity);
               if (taskStackBuilder.getIntentCount() == 0) {
-                return createResultAndNotify(activity, false, uri,
-                        entry.getUriTemplate(), "Could not deep link to method: " + entry.getMethod() + " intents length == 0");
+                return createResultAndNotify(activity, false, uri, entry.getUriTemplate(),
+                        "Could not deep link to method: "
+                                + entry.getMethod() + " intents length == 0");
               }
               newIntent = taskStackBuilder.editIntentAt(taskStackBuilder.getIntentCount() - 1);
             } else {
@@ -101,8 +103,9 @@ public class BaseDeepLinkDelegate {
             if (method.getReturnType().equals(TaskStackBuilder.class)) {
               taskStackBuilder = (TaskStackBuilder) method.invoke(c, activity, parameters);
               if (taskStackBuilder.getIntentCount() == 0) {
-                return createResultAndNotify(activity, false, uri,
-                        entry.getUriTemplate(), "Could not deep link to method: " + entry.getMethod() + " intents length == 0");
+                return createResultAndNotify(activity, false, uri, entry.getUriTemplate(),
+                        "Could not deep link to method: "
+                                + entry.getMethod() + " intents length == 0");
               }
               newIntent = taskStackBuilder.editIntentAt(taskStackBuilder.getIntentCount() - 1);
             } else {
@@ -139,13 +142,14 @@ public class BaseDeepLinkDelegate {
                 entry.getUriTemplate(), "Could not deep link to method: " + entry.getMethod());
       }
     } else {
-      return createResultAndNotify(activity, false, uri,
-              entry.getUriTemplate(), "No registered entity to handle deep link: " + uri.toString());
+      return createResultAndNotify(activity, false, uri, entry.getUriTemplate(),
+              "No registered entity to handle deep link: " + uri.toString());
     }
   }
 
-  private static DeepLinkResult createResultAndNotify(Context context, final boolean successful,
-                                                      final Uri uri, String uriTemplate, final String error) {
+  private static DeepLinkResult createResultAndNotify(Context context,
+                                                      final boolean successful, final Uri uri,
+                                                      String uriTemplate, final String error) {
     notifyListener(context, !successful, uri, uriTemplate, error);
     return new DeepLinkResult(successful, uri != null ? uri.toString() : null, error);
   }
