@@ -38,5 +38,6 @@ public @interface DeepLinkHandler {
   String ACTION = "com.airbnb.deeplinkdispatch.DEEPLINK_ACTION";
   String EXTRA_SUCCESSFUL = "com.airbnb.deeplinkdispatch.EXTRA_SUCCESSFUL";
   String EXTRA_URI = "com.airbnb.deeplinkdispatch.EXTRA_URI";
+  String EXTRA_URI_TEMPLATE = "com.airbnb.deeplinkdispatch.EXTRA_URI_TEMPLATE";
   String EXTRA_ERROR_MESSAGE = "com.airbnb.deeplinkdispatch.EXTRA_ERROR_MESSAGE";
 }
