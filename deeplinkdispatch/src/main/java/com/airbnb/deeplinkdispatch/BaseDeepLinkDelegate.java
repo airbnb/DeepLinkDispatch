@@ -51,7 +51,7 @@ public class BaseDeepLinkDelegate {
     }
     Uri uri = sourceIntent.getData();
     if (uri == null) {
-      return createResultAndNotify(activity, false, null, "No Uri in given activity's intent.");
+      return createResultAndNotify(activity, false, null, null, "No Uri in given activity's intent.");
     }
     String uriString = uri.toString();
     DeepLinkEntry entry = findEntry(uriString);
@@ -90,7 +90,7 @@ public class BaseDeepLinkDelegate {
               taskStackBuilder = (TaskStackBuilder) method.invoke(c, activity);
               if (taskStackBuilder.getIntentCount() == 0) {
                 return createResultAndNotify(activity, false, uri,
-                    "Could not deep link to method: " + entry.getMethod() + " intents length == 0");
+                        entry.getUriTemplate(), "Could not deep link to method: " + entry.getMethod() + " intents length == 0");
               }
               newIntent = taskStackBuilder.editIntentAt(taskStackBuilder.getIntentCount() - 1);
             } else {
@@ -102,7 +102,7 @@ public class BaseDeepLinkDelegate {
               taskStackBuilder = (TaskStackBuilder) method.invoke(c, activity, parameters);
               if (taskStackBuilder.getIntentCount() == 0) {
                 return createResultAndNotify(activity, false, uri,
-                    "Could not deep link to method: " + entry.getMethod() + " intents length == 0");
+                        entry.getUriTemplate(), "Could not deep link to method: " + entry.getMethod() + " intents length == 0");
               }
               newIntent = taskStackBuilder.editIntentAt(taskStackBuilder.getIntentCount() - 1);
             } else {
@@ -127,34 +127,35 @@ public class BaseDeepLinkDelegate {
         } else {
           activity.startActivity(newIntent);
         }
-        return createResultAndNotify(activity, true, uri, null);
+        return createResultAndNotify(activity, true, uri, entry.getUriTemplate(), null);
       } catch (NoSuchMethodException exception) {
         return createResultAndNotify(activity, false, uri,
-            "Deep link to non-existent method: " + entry.getMethod());
+                entry.getUriTemplate(), "Deep link to non-existent method: " + entry.getMethod());
       } catch (IllegalAccessException exception) {
         return createResultAndNotify(activity, false, uri,
-            "Could not deep link to method: " + entry.getMethod());
+                entry.getUriTemplate(), "Could not deep link to method: " + entry.getMethod());
       } catch (InvocationTargetException exception) {
         return createResultAndNotify(activity, false, uri,
-            "Could not deep link to method: " + entry.getMethod());
+                entry.getUriTemplate(), "Could not deep link to method: " + entry.getMethod());
       }
     } else {
       return createResultAndNotify(activity, false, uri,
-          "No registered entity to handle deep link: " + uri.toString());
+              entry.getUriTemplate(), "No registered entity to handle deep link: " + uri.toString());
     }
   }
 
   private static DeepLinkResult createResultAndNotify(Context context, final boolean successful,
-                                                      final Uri uri, final String error) {
-    notifyListener(context, !successful, uri, error);
+                                                      final Uri uri, String uriTemplate, final String error) {
+    notifyListener(context, !successful, uri, uriTemplate, error);
     return new DeepLinkResult(successful, uri != null ? uri.toString() : null, error);
   }
 
   private static void notifyListener(Context context, boolean isError, Uri uri,
-                                     String errorMessage) {
+                                     String uriTemplate, String errorMessage) {
     Intent intent = new Intent();
     intent.setAction(DeepLinkHandler.ACTION);
     intent.putExtra(DeepLinkHandler.EXTRA_URI, uri != null ? uri.toString() : "");
+    intent.putExtra(DeepLinkHandler.EXTRA_URI_TEMPLATE, uriTemplate != null ? uriTemplate : "");
     intent.putExtra(DeepLinkHandler.EXTRA_SUCCESSFUL, !isError);
     if (isError) {
       intent.putExtra(DeepLinkHandler.EXTRA_ERROR_MESSAGE, errorMessage);

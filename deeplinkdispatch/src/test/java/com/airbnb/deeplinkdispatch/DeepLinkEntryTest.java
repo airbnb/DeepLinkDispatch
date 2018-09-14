@@ -145,6 +145,16 @@ public class DeepLinkEntryTest {
       .contains(entry("foo", "baz"), entry("bar", "qux"));
   }
 
+  @Test public void templateWithoutParameters() {
+    DeepLinkEntry entry = deepLinkEntry("airbnb://something");
+    assertThat("airbnb://something".equals(entry.getUriTemplate())).isTrue();
+  }
+
+  @Test public void templatewithParameters() {
+    DeepLinkEntry entry = deepLinkEntry("airbnb://test/{param1}/{param2}");
+    assertThat("airbnb://test/{param1}/{param2}".equals(entry.getUriTemplate())).isTrue();
+  }
+
   private static DeepLinkEntry deepLinkEntry(String uri) {
     return new DeepLinkEntry(uri, DeepLinkEntry.Type.CLASS, String.class, null);
   }

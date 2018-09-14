@@ -34,15 +34,18 @@ public final class DeepLinkEntry {
   private final String method;
   private final Set<String> parameters;
   private final Pattern regex;
+  private final String uriTemplate;
 
   public enum Type {
     CLASS,
     METHOD
   }
 
-  public DeepLinkEntry(String uri, Type type, Class<?> activityClass, String method) {
-    DeepLinkUri parsedUri = DeepLinkUri.parse(uri);
+  public DeepLinkEntry(String uriTemplate, Type type, Class<?> activityClass, String method) {
+    DeepLinkUri parsedUri = DeepLinkUri.parse(uriTemplate);
     String schemeHostAndPath = schemeHostAndPath(parsedUri);
+
+    this.uriTemplate = uriTemplate;
     this.type = type;
     this.activityClass = activityClass;
     this.method = method;
@@ -97,6 +100,10 @@ public final class DeepLinkEntry {
       }
     }
     return paramsMap;
+  }
+
+  public String getUriTemplate(){
+    return this.uriTemplate;
   }
 
   private static String parsePath(DeepLinkUri parsedUri) {
