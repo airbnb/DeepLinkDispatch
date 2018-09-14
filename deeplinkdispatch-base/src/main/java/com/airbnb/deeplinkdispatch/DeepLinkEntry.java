@@ -102,7 +102,7 @@ public final class DeepLinkEntry {
     return paramsMap;
   }
 
-  public String getUriTemplate(){
+  public String getUriTemplate() {
     return this.uriTemplate;
   }
 
