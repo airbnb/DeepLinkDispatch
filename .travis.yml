@@ -4,19 +4,14 @@ android:
   components:
     - tools
     - platform-tools
-    - build-tools-28.0.1
     - android-28
-    - extra-google-google_play_services
-    - extra-android-m2repository
-    - extra-android-support
-    - extra-google-m2repository
-  licenses:
-    - 'android-sdk-preview-license-.+'
-    - 'android-sdk-license-.+'
-    - 'google-gdk-license-.+'
 
 after_success:
   - .buildscript/deploy_snapshot.sh
+
+before_install:
+    - mkdir "$ANDROID_HOME/licenses" || true
+    - echo "d56f5187479451eabf01fb78af6dfcb131a6481e" > "$ANDROID_HOME/licenses/android-sdk-license"
 
 jdk:
   - oraclejdk8
