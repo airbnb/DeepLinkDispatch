@@ -4,6 +4,7 @@ sourceCompatibility = 1.7
 
 apply plugin: 'com.bmuschko.nexus'
 apply plugin: 'checkstyle'
+apply plugin: 'com.github.dcendents.android-maven' 
 
 dependencies {
   api project(':deeplinkdispatch-base')
