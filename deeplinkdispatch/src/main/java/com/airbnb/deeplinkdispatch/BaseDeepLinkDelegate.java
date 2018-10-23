@@ -142,7 +142,7 @@ public class BaseDeepLinkDelegate {
                 entry.getUriTemplate(), "Could not deep link to method: " + entry.getMethod());
       }
     } else {
-      return createResultAndNotify(activity, false, uri, entry.getUriTemplate(),
+      return createResultAndNotify(activity, false, uri, null,
               "No registered entity to handle deep link: " + uri.toString());
     }
   }
