@@ -181,7 +181,7 @@ public @interface WebDeepLink {
 ```
 
 ```java
-// This activity is gonna hanndle the following deep links:
+// This activity is gonna handle the following deep links:
 // "app://airbnb/view_users"
 // "http://airbnb.com/users"
 // "http://airbnb.com/user/{id}"
