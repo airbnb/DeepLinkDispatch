@@ -19,6 +19,7 @@ ext.deps = [
     appCompat                : "androidx.appcompat:appcompat:$versions.androixVersion",
     localBroadcastManager    : "androidx.localbroadcastmanager:localbroadcastmanager:$versions.androixVersion",
     nexusPlugin              : 'com.bmuschko:gradle-nexus-plugin:2.3.1',
+    androidMavenPlugin       : 'com.github.dcendents:android-maven-gradle-plugin:2.1',
     kotlinStdLib             : "org.jetbrains.kotlin:kotlin-stdlib:$versions.kotlinVersion",
     kotlinGradlePlugin       : "org.jetbrains.kotlin:kotlin-gradle-plugin:$versions.kotlinVersion",
     javaPoet                 : 'com.squareup:javapoet:1.9.0',
