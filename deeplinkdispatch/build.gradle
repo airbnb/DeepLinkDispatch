@@ -4,7 +4,9 @@ sourceCompatibility = 1.7
 
 apply plugin: 'com.bmuschko.nexus'
 apply plugin: 'checkstyle'
-apply plugin: 'com.github.dcendents.android-maven' 
+apply plugin: 'com.github.dcendents.android-maven'
+
+apply from: '../gradle-maven-push.gradle'
 
 dependencies {
   api project(':deeplinkdispatch-base')
@@ -33,18 +35,18 @@ android {
   }
 }
 
-project.group = PROJECT_GROUP_ID
-project.version = PROJECT_VERSION
+project.group = GROUP
+project.version = VERSION_NAME
 
 modifyPom {
   project {
-    name 'DeepLinkDispatch library'
+    name POM_NAME
     description PROJECT_DESCRIPTION
     url PROJECT_URL
     inceptionYear '2015'
-    version PROJECT_VERSION
-    groupId PROJECT_GROUP_ID
-    artifactId 'deeplinkdispatch'
+    version VERSION_NAME
+    groupId GROUP
+    artifactId POM_ARTIFACT_ID
 
     scm {
       url PROJECT_URL

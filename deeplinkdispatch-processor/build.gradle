@@ -38,18 +38,18 @@ checkstyle {
   configProperties = ['checkstyle.cache.file': rootProject.file('build/checkstyle.cache')]
 }
 
-project.group = PROJECT_GROUP_ID
-project.version = PROJECT_VERSION
+project.group = GROUP
+project.version = VERSION_NAME
 
 modifyPom {
   project {
-    name 'DeepLinkDispatch processor'
+    name POM_NAME
     description PROJECT_DESCRIPTION
     url PROJECT_URL
     inceptionYear '2015'
-    version PROJECT_VERSION
-    groupId PROJECT_GROUP_ID
-    artifactId 'deeplinkdispatch-processor'
+    version VERSION_NAME
+    groupId GROUP
+    artifactId POM_ARTIFACT_ID
 
     scm {
       url PROJECT_URL
