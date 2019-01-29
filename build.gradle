@@ -9,8 +9,6 @@ buildscript {
   }
   dependencies {
     classpath deps.androidPlugin
-    classpath deps.nexusPlugin
-    classpath deps.androidMavenPlugin
   }
 }
 

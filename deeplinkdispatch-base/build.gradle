@@ -2,8 +2,10 @@ apply plugin: 'java'
 
 sourceCompatibility = 1.7
 
-apply plugin: 'com.bmuschko.nexus'
 apply plugin: 'checkstyle'
+
+apply from: '../gradle-maven-push.gradle'
+
 
 dependencies {
   implementation deps.okio
@@ -18,52 +20,3 @@ checkstyle {
   configProperties = ['checkstyle.cache.file': rootProject.file('build/checkstyle.cache')]
 }
 
-project.group = GROUP
-project.version = VERSION_NAME
-
-modifyPom {
-  project {
-    name POM_NAME
-    description PROJECT_DESCRIPTION
-    url PROJECT_URL
-    inceptionYear '2015'
-    version VERSION_NAME
-    groupId GROUP
-    artifactId POM_ARTIFACT_ID
-
-    scm {
-      url PROJECT_URL
-      connection 'scm:https://github.com/airbnb/DeepLinkDispatch.git'
-      developerConnection 'scm:git@github.com:airbnb/DeepLinkDispatch.git'
-    }
-
-    licenses {
-      license {
-        name 'The Apache Software License, Version 2.0'
-        url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-        distribution 'repo'
-      }
-    }
-
-    developers {
-      developer {
-        id 'airbnb'
-        name 'Airbnb'
-        email 'android@airbnb.com'
-      }
-    }
-  }
-}
-
-
-extraArchive {
-  sources = true
-  tests = false
-  javadoc = true
-}
-
-nexus {
-  sign = !isCi()
-  repositoryUrl = getReleaseRepositoryUrl()
-  snapshotRepositoryUrl = getSnapshotRepositoryUrl()
-}
