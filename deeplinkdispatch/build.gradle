@@ -2,9 +2,10 @@ apply plugin: 'com.android.library'
 
 sourceCompatibility = 1.7
 
-apply plugin: 'com.bmuschko.nexus'
 apply plugin: 'checkstyle'
-apply plugin: 'com.github.dcendents.android-maven' 
+
+apply from: '../gradle-maven-push.gradle'
+
 
 dependencies {
   api project(':deeplinkdispatch-base')
@@ -31,54 +32,4 @@ android {
     targetSdkVersion androidConfig.compileSdkVersion
     testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
   }
-}
-
-project.group = PROJECT_GROUP_ID
-project.version = PROJECT_VERSION
-
-modifyPom {
-  project {
-    name 'DeepLinkDispatch library'
-    description PROJECT_DESCRIPTION
-    url PROJECT_URL
-    inceptionYear '2015'
-    version PROJECT_VERSION
-    groupId PROJECT_GROUP_ID
-    artifactId 'deeplinkdispatch'
-
-    scm {
-      url PROJECT_URL
-      connection 'scm:https://github.com/airbnb/DeepLinkDispatch.git'
-      developerConnection 'scm:git@github.com:airbnb/DeepLinkDispatch.git'
-    }
-
-    licenses {
-      license {
-        name 'The Apache Software License, Version 2.0'
-        url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-        distribution 'repo'
-      }
-    }
-
-    developers {
-      developer {
-        id 'airbnb'
-        name 'Airbnb'
-        email 'android@airbnb.com'
-      }
-    }
-  }
-}
-
-
-extraArchive {
-  sources = true
-  tests = false
-  javadoc = true
-}
-
-nexus {
-  sign = !isCi()
-  repositoryUrl = getReleaseRepositoryUrl()
-  snapshotRepositoryUrl = getSnapshotRepositoryUrl()
 }
