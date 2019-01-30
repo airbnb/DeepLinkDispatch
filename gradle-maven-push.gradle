@@ -17,6 +17,11 @@
 apply plugin: 'maven'
 apply plugin: 'signing'
 
+// This is used so that relative version dependencies between the projects work.
+// Don't remove this!
+version = VERSION_NAME
+group = GROUP
+
 def isReleaseBuild() {
     return !VERSION_NAME.contains("SNAPSHOT")
 }
