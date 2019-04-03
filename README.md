@@ -199,8 +199,8 @@ public class CustomPrefixesActivity extends AppCompatActivity {
 Add to your project `build.gradle` file:
 ```groovy
 dependencies {
-  implementation 'com.airbnb:deeplinkdispatch:3.1.1'
-  annotationProcessor 'com.airbnb:deeplinkdispatch-processor:3.1.1'
+  implementation 'com.airbnb:deeplinkdispatch:x.x.x'
+  annotationProcessor 'com.airbnb:deeplinkdispatch-processor:x.x.x'
 }
 ```
 _For **Kotlin** you should use_ `kapt` _instead of_ `annotationProcessor`
