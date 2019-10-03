@@ -23,14 +23,11 @@ import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.Sets;
-import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
-import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterSpec;
-import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeSpec;
 
 import java.io.IOException;
@@ -72,10 +69,13 @@ import static com.google.auto.common.MoreElements.getAnnotationMirror;
 @AutoService(Processor.class)
 @SupportedOptions(Documentor.DOC_OUTPUT_PROPERTY_NAME)
 public class DeepLinkProcessor extends AbstractProcessor {
+  private static final String PACKAGE_NAME = "com.airbnb.deeplinkdispatch";
   private static final ClassName CLASS_BASE_DEEP_LINK_DELEGATE
-          = ClassName.get("com.airbnb.deeplinkdispatch", "BaseDeepLinkDelegate");
+    = ClassName.get(PACKAGE_NAME, "BaseDeepLinkDelegate");
   private static final ClassName CLASS_ARRAYS = ClassName.get(Arrays.class);
   private static final ClassName CLASS_COLLECTIONS = ClassName.get(Collections.class);
+  private static final ClassName CLASS_DEEP_LINK_ENTRY
+    = ClassName.get(PACKAGE_NAME, DeepLinkEntry.class.getSimpleName());
   private static final Class<DeepLink> DEEP_LINK_CLASS = DeepLink.class;
   private static final Class<DeepLinkSpec> DEEP_LINK_SPEC_CLASS = DeepLinkSpec.class;
 
@@ -246,9 +246,10 @@ public class DeepLinkProcessor extends AbstractProcessor {
   private void generateDeepLinkLoader(String packageName, String className,
       List<DeepLinkAnnotatedElement> elements)
       throws IOException {
-    CodeBlock.Builder initializer = CodeBlock.builder()
-        .add("$T.unmodifiableList($T.asList(\n", CLASS_COLLECTIONS, CLASS_ARRAYS)
-        .indent();
+    CodeBlock.Builder deeplinks = CodeBlock.builder()
+      .add("super($T.unmodifiableList($T.<$T>asList(\n",
+        CLASS_COLLECTIONS, CLASS_ARRAYS, CLASS_DEEP_LINK_ENTRY)
+      .indent();
     Collections.sort(elements, new Comparator<DeepLinkAnnotatedElement>() {
       @Override
       public int compare(DeepLinkAnnotatedElement element1, DeepLinkAnnotatedElement element2) {
@@ -260,13 +261,13 @@ public class DeepLinkProcessor extends AbstractProcessor {
         }
         if (comparisonResult == 0) {
           comparisonResult =
-                  uri1.encodedPath().split("%7B").length - uri2.encodedPath().split("%7B").length;
+            uri1.encodedPath().split("%7B").length - uri2.encodedPath().split("%7B").length;
         }
         if (comparisonResult == 0) {
           String element1Representation =
-                  element1.getUri() + element1.getMethod() + element1.getAnnotationType();
+            element1.getUri() + element1.getMethod() + element1.getAnnotationType();
           String element2Representation =
-                  element2.getUri() + element2.getMethod() + element2.getAnnotationType();
+            element2.getUri() + element2.getMethod() + element2.getAnnotationType();
           comparisonResult = element1Representation.compareTo(element2Representation);
         }
         return comparisonResult;
@@ -280,33 +281,19 @@ public class DeepLinkProcessor extends AbstractProcessor {
       ClassName activity = ClassName.get(element.getAnnotatedElement());
       Object method = element.getMethod();
       String uri = element.getUri();
-      initializer.add("new DeepLinkEntry($S, $L, $T.class, $S)$L\n",
-          uri, type, activity, method, (i < totalElements - 1) ? "," : "");
+      deeplinks.add("new DeepLinkEntry($S, $L, $T.class, $S)$L\n",
+        uri, type, activity, method, (i < totalElements - 1) ? "," : "");
     }
-    FieldSpec registry = FieldSpec
-        .builder(ParameterizedTypeName.get(List.class, DeepLinkEntry.class), "REGISTRY",
-            Modifier.PUBLIC, Modifier.FINAL, Modifier.STATIC)
-        .initializer(initializer.unindent().add("))").build())
-        .build();
 
-    MethodSpec parseMethod = MethodSpec.methodBuilder("parseUri")
-        .addModifiers(Modifier.PUBLIC)
-        .addAnnotation(AnnotationSpec.builder(Override.class).build())
-        .addParameter(String.class, "uri")
-        .returns(DeepLinkEntry.class)
-        .beginControlFlow("for (DeepLinkEntry entry : REGISTRY)")
-        .beginControlFlow("if (entry.matches(uri))")
-        .addStatement("return entry")
-        .endControlFlow()
-        .endControlFlow()
-        .addStatement("return null")
-        .build();
+    MethodSpec constructor = MethodSpec.constructorBuilder()
+      .addModifiers(Modifier.PUBLIC)
+      .addCode(deeplinks.unindent().add(")));\n").build())
+      .build();
 
     TypeSpec deepLinkLoader = TypeSpec.classBuilder(className + "Loader")
         .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
-        .addSuperinterface(ClassName.get(Parser.class))
-        .addField(registry)
-        .addMethod(parseMethod)
+        .superclass(ClassName.get(Parser.class))
+        .addMethod(constructor)
         .build();
 
     JavaFile.builder(packageName, deepLinkLoader)

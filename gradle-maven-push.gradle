@@ -213,7 +213,8 @@ afterEvaluate { project ->
         if (project.getPlugins().hasPlugin('com.android.application') ||
                 project.getPlugins().hasPlugin('com.android.library')) {
             archives androidSourcesJar
-            archives androidJavadocsJar
+            // todo AdellHk - javadocs classpath is broken eg. BaseDeepLinkDelegate.java:8: error: package androidx.core.app does not exist
+            // archives androidJavadocsJar
         } else {
             archives sourcesJar
             archives javadocJar

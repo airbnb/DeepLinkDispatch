@@ -7,11 +7,14 @@ public final class DeepLinkResult {
   private final boolean successful;
   private final String error;
   @Nullable private final String uriString;
+  private final String componentName;
 
-  public DeepLinkResult(boolean successful, @Nullable String uriString, String error) {
+  public DeepLinkResult(boolean successful, @Nullable String uriString, String error,
+                        String componentName) {
     this.successful = successful;
     this.uriString = uriString;
     this.error = error;
+    this.componentName = componentName;
   }
 
   /** @return whether or not the dispatch was a success. */
@@ -27,6 +30,11 @@ public final class DeepLinkResult {
   /** @return this result's error message, or {@code null} if there is none. */
   public String error() {
     return error;
+  }
+
+  /** @return the name of the component which is the DeepLink's destination. */
+  public String componentName() {
+    return componentName != null ? componentName : "";
   }
 
   @Override
