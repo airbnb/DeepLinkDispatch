@@ -14,7 +14,8 @@ public abstract class Parser {
   /**
    * The List of DeepLinkEntries collected from a Module. Annotation Processing-generated Children
    * of this class will pass the collected {@code List<DeepLinkEntry>} in the constructor's
-   * {@code super()}.
+   * {@code super()}. The generated implementation will be a {@link
+   * Collections#unmodifiableList(java.util.List)}.
    */
   private final List<DeepLinkEntry> registry;
 

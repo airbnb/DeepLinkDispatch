@@ -32,7 +32,10 @@ public final class DeepLinkResult {
     return error;
   }
 
-  /** @return the name of the component which is the DeepLink's destination. */
+  /**
+   * @return the fully-qualified name of the {@link android.content.ComponentName} component
+   * which is the DeepLink's destination. eg. com.airbnb.deeplinkdispatch.sample.DeepLinkActivity
+   */
   public String componentName() {
     return componentName != null ? componentName : "";
   }
