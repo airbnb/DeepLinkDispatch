@@ -19,7 +19,11 @@ public abstract class Parser {
    */
   private final List<DeepLinkEntry> registry;
 
-  public List<DeepLinkEntry> getRegistry() {
+  /**
+   * Notice that {@link com.airbnb.deeplinkdispatch.Parser#registry} is immutable.
+   * @return {@code Collections.unmodifiableList<DeepLinkEntry>} {@link Parser#registry}
+   */
+  public List<DeepLinkEntry> getRegisteredDeepLinks() {
     return registry;
   }
 

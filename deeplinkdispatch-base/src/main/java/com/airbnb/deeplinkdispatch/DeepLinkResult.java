@@ -7,6 +7,11 @@ public final class DeepLinkResult {
   private final boolean successful;
   private final String error;
   @Nullable private final String uriString;
+  /**
+   * The fully-qualified name of the {@link android.content.ComponentName} component
+   * which is the DeepLink's destination. eg. {@code
+   * com.airbnb.deeplinkdispatch.sample.DeepLinkActivity}
+   */
   private final String componentName;
 
   public DeepLinkResult(boolean successful, @Nullable String uriString, String error,
