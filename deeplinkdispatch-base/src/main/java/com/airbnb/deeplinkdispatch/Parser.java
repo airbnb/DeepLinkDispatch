@@ -7,10 +7,6 @@ import java.util.List;
  */
 public abstract class Parser {
 
-  public Parser(List<DeepLinkEntry> registry) {
-    this.registry = registry;
-  }
-
   /**
    * The List of DeepLinkEntries collected from a Module. Annotation Processing-generated Children
    * of this class will pass the collected {@code List<DeepLinkEntry>} in the constructor's
@@ -19,8 +15,13 @@ public abstract class Parser {
    */
   private final List<DeepLinkEntry> registry;
 
+  public Parser(List<DeepLinkEntry> registry) {
+    this.registry = registry;
+  }
+
   /**
    * Notice that {@link com.airbnb.deeplinkdispatch.Parser#registry} is immutable.
+   *
    * @return {@code Collections.unmodifiableList<DeepLinkEntry>} {@link Parser#registry}
    */
   public List<DeepLinkEntry> getRegisteredDeepLinks() {
