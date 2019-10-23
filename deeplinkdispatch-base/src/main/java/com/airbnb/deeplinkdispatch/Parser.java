@@ -28,6 +28,12 @@ public abstract class Parser {
     return registry;
   }
 
+  /**
+   * Iterate over {@linkplain registry} in a given Parser to see if there is a matching
+   * {@link DeepLinkEntry#getUriTemplate()}.
+   * @param uri the URI of the Deep Link that we are trying to match.
+   * @return A DeepLinkEntry if one can be found that matches the param uri, otherwise, null.
+   */
   public DeepLinkEntry parseUri(String uri) {
     for (DeepLinkEntry entry : registry) {
       if (entry.matches(uri)) {
