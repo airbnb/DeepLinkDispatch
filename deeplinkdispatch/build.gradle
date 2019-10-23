@@ -10,6 +10,7 @@ apply plugin: 'kotlin-android'
 
 dependencies {
   api project(':deeplinkdispatch-base')
+  implementation deps.kotlinStdLib
   implementation deps.okio
   implementation deps.jsr305
   implementation deps.localBroadcastManager

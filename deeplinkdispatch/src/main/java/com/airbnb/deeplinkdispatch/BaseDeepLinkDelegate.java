@@ -69,7 +69,7 @@ public class BaseDeepLinkDelegate {
       activity.startActivity(result.getIntent());
     }
     notifyListener(activity, !result.isSuccessful(), sourceIntent.getData(),
-        result.getDeepLinkEntry().getUriTemplate(), result.error());
+        result.getDeepLinkEntry().getUriTemplate(), result.getError());
     return result;
   }
 

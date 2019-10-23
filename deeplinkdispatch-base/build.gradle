@@ -11,6 +11,7 @@ apply from: '../gradle-maven-push.gradle'
 dependencies {
   implementation deps.okio
   implementation deps.jsr305
+  implementation deps.kotlinStdLib
   testImplementation deps.junit
   testImplementation deps.assertJ
 }
