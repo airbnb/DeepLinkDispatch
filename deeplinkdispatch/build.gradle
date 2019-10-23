@@ -5,6 +5,7 @@ sourceCompatibility = 1.7
 apply plugin: 'checkstyle'
 
 apply from: '../gradle-maven-push.gradle'
+apply plugin: 'kotlin-android'
 
 
 dependencies {
