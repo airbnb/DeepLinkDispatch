@@ -19,6 +19,12 @@ data class DeepLinkResult(
         val intent: Intent?,
         val taskStackBuilder: TaskStackBuilder?, val deepLinkEntry: DeepLinkEntry?
 ) {
+    /**
+     * This exists so that calls from Kotlin code [error()] are maintained across major version 4.
+     * This will be removed in DLD 5.x.x
+     */
+    fun error(): String? = error
+
     override fun toString(): String {
         return ("DeepLinkResult{"
                 + "successful=" + isSuccessful
