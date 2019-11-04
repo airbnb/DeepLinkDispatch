@@ -127,7 +127,7 @@ public class BaseDeepLinkDelegate {
     }
     try {
       Class<?> c = deepLinkEntry.getActivityClass();
-      Intent newIntent;
+      Intent newIntent = null;
       TaskStackBuilder taskStackBuilder = null;
       if (deepLinkEntry.getType() == DeepLinkEntry.Type.CLASS) {
         newIntent = new Intent(activity, c);
@@ -159,6 +159,10 @@ public class BaseDeepLinkDelegate {
             newIntent = (Intent) method.invoke(c, activity, parameters);
           }
         }
+      }
+      if (newIntent == null) {
+        return new DeepLinkResult(false, uriString, "Destination Intent is null!", null,
+          taskStackBuilder, deepLinkEntry);
       }
       if (newIntent.getAction() == null) {
         newIntent.setAction(sourceIntent.getAction());

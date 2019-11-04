@@ -112,6 +112,10 @@ public class MainActivity extends AppCompatActivity {
     if (bundle != null && bundle.containsKey("qp")) {
       Log.d(TAG, "found new parameter :with query parameter :" + bundle.getString("qp"));
     }
+    return nestedMethod(context);
+  }
+
+  public static Intent nestedMethod(Context context) {
     return new Intent(context, MainActivity.class).setAction(ACTION_DEEP_LINK_COMPLEX);
   }
 

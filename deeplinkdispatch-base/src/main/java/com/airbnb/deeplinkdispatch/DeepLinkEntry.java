@@ -30,6 +30,9 @@ public final class DeepLinkEntry {
   private static final Pattern PARAM_PATTERN = Pattern.compile(PARAM_REGEX);
 
   private final Type type;
+  /**
+   * The class where the annotation corresponding to where an instance of DeepLinkEntry is declared.
+   */
   private final Class<?> activityClass;
   private final String method;
   private final Set<String> parameters;

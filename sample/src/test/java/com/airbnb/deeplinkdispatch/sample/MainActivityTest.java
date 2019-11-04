@@ -5,6 +5,9 @@ import android.content.Intent;
 import android.net.Uri;
 
 import com.airbnb.deeplinkdispatch.DeepLink;
+import com.airbnb.deeplinkdispatch.DeepLinkEntry;
+import com.airbnb.deeplinkdispatch.DeepLinkResult;
+import com.airbnb.deeplinkdispatch.Parser;
 import com.airbnb.deeplinkdispatch.sample.library.LibraryDeepLinkModuleLoader;
 
 import org.junit.Test;
@@ -25,102 +28,107 @@ import static org.robolectric.Shadows.shadowOf;
 @Config(sdk = 21, manifest = "../sample/src/main/AndroidManifest.xml", shadows = {ShadowTaskStackBuilder.class})
 @RunWith(RobolectricTestRunner.class)
 public class MainActivityTest {
-  @Test public void testIntent() {
+  @Test
+  public void testIntent() {
     Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("dld://host/somePath/1234321"))
-        .putExtra("TEST_EXTRA", "FOO");
+      .putExtra("TEST_EXTRA", "FOO");
     DeepLinkActivity deepLinkActivity = Robolectric.buildActivity(DeepLinkActivity.class, intent)
-        .create().get();
+      .create().get();
     ShadowActivity shadowActivity = shadowOf(deepLinkActivity);
     Intent launchedIntent = shadowActivity.peekNextStartedActivityForResult().intent;
     assertThat(launchedIntent.getComponent(),
-        equalTo(new ComponentName(deepLinkActivity, MainActivity.class)));
+      equalTo(new ComponentName(deepLinkActivity, MainActivity.class)));
 
     assertThat(launchedIntent.getBooleanExtra(DeepLink.IS_DEEP_LINK, false), equalTo(true));
     assertThat(launchedIntent.getStringExtra("arbitraryNumber"), equalTo("1234321"));
     assertThat(launchedIntent.getStringExtra("TEST_EXTRA"), equalTo("FOO"));
     assertThat(launchedIntent.getAction(), equalTo("deep_link_complex"));
     assertThat(launchedIntent.<Uri>getParcelableExtra(DeepLink.REFERRER_URI).toString(),
-        equalTo("dld://host/somePath/1234321"));
+      equalTo("dld://host/somePath/1234321"));
     assertThat(launchedIntent.getData(), equalTo(Uri.parse("dld://host/somePath/1234321")));
     assertThat(launchedIntent.getStringExtra(DeepLink.URI),
-        equalTo("dld://host/somePath/1234321"));
+      equalTo("dld://host/somePath/1234321"));
   }
 
-  @Test public void testQueryParams() {
+  @Test
+  public void testQueryParams() {
     Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("dld://classDeepLink?foo=bar"));
     DeepLinkActivity deepLinkActivity = Robolectric.buildActivity(DeepLinkActivity.class, intent)
-        .create().get();
+      .create().get();
     ShadowActivity shadowActivity = shadowOf(deepLinkActivity);
 
     Intent launchedIntent = shadowActivity.peekNextStartedActivityForResult().intent;
     assertThat(launchedIntent.getComponent(),
-        equalTo(new ComponentName(deepLinkActivity, MainActivity.class)));
+      equalTo(new ComponentName(deepLinkActivity, MainActivity.class)));
 
     assertThat(launchedIntent.getBooleanExtra(DeepLink.IS_DEEP_LINK, false), equalTo(true));
     assertThat(launchedIntent.getStringExtra("foo"), equalTo("bar"));
     assertThat(launchedIntent.getAction(), equalTo(Intent.ACTION_VIEW));
     assertThat(launchedIntent.getStringExtra(DeepLink.URI),
-        equalTo("dld://classDeepLink?foo=bar"));
+      equalTo("dld://classDeepLink?foo=bar"));
   }
 
-  @Test public void testQueryParamsWithBracket() {
+  @Test
+  public void testQueryParamsWithBracket() {
     Intent intent =
-        new Intent(Intent.ACTION_VIEW, Uri.parse("dld://classDeepLink?foo[max]=123"));
+      new Intent(Intent.ACTION_VIEW, Uri.parse("dld://classDeepLink?foo[max]=123"));
     DeepLinkActivity deepLinkActivity = Robolectric.buildActivity(DeepLinkActivity.class, intent)
-        .create().get();
+      .create().get();
     ShadowActivity shadowActivity = shadowOf(deepLinkActivity);
 
     Intent launchedIntent = shadowActivity.peekNextStartedActivityForResult().intent;
     assertThat(launchedIntent.getComponent(),
-        equalTo(new ComponentName(deepLinkActivity, MainActivity.class)));
+      equalTo(new ComponentName(deepLinkActivity, MainActivity.class)));
 
     assertThat(launchedIntent.getBooleanExtra(DeepLink.IS_DEEP_LINK, false), equalTo(true));
     assertThat(launchedIntent.getStringExtra("foo[max]"), equalTo("123"));
     assertThat(launchedIntent.getStringExtra(DeepLink.URI),
-        equalTo("dld://classDeepLink?foo[max]=123"));
+      equalTo("dld://classDeepLink?foo[max]=123"));
   }
 
-  @Test public void testHttpScheme() {
+  @Test
+  public void testHttpScheme() {
     Intent intent = new Intent(Intent.ACTION_VIEW,
-        Uri.parse("http://example.com/fooball?baz=something"));
+      Uri.parse("http://example.com/fooball?baz=something"));
     DeepLinkActivity deepLinkActivity = Robolectric.buildActivity(DeepLinkActivity.class, intent)
-        .create().get();
+      .create().get();
     ShadowActivity shadowActivity = shadowOf(deepLinkActivity);
 
     Intent launchedIntent = shadowActivity.peekNextStartedActivityForResult().intent;
     assertThat(launchedIntent.getComponent(),
-        equalTo(new ComponentName(deepLinkActivity, MainActivity.class)));
+      equalTo(new ComponentName(deepLinkActivity, MainActivity.class)));
 
     assertThat(launchedIntent.getBooleanExtra(DeepLink.IS_DEEP_LINK, false), equalTo(true));
     assertThat(launchedIntent.getStringExtra("baz"), equalTo("something"));
     assertThat(launchedIntent.getStringExtra("arg"), equalTo("ball"));
     assertThat(launchedIntent.getStringExtra(DeepLink.URI),
-        equalTo("http://example.com/fooball?baz=something"));
+      equalTo("http://example.com/fooball?baz=something"));
   }
 
 
-  @Test public void testTaskStackBuilderIntents() {
+  @Test
+  public void testTaskStackBuilderIntents() {
     Intent intent = new Intent(Intent.ACTION_VIEW,
-        Uri.parse("http://example.com/deepLink/testid/testname/testplace"));
+      Uri.parse("http://example.com/deepLink/testid/testname/testplace"));
     DeepLinkActivity deepLinkActivity = Robolectric.buildActivity(DeepLinkActivity.class, intent)
-        .create().get();
+      .create().get();
     ShadowApplication shadowApplication = shadowOf(RuntimeEnvironment.application);
     Intent launchedIntent = shadowApplication.getNextStartedActivity();
     assertNotNull(launchedIntent);
     assertThat(launchedIntent.getComponent(),
-        equalTo(new ComponentName(deepLinkActivity, SecondActivity.class)));
+      equalTo(new ComponentName(deepLinkActivity, SecondActivity.class)));
 
     assertThat(launchedIntent.getBooleanExtra(DeepLink.IS_DEEP_LINK, false), equalTo(true));
     assertThat(launchedIntent.getStringExtra("id"), equalTo("testid"));
     assertThat(launchedIntent.getStringExtra("name"), equalTo("testname"));
     assertThat(launchedIntent.getStringExtra("place"), equalTo("testplace"));
     assertThat(launchedIntent.getStringExtra(DeepLink.URI),
-        equalTo("http://example.com/deepLink/testid/testname/testplace"));
+      equalTo("http://example.com/deepLink/testid/testname/testplace"));
 
     Intent parentIntent = shadowApplication.getNextStartedActivity();
     assertNotNull(parentIntent);
     assertThat(parentIntent.getComponent(),
-        equalTo(new ComponentName(deepLinkActivity, MainActivity.class)));
+      equalTo(new ComponentName(deepLinkActivity, MainActivity.class)));
     Intent nextNullIntent = shadowApplication.getNextStartedActivity();
     assertNull(nextNullIntent);
   }
@@ -128,8 +136,32 @@ public class MainActivityTest {
   @Test
   public void testSupportsUri() throws Exception {
     DeepLinkDelegate deepLinkDelegate = new DeepLinkDelegate(new SampleModuleLoader(),
-        new LibraryDeepLinkModuleLoader());
+      new LibraryDeepLinkModuleLoader());
     assertThat(deepLinkDelegate.supportsUri("dld://classDeepLink"), equalTo(true));
     assertThat(deepLinkDelegate.supportsUri("some://weirdNonExistentUri"), equalTo(false));
+  }
+
+  @Test
+  public void testNestedMethods() {
+    String inputUri = "dld://host/somePathOne/1/otherPath";
+    Intent intent = new Intent(Intent.ACTION_VIEW,
+      Uri.parse(inputUri));
+    DeepLinkActivity deepLinkActivity = Robolectric.buildActivity(DeepLinkActivity.class, intent)
+      .create().get();
+
+    DeepLinkResult result = null;
+    DeepLinkDelegate deepLinkDelegate = new DeepLinkDelegate(new SampleModuleLoader(),
+      new LibraryDeepLinkModuleLoader());
+    for (Parser loader : deepLinkDelegate.getLoaders()) {
+      for (DeepLinkEntry deepLinkEntry : loader.getRegisteredDeepLinks()) {
+        if (deepLinkEntry.matches(inputUri)) {
+//          Uri.parse(deepLinkEntry.getUriTemplate())
+          result = deepLinkDelegate.createResult(deepLinkActivity, intent, deepLinkEntry);
+
+        }
+      }
+    }
+    assertNotNull(result);
+    assertThat(result.isSuccessful(), equalTo(true));
   }
 }
