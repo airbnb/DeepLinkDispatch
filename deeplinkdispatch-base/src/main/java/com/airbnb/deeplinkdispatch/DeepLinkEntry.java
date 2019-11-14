@@ -35,9 +35,10 @@ public final class DeepLinkEntry {
    */
   private final Class<?> activityClass;
   private final String method;
-  private final Set<String> parameters;
-  private final Pattern regex;
   private final String uriTemplate;
+  private final String prefix;
+  private Set<String> parameters;
+  private Pattern regex;
 
   public enum Type {
     CLASS,
@@ -45,15 +46,11 @@ public final class DeepLinkEntry {
   }
 
   public DeepLinkEntry(String uriTemplate, Type type, Class<?> activityClass, String method) {
-    DeepLinkUri parsedUri = DeepLinkUri.parse(uriTemplate);
-    String schemeHostAndPath = schemeHostAndPath(parsedUri);
-
     this.uriTemplate = uriTemplate;
     this.type = type;
     this.activityClass = activityClass;
     this.method = method;
-    this.parameters = parseParameters(parsedUri);
-    this.regex = Pattern.compile(schemeHostAndPath.replaceAll(PARAM_REGEX, PARAM_VALUE) + "$");
+    this.prefix = prefix(uriTemplate);
   }
 
   public Type getType() {
@@ -88,10 +85,14 @@ public final class DeepLinkEntry {
    * @return the map of parameter values, where all values will be strings.
    */
   public Map<String, String> getParameters(String inputUri) {
+    if (parameters == null) {
+      DeepLinkUri parsedUri = DeepLinkUri.parse(uriTemplate);
+      parameters = parseParameters(parsedUri);
+    }
     Iterator<String> paramsIterator = parameters.iterator();
     Map<String, String> paramsMap = new HashMap<>(parameters.size());
     DeepLinkUri deepLinkUri = DeepLinkUri.parse(inputUri);
-    Matcher matcher = regex.matcher(schemeHostAndPath(deepLinkUri));
+    Matcher matcher = regexMatcher(schemeHostAndPath(deepLinkUri));
     int i = 1;
     if (matcher.matches()) {
       while (paramsIterator.hasNext()) {
@@ -113,9 +114,30 @@ public final class DeepLinkEntry {
     return parsedUri.encodedPath();
   }
 
+  private static String prefix(String uriTemplate) {
+    int pos = uriTemplate.indexOf("{");
+    if (pos == -1) {
+      return uriTemplate;
+    }
+    return uriTemplate.substring(0, pos);
+  }
+
+  private Matcher regexMatcher(CharSequence input) {
+    if (regex == null) {
+      DeepLinkUri parsedUri = DeepLinkUri.parse(uriTemplate);
+      String schemeHostAndPath = schemeHostAndPath(parsedUri);
+      this.regex = Pattern.compile(schemeHostAndPath.replaceAll(PARAM_REGEX, PARAM_VALUE) + "$");
+    }
+    return regex.matcher(input);
+  }
+
+  public boolean matchesPrefix(String inputUri) {
+    return inputUri.startsWith(prefix);
+  }
+
   public boolean matches(String inputUri) {
     DeepLinkUri deepLinkUri = DeepLinkUri.parse(inputUri);
-    return deepLinkUri != null && regex.matcher(schemeHostAndPath(deepLinkUri)).find();
+    return deepLinkUri != null && regexMatcher(schemeHostAndPath(deepLinkUri)).find();
   }
 
   private String schemeHostAndPath(DeepLinkUri uri) {

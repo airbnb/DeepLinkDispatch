@@ -36,7 +36,7 @@ public abstract class Parser {
    */
   public DeepLinkEntry parseUri(String uri) {
     for (DeepLinkEntry entry : registry) {
-      if (entry.matches(uri)) {
+      if (entry.matchesPrefix(uri) && entry.matches(uri)) {
         return entry;
       }
     }

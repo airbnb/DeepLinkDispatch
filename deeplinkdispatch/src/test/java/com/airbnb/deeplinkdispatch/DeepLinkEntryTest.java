@@ -2,6 +2,8 @@ package com.airbnb.deeplinkdispatch;
 
 import org.junit.Test;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -153,6 +155,16 @@ public class DeepLinkEntryTest {
   @Test public void templateWithParameters() {
     DeepLinkEntry entry = deepLinkEntry("airbnb://test/{param1}/{param2}");
     assertThat("airbnb://test/{param1}/{param2}".equals(entry.getUriTemplate())).isTrue();
+  }
+
+  @Test public void testLotsOfEntries() {
+    List<DeepLinkEntry> entries = new ArrayList<>();
+    for (int i = 0; i < 100000; i++) {
+      entries.add(deepLinkEntry("airbnb://" + i + "test/{param1}/{param2}"));
+    }
+    Parser parser = new Parser(entries) {};
+    DeepLinkEntry entry = parser.parseUri("airbnb://99999test/1/2");
+    assertThat("airbnb://99999test/{param1}/{param2}".equals(entry.getUriTemplate())).isTrue();
   }
 
   private static DeepLinkEntry deepLinkEntry(String uri) {
