@@ -23,6 +23,7 @@ ext.deps = [
     javaPoet                 : 'com.squareup:javapoet:1.9.0',
     jsr305                   : 'com.google.code.findbugs:jsr305:3.0.2',
     okio                     : 'com.squareup.okio:okio:1.13.0',
+    gradleMavenPublishPlugin : 'com.vanniktech:gradle-maven-publish-plugin:0.8.0',
 
     // Testing
     junit                    : 'junit:junit:4.12',

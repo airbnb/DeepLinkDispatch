@@ -11,10 +11,7 @@ data class DeepLinkResult(
         val uriString: String?,
         val error: String?,
         /**
-         * The intent for the Deep Link's destination. eg. `com.airbnb.deeplinkdispatch.sample.DeepLinkActivity`
-         */
-        /**
-         * @return the Intent for the DeepLink's destination. `com.airbnb.deeplinkdispatch.sample.DeepLinkActivity`
+         * The intent for the Deep Link's destination. eg. [com.airbnb.deeplinkdispatch.sample.DeepLinkActivity]
          */
         val intent: Intent?,
         val taskStackBuilder: TaskStackBuilder?, val deepLinkEntry: DeepLinkEntry?
