@@ -18,7 +18,6 @@ package com.airbnb.deeplinkdispatch;
 import com.google.auto.common.AnnotationMirrors;
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
-import com.google.auto.service.AutoService;
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.collect.FluentIterable;
@@ -46,7 +45,6 @@ import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Filer;
 import javax.annotation.processing.Messager;
 import javax.annotation.processing.ProcessingEnvironment;
-import javax.annotation.processing.Processor;
 import javax.annotation.processing.RoundEnvironment;
 import javax.annotation.processing.SupportedOptions;
 import javax.lang.model.SourceVersion;
@@ -66,7 +64,6 @@ import static com.airbnb.deeplinkdispatch.MoreAnnotationMirrors.getTypeValue;
 import static com.airbnb.deeplinkdispatch.Utils.decapitalize;
 import static com.google.auto.common.MoreElements.getAnnotationMirror;
 
-@AutoService(Processor.class)
 @SupportedOptions(Documentor.DOC_OUTPUT_PROPERTY_NAME)
 public class DeepLinkProcessor extends AbstractProcessor {
   private static final String PACKAGE_NAME = "com.airbnb.deeplinkdispatch";
@@ -90,8 +87,21 @@ public class DeepLinkProcessor extends AbstractProcessor {
     documentor = new Documentor(processingEnv);
   }
 
+  private String[] getCustomAnnotations() {
+    Map<String, String> options = processingEnv.getOptions();
+    String customAnnotationOption = options.get("deepLink.customAnnotations");
+    if (customAnnotationOption == null) {
+      return new String[0];
+    }
+    return customAnnotationOption.split(",");
+  }
+
   @Override public Set<String> getSupportedAnnotationTypes() {
-    return Sets.newHashSet("*");
+    HashSet<String> annotationTypes = Sets.newHashSet(getCustomAnnotations());
+    annotationTypes.add(DeepLink.class.getCanonicalName());
+    annotationTypes.add(DeepLinkHandler.class.getCanonicalName());
+    annotationTypes.add(DeepLinkModule.class.getCanonicalName());
+    return annotationTypes;
   }
 
   @Override public SourceVersion getSupportedSourceVersion() {
@@ -104,6 +114,20 @@ public class DeepLinkProcessor extends AbstractProcessor {
 
   @Override
   public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+    try {
+      processInternal(annotations, roundEnv);
+    } catch (DeepLinkProcessorException e) {
+      error(e.getElement(), e.getMessage());
+    }
+    return true;
+  }
+
+  private void processInternal(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+    if (getCustomAnnotations().length == 0) {
+      throw new DeepLinkProcessorException(
+          "deepLink.customAnnotations must defined and contain at least one annotation");
+    }
+
     Set<Element> customAnnotations = new HashSet<>();
     for (Element annotation : annotations) {
       if (annotation.getAnnotation(DEEP_LINK_SPEC_CLASS) != null) {
@@ -217,8 +241,6 @@ public class DeepLinkProcessor extends AbstractProcessor {
             "Internal error during annotation processing: " + e.getClass().getSimpleName());
       }
     }
-
-    return false;
   }
 
   private static List<String> enumerateCustomDeepLinks(Element element,
@@ -229,7 +251,19 @@ public class DeepLinkProcessor extends AbstractProcessor {
     for (AnnotationMirror customAnnotation : annotationMirrors) {
       List<? extends AnnotationValue> suffixes =
           asAnnotationValues(AnnotationMirrors.getAnnotationValue(customAnnotation, "value"));
-      String[] prefixes = prefixesMap.get(customAnnotation.getAnnotationType().asElement());
+
+      Element customElement = customAnnotation.getAnnotationType().asElement();
+      String[] prefixes = prefixesMap.get(customElement);
+
+      if (prefixes == null) {
+        throw new DeepLinkProcessorException(
+            "Unable to find annotation '"
+                + customElement
+                + "' you must update "
+                + "'deepLink.customAnnotations' within the build.gradle",
+            customElement);
+      }
+
       for (String prefix : prefixes) {
         for (AnnotationValue suffix : suffixes) {
           deepLinks.add(prefix + suffix.getValue());

@@ -16,3 +16,8 @@ dependencies {
   implementation deps.appCompat
   testImplementation deps.junit
 }
+
+tasks.withType(JavaCompile) {
+  options.compilerArgs << "-AdeepLink.customAnnotations=" +
+          "com.airbnb.deeplinkdispatch.sample.library.LibraryDeepLink"
+}

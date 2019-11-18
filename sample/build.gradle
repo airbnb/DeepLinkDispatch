@@ -41,4 +41,8 @@ dependencies {
 
 tasks.withType(JavaCompile) {
   options.compilerArgs << "-AdeepLinkDoc.output=${buildDir}/doc/deeplinks.txt"
+  options.compilerArgs << "-AdeepLink.customAnnotations=" +
+          "com.airbnb.deeplinkdispatch.sample.AppDeepLink," +
+          "com.airbnb.deeplinkdispatch.sample.WebDeepLink," +
+          "com.airbnb.deeplinkdispatch.sample.library.LibraryDeepLink"
 }

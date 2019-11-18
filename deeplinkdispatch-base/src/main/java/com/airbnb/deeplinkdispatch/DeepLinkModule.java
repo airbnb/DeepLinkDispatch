@@ -16,6 +16,6 @@ import java.lang.annotation.Target;
  * Intent delivery.
  */
 @Target({ ElementType.TYPE })
-@Retention(RetentionPolicy.SOURCE)
+@Retention(RetentionPolicy.CLASS)
 public @interface DeepLinkModule {
 }
