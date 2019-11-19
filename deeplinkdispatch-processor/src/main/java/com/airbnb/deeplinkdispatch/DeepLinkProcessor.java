@@ -123,11 +123,6 @@ public class DeepLinkProcessor extends AbstractProcessor {
   }
 
   private void processInternal(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
-    if (getCustomAnnotations().length == 0) {
-      throw new DeepLinkProcessorException(
-          "deepLink.customAnnotations must defined and contain at least one annotation");
-    }
-
     Set<Element> customAnnotations = new HashSet<>();
     for (Element annotation : annotations) {
       if (annotation.getAnnotation(DEEP_LINK_SPEC_CLASS) != null) {
