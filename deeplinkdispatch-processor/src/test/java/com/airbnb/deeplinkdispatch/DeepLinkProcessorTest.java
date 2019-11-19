@@ -350,4 +350,29 @@ public class DeepLinkProcessorTest {
             "Only `Intent` or `androidx.core.app.TaskStackBuilder` are supported."
                 + " Please double check your imports and try again.");
   }
+
+  @Test public void testCustomAnnotationMissingFromCompilerOptionsErrorMessage() {
+    JavaFileObject customAnnotationAppLink = JavaFileObjects
+        .forSourceString("AppDeepLink", "package com.example;\n"
+            + "import com.airbnb.deeplinkdispatch.DeepLinkSpec;\n"
+            + "@DeepLinkSpec(prefix = { \"example://\" })\n"
+            + "public @interface AppDeepLink {\n"
+            + "    String[] value();\n"
+            + "}");
+    JavaFileObject sampleActivity = JavaFileObjects
+        .forSourceString("SampleActivity", "package com.example;"
+            + "import com.airbnb.deeplinkdispatch.DeepLink;\n"
+            + "@DeepLink(\"airbnb://example.com/deepLink\")\n"
+            + "@AppDeepLink({\"example.com/deepLink\",\"example.com/another\"})\n"
+            + "public class SampleActivity {\n"
+            + "}");
+
+    assertAbout(javaSources())
+        .that(Arrays.asList(customAnnotationAppLink, sampleActivity))
+        .processedWith(new DeepLinkProcessor())
+        .failsToCompile()
+        .withErrorContaining(
+            "Unable to find annotation 'com.example.AppDeepLink' you must update "
+                + "'deepLink.customAnnotations' within the build.gradle");
+  }
 }

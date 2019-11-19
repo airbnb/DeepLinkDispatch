@@ -133,7 +133,7 @@ public class DeepLinkProcessor extends AbstractProcessor {
     }
 
     Map<Element, String[]> prefixes = new HashMap<>();
-    Set<Element> customAnnotatedElements = new HashSet<>();
+    Set<Element> elementsToProcess = new HashSet<>();
     for (Element customAnnotation : customAnnotations) {
       ElementKind kind = customAnnotation.getKind();
       if (kind != ElementKind.ANNOTATION_TYPE) {
@@ -148,11 +148,10 @@ public class DeepLinkProcessor extends AbstractProcessor {
         error(customAnnotation, "Prefix property cannot be empty");
       }
       prefixes.put(customAnnotation, prefix);
-      customAnnotatedElements.addAll(
+      elementsToProcess.addAll(
           roundEnv.getElementsAnnotatedWith(MoreElements.asType(customAnnotation)));
     }
 
-    Set<Element> elementsToProcess = new HashSet<>(customAnnotatedElements);
     elementsToProcess.addAll(roundEnv.getElementsAnnotatedWith(DEEP_LINK_CLASS));
 
     List<DeepLinkAnnotatedElement> deepLinkElements = new ArrayList<>();
@@ -184,9 +183,7 @@ public class DeepLinkProcessor extends AbstractProcessor {
       if (deepLinkAnnotation != null) {
         deepLinks.addAll(Arrays.asList(deepLinkAnnotation.value()));
       }
-      if (customAnnotatedElements.contains(element)) {
-        deepLinks.addAll(enumerateCustomDeepLinks(element, prefixes));
-      }
+      deepLinks.addAll(enumerateCustomDeepLinks(element, prefixes));
       DeepLinkEntry.Type type = kind == ElementKind.CLASS
           ? DeepLinkEntry.Type.CLASS : DeepLinkEntry.Type.METHOD;
       for (String deepLink : deepLinks) {
