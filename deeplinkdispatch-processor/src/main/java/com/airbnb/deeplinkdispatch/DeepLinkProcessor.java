@@ -119,7 +119,7 @@ public class DeepLinkProcessor extends AbstractProcessor {
     } catch (DeepLinkProcessorException e) {
       error(e.getElement(), e.getMessage());
     }
-    return true;
+    return false;
   }
 
   private void processInternal(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
