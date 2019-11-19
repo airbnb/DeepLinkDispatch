@@ -6,7 +6,7 @@ def versions = [
 
 ext.versions = versions
 ext.androidConfig = [
-    agpVersion       : '3.5.0',
+    agpVersion       : '3.5.2',
     compileSdkVersion: 28,
     buildToolsVersion: '28.0.3',
     minSdkVersion    : 16,
@@ -15,7 +15,7 @@ ext.androidConfig = [
 
 ext.deps = [
     autoCommon               : "com.google.auto:auto-common:0.8",
-    autoService              : "com.google.auto.service:auto-service:1.0-rc3",
+    autoService              : "com.google.auto.service:auto-service:1.0-rc6",
     androidPlugin            : "com.android.tools.build:gradle:$androidConfig.agpVersion",
     appCompat                : "androidx.appcompat:appcompat:$versions.androixVersion",
     localBroadcastManager    : "androidx.localbroadcastmanager:localbroadcastmanager:$versions.androixVersion",
