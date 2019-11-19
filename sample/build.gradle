@@ -1,5 +1,7 @@
 apply plugin: 'com.android.application'
 apply plugin: 'checkstyle'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-kapt'
 
 checkstyle {
   configFile rootProject.file('checkstyle.xml')
@@ -27,8 +29,9 @@ android {
 }
 
 dependencies {
+  implementation deps.kotlinStdLib
   implementation project(':deeplinkdispatch')
-  annotationProcessor project(':deeplinkdispatch-processor')
+  kapt project(':deeplinkdispatch-processor')
   implementation project(':sample-library')
   implementation deps.appCompat
 
