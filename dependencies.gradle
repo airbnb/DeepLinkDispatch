@@ -34,7 +34,6 @@ ext.deps = [
     junit                    : 'junit:junit:4.12',
     assertJ                  : 'org.assertj:assertj-core:1.7.0',
     roboelectric             : "org.robolectric:robolectric:$versions.roboelectricVersion",
-    roboelectricShadowSupport: "org.robolectric:shadows-supportv4:$versions.roboelectricVersion",
     mockito                  : 'org.mockito:mockito-core:1.10.19',
     truth                    : 'com.google.truth:truth:0.30',
     compileTesting           : 'com.google.testing.compile:compile-testing:0.10',
