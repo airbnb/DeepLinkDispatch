@@ -79,12 +79,14 @@ public class DeepLinkProcessor extends AbstractProcessor {
   private Filer filer;
   private Messager messager;
   private Documentor documentor;
+  private String[] customAnnotations;
 
   @Override public synchronized void init(ProcessingEnvironment processingEnv) {
     super.init(processingEnv);
     filer = processingEnv.getFiler();
     messager = processingEnv.getMessager();
     documentor = new Documentor(processingEnv);
+    customAnnotations = getCustomAnnotations();
   }
 
   private String[] getCustomAnnotations() {
@@ -97,7 +99,7 @@ public class DeepLinkProcessor extends AbstractProcessor {
   }
 
   @Override public Set<String> getSupportedAnnotationTypes() {
-    HashSet<String> annotationTypes = Sets.newHashSet(getCustomAnnotations());
+    HashSet<String> annotationTypes = Sets.newHashSet(customAnnotations);
     annotationTypes.add(DeepLink.class.getCanonicalName());
     annotationTypes.add(DeepLinkHandler.class.getCanonicalName());
     annotationTypes.add(DeepLinkModule.class.getCanonicalName());
