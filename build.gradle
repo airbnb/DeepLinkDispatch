@@ -6,10 +6,12 @@ buildscript {
   repositories {
     google()
     jcenter()
+    maven { url "https://oss.sonatype.org/service/local/repositories/snapshots/content/" }
   }
   dependencies {
     classpath deps.androidPlugin
     classpath deps.kotlinGradlePlugin
+    classpath deps.gradleMavenPublishPlugin
   }
 }
 

@@ -6,15 +6,16 @@ def versions = [
 
 ext.versions = versions
 ext.androidConfig = [
-    agpVersion       : '3.2.0',
+    agpVersion       : '3.5.2',
     compileSdkVersion: 28,
-    buildToolsVersion: '28.0.2',
+    buildToolsVersion: '28.0.3',
     minSdkVersion    : 16,
     targetSdkVersion : 28
 ]
 
 ext.deps = [
     autoCommon               : "com.google.auto:auto-common:0.8",
+    autoService              : "com.google.auto.service:auto-service:1.0-rc6",
     androidPlugin            : "com.android.tools.build:gradle:$androidConfig.agpVersion",
     appCompat                : "androidx.appcompat:appcompat:$versions.androixVersion",
     localBroadcastManager    : "androidx.localbroadcastmanager:localbroadcastmanager:$versions.androixVersion",
@@ -23,12 +24,16 @@ ext.deps = [
     javaPoet                 : 'com.squareup:javapoet:1.9.0',
     jsr305                   : 'com.google.code.findbugs:jsr305:3.0.2',
     okio                     : 'com.squareup.okio:okio:1.13.0',
+    // Build and upload with:
+    // ./gradlew clean assemble androidSourcesJar androidJavadocsJar uploadArchives --no-daemon --no-parallel
+    // Need to use snapshot version and explicitly include javadoc/sources tasks until
+    // https://github.com/vanniktech/gradle-maven-publish-plugin/issues/54 is fixed.
+    gradleMavenPublishPlugin : 'com.vanniktech:gradle-maven-publish-plugin:0.9.0-SNAPSHOT',
 
     // Testing
     junit                    : 'junit:junit:4.12',
     assertJ                  : 'org.assertj:assertj-core:1.7.0',
     roboelectric             : "org.robolectric:robolectric:$versions.roboelectricVersion",
-    roboelectricShadowSupport: "org.robolectric:shadows-supportv4:$versions.roboelectricVersion",
     mockito                  : 'org.mockito:mockito-core:1.10.19',
     truth                    : 'com.google.truth:truth:0.30',
     compileTesting           : 'com.google.testing.compile:compile-testing:0.10',

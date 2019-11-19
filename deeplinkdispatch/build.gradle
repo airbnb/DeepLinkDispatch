@@ -4,12 +4,12 @@ sourceCompatibility = 1.7
 
 apply plugin: 'checkstyle'
 
-apply from: '../gradle-maven-push.gradle'
 apply plugin: 'kotlin-android'
-
+apply plugin: 'com.vanniktech.maven.publish'
 
 dependencies {
   api project(':deeplinkdispatch-base')
+  implementation deps.kotlinStdLib
   implementation deps.okio
   implementation deps.jsr305
   implementation deps.localBroadcastManager

@@ -1,12 +1,10 @@
 package com.airbnb.deeplinkdispatch;
 
 import com.google.testing.compile.JavaFileObjects;
-
 import org.junit.Test;
 
-import java.util.Arrays;
-
 import javax.tools.JavaFileObject;
+import java.util.Arrays;
 
 import static com.google.common.truth.Truth.assertAbout;
 import static com.google.testing.compile.JavaSourceSubjectFactory.javaSource;
@@ -59,28 +57,18 @@ public class DeepLinkProcessorTest {
                     + "\n"
                     + "import com.airbnb.deeplinkdispatch.DeepLinkEntry;\n"
                     + "import com.airbnb.deeplinkdispatch.Parser;\n"
-                    + "import java.lang.Override;\n"
-                    + "import java.lang.String;\n"
                     + "import java.util.Arrays;\n"
                     + "import java.util.Collections;\n"
-                    + "import java.util.List;\n"
                     + "\n"
-                    + "public final class SampleModuleLoader implements Parser {\n"
-                    + "  public static final List<DeepLinkEntry> REGISTRY = "
-                    + "Collections.unmodifiableList(Arrays.asList("
-                    + "new DeepLinkEntry(\"airbnb://example.com/deepLink\", DeepLinkEntry.Type"
-                    + ".CLASS, SampleActivity.class, null)));\n"
-                    + "\n"
-                    + "  @Override"
-                    + "  public DeepLinkEntry parseUri(String uri) {\n"
-                    + "    for (DeepLinkEntry entry : REGISTRY) {\n"
-                    + "      if (entry.matches(uri)) {\n"
-                    + "        return entry;\n"
-                    + "      }\n"
-                    + "    }\n"
-                    + "    return null;\n"
+                    + "public final class SampleModuleLoader extends Parser {\n"
+                    + "  public SampleModuleLoader() {"
+                    + "    super(Collections.unmodifiableList(Arrays.<DeepLinkEntry>asList(\n"
+                    + "      new DeepLinkEntry(\"airbnb://example.com/deepLink\", DeepLinkEntry."
+                    + "Type.CLASS, SampleActivity.class, null)\n"
+                    + "    )));\n"
                     + "  }\n"
-                    + "}"));
+                    + "}"
+                    ));
   }
 
   @Test public void testProcessorWithDefaultAndCustomAnnotations() {
@@ -130,15 +118,12 @@ public class DeepLinkProcessorTest {
                     + "\n"
                     + "import com.airbnb.deeplinkdispatch.DeepLinkEntry;\n"
                     + "import com.airbnb.deeplinkdispatch.Parser;\n"
-                    + "import java.lang.Override;\n"
-                    + "import java.lang.String;\n"
                     + "import java.util.Arrays;\n"
                     + "import java.util.Collections;\n"
-                    + "import java.util.List;\n"
                     + "\n"
-                    + "public final class SampleModuleLoader implements Parser {\n"
-                    + "  public static final List<DeepLinkEntry> REGISTRY = "
-                    + "Collections.unmodifiableList(Arrays.asList(\n"
+                    + "public final class SampleModuleLoader extends Parser {\n"
+                    + "  public SampleModuleLoader() {"
+                    + "    super(Collections.unmodifiableList(Arrays.<DeepLinkEntry>asList(\n"
                     + "    new DeepLinkEntry(\"airbnb://example.com/deepLink\", DeepLinkEntry.Type"
                     + ".CLASS, SampleActivity.class, null),\n"
                     + "    new DeepLinkEntry(\"example://example.com/another\", DeepLinkEntry.Type"
@@ -153,17 +138,9 @@ public class DeepLinkProcessorTest {
                     + ".CLASS, SampleActivity.class, null),\n"
                     + "    new DeepLinkEntry(\"https://example.com/deepLink\", DeepLinkEntry.Type"
                     + ".CLASS, SampleActivity.class, null)));\n"
-                    + "\n"
-                    + "  @Override"
-                    + "  public DeepLinkEntry parseUri(String uri) {\n"
-                    + "    for (DeepLinkEntry entry : REGISTRY) {\n"
-                    + "      if (entry.matches(uri)) {\n"
-                    + "        return entry;\n"
-                    + "      }\n"
-                    + "    }\n"
-                    + "    return null;\n"
                     + "  }\n"
-                    + "}"));
+                    + "}"
+            ));
   }
 
   @Test public void uppercasePackage() {
@@ -195,28 +172,19 @@ public class DeepLinkProcessorTest {
                     + "\n"
                     + "import com.airbnb.deeplinkdispatch.DeepLinkEntry;\n"
                     + "import com.airbnb.deeplinkdispatch.Parser;\n"
-                    + "import java.lang.Override;\n"
-                    + "import java.lang.String;\n"
                     + "import java.util.Arrays;\n"
                     + "import java.util.Collections;\n"
-                    + "import java.util.List;\n"
                     + "\n"
-                    + "public final class SampleModuleLoader implements Parser {\n"
-                    + "  public static final List<DeepLinkEntry> REGISTRY = "
-                    + "Collections.unmodifiableList(Arrays.asList("
-                    + "new DeepLinkEntry(\"airbnb://example.com/deepLink\", DeepLinkEntry.Type"
-                    + ".CLASS, SampleActivity.class, null)));\n"
-                    + "\n"
-                    + "  @Override"
-                    + "  public DeepLinkEntry parseUri(String uri) {\n"
-                    + "    for (DeepLinkEntry entry : REGISTRY) {\n"
-                    + "      if (entry.matches(uri)) {\n"
-                    + "        return entry;\n"
-                    + "      }\n"
-                    + "    }\n"
-                    + "    return null;\n"
+                    + "public final class SampleModuleLoader extends Parser {\n"
+                    + "  public SampleModuleLoader() {"
+                    + "    super(Collections.unmodifiableList(Arrays.<DeepLinkEntry>asList(\n"
+                    + "      new DeepLinkEntry(\"airbnb://example.com/deepLink\", DeepLinkEntry."
+                    + "Type.CLASS, SampleActivity.class, null)\n"
+                    + "    )));\n"
                     + "  }\n"
-                    + "}"));
+                    + "}"
+            )
+        );
   }
 
   @Test public void testNonStaticMethodCompileFail() {
@@ -323,15 +291,12 @@ public class DeepLinkProcessorTest {
                     + "\n"
                     + "import com.airbnb.deeplinkdispatch.DeepLinkEntry;\n"
                     + "import com.airbnb.deeplinkdispatch.Parser;\n"
-                    + "import java.lang.Override;\n"
-                    + "import java.lang.String;\n"
                     + "import java.util.Arrays;\n"
                     + "import java.util.Collections;\n"
-                    + "import java.util.List;\n"
                     + "\n"
-                    + "public final class SampleModuleLoader implements Parser {\n"
-                    + "public static final List<DeepLinkEntry> REGISTRY ="
-                    + " Collections.unmodifiableList(Arrays.asList(\n"
+                    + "public final class SampleModuleLoader extends Parser {\n"
+                    + "  public SampleModuleLoader() {"
+                    + "    super(Collections.unmodifiableList(Arrays.<DeepLinkEntry>asList(\n"
                     + "    new DeepLinkEntry(\"airbnb://host/path1/path2?q={q}\","
                     + " DeepLinkEntry.Type.METHOD, SampleActivity.class,"
                     + " \"intentFromTwoPathWithQuery\"),\n"
@@ -349,15 +314,6 @@ public class DeepLinkProcessorTest {
                     + " \"intentFromOnePathWithOneParam\")\n"
                     + "  ));\n"
                     + "\n"
-                    + "  @Override\n"
-                    + "  public DeepLinkEntry parseUri(String uri) {\n"
-                    + "    for (DeepLinkEntry entry : REGISTRY) {\n"
-                    + "      if (entry.matches(uri)) {\n"
-                    + "        return entry;\n"
-                    + "      }\n"
-                    + "    }\n"
-                    + "    return null;\n"
-                    + "  }"
                     + "}"));
   }
 

@@ -5,8 +5,6 @@ sourceCompatibility = 1.7
 
 apply plugin: 'checkstyle'
 
-apply from: '../gradle-maven-push.gradle'
-
 sourceSets {
   test {
     java {
@@ -17,8 +15,10 @@ sourceSets {
 
 dependencies {
   implementation project(':deeplinkdispatch-base')
-  implementation 'com.google.auto.service:auto-service:1.0-rc3'
+  compileOnly deps.autoService
+  annotationProcessor deps.autoService
   implementation deps.jsr305
+  implementation deps.kotlinStdLib
   implementation deps.javaPoet
   implementation deps.autoCommon
 
