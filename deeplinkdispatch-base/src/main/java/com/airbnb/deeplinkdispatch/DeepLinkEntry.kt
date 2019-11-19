@@ -17,7 +17,7 @@ package com.airbnb.deeplinkdispatch
 
 import java.util.regex.Pattern
 
-class DeepLinkEntry(
+data class DeepLinkEntry(
     val uriTemplate: String,
     val type: Type,
     /**
@@ -26,6 +26,10 @@ class DeepLinkEntry(
     val activityClass: Class<*>,
     val method: String? = null
 ) {
+  /**
+   * Thread safety mode is disable in this class in order to gain better performance.
+   * Parallel usage is not expected.
+   */
   private val prefix: String by lazy(mode = LazyThreadSafetyMode.NONE) {
     prefix(uriTemplate)
   }
@@ -59,9 +63,8 @@ class DeepLinkEntry(
     regex.matcher(deepLinkUri.schemeHostAndPath()).takeIf {
       it.matches()
     }?.let { matcher ->
-      var i = 1
-      parameters.forEach { key ->
-        val value = matcher.group(i++)
+      parameters.forEachIndexed { index, key ->
+        val value = matcher.group(index + 1)
         if (!value?.trim().isNullOrEmpty()) {
           paramsMap[key] = value
         }
