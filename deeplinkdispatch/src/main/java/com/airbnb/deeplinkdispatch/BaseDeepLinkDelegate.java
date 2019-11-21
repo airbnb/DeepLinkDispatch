@@ -31,8 +31,9 @@ public class BaseDeepLinkDelegate {
   }
 
   private DeepLinkEntry findEntry(String uriString) {
+    SchemeHostAndPath schemeHostAndPath = new SchemeHostAndPath(DeepLinkUri.parse(uriString));
     for (Parser loader : loaders) {
-      DeepLinkEntry entry = loader.parseUri(uriString);
+      DeepLinkEntry entry = loader.parseUri(schemeHostAndPath);
       if (entry != null) {
         return entry;
       }

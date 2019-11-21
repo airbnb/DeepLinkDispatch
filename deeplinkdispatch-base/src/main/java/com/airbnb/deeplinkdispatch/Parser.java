@@ -31,12 +31,12 @@ public abstract class Parser {
   /**
    * Iterate over {@link #registry} in a given Parser to see if there is a matching
    * {@link DeepLinkEntry#getUriTemplate()}.
-   * @param uri the URI of the Deep Link that we are trying to match.
+   * @param schemeHostAndPath the SchemeHostAndPath of the Deep Link URI that we are trying to match.
    * @return A DeepLinkEntry if one can be found that matches the param uri, otherwise, null.
    */
-  public DeepLinkEntry parseUri(String uri) {
+  public DeepLinkEntry parseUri(SchemeHostAndPath schemeHostAndPath) {
     for (DeepLinkEntry entry : registry) {
-      if (entry.matches(uri)) {
+      if (entry.matches(schemeHostAndPath)) {
         return entry;
       }
     }

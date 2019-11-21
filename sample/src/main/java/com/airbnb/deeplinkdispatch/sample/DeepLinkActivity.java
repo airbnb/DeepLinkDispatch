@@ -14,13 +14,13 @@ import com.airbnb.deeplinkdispatch.sample.library.LibraryDeepLinkModuleLoader;
 public class DeepLinkActivity extends Activity {
   @Override protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    Debug.startMethodTracing("deeplink.trace",90000000);
+//    Debug.startMethodTracing("deeplink.trace",90000000);
     long before = SystemClock.elapsedRealtime();
     DeepLinkDelegate deepLinkDelegate = new DeepLinkDelegate(
         new SampleModuleLoader(), new LibraryDeepLinkModuleLoader());
     deepLinkDelegate.dispatchFrom(this);
     Log.d("DeepLinkActivity", "DeeplinkTime: "+ (Long.toString(SystemClock.elapsedRealtime() -before))+"ms");
-    Debug.stopMethodTracing();
+//    Debug.stopMethodTracing();
     finish();
   }
 }

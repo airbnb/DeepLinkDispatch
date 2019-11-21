@@ -31,6 +31,8 @@ import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeSpec;
 
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -38,9 +40,11 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Filer;
@@ -197,7 +201,8 @@ public class DeepLinkProcessor extends AbstractProcessor {
           messager.printMessage(Diagnostic.Kind.ERROR, "Error creating file");
         } catch (RuntimeException e) {
           messager.printMessage(Diagnostic.Kind.ERROR,
-              "Internal error during annotation processing: " + e.getClass().getSimpleName());
+              "Internal 12 error during annotation processing: " + e.getClass().getSimpleName());
+          e.printStackTrace();
         }
       }
     }
@@ -213,8 +218,13 @@ public class DeepLinkProcessor extends AbstractProcessor {
       } catch (IOException e) {
         messager.printMessage(Diagnostic.Kind.ERROR, "Error creating file");
       } catch (RuntimeException e) {
+        StringWriter sw = new StringWriter();
+        PrintWriter pw = new PrintWriter(sw);
+        e.printStackTrace(pw);
         messager.printMessage(Diagnostic.Kind.ERROR,
-            "Internal error during annotation processing: " + e.getClass().getSimpleName());
+            "Internal 34 error during annotation processing: " + sw.toString());
+        e.printStackTrace();
+
       }
     }
 
@@ -281,8 +291,11 @@ public class DeepLinkProcessor extends AbstractProcessor {
       ClassName activity = ClassName.get(element.getAnnotatedElement());
       Object method = element.getMethod();
       String uri = element.getUri();
-      deeplinks.add("new DeepLinkEntry($S, $L, $T.class, $S)$L\n",
-        uri, type, activity, method, (i < totalElements - 1) ? "," : "");
+      DeepLinkUri deeplinkUri = DeepLinkUri.parse(uri);
+      CodeBlock uriRegEx =  CodeBlock.builder().add("$T.compile(\""+Utils.getUriRegex(deeplinkUri)+"\")",ClassName.get(Pattern.class)).build();
+      CodeBlock parametersSet = CodeBlock.builder().add("new $T<>($T.asList("+ Utils.parseParametersIntoArrayString(deeplinkUri)+"))",ClassName.get(LinkedHashSet.class),ClassName.get(Arrays.class)).build();
+      deeplinks.add("new DeepLinkEntry($L, $S, $L, $L, $T.class, $S)$L\n",
+              uriRegEx, uri, Utils.parseParametersIntoArrayString(deeplinkUri) ,type, activity, method, (i < totalElements - 1) ? "," : "");
     }
 
     MethodSpec constructor = MethodSpec.constructorBuilder()
