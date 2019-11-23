@@ -10,7 +10,7 @@ import static com.google.common.truth.Truth.assertAbout;
 import static com.google.testing.compile.JavaSourceSubjectFactory.javaSource;
 import static com.google.testing.compile.JavaSourcesSubjectFactory.javaSources;
 
-public class DeepLinkProcessorTest {
+public class DeepLinkProcessorNonIncrementalTest {
   private static final JavaFileObject SIMPLE_DEEPLINK_ACTIVITY = JavaFileObjects
       .forSourceString("SampleActivity", "package com.example;"
           + "import com.airbnb.deeplinkdispatch.DeepLink;\n"
@@ -38,16 +38,8 @@ public class DeepLinkProcessorTest {
             + "public class SampleActivity {\n"
             + "}");
 
-    JavaFileObject module = JavaFileObjects.forSourceString(
-        "SampleModule", "package com.example;"
-            + "import com.airbnb.deeplinkdispatch.DeepLinkModule;\n\n"
-            + "@DeepLinkModule\n"
-            + "public class SampleModule {\n"
-            + "}");
-
     assertAbout(javaSources())
-        .that(Arrays.asList(module, sampleActivity))
-        .withCompilerOptions("-AdeepLink.customAnnotations=com.example.MyDeepLink")
+        .that(Arrays.asList(SIMPLE_DEEPLINK_MODULE, sampleActivity))
         .processedWith(new DeepLinkProcessor())
         .compilesWithoutError()
         .and()
@@ -99,19 +91,9 @@ public class DeepLinkProcessorTest {
             + "public class SampleActivity {\n"
             + "}");
 
-    JavaFileObject module = JavaFileObjects.forSourceString(
-        "SampleModule", "package com.example;"
-            + "import com.airbnb.deeplinkdispatch.DeepLinkModule;\n\n"
-            + "@DeepLinkModule\n"
-            + "public class SampleModule {\n"
-            + "}");
-
     assertAbout(javaSources())
         .that(Arrays.asList(customAnnotationAppLink, customAnnotationWebLink,
-            module, sampleActivity))
-        .withCompilerOptions("-AdeepLink.customAnnotations="
-            + "com.example.MyDeepLink,"
-            + "com.example.WebDeepLink,com.example.AppDeepLink")
+            SIMPLE_DEEPLINK_MODULE, sampleActivity))
         .processedWith(new DeepLinkProcessor())
         .compilesWithoutError()
         .and()
@@ -149,31 +131,23 @@ public class DeepLinkProcessorTest {
 
   @Test public void uppercasePackage() {
     JavaFileObject activityWithUppercasePackage = JavaFileObjects
-        .forSourceString("SampleActivity", "package com.Example;"
+        .forSourceString("SampleActivity", "package com.example;"
             + "import com.airbnb.deeplinkdispatch.DeepLink;\n"
             + "import com.airbnb.deeplinkdispatch.DeepLinkHandler;\n\n"
-            + "import com.Example.SampleModule;\n\n"
+            + "import com.example.SampleModule;\n\n"
             + "@DeepLink(\"airbnb://example.com/deepLink\")"
             + "@DeepLinkHandler({ SampleModule.class })\n"
             + "public class SampleActivity {\n"
             + "}");
 
-    JavaFileObject module = JavaFileObjects.forSourceString(
-        "SampleModule", "package com.Example;"
-            + "import com.airbnb.deeplinkdispatch.DeepLinkModule;\n\n"
-            + "@DeepLinkModule\n"
-            + "public class SampleModule {\n"
-            + "}");
-
     assertAbout(javaSources())
-        .that(Arrays.asList(module, activityWithUppercasePackage))
-        .withCompilerOptions("-AdeepLink.customAnnotations=com.example.MyDeepLink")
+        .that(Arrays.asList(SIMPLE_DEEPLINK_MODULE, activityWithUppercasePackage))
         .processedWith(new DeepLinkProcessor())
         .compilesWithoutError()
         .and()
         .generatesSources(
-            JavaFileObjects.forSourceString("/SOURCE_OUTPUT.com.Example.SampleModuleLoader",
-                "package com.Example;\n"
+            JavaFileObjects.forSourceString("/SOURCE_OUTPUT.com.example.SampleModuleLoader",
+                "package com.example;\n"
                     + "\n"
                     + "import com.airbnb.deeplinkdispatch.DeepLinkEntry;\n"
                     + "import com.airbnb.deeplinkdispatch.Parser;\n"
@@ -206,7 +180,6 @@ public class DeepLinkProcessorTest {
 
     assertAbout(javaSource())
         .that(sampleActivity)
-        .withCompilerOptions("-AdeepLink.customAnnotations=com.example.MyDeepLink")
         .processedWith(new DeepLinkProcessor())
         .failsToCompile()
         .withErrorContaining("Only static methods can be annotated");
@@ -223,7 +196,6 @@ public class DeepLinkProcessorTest {
 
     assertAbout(javaSources())
         .that(Arrays.asList(emptyPrefixLink, SIMPLE_DEEPLINK_ACTIVITY, SIMPLE_DEEPLINK_MODULE))
-        .withCompilerOptions("-AdeepLink.customAnnotations=com.example.MyDeepLink")
         .processedWith(new DeepLinkProcessor())
         .failsToCompile()
         .withErrorContaining("Prefix property cannot have null or empty strings");
@@ -241,7 +213,6 @@ public class DeepLinkProcessorTest {
     assertAbout(javaSources())
         .that(Arrays.asList(emptyPrefixArrayLink, SIMPLE_DEEPLINK_ACTIVITY,
             SIMPLE_DEEPLINK_MODULE))
-        .withCompilerOptions("-AdeepLink.customAnnotations=com.example.MyDeepLink")
         .processedWith(new DeepLinkProcessor())
         .failsToCompile()
         .withErrorContaining("Prefix property cannot be empty");
@@ -280,16 +251,8 @@ public class DeepLinkProcessorTest {
             + "}"
         );
 
-    JavaFileObject module = JavaFileObjects.forSourceString(
-        "SampleModule", "package com.example;"
-            + "import com.airbnb.deeplinkdispatch.DeepLinkModule;\n\n"
-            + "@DeepLinkModule\n"
-            + "public class SampleModule {\n"
-            + "}");
-
     assertAbout(javaSources())
-        .that(Arrays.asList(module, sampleActivity))
-        .withCompilerOptions("-AdeepLink.customAnnotations=com.example.MyDeepLink")
+        .that(Arrays.asList(SIMPLE_DEEPLINK_MODULE, sampleActivity))
         .processedWith(new DeepLinkProcessor())
         .compilesWithoutError()
         .and()
@@ -343,36 +306,10 @@ public class DeepLinkProcessorTest {
 
     assertAbout(javaSource())
         .that(sampleActivity)
-        .withCompilerOptions("-AdeepLink.customAnnotations=com.example.MyDeepLink")
         .processedWith(new DeepLinkProcessor())
         .failsToCompile()
         .withErrorContaining(
             "Only `Intent` or `androidx.core.app.TaskStackBuilder` are supported."
                 + " Please double check your imports and try again.");
-  }
-
-  @Test public void testCustomAnnotationMissingFromCompilerOptionsErrorMessage() {
-    JavaFileObject customAnnotationAppLink = JavaFileObjects
-        .forSourceString("AppDeepLink", "package com.example;\n"
-            + "import com.airbnb.deeplinkdispatch.DeepLinkSpec;\n"
-            + "@DeepLinkSpec(prefix = { \"example://\" })\n"
-            + "public @interface AppDeepLink {\n"
-            + "    String[] value();\n"
-            + "}");
-    JavaFileObject sampleActivity = JavaFileObjects
-        .forSourceString("SampleActivity", "package com.example;"
-            + "import com.airbnb.deeplinkdispatch.DeepLink;\n"
-            + "@DeepLink(\"airbnb://example.com/deepLink\")\n"
-            + "@AppDeepLink({\"example.com/deepLink\",\"example.com/another\"})\n"
-            + "public class SampleActivity {\n"
-            + "}");
-
-    assertAbout(javaSources())
-        .that(Arrays.asList(customAnnotationAppLink, sampleActivity))
-        .processedWith(new DeepLinkProcessor())
-        .failsToCompile()
-        .withErrorContaining(
-            "Unable to find annotation 'com.example.AppDeepLink' you must update "
-                + "'deepLink.customAnnotations' within the build.gradle");
   }
 }

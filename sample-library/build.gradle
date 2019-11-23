@@ -18,6 +18,7 @@ dependencies {
 }
 
 tasks.withType(JavaCompile) {
+  options.compilerArgs << "-AdeepLink.incremental=true"
   options.compilerArgs << "-AdeepLink.customAnnotations=" +
           "com.airbnb.deeplinkdispatch.sample.library.LibraryDeepLink"
 }

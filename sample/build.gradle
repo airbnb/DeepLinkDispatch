@@ -42,6 +42,7 @@ dependencies {
 kapt {
   arguments {
     arg("deepLinkDoc.output", "${buildDir}/doc/deeplinks.txt")
+    arg("deepLink.incremental", "true")
     arg("deepLink.customAnnotations",
         "com.airbnb.deeplinkdispatch.sample.AppDeepLink,"
             + "com.airbnb.deeplinkdispatch.sample.WebDeepLink,"

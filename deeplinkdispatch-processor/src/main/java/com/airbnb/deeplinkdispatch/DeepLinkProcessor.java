@@ -67,6 +67,8 @@ import static com.google.auto.common.MoreElements.getAnnotationMirror;
 @SupportedOptions(Documentor.DOC_OUTPUT_PROPERTY_NAME)
 public class DeepLinkProcessor extends AbstractProcessor {
   private static final String PACKAGE_NAME = "com.airbnb.deeplinkdispatch";
+  private static final String OPTION_CUSTOM_ANNOTATIONS = "deepLink.customAnnotations";
+  private static final String OPTION_INCREMENTAL = "deepLink.incremental";
   private static final ClassName CLASS_BASE_DEEP_LINK_DELEGATE
     = ClassName.get(PACKAGE_NAME, "BaseDeepLinkDelegate");
   private static final ClassName CLASS_ARRAYS = ClassName.get(Arrays.class);
@@ -79,31 +81,39 @@ public class DeepLinkProcessor extends AbstractProcessor {
   private Filer filer;
   private Messager messager;
   private Documentor documentor;
-  private String[] customAnnotations;
+  private IncrementalMetadata incrementalMetadata;
 
   @Override public synchronized void init(ProcessingEnvironment processingEnv) {
     super.init(processingEnv);
     filer = processingEnv.getFiler();
     messager = processingEnv.getMessager();
     documentor = new Documentor(processingEnv);
-    customAnnotations = getCustomAnnotations();
+    incrementalMetadata = getIncrementalMetadata();
   }
 
-  private String[] getCustomAnnotations() {
-    Map<String, String> options = processingEnv.getOptions();
-    String customAnnotationOption = options.get("deepLink.customAnnotations");
-    if (customAnnotationOption == null) {
-      return new String[0];
+  private IncrementalMetadata getIncrementalMetadata() {
+    if (!"true".equals(processingEnv.getOptions().get(OPTION_INCREMENTAL))) {
+      return null;
     }
-    return customAnnotationOption.split(",");
+    Map<String, String> options = processingEnv.getOptions();
+    String customAnnotationOption = options.get(OPTION_CUSTOM_ANNOTATIONS);
+    if (customAnnotationOption == null) {
+      return new IncrementalMetadata(new String[0]);
+    }
+    return new IncrementalMetadata(customAnnotationOption.split(","));
   }
 
   @Override public Set<String> getSupportedAnnotationTypes() {
-    HashSet<String> annotationTypes = Sets.newHashSet(customAnnotations);
-    annotationTypes.add(DeepLink.class.getCanonicalName());
-    annotationTypes.add(DeepLinkHandler.class.getCanonicalName());
-    annotationTypes.add(DeepLinkModule.class.getCanonicalName());
-    return annotationTypes;
+    if (incrementalMetadata != null) {
+      HashSet<String> annotationTypes = Sets.newHashSet(incrementalMetadata.customAnnotations);
+      annotationTypes.add(DeepLink.class.getCanonicalName());
+      annotationTypes.add(DeepLinkHandler.class.getCanonicalName());
+      annotationTypes.add(DeepLinkModule.class.getCanonicalName());
+      return annotationTypes;
+
+    } else {
+      return Sets.newHashSet("*");
+    }
   }
 
   @Override public SourceVersion getSupportedSourceVersion() {
@@ -111,7 +121,11 @@ public class DeepLinkProcessor extends AbstractProcessor {
   }
 
   @Override public Set<String> getSupportedOptions() {
-    return Collections.singleton(Documentor.DOC_OUTPUT_PROPERTY_NAME);
+    HashSet<String> supportedOptions = Sets.newHashSet(Documentor.DOC_OUTPUT_PROPERTY_NAME);
+    if (incrementalMetadata != null) {
+      supportedOptions.add("org.gradle.annotation.processing.aggregating");
+    }
+    return supportedOptions;
   }
 
   @Override
@@ -378,5 +392,13 @@ public class DeepLinkProcessor extends AbstractProcessor {
     JavaFile.builder(packageName, deepLinkDelegate)
         .build()
         .writeTo(filer);
+  }
+
+  private static final class IncrementalMetadata {
+    private String[] customAnnotations;
+
+    private IncrementalMetadata(String[] customAnnotations) {
+      this.customAnnotations = customAnnotations;
+    }
   }
 }
