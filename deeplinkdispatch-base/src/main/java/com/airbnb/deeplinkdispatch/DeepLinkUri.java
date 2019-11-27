@@ -295,6 +295,10 @@ public final class DeepLinkUri {
     return result.toString();
   }
 
+  List<String> getQueryNamesAndValues(){
+    return queryNamesAndValues;
+  }
+
   int querySize() {
     return queryNamesAndValues != null ? queryNamesAndValues.size() / 2 : 0;
   }

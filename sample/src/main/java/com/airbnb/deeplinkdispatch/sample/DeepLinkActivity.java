@@ -16,10 +16,21 @@ public class DeepLinkActivity extends Activity {
     super.onCreate(savedInstanceState);
 //    Debug.startMethodTracing("deeplink.trace",90000000);
     long before = SystemClock.elapsedRealtime();
+    LibraryDeepLinkModuleLoader libraryDeepLinkModuleLoader = new LibraryDeepLinkModuleLoader();
     DeepLinkDelegate deepLinkDelegate = new DeepLinkDelegate(
-        new SampleModuleLoader(), new LibraryDeepLinkModuleLoader());
+        new SampleModuleLoader(), libraryDeepLinkModuleLoader);
+
+//    long startMatch = SystemClock.elapsedRealtime();
+//    for ( int i=0 ; i< SampleModuleLoader.MATCHER.length() ; i++){
+//      if (SampleModuleLoader.MATCHER.charAt(i) == '>'){
+//        long matchTime = SystemClock.elapsedRealtime();
+//        Log.d("DeepLinkActivity", "MATCH at "+i+" time: "+ (matchTime-startMatch)+"ms");
+//      }
+//    }
+
+    Log.d("DeepLinkActivity", "Deeplink Delegate Time: "+ (Long.toString(SystemClock.elapsedRealtime() -before))+"ms");
     deepLinkDelegate.dispatchFrom(this);
-    Log.d("DeepLinkActivity", "DeeplinkTime: "+ (Long.toString(SystemClock.elapsedRealtime() -before))+"ms");
+    Log.d("DeepLinkActivity", "Deeplink Time: "+ (Long.toString(SystemClock.elapsedRealtime() -before))+"ms");
 //    Debug.stopMethodTracing();
     finish();
   }

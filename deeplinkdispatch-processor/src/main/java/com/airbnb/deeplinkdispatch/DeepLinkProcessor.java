@@ -25,6 +25,7 @@ import com.google.common.collect.FluentIterable;
 import com.google.common.collect.Sets;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
+import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterSpec;
@@ -200,9 +201,11 @@ public class DeepLinkProcessor extends AbstractProcessor {
         } catch (IOException e) {
           messager.printMessage(Diagnostic.Kind.ERROR, "Error creating file");
         } catch (RuntimeException e) {
+          StringWriter sw = new StringWriter();
+          PrintWriter pw = new PrintWriter(sw);
+          e.printStackTrace(pw);
           messager.printMessage(Diagnostic.Kind.ERROR,
-              "Internal 12 error during annotation processing: " + e.getClass().getSimpleName());
-          e.printStackTrace();
+              "Internal error during annotation processing: " + sw.toString());
         }
       }
     }
@@ -222,9 +225,7 @@ public class DeepLinkProcessor extends AbstractProcessor {
         PrintWriter pw = new PrintWriter(sw);
         e.printStackTrace(pw);
         messager.printMessage(Diagnostic.Kind.ERROR,
-            "Internal 34 error during annotation processing: " + sw.toString());
-        e.printStackTrace();
-
+            "Internal error during annotation processing: " + sw.toString());
       }
     }
 
@@ -285,6 +286,7 @@ public class DeepLinkProcessor extends AbstractProcessor {
     });
     documentor.write(elements);
     int totalElements = elements.size();
+    Root urisTrie = new Root();
     for (int i = 0; i < totalElements; i++) {
       DeepLinkAnnotatedElement element = elements.get(i);
       String type = "DeepLinkEntry.Type." + element.getAnnotationType().toString();
@@ -292,21 +294,74 @@ public class DeepLinkProcessor extends AbstractProcessor {
       Object method = element.getMethod();
       String uri = element.getUri();
       DeepLinkUri deeplinkUri = DeepLinkUri.parse(uri);
-      CodeBlock uriRegEx =  CodeBlock.builder().add("$T.compile(\""+Utils.getUriRegex(deeplinkUri)+"\")",ClassName.get(Pattern.class)).build();
-      CodeBlock parametersSet = CodeBlock.builder().add("new $T<>($T.asList("+ Utils.parseParametersIntoArrayString(deeplinkUri)+"))",ClassName.get(LinkedHashSet.class),ClassName.get(Arrays.class)).build();
-      deeplinks.add("new DeepLinkEntry($L, $S, $L, $L, $T.class, $S)$L\n",
+
+      TrieNode node = urisTrie.addNode(new com.airbnb.deeplinkdispatch.Scheme(deeplinkUri.scheme()));
+      if(deeplinkUri.username() != null && !deeplinkUri.username().isEmpty()){
+        node = node.addNode(new Username(deeplinkUri.username()));
+        if (deeplinkUri.password() == null && deeplinkUri.host()  == null && deeplinkUri.port() == 0 && (deeplinkUri.pathSegments() == null || deeplinkUri.pathSegments().isEmpty()) && (deeplinkUri.queryParameterNames() == null || deeplinkUri.queryParameterNames().isEmpty()) && deeplinkUri.fragment() == null){
+          node.setMatchId(new UriMatch(deeplinkUri,i));
+        }
+      }
+      if(deeplinkUri.password() != null && !deeplinkUri.password().isEmpty()){
+        node = node.addNode(new Password(deeplinkUri.password()));
+        if (deeplinkUri.host()  == null && deeplinkUri.port() == 0 && (deeplinkUri.pathSegments() == null || deeplinkUri.pathSegments().isEmpty()) && (deeplinkUri.queryParameterNames() == null || deeplinkUri.queryParameterNames().isEmpty()) && deeplinkUri.fragment() == null){
+          node.setMatchId(new UriMatch(deeplinkUri, i));
+        }
+      }
+      if(deeplinkUri.host() != null && !deeplinkUri.host().isEmpty()){
+        node = node.addNode(new Host(deeplinkUri.host()));
+        if (deeplinkUri.port() == 0 && (deeplinkUri.pathSegments() == null || deeplinkUri.pathSegments().isEmpty()) && (deeplinkUri.queryParameterNames() == null || deeplinkUri.queryParameterNames().isEmpty()) && deeplinkUri.fragment() == null){
+          node.setMatchId(new UriMatch(deeplinkUri, i));
+        }
+      }
+      if(deeplinkUri.port() != -1){
+        node = node.addNode(new Port(Integer.toString(deeplinkUri.port())));
+        if ((deeplinkUri.pathSegments() == null || deeplinkUri.pathSegments().isEmpty()) && (deeplinkUri.queryParameterNames() == null || deeplinkUri.queryParameterNames().isEmpty()) && deeplinkUri.fragment() == null){
+          node.setMatchId(new UriMatch(deeplinkUri, i));
+        }
+      }
+      if(deeplinkUri.pathSegments() != null || !deeplinkUri.pathSegments().isEmpty()){
+        for(String pathSegment : deeplinkUri.pathSegments()){
+          node = node.addNode(new PathSegment(pathSegment,pathSegment.startsWith("{")));
+        }
+          node.setMatchId(new UriMatch(deeplinkUri, i));
+      }
+//      if(deeplinkUri.getQueryNamesAndValues() != null && !deeplinkUri.getQueryNamesAndValues().isEmpty()){
+//        for (int i2 = 0, size = deeplinkUri.queryParameterNames().size(); i2 < size; i2 += 2) {
+//          // FIXME Add null checks
+//          node = node.addNode(new QueryNameValue(deeplinkUri.getQueryNamesAndValues().get(i),deeplinkUri.getQueryNamesAndValues().get(i+1),deeplinkUri.getQueryNamesAndValues().get(i+1).startsWith("{")));
+//        }
+//        if (deeplinkUri.fragment() == null){
+//          node.setMatchId(new UriMatch(deeplinkUri, i));
+//        }
+//      }
+//      if (deeplinkUri.fragment() != null){
+//        node = node.addNode(new Fragment(deeplinkUri.fragment()));
+//        node.setMatchId(new UriMatch(deeplinkUri, i));
+//      }
+
+      String uriRegEx =  Utils.getUriRegex(deeplinkUri);
+      deeplinks.add("new DeepLinkEntry($S, $S, $L, $L, $T.class, $S)$L\n",
               uriRegEx, uri, Utils.parseParametersIntoArrayString(deeplinkUri) ,type, activity, method, (i < totalElements - 1) ? "," : "");
     }
+
+    System.out.println("TRIE: "+urisTrie.toString());
 
     MethodSpec constructor = MethodSpec.constructorBuilder()
       .addModifiers(Modifier.PUBLIC)
       .addCode(deeplinks.unindent().add(")));\n").build())
       .build();
 
+    FieldSpec matcher = FieldSpec.builder(byte[].class, "MATCHER")
+            .addModifiers(Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL)
+            .initializer(urisTrie.toJavaByteArrayString())
+            .build();
+
     TypeSpec deepLinkLoader = TypeSpec.classBuilder(className + "Loader")
         .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
         .superclass(ClassName.get(Parser.class))
         .addMethod(constructor)
+            .addField(matcher)
         .build();
 
     JavaFile.builder(packageName, deepLinkLoader)
@@ -363,5 +418,9 @@ public class DeepLinkProcessor extends AbstractProcessor {
     JavaFile.builder(packageName, deepLinkDelegate)
         .build()
         .writeTo(filer);
+  }
+
+  private class Scheme {
+
   }
 }

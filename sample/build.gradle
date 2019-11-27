@@ -32,6 +32,7 @@ dependencies {
   implementation deps.kotlinStdLib
   implementation project(':deeplinkdispatch')
   kapt project(':deeplinkdispatch-processor')
+//  compileOnly project(':deeplinkdispatch-processor')
   implementation project(':sample-library')
   implementation deps.appCompat
 
