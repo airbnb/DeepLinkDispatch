@@ -6,32 +6,29 @@ import android.os.Bundle;
 import android.os.Debug;
 import android.os.SystemClock;
 import android.util.Log;
+
 import com.airbnb.deeplinkdispatch.DeepLinkHandler;
 import com.airbnb.deeplinkdispatch.sample.library.LibraryDeepLinkModule;
 import com.airbnb.deeplinkdispatch.sample.library.LibraryDeepLinkModuleLoader;
 
-@DeepLinkHandler({ SampleModule.class, LibraryDeepLinkModule.class })
+@DeepLinkHandler({SampleModule.class, LibraryDeepLinkModule.class})
 public class DeepLinkActivity extends Activity {
-  @Override protected void onCreate(Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
 //    Debug.startMethodTracing("deeplink.trace",90000000);
-    long before = SystemClock.elapsedRealtime();
-    LibraryDeepLinkModuleLoader libraryDeepLinkModuleLoader = new LibraryDeepLinkModuleLoader();
-    DeepLinkDelegate deepLinkDelegate = new DeepLinkDelegate(
-        new SampleModuleLoader(), libraryDeepLinkModuleLoader);
+        long before = SystemClock.elapsedRealtime();
+        LibraryDeepLinkModuleLoader libraryDeepLinkModuleLoader = new LibraryDeepLinkModuleLoader(this.getApplicationContext());
+        DeepLinkDelegate deepLinkDelegate = new DeepLinkDelegate(
+                new SampleModuleLoader(this.getApplicationContext()), libraryDeepLinkModuleLoader);
 
-//    long startMatch = SystemClock.elapsedRealtime();
-//    for ( int i=0 ; i< SampleModuleLoader.MATCHER.length() ; i++){
-//      if (SampleModuleLoader.MATCHER.charAt(i) == '>'){
-//        long matchTime = SystemClock.elapsedRealtime();
-//        Log.d("DeepLinkActivity", "MATCH at "+i+" time: "+ (matchTime-startMatch)+"ms");
-//      }
-//    }
-
-    Log.d("DeepLinkActivity", "Deeplink Delegate Time: "+ (Long.toString(SystemClock.elapsedRealtime() -before))+"ms");
-    deepLinkDelegate.dispatchFrom(this);
-    Log.d("DeepLinkActivity", "Deeplink Time: "+ (Long.toString(SystemClock.elapsedRealtime() -before))+"ms");
+        long afterDelegateCreation = SystemClock.elapsedRealtime();
+        Log.d("DeepLinkActivity", "Deeplink Delegate Time: " + (Long.toString(afterDelegateCreation - before)) + "ms");
+        deepLinkDelegate.dispatchFrom(this);
+        long afterDispatch = SystemClock.elapsedRealtime();
+        Log.d("DeepLinkActivity", "Deeplink Time: " + (Long.toString(afterDispatch - before)) + "ms");
 //    Debug.stopMethodTracing();
-    finish();
-  }
+
+        finish();
+    }
 }

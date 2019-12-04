@@ -1,31 +1,24 @@
 package com.airbnb.deeplinkdispatch
 
-import java.lang.StringBuilder
-import java.nio.charset.Charset
+import com.airbnb.deeplinkdispatch.base.MatchIndex
+import com.airbnb.deeplinkdispatch.base.MatchIndex.*
+import java.io.OutputStream
 import kotlin.text.Charsets.UTF_8
 
 data class UriMatch(val uri: DeepLinkUri, val matchId: Int)
 
-open class TrieNode(val id: String, val type: UByte) {
+@kotlin.ExperimentalUnsignedTypes
+open class TrieNode(open val id: String = "", val type: UByte, open val placeholder: Boolean = false) {
 
     val children = mutableSetOf<TrieNode>()
-    var matchId: UriMatch? = null
+    var match: UriMatch? = null
         set(value) {
-            if (matchId != null) error("Ambiguos URI. Same match for two URIs ($matchId vs $value)") else field = value
+            if (match != null) error("Ambiguous URI. Same match for two URIs ($match vs $value)") else field = value
         }
 
     fun addNode(node: TrieNode): TrieNode {
         return if (children.add(node)) node else children.find { it.equals(node) }!!
     }
-
-//    fun queryString(): String {
-//        var queryString: String = ""
-//        children.forEach { child ->
-//            queryString += child.queryString()
-//        }
-//        queryString = children.joinToString(separator = RECORD_DIVIDER, transform = { it.type + it.id }, postfix = if (children.isEmpty()) "" else NODE_DIVIDER) + queryString
-//        return queryString
-//    }
 
     /**
      * Byte array format is:
@@ -38,17 +31,22 @@ open class TrieNode(val id: String, val type: UByte) {
      */
     fun toByteArray(): UByteArray {
         val childrenByteArrays: List<UByteArray> = generateChildrenByteArrays()
-        val header = generateHeader(type, id, childrenByteArrays)
+        val header = if (match != null) generateHeader(type, id, placeholder, childrenByteArrays, match!!.matchId.toUShort()) else generateHeader(type, id, placeholder, childrenByteArrays)
         val resultByteArray = UByteArray(arrayLength(
                 childrenByteArrays,
-                id,
+                if (placeholder) ByteArray(1) { idx -> IDX_PLACEHOLDER }.toString(UTF_8) else id,
                 header
         ))
         header.copyInto(resultByteArray)
         var position = header.size
-        with(id.toByteArray(UTF_8).toUByteArray()) {
-            copyInto(resultByteArray, position)
-            position += size
+        if (placeholder) {
+            resultByteArray[position] = IDX_PLACEHOLDER.toUByte()
+            position++
+        } else {
+            with(id.toByteArray(UTF_8).toUByteArray()) {
+                copyInto(resultByteArray, position)
+                position += size
+            }
         }
         for (childByteArray in childrenByteArrays) {
             childByteArray.copyInto(resultByteArray, position)
@@ -59,7 +57,7 @@ open class TrieNode(val id: String, val type: UByte) {
     }
 
     private fun arrayLength(childArrays: List<UByteArray>, value: String, header: UByteArray): Int {
-        var length = header.size + value.toByteArray(Charsets.UTF_8).size
+        var length = header.size + value.toByteArray(UTF_8).size
         childArrays.forEach { child ->
             length += child.size
         }
@@ -68,67 +66,44 @@ open class TrieNode(val id: String, val type: UByte) {
 
     private fun generateChildrenByteArrays(): List<UByteArray> = children.map { it.toByteArray() }
 
-    private fun generateHeader(type: UByte, value: String, children: List<UByteArray>? = null, matchId: UShort = UShort.MAX_VALUE): UByteArray {
+    private fun generateHeader(type: UByte, value: String, placeholder: Boolean, children: List<UByteArray>? = null, matchId: UShort = UShort.MAX_VALUE): UByteArray {
         var childrenLength: UInt = 0u
         children?.forEach { child ->
             childrenLength += child.size.toUInt()
         }
-        val header = UByteArray(1 + 1 + 4 + 2)
+        val header = UByteArray(HEADER_LENGTH)
         header.set(0, type)
-        header.set(1, value.length.toUByte())
+        header.set(1, if (placeholder) 1.toUByte() else value.length.toUByte()) // If this is a placeholder we will only save one byte
         header.writeUIntAt(2, childrenLength)
         header.writeUShortAt(6, matchId)
         return header
     }
 
-    companion object {
-//        val RECORD_DIVIDER = "_RECORD_"//30.toChar().toString() // (unit separator)
-//        val NODE_DIVIDER = "_NODE_"//31.toChar().toString() // (unit separator)
+}
 
-        val TYPE_ROOT: UByte = 0u
-        val TYPE_SCHEME: UByte = 1u
-        val TYPE_USERNAME: UByte = 2u
-        val TYPE_PASSWORD: UByte = 3u
-        val TYPE_HOST: UByte = 4u
-        val TYPE_PORT: UByte = 5u
-        val TYPE_PATH_SEGMENT: UByte = 6u
-        val TYPE_QUERY_NAME_VALUE: UByte = 7u
-        val TYPE_FRAGMENT: UByte = 8u
+data class Root(val bla: String = "") : TrieNode(ROOT_VALUE, TYPE_ROOT.toUByte()) {
+    fun writeToOutoutStream(openOutputStream: OutputStream) {
+        openOutputStream.write(this.toByteArray().toByteArray())
     }
 }
 
-data class Root(val bla: String = "") : TrieNode("root", TYPE_ROOT) {
-    fun toJavaByteArrayString(): String {
-        println("Array length: $")
-        var bytes = 0
-        return "new byte[] " +
-                children.joinToString(
-                        ", ", "{", "}", -1, "...", ({ child ->
-                    child.toByteArray().joinToString(separator = ", ", transform = ({ byte ->
-                        bytes++
-                        "(byte) $byte"
-                    }))
-                })).also { println ("Bytes written: $bytes") }
-    }
-}
+data class Scheme(override val id: String) : TrieNode(type = TYPE_SCHEME.toUByte())
 
-data class Scheme(val scheme: String) : TrieNode(scheme, TYPE_SCHEME)
+data class Username(override val id: String) : TrieNode(type = TYPE_USERNAME.toUByte())
 
-data class Username(val username: String) : TrieNode(username, TYPE_USERNAME)
+data class Password(override val id: String) : TrieNode(type = TYPE_PASSWORD.toUByte())
 
-data class Password(val password: String) : TrieNode(password, TYPE_PASSWORD)
+data class Host(override val id: String) : TrieNode(type = TYPE_HOST.toUByte())
 
-data class Host(val host: String) : TrieNode(host, TYPE_HOST)
+data class Port(override val id: String) : TrieNode(type = TYPE_PORT.toUByte())
+data class PathSegment(override val id: String, override val placeholder: Boolean = false) : TrieNode(type = TYPE_PATH_SEGMENT.toUByte())
 
-data class Port(val port: String) : TrieNode(port, TYPE_PORT)
-data class PathSegment(val pathSegment: String, val placeholder: Boolean = false) : TrieNode(pathSegment, TYPE_PATH_SEGMENT)
+data class QueryNameValue(override val id: String, val value: String, override val placeholder: Boolean = false) : TrieNode(type = TYPE_QUERY_NAME_VALUE.toUByte())
 
-data class QueryNameValue(val name: String, val value: String, val placeholder: Boolean = false) : TrieNode(name, TYPE_QUERY_NAME_VALUE)
-
-data class Fragment(val fragemnt: String) : TrieNode(fragemnt, TYPE_FRAGMENT)
+data class Fragment(override val id: String) : TrieNode(type = TYPE_FRAGMENT.toUByte())
 
 fun UByteArray.writeUIntAt(startIndex: Int, value: UInt) {
-    val ubyte3: UByte = value.and(0x000000FFu).toUByte()
+    val ubyte3: UByte = value.and(0x000000FFu).toUByte().toUByte()
     val ubyte2: UByte = value.shr(8).and(0x0000FFu).toUByte()
     val ubyte1: UByte = value.shr(16).and(0x00FFu).toUByte()
     val ubyte0: UByte = value.shr(24).and(0xFFu).toUByte()

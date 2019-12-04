@@ -6102,6 +6102,11 @@ public class MainActivity extends AppCompatActivity {
     return new Intent(context, MainActivity.class).setAction(ACTION_DEEP_LINK_METHOD);
   }
 
+  @DeepLink("dld://methodDeepLink1206/{param1}/road")
+  public static Intent intentForDeepLinkMethod1206something(Context context) {
+    return new Intent(context, MainActivity.class).setAction(ACTION_DEEP_LINK_METHOD);
+  }
+
   /**
    * Handles deep link with params.
    * @param context of the activity

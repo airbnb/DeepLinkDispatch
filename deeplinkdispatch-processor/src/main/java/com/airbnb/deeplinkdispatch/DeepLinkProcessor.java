@@ -15,6 +15,7 @@
  */
 package com.airbnb.deeplinkdispatch;
 
+import com.airbnb.deeplinkdispatch.base.MatchIndex;
 import com.google.auto.common.AnnotationMirrors;
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
@@ -25,27 +26,27 @@ import com.google.common.collect.FluentIterable;
 import com.google.common.collect.Sets;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
-import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeSpec;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.Pattern;
 
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Filer;
@@ -65,6 +66,7 @@ import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
 import javax.tools.Diagnostic;
+import javax.tools.JavaFileObject;
 
 import static com.airbnb.deeplinkdispatch.MoreAnnotationMirrors.asAnnotationValues;
 import static com.airbnb.deeplinkdispatch.MoreAnnotationMirrors.getTypeValue;
@@ -79,6 +81,7 @@ public class DeepLinkProcessor extends AbstractProcessor {
     = ClassName.get(PACKAGE_NAME, "BaseDeepLinkDelegate");
   private static final ClassName CLASS_ARRAYS = ClassName.get(Arrays.class);
   private static final ClassName CLASS_COLLECTIONS = ClassName.get(Collections.class);
+  private static final ClassName CLASS_UTILS = ClassName.get(Utils.class);
   private static final ClassName CLASS_DEEP_LINK_ENTRY
     = ClassName.get(PACKAGE_NAME, DeepLinkEntry.class.getSimpleName());
   private static final Class<DeepLink> DEEP_LINK_CLASS = DeepLink.class;
@@ -299,69 +302,58 @@ public class DeepLinkProcessor extends AbstractProcessor {
       if(deeplinkUri.username() != null && !deeplinkUri.username().isEmpty()){
         node = node.addNode(new Username(deeplinkUri.username()));
         if (deeplinkUri.password() == null && deeplinkUri.host()  == null && deeplinkUri.port() == 0 && (deeplinkUri.pathSegments() == null || deeplinkUri.pathSegments().isEmpty()) && (deeplinkUri.queryParameterNames() == null || deeplinkUri.queryParameterNames().isEmpty()) && deeplinkUri.fragment() == null){
-          node.setMatchId(new UriMatch(deeplinkUri,i));
+          node.setMatch(new UriMatch(deeplinkUri,i));
         }
       }
       if(deeplinkUri.password() != null && !deeplinkUri.password().isEmpty()){
         node = node.addNode(new Password(deeplinkUri.password()));
         if (deeplinkUri.host()  == null && deeplinkUri.port() == 0 && (deeplinkUri.pathSegments() == null || deeplinkUri.pathSegments().isEmpty()) && (deeplinkUri.queryParameterNames() == null || deeplinkUri.queryParameterNames().isEmpty()) && deeplinkUri.fragment() == null){
-          node.setMatchId(new UriMatch(deeplinkUri, i));
+          node.setMatch(new UriMatch(deeplinkUri, i));
         }
       }
       if(deeplinkUri.host() != null && !deeplinkUri.host().isEmpty()){
         node = node.addNode(new Host(deeplinkUri.host()));
         if (deeplinkUri.port() == 0 && (deeplinkUri.pathSegments() == null || deeplinkUri.pathSegments().isEmpty()) && (deeplinkUri.queryParameterNames() == null || deeplinkUri.queryParameterNames().isEmpty()) && deeplinkUri.fragment() == null){
-          node.setMatchId(new UriMatch(deeplinkUri, i));
+          node.setMatch(new UriMatch(deeplinkUri, i));
         }
       }
       if(deeplinkUri.port() != -1){
         node = node.addNode(new Port(Integer.toString(deeplinkUri.port())));
         if ((deeplinkUri.pathSegments() == null || deeplinkUri.pathSegments().isEmpty()) && (deeplinkUri.queryParameterNames() == null || deeplinkUri.queryParameterNames().isEmpty()) && deeplinkUri.fragment() == null){
-          node.setMatchId(new UriMatch(deeplinkUri, i));
+          node.setMatch(new UriMatch(deeplinkUri, i));
         }
       }
       if(deeplinkUri.pathSegments() != null || !deeplinkUri.pathSegments().isEmpty()){
         for(String pathSegment : deeplinkUri.pathSegments()){
           node = node.addNode(new PathSegment(pathSegment,pathSegment.startsWith("{")));
         }
-          node.setMatchId(new UriMatch(deeplinkUri, i));
+          node.setMatch(new UriMatch(deeplinkUri, i));
       }
-//      if(deeplinkUri.getQueryNamesAndValues() != null && !deeplinkUri.getQueryNamesAndValues().isEmpty()){
-//        for (int i2 = 0, size = deeplinkUri.queryParameterNames().size(); i2 < size; i2 += 2) {
-//          // FIXME Add null checks
-//          node = node.addNode(new QueryNameValue(deeplinkUri.getQueryNamesAndValues().get(i),deeplinkUri.getQueryNamesAndValues().get(i+1),deeplinkUri.getQueryNamesAndValues().get(i+1).startsWith("{")));
-//        }
-//        if (deeplinkUri.fragment() == null){
-//          node.setMatchId(new UriMatch(deeplinkUri, i));
-//        }
-//      }
-//      if (deeplinkUri.fragment() != null){
-//        node = node.addNode(new Fragment(deeplinkUri.fragment()));
-//        node.setMatchId(new UriMatch(deeplinkUri, i));
-//      }
 
       String uriRegEx =  Utils.getUriRegex(deeplinkUri);
       deeplinks.add("new DeepLinkEntry($S, $S, $L, $L, $T.class, $S)$L\n",
               uriRegEx, uri, Utils.parseParametersIntoArrayString(deeplinkUri) ,type, activity, method, (i < totalElements - 1) ? "," : "");
     }
 
-    System.out.println("TRIE: "+urisTrie.toString());
-
     MethodSpec constructor = MethodSpec.constructorBuilder()
-      .addModifiers(Modifier.PUBLIC)
-      .addCode(deeplinks.unindent().add(")));\n").build())
-      .build();
+        .addModifiers(Modifier.PUBLIC)
+        .addParameter(ClassName.get("android.content", "Context"), "context")
+        .addCode(deeplinks.unindent().add(")), $T.readMatchIndex(context,\"" + className + "\" ));\n", CLASS_UTILS).build())
+        .build();
 
-    FieldSpec matcher = FieldSpec.builder(byte[].class, "MATCHER")
-            .addModifiers(Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL)
-            .initializer(urisTrie.toJavaByteArrayString())
-            .build();
+    try {
+      File assetsFile = new File(findAssets(), MatchIndex.getMatchIdxFileName(className));
+      assetsFile.getParentFile().mkdirs();
+      assetsFile.createNewFile();
+      urisTrie.writeToOutoutStream(new FileOutputStream(assetsFile));
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
 
     TypeSpec deepLinkLoader = TypeSpec.classBuilder(className + "Loader")
         .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
         .superclass(ClassName.get(Parser.class))
         .addMethod(constructor)
-            .addField(matcher)
         .build();
 
     JavaFile.builder(packageName, deepLinkLoader)
@@ -420,7 +412,27 @@ public class DeepLinkProcessor extends AbstractProcessor {
         .writeTo(filer);
   }
 
-  private class Scheme {
+  private File findAssets() throws Exception {
 
+    Filer filer = processingEnv.getFiler();
+
+    JavaFileObject dummySourceFile = filer.createSourceFile("dummy" + System.currentTimeMillis());
+    String dummySourceFilePath = dummySourceFile.toUri().toString();
+
+    if (dummySourceFilePath.startsWith("file:")) {
+      if (!dummySourceFilePath.startsWith("file://")) {
+        dummySourceFilePath = "file://" + dummySourceFilePath.substring("file:".length());
+      }
+    } else {
+      dummySourceFilePath = "file://" + dummySourceFilePath;
+    }
+
+    URI cleanURI = new URI(dummySourceFilePath);
+
+    File dummyFile = new File(cleanURI);
+
+    File projectRoot = dummyFile.getParentFile().getParentFile().getParentFile().getParentFile().getParentFile().getParentFile();
+
+    return new File(projectRoot.getAbsolutePath() + "/src/main/assets");
   }
 }

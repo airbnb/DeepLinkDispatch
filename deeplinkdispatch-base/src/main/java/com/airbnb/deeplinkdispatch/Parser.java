@@ -1,5 +1,8 @@
 package com.airbnb.deeplinkdispatch;
 
+import com.airbnb.deeplinkdispatch.base.MatchIndex;
+
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -15,8 +18,15 @@ public abstract class Parser {
    */
   private final List<DeepLinkEntry> registry;
 
-  public Parser(List<DeepLinkEntry> registry) {
+  /**
+   * A binary match index, created by the annotation processor.
+   * In a wrapper to make handling it easier
+   */
+  private final MatchIndex matchIndex;
+
+  public Parser(List<DeepLinkEntry> registry, byte[] matchIndexArray) {
     this.registry = registry;
+    this.matchIndex = new MatchIndex(matchIndexArray);
   }
 
   /**
@@ -42,6 +52,21 @@ public abstract class Parser {
     }
     return null;
 
+  }
+
+  /**
+   * Byte array format is:
+   * 0                                                    type
+   * 1                                                    value length
+   * 2..5                                                 children length
+   * 6..8                                                 match id
+   * 8..(8+value length)                                  value
+   * (8+value length)..((8+value length)+children length) children
+   */
+  public DeepLinkEntry idxMatch(DeepLinkUri deepLinkUri) {
+    // The first elment is the root, start with the children
+    int elementMatch = matchIndex.matchUri(new SchemeHostAndPath(deepLinkUri).getMatchList(), 0, 0, matchIndex.length());
+    return elementMatch != -1 ? registry.get(elementMatch) : null;
   }
 
 }
