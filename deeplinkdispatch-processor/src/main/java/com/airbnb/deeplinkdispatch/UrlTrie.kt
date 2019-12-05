@@ -1,7 +1,17 @@
 package com.airbnb.deeplinkdispatch
 
-import com.airbnb.deeplinkdispatch.base.MatchIndex
-import com.airbnb.deeplinkdispatch.base.MatchIndex.*
+import com.airbnb.deeplinkdispatch.base.MatchIndex.Companion.HEADER_LENGTH
+import com.airbnb.deeplinkdispatch.base.MatchIndex.Companion.IDX_PLACEHOLDER
+import com.airbnb.deeplinkdispatch.base.MatchIndex.Companion.ROOT_VALUE
+import com.airbnb.deeplinkdispatch.base.MatchIndex.Companion.TYPE_FRAGMENT
+import com.airbnb.deeplinkdispatch.base.MatchIndex.Companion.TYPE_HOST
+import com.airbnb.deeplinkdispatch.base.MatchIndex.Companion.TYPE_PASSWORD
+import com.airbnb.deeplinkdispatch.base.MatchIndex.Companion.TYPE_PATH_SEGMENT
+import com.airbnb.deeplinkdispatch.base.MatchIndex.Companion.TYPE_PORT
+import com.airbnb.deeplinkdispatch.base.MatchIndex.Companion.TYPE_QUERY_NAME_VALUE
+import com.airbnb.deeplinkdispatch.base.MatchIndex.Companion.TYPE_ROOT
+import com.airbnb.deeplinkdispatch.base.MatchIndex.Companion.TYPE_SCHEME
+import com.airbnb.deeplinkdispatch.base.MatchIndex.Companion.TYPE_USERNAME
 import java.io.OutputStream
 import kotlin.text.Charsets.UTF_8
 
@@ -34,7 +44,7 @@ open class TrieNode(open val id: String = "", val type: UByte, open val placehol
         val header = if (match != null) generateHeader(type, id, placeholder, childrenByteArrays, match!!.matchId.toUShort()) else generateHeader(type, id, placeholder, childrenByteArrays)
         val resultByteArray = UByteArray(arrayLength(
                 childrenByteArrays,
-                if (placeholder) ByteArray(1) { idx -> IDX_PLACEHOLDER }.toString(UTF_8) else id,
+                if (placeholder) ByteArray(1) { idx -> IDX_PLACEHOLDER.toByte() }.toString(UTF_8) else id,
                 header
         ))
         header.copyInto(resultByteArray)

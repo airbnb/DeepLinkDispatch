@@ -1,5 +1,6 @@
 package com.airbnb.deeplinkdispatch;
 
+import com.airbnb.deeplinkdispatch.base.Match;
 import com.airbnb.deeplinkdispatch.base.MatchIndex;
 
 import java.util.Collections;
@@ -39,34 +40,20 @@ public abstract class Parser {
   }
 
   /**
-   * Iterate over {@link #registry} in a given Parser to see if there is a matching
-   * {@link DeepLinkEntry#getUriTemplate()}.
-   * @param schemeHostAndPath the SchemeHostAndPath of the Deep Link URI that we are trying to match.
-   * @return A DeepLinkEntry if one can be found that matches the param uri, otherwise, null.
-   */
-  public DeepLinkEntry parseUri(SchemeHostAndPath schemeHostAndPath) {
-    for (DeepLinkEntry entry : registry) {
-      if (entry.matches(schemeHostAndPath)) {
-        return entry;
-      }
-    }
-    return null;
-
-  }
-
-  /**
-   * Byte array format is:
-   * 0                                                    type
-   * 1                                                    value length
-   * 2..5                                                 children length
-   * 6..8                                                 match id
-   * 8..(8+value length)                                  value
-   * (8+value length)..((8+value length)+children length) children
+   * Use the binary matchIndex to find a martch for the given {@link DeepLinkUri}.
+   *
+   * @param deepLinkUri The {@link DeepLinkUri} the match should be retrieved for.
+   * @return Either a {@link DeepLinkEntry} object if a match was found or null if no match was found.
    */
   public DeepLinkEntry idxMatch(DeepLinkUri deepLinkUri) {
-    // The first elment is the root, start with the children
-    int elementMatch = matchIndex.matchUri(new SchemeHostAndPath(deepLinkUri).getMatchList(), 0, 0, matchIndex.length());
-    return elementMatch != -1 ? registry.get(elementMatch) : null;
+    Match elementMatch = matchIndex.matchUri(new SchemeHostAndPath(deepLinkUri).getMatchList(), 0, 0, matchIndex.length());
+    if (elementMatch != null) {
+      DeepLinkEntry matchedDeeplinkEntry = registry.get(elementMatch.getMatchIndex());
+      matchedDeeplinkEntry.setParameters(deepLinkUri, elementMatch.getPlaceholders());
+      return matchedDeeplinkEntry;
+    } else {
+      return null;
+    }
   }
 
 }

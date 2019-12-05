@@ -18,7 +18,7 @@ public class Utils {
         byte[] array = null;
         try {
             BufferedInputStream is = new BufferedInputStream(
-                context.getAssets().open(MatchIndex.getMatchIdxFileName(moduleName)));
+                context.getAssets().open(MatchIndex.Companion.getMatchIdxFileName(moduleName)));
             array = getBytes(is);
         } catch (IOException e) {
             Log.e(TAG, "Error reading match index.", e);

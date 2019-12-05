@@ -329,10 +329,8 @@ public class DeepLinkProcessor extends AbstractProcessor {
         }
           node.setMatch(new UriMatch(deeplinkUri, i));
       }
-
-      String uriRegEx =  Utils.getUriRegex(deeplinkUri);
-      deeplinks.add("new DeepLinkEntry($S, $S, $L, $L, $T.class, $S)$L\n",
-              uriRegEx, uri, Utils.parseParametersIntoArrayString(deeplinkUri) ,type, activity, method, (i < totalElements - 1) ? "," : "");
+      deeplinks.add("new DeepLinkEntry($S, $L, $L, $T.class, $S)$L\n",
+              uri, Utils.parseParametersIntoArrayString(deeplinkUri) ,type, activity, method, (i < totalElements - 1) ? "," : "");
     }
 
     MethodSpec constructor = MethodSpec.constructorBuilder()
@@ -342,7 +340,7 @@ public class DeepLinkProcessor extends AbstractProcessor {
         .build();
 
     try {
-      File assetsFile = new File(findAssets(), MatchIndex.getMatchIdxFileName(className));
+      File assetsFile = new File(findAssets(), MatchIndex.Companion.getMatchIdxFileName(className));
       assetsFile.getParentFile().mkdirs();
       assetsFile.createNewFile();
       urisTrie.writeToOutoutStream(new FileOutputStream(assetsFile));

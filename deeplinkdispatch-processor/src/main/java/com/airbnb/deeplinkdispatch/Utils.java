@@ -7,7 +7,6 @@ import java.util.regex.Pattern;
 
 final class Utils {
 
-  private static final String PARAM_VALUE = "([a-zA-Z0-9_#'!+%~,\\-\\.\\@\\$\\$\\:]+)";
   private static final String PARAM = "([a-zA-Z][a-zA-Z0-9_-]*)";
   private static final String PARAM_REGEX = "%7B(" + PARAM + ")%7D";
   private static final Pattern PARAM_PATTERN = Pattern.compile(PARAM_REGEX);
@@ -28,17 +27,6 @@ final class Utils {
       list.add("\""+matcher.group(1)+"\"");
     }
     return "new String[] {"+String.join(", ",list)+"}";
-  }
-
-  /**
-   * Get the RegEx pattern used for matching for the given DeepLinkUri.
-   *
-   * @param uri The DeepLinkUri the Pattern should be basd on.
-   * @return The RegEx match Pattern for the given DeepLinkUri.
-   */
-  public static String getUriRegex(DeepLinkUri uri) {
-    SchemeHostAndPath schemeHostAndPath = new SchemeHostAndPath(uri);
-    return schemeHostAndPath.getSchemeHostAndPath().replaceAll(PARAM_REGEX, PARAM_VALUE) + "$$";
   }
 
   static String decapitalize(String str) {

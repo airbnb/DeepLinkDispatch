@@ -14,10 +14,14 @@ class SchemeHostAndPath(val uri: DeepLinkUri) {
     }
 
     val matchList by lazy(LazyThreadSafetyMode.NONE) {
-        val list = mutableListOf(UrlElement(MatchIndex.TYPE_ROOT,MatchIndex.ROOT_VALUE.toByteArray()),UrlElement(MatchIndex.TYPE_SCHEME, uri.scheme().toByteArray()),UrlElement(MatchIndex.TYPE_HOST, uri.encodedHost().toByteArray()))
-        uri.encodedPathSegments().forEach({pathElement -> list.add(UrlElement(MatchIndex.TYPE_PATH_SEGMENT, pathElement.toByteArray()))})
+        val list = mutableListOf(UrlElement(MatchIndex.TYPE_ROOT,MatchIndex.ROOT_VALUE.toUByteArray()),UrlElement(MatchIndex.TYPE_SCHEME, uri.scheme().toUByteArray()),UrlElement(MatchIndex.TYPE_HOST, uri.encodedHost().toUByteArray()))
+        uri.encodedPathSegments().forEach({pathElement -> list.add(UrlElement(MatchIndex.TYPE_PATH_SEGMENT, pathElement.toUByteArray()))})
         list
     }
 }
 
-data class UrlElement(val type: Byte, val value: ByteArray)
+data class UrlElement(val type: UByte, val value: UByteArray)
+
+fun String.toUByteArray() : UByteArray {
+    return toByteArray().toUByteArray()
+}

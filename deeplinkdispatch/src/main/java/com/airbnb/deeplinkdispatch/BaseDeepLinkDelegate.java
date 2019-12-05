@@ -32,18 +32,8 @@ public class BaseDeepLinkDelegate {
   }
 
   private DeepLinkEntry findEntry(String uriString) {
-    SchemeHostAndPath schemeHostAndPath = new SchemeHostAndPath(DeepLinkUri.parse(uriString));
-    DeepLinkEntry entryRegExpMatch = null;
-    DeepLinkEntry entryIdxMatch = null;
-    long regExSearchStart = SystemClock.elapsedRealtime();
-    for (Parser loader : loaders) {
-      entryRegExpMatch = loader.parseUri(schemeHostAndPath);
-      if (entryRegExpMatch != null) {
-        break;
-      }
-    }
-    long regExSearchEnd = SystemClock.elapsedRealtime();
     long idxSearchStart = SystemClock.elapsedRealtime();
+    DeepLinkEntry entryIdxMatch = null;
     for (Parser loader : loaders) {
       entryIdxMatch = loader.idxMatch(DeepLinkUri.parse(uriString));
       if (entryIdxMatch != null) {
@@ -51,7 +41,7 @@ public class BaseDeepLinkDelegate {
       }
     }
     long idxSearchEnd = SystemClock.elapsedRealtime();
-    Log.d(TAG, "Regular Expression search took: "+(regExSearchEnd-regExSearchStart)+"ms. Index search took: "+(idxSearchEnd-idxSearchStart)+"ms");
+    Log.d(TAG, "Index search took: "+(idxSearchEnd-idxSearchStart)+"ms");
     return entryIdxMatch;
   }
 
@@ -121,7 +111,7 @@ public class BaseDeepLinkDelegate {
         null, null, null);
     }
     DeepLinkUri deepLinkUri = DeepLinkUri.parse(uriString);
-    Map<String, String> parameterMap = deepLinkEntry.getParameters(uriString);
+    Map<String, String> parameterMap = deepLinkEntry.getParameters(deepLinkUri);
     for (String queryParameter : deepLinkUri.queryParameterNames()) {
       for (String queryParameterValue : deepLinkUri.queryParameterValues(queryParameter)) {
         if (parameterMap.containsKey(queryParameter)) {
