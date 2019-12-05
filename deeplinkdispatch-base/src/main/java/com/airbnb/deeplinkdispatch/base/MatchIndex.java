@@ -54,15 +54,18 @@ public class MatchIndex {
     int currentElementStartPosition = elementStartPosition;
     do {
       UrlElement urlElement = elements.get(elementIndex);
-      if (compareValue(currentElementStartPosition, urlElement.getType(), urlElement.getValue())){
-        if (elementIndex < elements.size()-1) {
+      if (compareValue(currentElementStartPosition, urlElement.getType(), urlElement.getValue())) {
+        if (elementIndex < elements.size() - 1) {
           // If value matched we need to explore this elements children next.
-          matchIndex = matchUri(elements, elementIndex + 1, getChildrenPos(currentElementStartPosition), getElementBoundaryPos(currentElementStartPosition));
+          int childrenPos = getChildrenPos(currentElementStartPosition);
+          if (childrenPos != -1) {
+            matchIndex = matchUri(elements, elementIndex + 1, childrenPos, getElementBoundaryPos(currentElementStartPosition));
+          }
         } else {
           matchIndex = getMatchIndex(currentElementStartPosition);
         }
       }
-      if (matchIndex != -1){
+      if (matchIndex != -1) {
         return matchIndex;
       }
       currentElementStartPosition = getNextElementStartPosition(currentElementStartPosition, parentBoundryPos);
@@ -71,15 +74,15 @@ public class MatchIndex {
   }
 
   /**
-   * @param elementStartPos   The start position of the element to compare
-   * @param type  The type of the value to compare
-   * @param value The value of the value to compare
+   * @param elementStartPos The start position of the element to compare
+   * @param type            The type of the value to compare
+   * @param value           The value of the value to compare
    * @return true if the type, length and value of the element staring at elementStartPos is the same as
    * the value given in in the parameter. false otherwise.
    */
   private boolean compareValue(int elementStartPos, byte type, byte[] value) {
     // Placeholder always matches
-    if (byteArray[elementStartPos + HEADER_LENGTH] == IDX_PLACEHOLDER){
+    if (byteArray[elementStartPos + HEADER_LENGTH] == IDX_PLACEHOLDER) {
       return true;
     }
     if ((byteArray[elementStartPos] != type || getValueLength(elementStartPos) != value.length)) {
@@ -97,7 +100,7 @@ public class MatchIndex {
   /**
    * Get the next entries position, or -1 if there are no further entries.
    *
-   * @param elementStartPos           The start postion of the current element.
+   * @param elementStartPos   The start postion of the current element.
    * @param parentBoundaryPos The parent elements boundry (i.e. the first elementStartPos that is not part of the parent element anhymore)
    * @return
    */
@@ -108,9 +111,8 @@ public class MatchIndex {
       return -1;
     } else if (nextElementPos > parentBoundaryPos) {
       // TODO Remove this check for prod
-      throw new IllegalStateException("Element size error at index "+elementStartPos);
-    }
-    else {
+      throw new IllegalStateException("Element size error at index " + elementStartPos);
+    } else {
       return nextElementPos;
     }
   }
@@ -125,8 +127,18 @@ public class MatchIndex {
     return elementStartPos + HEADER_LENGTH + getValueLength(elementStartPos) + getChildrenLenght(elementStartPos);
   }
 
+  /**
+   * Get the position of the children element of the element starting at elementStartPos.
+   *
+   * @param elementStartPos The start position of the element to get the children for
+   * @return children pos or -1 if there are no children.
+   */
   private int getChildrenPos(int elementStartPos) {
-    return elementStartPos + HEADER_LENGTH + getValueLength(elementStartPos);
+    if (getChildrenLenght(elementStartPos) == 0) {
+      return -1;
+    } else {
+      return elementStartPos + HEADER_LENGTH + getValueLength(elementStartPos);
+    }
   }
 
   private int getValueLength(int elementStartPos) {
@@ -144,7 +156,7 @@ public class MatchIndex {
   public int length() {
     return byteArray.length;
   }
-  
+
   private int readOneByteAsInt(int pos) {
     return byteArray[pos] & 0xFF;
   }
