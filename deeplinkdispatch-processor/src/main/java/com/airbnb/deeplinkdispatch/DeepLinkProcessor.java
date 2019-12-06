@@ -92,7 +92,7 @@ public class DeepLinkProcessor extends AbstractProcessor {
   }
 
   private IncrementalMetadata getIncrementalMetadata() {
-    if (!"true".equals(processingEnv.getOptions().get(OPTION_INCREMENTAL))) {
+    if (!"true".equalsIgnoreCase(processingEnv.getOptions().get(OPTION_INCREMENTAL))) {
       return null;
     }
     Map<String, String> options = processingEnv.getOptions();
