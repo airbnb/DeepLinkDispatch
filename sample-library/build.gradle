@@ -7,6 +7,15 @@ android {
   defaultConfig {
     minSdkVersion androidConfig.minSdkVersion
     targetSdkVersion androidConfig.compileSdkVersion
+
+    javaCompileOptions {
+      annotationProcessorOptions {
+        arguments = [
+          'deepLink.incremental': 'true',
+          'deepLink.customAnnotations': 'com.airbnb.deeplinkdispatch.sample.library.LibraryDeepLink'
+        ]
+      }
+    }
   }
 }
 

@@ -18,7 +18,6 @@ package com.airbnb.deeplinkdispatch;
 import com.google.auto.common.AnnotationMirrors;
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
-import com.google.auto.service.AutoService;
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.collect.FluentIterable;
@@ -46,7 +45,6 @@ import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Filer;
 import javax.annotation.processing.Messager;
 import javax.annotation.processing.ProcessingEnvironment;
-import javax.annotation.processing.Processor;
 import javax.annotation.processing.RoundEnvironment;
 import javax.annotation.processing.SupportedOptions;
 import javax.lang.model.SourceVersion;
@@ -66,10 +64,11 @@ import static com.airbnb.deeplinkdispatch.MoreAnnotationMirrors.getTypeValue;
 import static com.airbnb.deeplinkdispatch.Utils.decapitalize;
 import static com.google.auto.common.MoreElements.getAnnotationMirror;
 
-@AutoService(Processor.class)
 @SupportedOptions(Documentor.DOC_OUTPUT_PROPERTY_NAME)
 public class DeepLinkProcessor extends AbstractProcessor {
   private static final String PACKAGE_NAME = "com.airbnb.deeplinkdispatch";
+  private static final String OPTION_CUSTOM_ANNOTATIONS = "deepLink.customAnnotations";
+  private static final String OPTION_INCREMENTAL = "deepLink.incremental";
   private static final ClassName CLASS_BASE_DEEP_LINK_DELEGATE
     = ClassName.get(PACKAGE_NAME, "BaseDeepLinkDelegate");
   private static final ClassName CLASS_ARRAYS = ClassName.get(Arrays.class);
@@ -82,16 +81,39 @@ public class DeepLinkProcessor extends AbstractProcessor {
   private Filer filer;
   private Messager messager;
   private Documentor documentor;
+  private IncrementalMetadata incrementalMetadata;
 
   @Override public synchronized void init(ProcessingEnvironment processingEnv) {
     super.init(processingEnv);
     filer = processingEnv.getFiler();
     messager = processingEnv.getMessager();
     documentor = new Documentor(processingEnv);
+    incrementalMetadata = getIncrementalMetadata();
+  }
+
+  private IncrementalMetadata getIncrementalMetadata() {
+    if (!"true".equalsIgnoreCase(processingEnv.getOptions().get(OPTION_INCREMENTAL))) {
+      return null;
+    }
+    Map<String, String> options = processingEnv.getOptions();
+    String customAnnotationOption = options.get(OPTION_CUSTOM_ANNOTATIONS);
+    if (customAnnotationOption == null) {
+      return new IncrementalMetadata(new String[0]);
+    }
+    return new IncrementalMetadata(customAnnotationOption.split(","));
   }
 
   @Override public Set<String> getSupportedAnnotationTypes() {
-    return Sets.newHashSet("*");
+    if (incrementalMetadata != null) {
+      HashSet<String> annotationTypes = Sets.newHashSet(incrementalMetadata.customAnnotations);
+      annotationTypes.add(DeepLink.class.getCanonicalName());
+      annotationTypes.add(DeepLinkHandler.class.getCanonicalName());
+      annotationTypes.add(DeepLinkModule.class.getCanonicalName());
+      return annotationTypes;
+
+    } else {
+      return Sets.newHashSet("*");
+    }
   }
 
   @Override public SourceVersion getSupportedSourceVersion() {
@@ -99,11 +121,24 @@ public class DeepLinkProcessor extends AbstractProcessor {
   }
 
   @Override public Set<String> getSupportedOptions() {
-    return Collections.singleton(Documentor.DOC_OUTPUT_PROPERTY_NAME);
+    HashSet<String> supportedOptions = Sets.newHashSet(Documentor.DOC_OUTPUT_PROPERTY_NAME);
+    if (incrementalMetadata != null) {
+      supportedOptions.add("org.gradle.annotation.processing.aggregating");
+    }
+    return supportedOptions;
   }
 
   @Override
   public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+    try {
+      processInternal(annotations, roundEnv);
+    } catch (DeepLinkProcessorException e) {
+      error(e.getElement(), e.getMessage());
+    }
+    return false;
+  }
+
+  private void processInternal(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
     Set<Element> customAnnotations = new HashSet<>();
     for (Element annotation : annotations) {
       if (annotation.getAnnotation(DEEP_LINK_SPEC_CLASS) != null) {
@@ -112,7 +147,7 @@ public class DeepLinkProcessor extends AbstractProcessor {
     }
 
     Map<Element, String[]> prefixes = new HashMap<>();
-    Set<Element> customAnnotatedElements = new HashSet<>();
+    Set<Element> elementsToProcess = new HashSet<>();
     for (Element customAnnotation : customAnnotations) {
       ElementKind kind = customAnnotation.getKind();
       if (kind != ElementKind.ANNOTATION_TYPE) {
@@ -127,11 +162,10 @@ public class DeepLinkProcessor extends AbstractProcessor {
         error(customAnnotation, "Prefix property cannot be empty");
       }
       prefixes.put(customAnnotation, prefix);
-      customAnnotatedElements.addAll(
+      elementsToProcess.addAll(
           roundEnv.getElementsAnnotatedWith(MoreElements.asType(customAnnotation)));
     }
 
-    Set<Element> elementsToProcess = new HashSet<>(customAnnotatedElements);
     elementsToProcess.addAll(roundEnv.getElementsAnnotatedWith(DEEP_LINK_CLASS));
 
     List<DeepLinkAnnotatedElement> deepLinkElements = new ArrayList<>();
@@ -163,9 +197,7 @@ public class DeepLinkProcessor extends AbstractProcessor {
       if (deepLinkAnnotation != null) {
         deepLinks.addAll(Arrays.asList(deepLinkAnnotation.value()));
       }
-      if (customAnnotatedElements.contains(element)) {
-        deepLinks.addAll(enumerateCustomDeepLinks(element, prefixes));
-      }
+      deepLinks.addAll(enumerateCustomDeepLinks(element, prefixes));
       DeepLinkEntry.Type type = kind == ElementKind.CLASS
           ? DeepLinkEntry.Type.CLASS : DeepLinkEntry.Type.METHOD;
       for (String deepLink : deepLinks) {
@@ -217,8 +249,6 @@ public class DeepLinkProcessor extends AbstractProcessor {
             "Internal error during annotation processing: " + e.getClass().getSimpleName());
       }
     }
-
-    return false;
   }
 
   private static List<String> enumerateCustomDeepLinks(Element element,
@@ -229,7 +259,19 @@ public class DeepLinkProcessor extends AbstractProcessor {
     for (AnnotationMirror customAnnotation : annotationMirrors) {
       List<? extends AnnotationValue> suffixes =
           asAnnotationValues(AnnotationMirrors.getAnnotationValue(customAnnotation, "value"));
-      String[] prefixes = prefixesMap.get(customAnnotation.getAnnotationType().asElement());
+
+      Element customElement = customAnnotation.getAnnotationType().asElement();
+      String[] prefixes = prefixesMap.get(customElement);
+
+      if (prefixes == null) {
+        throw new DeepLinkProcessorException(
+            "Unable to find annotation '"
+                + customElement
+                + "' you must update "
+                + "'deepLink.customAnnotations' within the build.gradle",
+            customElement);
+      }
+
       for (String prefix : prefixes) {
         for (AnnotationValue suffix : suffixes) {
           deepLinks.add(prefix + suffix.getValue());
@@ -350,5 +392,13 @@ public class DeepLinkProcessor extends AbstractProcessor {
     JavaFile.builder(packageName, deepLinkDelegate)
         .build()
         .writeTo(filer);
+  }
+
+  private static final class IncrementalMetadata {
+    private String[] customAnnotations;
+
+    private IncrementalMetadata(String[] customAnnotations) {
+      this.customAnnotations = customAnnotations;
+    }
   }
 }

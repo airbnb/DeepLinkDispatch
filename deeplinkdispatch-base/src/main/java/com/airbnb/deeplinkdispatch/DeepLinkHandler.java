@@ -26,7 +26,7 @@ import java.lang.annotation.Target;
  * incoming {@code Intent} to the correct Activities annotated with {@link DeepLink}.
  */
 @Target({ ElementType.TYPE })
-@Retention(RetentionPolicy.SOURCE)
+@Retention(RetentionPolicy.CLASS)
 public @interface DeepLinkHandler {
   /**
    * A list of {@link DeepLinkModule} annotated classes used for collecting all the deep links in
