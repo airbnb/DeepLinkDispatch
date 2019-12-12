@@ -14,12 +14,21 @@ import java.util.Map;
  * This is a wrapper class around the byte array matgch index.
  * <p>
  * Byte array format is:
- * 0                                                    type
- * 1                                                    value length
- * 2..5                                                 children length
- * 6..8                                                 match id
- * 8..(8+value length)                                  value
- * (8+value length)..((8+value length)+children length) children
+ *
+ * <pre><
+ * 1 byte  2 bytes       4 bytes                     2 bytres      n bytes       n bytes
+ * +------+-------------+---------------------------+-------------+-------------+--------------------------------------------------------------------------------------------------------+
+ * |      |             |                           |             |             |                                                                                                        |
+ * | Type |Value length | Children length           | Match idx   | Value       | Children                                                                                               |
+ * |      |             |                           |             |             |                                                                                                        |
+ * +------+-------------+---------------------------+-------------+-------------+--------------------------------------------------------------------------------------------------------+
+ *
+ * <----------------------+  8 byte header  +--------------------->             +------+-------------+---------------------------+-------------+-------------+---------------------------+
+ *                                                                              |      |             |                           |             |             |                           |
+ *                                                                              | Type |Value length | Children length           | Match idx   | Value       | Children                  |
+ *                                                                              |      |             |                           |             |             |                           |
+ *                                                                              +------+-------------+---------------------------+-------------+-------------+---------------------------+
+ * </pre>
  */
 public class MatchIndex {
 
