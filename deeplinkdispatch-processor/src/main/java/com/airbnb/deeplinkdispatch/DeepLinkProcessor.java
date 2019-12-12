@@ -15,7 +15,7 @@
  */
 package com.airbnb.deeplinkdispatch;
 
-import com.airbnb.deeplinkdispatch.base.MatchIndex;
+import com.airbnb.deeplinkdispatch.base.Utils;
 import com.google.auto.common.AnnotationMirrors;
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
@@ -31,13 +31,10 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeSpec;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.MalformedURLException;
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -66,11 +63,11 @@ import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
 import javax.tools.Diagnostic;
-import javax.tools.JavaFileObject;
 
 import static com.airbnb.deeplinkdispatch.MoreAnnotationMirrors.asAnnotationValues;
 import static com.airbnb.deeplinkdispatch.MoreAnnotationMirrors.getTypeValue;
-import static com.airbnb.deeplinkdispatch.Utils.decapitalize;
+import static com.airbnb.deeplinkdispatch.ProcessorUtils.decapitalize;
+import static com.airbnb.deeplinkdispatch.ProcessorUtils.hasEmptyOrNullString;
 import static com.google.auto.common.MoreElements.getAnnotationMirror;
 
 @AutoService(Processor.class)
@@ -78,12 +75,12 @@ import static com.google.auto.common.MoreElements.getAnnotationMirror;
 public class DeepLinkProcessor extends AbstractProcessor {
   private static final String PACKAGE_NAME = "com.airbnb.deeplinkdispatch";
   private static final ClassName CLASS_BASE_DEEP_LINK_DELEGATE
-    = ClassName.get(PACKAGE_NAME, "BaseDeepLinkDelegate");
+      = ClassName.get(PACKAGE_NAME, "BaseDeepLinkDelegate");
   private static final ClassName CLASS_ARRAYS = ClassName.get(Arrays.class);
   private static final ClassName CLASS_COLLECTIONS = ClassName.get(Collections.class);
   private static final ClassName CLASS_UTILS = ClassName.get(Utils.class);
   private static final ClassName CLASS_DEEP_LINK_ENTRY
-    = ClassName.get(PACKAGE_NAME, DeepLinkEntry.class.getSimpleName());
+      = ClassName.get(PACKAGE_NAME, DeepLinkEntry.class.getSimpleName());
   private static final Class<DeepLink> DEEP_LINK_CLASS = DeepLink.class;
   private static final Class<DeepLinkSpec> DEEP_LINK_SPEC_CLASS = DeepLinkSpec.class;
 
@@ -91,22 +88,26 @@ public class DeepLinkProcessor extends AbstractProcessor {
   private Messager messager;
   private Documentor documentor;
 
-  @Override public synchronized void init(ProcessingEnvironment processingEnv) {
+  @Override
+  public synchronized void init(ProcessingEnvironment processingEnv) {
     super.init(processingEnv);
     filer = processingEnv.getFiler();
     messager = processingEnv.getMessager();
     documentor = new Documentor(processingEnv);
   }
 
-  @Override public Set<String> getSupportedAnnotationTypes() {
+  @Override
+  public Set<String> getSupportedAnnotationTypes() {
     return Sets.newHashSet("*");
   }
 
-  @Override public SourceVersion getSupportedSourceVersion() {
+  @Override
+  public SourceVersion getSupportedSourceVersion() {
     return SourceVersion.latestSupported();
   }
 
-  @Override public Set<String> getSupportedOptions() {
+  @Override
+  public Set<String> getSupportedOptions() {
     return Collections.singleton(Documentor.DOC_OUTPUT_PROPERTY_NAME);
   }
 
@@ -128,7 +129,7 @@ public class DeepLinkProcessor extends AbstractProcessor {
             DEEP_LINK_SPEC_CLASS.getSimpleName());
       }
       String[] prefix = customAnnotation.getAnnotation(DEEP_LINK_SPEC_CLASS).prefix();
-      if (Utils.hasEmptyOrNullString(prefix)) {
+      if (hasEmptyOrNullString(prefix)) {
         error(customAnnotation, "Prefix property cannot have null or empty strings");
       }
       if (prefix.length == 0) {
@@ -162,7 +163,7 @@ public class DeepLinkProcessor extends AbstractProcessor {
         if (!qualifiedName.equals("android.content.Intent")
             && !qualifiedName.equals("androidx.core.app.TaskStackBuilder")) {
           error(element, "Only `Intent` or `androidx.core.app.TaskStackBuilder` are supported."
-                  + " Please double check your imports and try again.");
+              + " Please double check your imports and try again.");
         }
       }
 
@@ -193,7 +194,8 @@ public class DeepLinkProcessor extends AbstractProcessor {
         Iterable<TypeMirror> klasses = getTypeValue(annotationMirror.get(), "value");
         List<TypeElement> typeElements = FluentIterable.from(klasses).transform(
             new Function<TypeMirror, TypeElement>() {
-              @Override public TypeElement apply(TypeMirror klass) {
+              @Override
+              public TypeElement apply(TypeMirror klass) {
                 return MoreTypes.asTypeElement(klass);
               }
             }).toList();
@@ -236,7 +238,7 @@ public class DeepLinkProcessor extends AbstractProcessor {
   }
 
   private static List<String> enumerateCustomDeepLinks(Element element,
-      Map<Element, String[]> prefixesMap) {
+                                                       Map<Element, String[]> prefixesMap) {
     Set<? extends AnnotationMirror> annotationMirrors =
         AnnotationMirrors.getAnnotatedAnnotations(element, DEEP_LINK_SPEC_CLASS);
     final List<String> deepLinks = new ArrayList<>();
@@ -258,12 +260,12 @@ public class DeepLinkProcessor extends AbstractProcessor {
   }
 
   private void generateDeepLinkLoader(String packageName, String className,
-      List<DeepLinkAnnotatedElement> elements)
+                                      List<DeepLinkAnnotatedElement> elements)
       throws IOException {
     CodeBlock.Builder deeplinks = CodeBlock.builder()
-      .add("super($T.unmodifiableList($T.<$T>asList(\n",
-        CLASS_COLLECTIONS, CLASS_ARRAYS, CLASS_DEEP_LINK_ENTRY)
-      .indent();
+        .add("super($T.unmodifiableList($T.<$T>asList(\n",
+            CLASS_COLLECTIONS, CLASS_ARRAYS, CLASS_DEEP_LINK_ENTRY)
+        .indent();
     Collections.sort(elements, new Comparator<DeepLinkAnnotatedElement>() {
       @Override
       public int compare(DeepLinkAnnotatedElement element1, DeepLinkAnnotatedElement element2) {
@@ -275,13 +277,13 @@ public class DeepLinkProcessor extends AbstractProcessor {
         }
         if (comparisonResult == 0) {
           comparisonResult =
-            uri1.encodedPath().split("%7B").length - uri2.encodedPath().split("%7B").length;
+              uri1.encodedPath().split("%7B").length - uri2.encodedPath().split("%7B").length;
         }
         if (comparisonResult == 0) {
           String element1Representation =
-            element1.getUri() + element1.getMethod() + element1.getAnnotationType();
+              element1.getUri() + element1.getMethod() + element1.getAnnotationType();
           String element2Representation =
-            element2.getUri() + element2.getMethod() + element2.getAnnotationType();
+              element2.getUri() + element2.getMethod() + element2.getAnnotationType();
           comparisonResult = element1Representation.compareTo(element2Representation);
         }
         return comparisonResult;
@@ -298,63 +300,40 @@ public class DeepLinkProcessor extends AbstractProcessor {
       String uri = element.getUri();
       DeepLinkUri deeplinkUri = DeepLinkUri.parse(uri);
 
-      TrieNode node = urisTrie.addNode(new com.airbnb.deeplinkdispatch.Scheme(deeplinkUri.scheme()));
-      if(deeplinkUri.username() != null && !deeplinkUri.username().isEmpty()){
-        node = node.addNode(new Username(deeplinkUri.username()));
-        if (deeplinkUri.password() == null && deeplinkUri.host()  == null && deeplinkUri.port() == 0 && (deeplinkUri.pathSegments() == null || deeplinkUri.pathSegments().isEmpty()) && (deeplinkUri.queryParameterNames() == null || deeplinkUri.queryParameterNames().isEmpty()) && deeplinkUri.fragment() == null){
-          node.setMatch(new UriMatch(deeplinkUri,i));
-        }
-      }
-      if(deeplinkUri.password() != null && !deeplinkUri.password().isEmpty()){
-        node = node.addNode(new Password(deeplinkUri.password()));
-        if (deeplinkUri.host()  == null && deeplinkUri.port() == 0 && (deeplinkUri.pathSegments() == null || deeplinkUri.pathSegments().isEmpty()) && (deeplinkUri.queryParameterNames() == null || deeplinkUri.queryParameterNames().isEmpty()) && deeplinkUri.fragment() == null){
-          node.setMatch(new UriMatch(deeplinkUri, i));
-        }
-      }
-      if(deeplinkUri.host() != null && !deeplinkUri.host().isEmpty()){
-        node = node.addNode(new Host(deeplinkUri.host()));
-        if (deeplinkUri.port() == 0 && (deeplinkUri.pathSegments() == null || deeplinkUri.pathSegments().isEmpty()) && (deeplinkUri.queryParameterNames() == null || deeplinkUri.queryParameterNames().isEmpty()) && deeplinkUri.fragment() == null){
-          node.setMatch(new UriMatch(deeplinkUri, i));
-        }
-      }
-      if(deeplinkUri.port() != -1){
-        node = node.addNode(new Port(Integer.toString(deeplinkUri.port())));
-        if ((deeplinkUri.pathSegments() == null || deeplinkUri.pathSegments().isEmpty()) && (deeplinkUri.queryParameterNames() == null || deeplinkUri.queryParameterNames().isEmpty()) && deeplinkUri.fragment() == null){
-          node.setMatch(new UriMatch(deeplinkUri, i));
-        }
-      }
-      if(deeplinkUri.pathSegments() != null || !deeplinkUri.pathSegments().isEmpty()){
-        for(String pathSegment : deeplinkUri.pathSegments()){
-          node = node.addNode(new PathSegment(pathSegment,pathSegment.startsWith("{")));
-        }
-          node.setMatch(new UriMatch(deeplinkUri, i));
-      }
+      urisTrie.addToTrie(i, deeplinkUri);
 
-      String uriRegEx =  Utils.getUriRegex(deeplinkUri);
-      deeplinks.add("new DeepLinkEntry($S, $S, $L, $L, $T.class, $S)$L\n",
-              uriRegEx, uri, Utils.parseParametersIntoArrayString(deeplinkUri) ,type, activity, method, (i < totalElements - 1) ? "," : "");
+      deeplinks.add("new DeepLinkEntry($S, $L, $T.class, $S)$L\n",
+          uri, type, activity, method, (i < totalElements - 1) ? "," : "");
+    }
+
+    TypeSpec.Builder deeplinkLoaderBuilder = TypeSpec.classBuilder(className + "Loader")
+        .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
+        .superclass(ClassName.get(BaseLoader.class));
+
+    int i = 0;
+    StringBuilder stringMethodNames = new StringBuilder();
+    for (String string : urisTrie.getStrings()) {
+      String methodName = "matchIndex" + i;
+      stringMethodNames.append(methodName).append("(), ");
+      deeplinkLoaderBuilder.addMethod(MethodSpec.methodBuilder(methodName)
+          .addModifiers(Modifier.PRIVATE, Modifier.STATIC)
+          .returns(String.class)
+          .addCode(CodeBlock.builder().add("return $S;", string).build()).build());
+      i++;
     }
 
     MethodSpec constructor = MethodSpec.constructorBuilder()
         .addModifiers(Modifier.PUBLIC)
-        .addParameter(ClassName.get("android.content", "Context"), "context")
-        .addCode(deeplinks.unindent().add(")), $T.readMatchIndex(context,\"" + className + "\" ));\n", CLASS_UTILS).build())
+        .addCode(deeplinks.unindent().add(")), $T.readMatchIndexFromStrings( new String[] {" + stringMethodNames + "} ));\n", CLASS_UTILS).build())
         .build();
 
-    try {
-      File assetsFile = new File(findAssets(), MatchIndex.getMatchIdxFileName(className));
-      assetsFile.getParentFile().mkdirs();
-      assetsFile.createNewFile();
-      urisTrie.writeToOutoutStream(new FileOutputStream(assetsFile));
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
+    // For debugging it is nice to have a file version of the index, just comment this in to get on in the classpath
+//    FileObject indexResource = filer.createResource(StandardLocation.CLASS_OUTPUT, "", MatchIndex.getMatchIdxFileName(className));
+//    urisTrie.writeToOutoutStream(indexResource.openOutputStream());
 
-    TypeSpec deepLinkLoader = TypeSpec.classBuilder(className + "Loader")
-        .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
-        .superclass(ClassName.get(Parser.class))
-        .addMethod(constructor)
-        .build();
+    deeplinkLoaderBuilder.addMethod(constructor);
+
+    TypeSpec deepLinkLoader = deeplinkLoaderBuilder.build();
 
     JavaFile.builder(packageName, deepLinkLoader)
         .build()
@@ -393,7 +372,8 @@ public class DeepLinkProcessor extends AbstractProcessor {
         .addModifiers(Modifier.PUBLIC)
         .addParameters(FluentIterable.from(loaderClasses).transform(
             new Function<TypeElement, ParameterSpec>() {
-              @Override public ParameterSpec apply(TypeElement typeElement) {
+              @Override
+              public ParameterSpec apply(TypeElement typeElement) {
                 return ParameterSpec.builder(moduleElementToLoaderClassName(typeElement),
                     decapitalize(moduleNameToLoaderName(typeElement))).build();
               }
@@ -412,27 +392,4 @@ public class DeepLinkProcessor extends AbstractProcessor {
         .writeTo(filer);
   }
 
-  private File findAssets() throws Exception {
-
-    Filer filer = processingEnv.getFiler();
-
-    JavaFileObject dummySourceFile = filer.createSourceFile("dummy" + System.currentTimeMillis());
-    String dummySourceFilePath = dummySourceFile.toUri().toString();
-
-    if (dummySourceFilePath.startsWith("file:")) {
-      if (!dummySourceFilePath.startsWith("file://")) {
-        dummySourceFilePath = "file://" + dummySourceFilePath.substring("file:".length());
-      }
-    } else {
-      dummySourceFilePath = "file://" + dummySourceFilePath;
-    }
-
-    URI cleanURI = new URI(dummySourceFilePath);
-
-    File dummyFile = new File(cleanURI);
-
-    File projectRoot = dummyFile.getParentFile().getParentFile().getParentFile().getParentFile().getParentFile().getParentFile();
-
-    return new File(projectRoot.getAbsolutePath() + "/src/main/assets");
-  }
 }

@@ -21,13 +21,13 @@ public class BaseDeepLinkDelegate {
 
   protected static final String TAG = "DeepLinkDelegate";
 
-  protected final List<? extends Parser> loaders;
+  protected final List<? extends BaseLoader> loaders;
 
-  public List<? extends Parser> getLoaders() {
+  public List<? extends BaseLoader> getLoaders() {
     return loaders;
   }
 
-  public BaseDeepLinkDelegate(List<? extends Parser> loaders) {
+  public BaseDeepLinkDelegate(List<? extends BaseLoader> loaders) {
     this.loaders = loaders;
   }
 
@@ -36,22 +36,15 @@ public class BaseDeepLinkDelegate {
     DeepLinkEntry entryRegExpMatch = null;
     DeepLinkEntry entryIdxMatch = null;
     long regExSearchStart = SystemClock.elapsedRealtime();
-    for (Parser loader : loaders) {
-      entryRegExpMatch = loader.parseUri(schemeHostAndPath);
-      if (entryRegExpMatch != null) {
-        break;
-      }
-    }
     long regExSearchEnd = SystemClock.elapsedRealtime();
     long idxSearchStart = SystemClock.elapsedRealtime();
-    for (Parser loader : loaders) {
+    for (BaseLoader loader : loaders) {
       entryIdxMatch = loader.idxMatch(DeepLinkUri.parse(uriString));
       if (entryIdxMatch != null) {
         break;
       }
     }
     long idxSearchEnd = SystemClock.elapsedRealtime();
-    Log.d(TAG, "Regular Expression search took: "+(regExSearchEnd-regExSearchStart)+"ms. Index search took: "+(idxSearchEnd-idxSearchStart)+"ms");
     return entryIdxMatch;
   }
 
@@ -121,7 +114,7 @@ public class BaseDeepLinkDelegate {
         null, null, null);
     }
     DeepLinkUri deepLinkUri = DeepLinkUri.parse(uriString);
-    Map<String, String> parameterMap = deepLinkEntry.getParameters(uriString);
+    Map<String, String> parameterMap = deepLinkEntry.getParameters(deepLinkUri);
     for (String queryParameter : deepLinkUri.queryParameterNames()) {
       for (String queryParameterValue : deepLinkUri.queryParameterValues(queryParameter)) {
         if (parameterMap.containsKey(queryParameter)) {

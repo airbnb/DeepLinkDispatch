@@ -1,15 +1,34 @@
 package com.airbnb.deeplinkdispatch.base;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 import com.airbnb.deeplinkdispatch.UrlElement;
 
-import org.jetbrains.annotations.NotNull;
-
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
- * This is a wrapper class around the byte array matgch index
+ * This is a wrapper class around the byte array matgch index.
+ * <p>
+ * Byte array format is:
+ * 0                                                    type
+ * 1                                                    value length
+ * 2..5                                                 children length
+ * 6..8                                                 match id
+ * 8..(8+value length)                                  value
+ * (8+value length)..((8+value length)+children length) children
  */
 public class MatchIndex {
+
+  /**
+   * Encoding used for serialization
+   */
+  @NonNull
+  public static final String MATCH_INDEX_ENCODING = "ISO_8859_1";
+
 
   /**
    * Lenght of header elements in bytes
@@ -26,75 +45,117 @@ public class MatchIndex {
    */
   public static final byte TYPE_ROOT = (byte) 0;
   public static final byte TYPE_SCHEME = (byte) 1;
-  public static final byte TYPE_USERNAME = (byte) 2;
-  public static final byte TYPE_PASSWORD = (byte) 3;
-  public static final byte TYPE_HOST = (byte) 4;
-  public static final byte TYPE_PORT = (byte) 5;
-  public static final byte TYPE_PATH_SEGMENT = (byte) 6;
-  public static final byte TYPE_QUERY_NAME_VALUE = (byte) 7;
-  public static final byte TYPE_FRAGMENT = (byte) 8;
+  public static final byte TYPE_HOST = (byte) 2;
+  public static final byte TYPE_PATH_SEGMENT = (byte) 3;
 
   /**
    * Used as a value placeholder to indicate the value is a placeholder
    * e.g. in dld://host/{param1} "{param1}" would be encoded as this character.
    */
-  public static final byte IDX_PLACEHOLDER = 0x1a; // ASCII substitute
+  @NonNull
+  public static final char IDX_PLACEHOLDER = 0x1a; // ASCII substitute
 
-  @NotNull
+  @NonNull
   public static final String ROOT_VALUE = "r";
 
+  // Used to separate param and param value in comapre return value
+  @NonNull
+  public static final String MATCH_PARAM_DIVIDER_CHAR = String.valueOf((char) 0x1e); // record separator
+
+  @NonNull
   private byte[] byteArray;
 
-  public MatchIndex(byte[] byteArray) {
+  public MatchIndex(@NonNull byte[] byteArray) {
     this.byteArray = byteArray;
   }
 
-  public int matchUri(List<UrlElement> elements, int elementIndex, int elementStartPosition, int parentBoundryPos) {
-    int matchIndex = -1;
+  public Match matchUri(@NonNull List<UrlElement> elements, @Nullable Map<String, String> placeholders, int elementIndex, int elementStartPosition, int parentBoundryPos) {
+    Match match = null;
     int currentElementStartPosition = elementStartPosition;
     do {
       UrlElement urlElement = elements.get(elementIndex);
-      if (compareValue(currentElementStartPosition, urlElement.getType(), urlElement.getValue())) {
+      String compareResult = compareValue(currentElementStartPosition, urlElement.getType(), urlElement.getValue());
+      if (compareResult != null) {
+        Map<String, String> placeholdersOutput = placeholders == null ? null : placeholders; // Need to hand down a new Hashmap, but only if we already have one.
+        if (!compareResult.isEmpty()) {
+          if (placeholdersOutput == null) {
+            placeholdersOutput = new HashMap<>(placeholders != null ? placeholders : Collections.<String, String>emptyMap());
+          }
+          String[] compareParams = compareResult.split(MATCH_PARAM_DIVIDER_CHAR);
+          placeholdersOutput.put(compareParams[0], compareParams[1]);
+        }
         if (elementIndex < elements.size() - 1) {
           // If value matched we need to explore this elements children next.
           int childrenPos = getChildrenPos(currentElementStartPosition);
           if (childrenPos != -1) {
-            matchIndex = matchUri(elements, elementIndex + 1, childrenPos, getElementBoundaryPos(currentElementStartPosition));
+            match = matchUri(elements, placeholdersOutput, elementIndex + 1, childrenPos, getElementBoundaryPos(currentElementStartPosition));
           }
         } else {
-          matchIndex = getMatchIndex(currentElementStartPosition);
+          match = new Match(getMatchIndex(currentElementStartPosition), placeholdersOutput == null ? new HashMap<String, String>(0) : placeholdersOutput);
         }
       }
-      if (matchIndex != -1) {
-        return matchIndex;
+      if (match != null) {
+        return match;
       }
       currentElementStartPosition = getNextElementStartPosition(currentElementStartPosition, parentBoundryPos);
     } while (currentElementStartPosition != -1);
-    return -1;
+    return null;
   }
 
   /**
    * @param elementStartPos The start position of the element to compare
    * @param type            The type of the value to compare
    * @param value           The value of the value to compare
-   * @return true if the type, length and value of the element staring at elementStartPos is the same as
-   * the value given in in the parameter. false otherwise.
+   * @return Empty String ""  if the type, length and value of the element staring at elementStartPos is the same as
+   * the value given in in the parameter. If this was a placeholder match the value of thee placeholder, null otherwise.
    */
-  private boolean compareValue(int elementStartPos, byte type, byte[] value) {
+  private @Nullable
+  String compareValue(int elementStartPos, byte type, @NonNull byte[] value) {
     // Placeholder always matches
-    if (byteArray[elementStartPos + HEADER_LENGTH] == IDX_PLACEHOLDER) {
-      return true;
-    }
-    if ((byteArray[elementStartPos] != type || getValueLength(elementStartPos) != value.length)) {
-      return false;
-    }
-    final int valueOffset = elementStartPos + HEADER_LENGTH;
-    for (int i = 0; i < value.length; i++) {
-      if (byteArray[valueOffset + i] != value[i]) {
-        return false;
+    int valuePos = elementStartPos + HEADER_LENGTH;
+    boolean containsPlaceholder = false;
+    int valueLength = getValueLength(elementStartPos);
+    if (valueLength > 0 && byteArray[valuePos] == IDX_PLACEHOLDER) {
+      valuePos += 1; // The actual value starts at +1 if we have a placeholder indicator
+      valueLength -= 1; // The value is one byte shorter than the actual value if we have a placeholder
+      containsPlaceholder = true;
+      if (valueLength == 2) {
+        return null; // Empty placeholder id does not match
+      }
+      if (value.length == 0){
+        return null; // Empty string does not match the placeholder
       }
     }
-    return true;
+    if (byteArray[elementStartPos] != type || (valueLength != value.length && !containsPlaceholder)) {
+      return null; // Does not match
+    }
+    // i index over value array forward
+    // j index over search byte arrays value element forward
+    // k index over value array backward
+    for (int i = 0; i < value.length; i++) {
+      if (containsPlaceholder && byteArray[valuePos + i] == '{') {
+        // Until here every char in front for the placeholder matched.
+        // Now lets see of all chars behind thje placeholer also match
+        for (int j = valueLength - 1, k = value.length - 1; j >= 0; j--, k--) {
+          if (byteArray[valuePos + j] == '}') {
+            // Text behind the placholder fully matches. Now we just need to get the placeholer
+            // string and can return.
+            byte[] placeholderValue = new byte[k - i + 1];
+            byte[] placeholder = new byte[(valuePos + j) - (valuePos + i) - 1]; // Size is without braces
+            System.arraycopy(value, i, placeholderValue, 0, placeholderValue.length);
+            System.arraycopy(byteArray, valuePos + i + 1, placeholder, 0, placeholder.length);
+            return new StringBuilder(placeholderValue.length + placeholder.length + 1).append(new String(placeholder)).append(MATCH_PARAM_DIVIDER_CHAR).append(new String(placeholderValue)).toString();
+          }
+          if (byteArray[valuePos + j] != value[k]) {
+            return null;
+          }
+        }
+      }
+      if (byteArray[valuePos + i] != value[i]) {
+        return null; // Does not magch
+      }
+    }
+    return ""; // Matches but is no placeholder
   }
 
   /**
@@ -141,14 +202,30 @@ public class MatchIndex {
     }
   }
 
+  /**
+   * The length of the value element of the element starting at elementStartPos.
+   *
+   * @param elementStartPos Starting positon of element to process
+   * @return The length of the value section of this element.
+   */
   private int getValueLength(int elementStartPos) {
     return readOneByteAsInt(elementStartPos + HEADER_TYPE_LENGTH);
   }
 
+  /**
+   * The length of the children section of the element starting at elementStartPos.
+   *
+   * @param elementStartPos Starting positon of element to process
+   * @return The length of the children section of this element.
+   */
   private int getChildrenLenght(int elementStartPos) {
     return readFourBytesAsInt(elementStartPos + HEADER_TYPE_LENGTH + HEADER_VALUE_LENGHT);
   }
 
+  /**
+   * @param elementStartPos
+   * @return The match index for this element. It is either the match index or MAX_SHORT if no match.
+   */
   private int getMatchIndex(int elementStartPos) {
     return readTwoBytesAsInt(elementStartPos + HEADER_TYPE_LENGTH + HEADER_VALUE_LENGHT + HEADER_CHILDREN_LENGTH);
   }
@@ -179,8 +256,29 @@ public class MatchIndex {
    * @param moduleName
    * @return
    */
-  public static String getMatchIdxFileName(String moduleName) {
+  public static @NonNull
+  String getMatchIdxFileName(@NonNull String moduleName) {
     return ("dld_match_" + moduleName + ".idx").toLowerCase();
   }
 
+  public static class Match {
+
+    private final int matchIndex;
+    private final Map<String, String> parameterMap;
+
+    public Match(int matchIndex, @NonNull Map<String, String> parameterMap) {
+      this.matchIndex = matchIndex;
+      this.parameterMap = parameterMap;
+    }
+
+    public int getMatchIndex() {
+      return matchIndex;
+    }
+
+    public @NonNull
+    Map<String, String> getParameterMap() {
+      return parameterMap;
+    }
+
+  }
 }

@@ -24,6 +24,7 @@ ext.deps = [
     javaPoet                 : 'com.squareup:javapoet:1.9.0',
     jsr305                   : 'com.google.code.findbugs:jsr305:3.0.2',
     okio                     : 'com.squareup.okio:okio:1.13.0',
+    androidXAnnotations      : 'androidx.annotation:annotation:1.1.0',
     // Build and upload with:
     // ./gradlew clean assemble androidSourcesJar androidJavadocsJar uploadArchives --no-daemon --no-parallel
     // Need to use snapshot version and explicitly include javadoc/sources tasks until

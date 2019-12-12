@@ -46,6 +46,40 @@ public class MainActivityTest {
         equalTo("dld://host/somePath/1234321"));
   }
 
+  @Test public void testPartialSegmentPlaceholderStart() {
+    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://example.com/test123bar"));
+    DeepLinkActivity deepLinkActivity = Robolectric.buildActivity(DeepLinkActivity.class, intent)
+        .create().get();
+    ShadowActivity shadowActivity = shadowOf(deepLinkActivity);
+    Intent launchedIntent = shadowActivity.peekNextStartedActivityForResult().intent;
+    assertThat(launchedIntent.getComponent(),
+        equalTo(new ComponentName(deepLinkActivity, MainActivity.class)));
+
+    assertThat(launchedIntent.getBooleanExtra(DeepLink.IS_DEEP_LINK, false), equalTo(true));
+    assertThat(launchedIntent.getStringExtra("arg_start"), equalTo("test123"));
+    assertThat(launchedIntent.getAction(), equalTo(Intent.ACTION_VIEW));
+    assertThat(launchedIntent.getData(), equalTo(Uri.parse("http://example.com/test123bar")));
+    assertThat(launchedIntent.getStringExtra(DeepLink.URI),
+        equalTo("http://example.com/test123bar"));
+  }
+
+  @Test public void testPartialSegmentPlaceholdeEnd() {
+    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://example.com/footest123"));
+    DeepLinkActivity deepLinkActivity = Robolectric.buildActivity(DeepLinkActivity.class, intent)
+        .create().get();
+    ShadowActivity shadowActivity = shadowOf(deepLinkActivity);
+    Intent launchedIntent = shadowActivity.peekNextStartedActivityForResult().intent;
+    assertThat(launchedIntent.getComponent(),
+        equalTo(new ComponentName(deepLinkActivity, MainActivity.class)));
+
+    assertThat(launchedIntent.getBooleanExtra(DeepLink.IS_DEEP_LINK, false), equalTo(true));
+    assertThat(launchedIntent.getStringExtra("arg_end"), equalTo("test123"));
+    assertThat(launchedIntent.getAction(), equalTo(Intent.ACTION_VIEW));
+    assertThat(launchedIntent.getData(), equalTo(Uri.parse("http://example.com/footest123")));
+    assertThat(launchedIntent.getStringExtra(DeepLink.URI),
+        equalTo("http://example.com/footest123"));
+  }
+
   @Test public void testQueryParams() {
     Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("dld://classDeepLink?foo=bar"));
     DeepLinkActivity deepLinkActivity = Robolectric.buildActivity(DeepLinkActivity.class, intent)
@@ -93,7 +127,7 @@ public class MainActivityTest {
 
     assertThat(launchedIntent.getBooleanExtra(DeepLink.IS_DEEP_LINK, false), equalTo(true));
     assertThat(launchedIntent.getStringExtra("baz"), equalTo("something"));
-    assertThat(launchedIntent.getStringExtra("arg"), equalTo("ball"));
+    assertThat(launchedIntent.getStringExtra("arg_end"), equalTo("ball"));
     assertThat(launchedIntent.getStringExtra(DeepLink.URI),
         equalTo("http://example.com/fooball?baz=something"));
   }
