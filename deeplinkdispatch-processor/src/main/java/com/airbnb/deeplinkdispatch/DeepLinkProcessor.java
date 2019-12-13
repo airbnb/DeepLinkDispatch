@@ -324,11 +324,14 @@ public class DeepLinkProcessor extends AbstractProcessor {
 
     MethodSpec constructor = MethodSpec.constructorBuilder()
         .addModifiers(Modifier.PUBLIC)
-        .addCode(deeplinks.unindent().add(")), $T.readMatchIndexFromStrings( new String[] {" + stringMethodNames + "} ));\n", CLASS_UTILS).build())
+        .addCode(deeplinks.unindent().add(")), $T.readMatchIndexFromStrings( new String[] {"
+            + stringMethodNames + "} ));\n", CLASS_UTILS).build())
         .build();
 
-    // For debugging it is nice to have a file version of the index, just comment this in to get on in the classpath
-//    FileObject indexResource = filer.createResource(StandardLocation.CLASS_OUTPUT, "", MatchIndex.getMatchIdxFileName(className));
+    // For debugging it is nice to have a file version of the index, just comment this in to get
+    // on in the classpath
+//    FileObject indexResource = filer.createResource(StandardLocation.CLASS_OUTPUT, "",
+//    MatchIndex.getMatchIdxFileName(className));
 //    urisTrie.writeToOutoutStream(indexResource.openOutputStream());
 
     deeplinkLoaderBuilder.addMethod(constructor);

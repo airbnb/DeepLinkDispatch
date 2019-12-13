@@ -297,7 +297,8 @@ public final class DeepLinkUri {
     return result.toString();
   }
 
-  @Nullable List<String> getQueryNamesAndValues(){
+  @Nullable
+  List<String> getQueryNamesAndValues() {
     return queryNamesAndValues;
   }
 

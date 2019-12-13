@@ -9,10 +9,10 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * BaseLoader classes are used for keeping a registry of deep links and dispatching them from Intents.
+ * BaseLoader classes are used for keeping a registry of deep links and dispatching them
+ * from Intents.
  */
 public abstract class BaseLoader {
-
 
   /**
    * The List of DeepLinkEntries collected from a Module. Annotation Processing-generated Children
@@ -48,13 +48,15 @@ public abstract class BaseLoader {
    * @param deepLinkUri The input {@link DeepLinkUri} to match
    * @return A {@link DeepLinkEntry} if a match was found or null if not.
    */
-  public @Nullable DeepLinkEntry idxMatch(@NonNull DeepLinkUri deepLinkUri) {
-    if (deepLinkUri == null){
+  public @Nullable
+  DeepLinkEntry idxMatch(@NonNull DeepLinkUri deepLinkUri) {
+    if (deepLinkUri == null) {
       return null;
     }
     // The first elment is the root, start with the children
-    MatchIndex.Match match = matchIndex.matchUri(new SchemeHostAndPath(deepLinkUri).getMatchList(), null, 0, 0, matchIndex.length());
-    if(match != null){
+    MatchIndex.Match match = matchIndex.matchUri(new SchemeHostAndPath(deepLinkUri).getMatchList(),
+        null, 0, 0, matchIndex.length());
+    if (match != null) {
       DeepLinkEntry matchedEntry = registry.get(match.getMatchIndex());
       matchedEntry.setParameters(deepLinkUri, match.getParameterMap());
       return matchedEntry;

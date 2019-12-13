@@ -17,17 +17,28 @@ import java.util.Map;
  *
  * <pre><
  * 1 byte  2 bytes       4 bytes                     2 bytres      n bytes       n bytes
- * +------+-------------+---------------------------+-------------+-------------+--------------------------------------------------------------------------------------------------------+
- * |      |             |                           |             |             |                                                                                                        |
- * | Type |Value length | Children length           | Match idx   | Value       | Children                                                                                               |
- * |      |             |                           |             |             |                                                                                                        |
- * +------+-------------+---------------------------+-------------+-------------+--------------------------------------------------------------------------------------------------------+
+ * +------+-------------+---------------------------+-------------+-------------+--------------
+ * |      |             |                           |             |             |
+ * | Type |Value length | Children length           | Match idx   | Value       | Children
+ * |      |             |                           |             |             |
+ * +------+-------------+---------------------------+-------------+-------------+--------------
  *
- * <----------------------+  8 byte header  +--------------------->             +------+-------------+---------------------------+-------------+-------------+---------------------------+
- *                                                                              |      |             |                           |             |             |                           |
- *                                                                              | Type |Value length | Children length           | Match idx   | Value       | Children                  |
- *                                                                              |      |             |                           |             |             |                           |
- *                                                                              +------+-------------+---------------------------+-------------+-------------+---------------------------+
+ * <----------------------+  8 byte header  +--------------------->             +------+-------
+ *                                                                              |      |
+ *                                                                              | Type |Value
+ *                                                                              |      |
+ *                                                                              +------+-------
+ * -------------------------------------------------------------------------------------------+
+ *                                                                                            |
+ *                                                                                            |
+ *                                                                                            |
+ * -------------------------------------------------------------------------------------------+
+ *
+ * -------+---------------------------+-------------+-------------+---------------------------+
+ *        |             |                           |             |                           |
+ * length | Children length           | Match idx   | Value       | Children                  |
+ *        |             |                           |             |                           |
+ * -------+---------------------------+-------------+-------------+---------------------------+
  * </pre>
  */
 public class MatchIndex {
@@ -38,7 +49,6 @@ public class MatchIndex {
   @NonNull
   public static final String MATCH_INDEX_ENCODING = "ISO_8859_1";
 
-
   /**
    * Lenght of header elements in bytes
    */
@@ -47,7 +57,8 @@ public class MatchIndex {
   private static final int HEADER_CHILDREN_LENGTH = 4;
   private static final int HEADER_MATCH_ID_LENGTH = 2;
 
-  public static final int HEADER_LENGTH = HEADER_TYPE_LENGTH + HEADER_VALUE_LENGHT + HEADER_CHILDREN_LENGTH + HEADER_MATCH_ID_LENGTH;
+  public static final int HEADER_LENGTH = HEADER_TYPE_LENGTH + HEADER_VALUE_LENGHT
+      + HEADER_CHILDREN_LENGTH + HEADER_MATCH_ID_LENGTH;
 
   /**
    * Type constants used in match index
@@ -67,9 +78,9 @@ public class MatchIndex {
   @NonNull
   public static final String ROOT_VALUE = "r";
 
-  // Used to separate param and param value in comapre return value
+  // Used to separate param and param value in comapre return value (record separator)
   @NonNull
-  public static final String MATCH_PARAM_DIVIDER_CHAR = String.valueOf((char) 0x1e); // record separator
+  public static final String MATCH_PARAM_DIVIDER_CHAR = String.valueOf((char) 0x1e);
 
   @NonNull
   private byte[] byteArray;
@@ -78,17 +89,21 @@ public class MatchIndex {
     this.byteArray = byteArray;
   }
 
-  public Match matchUri(@NonNull List<UrlElement> elements, @Nullable Map<String, String> placeholders, int elementIndex, int elementStartPosition, int parentBoundryPos) {
+  public Match matchUri(@NonNull List<UrlElement> elements, @Nullable Map<String, String>
+      placeholders, int elementIndex, int elementStartPosition, int parentBoundryPos) {
     Match match = null;
     int currentElementStartPosition = elementStartPosition;
     do {
       UrlElement urlElement = elements.get(elementIndex);
-      String compareResult = compareValue(currentElementStartPosition, urlElement.getType(), urlElement.getValue());
+      String compareResult = compareValue(currentElementStartPosition, urlElement.getType(),
+          urlElement.getValue());
       if (compareResult != null) {
-        Map<String, String> placeholdersOutput = placeholders == null ? null : placeholders; // Need to hand down a new Hashmap, but only if we already have one.
+        // Need to hand down a new Hashmap, but only if we already have one.
+        Map<String, String> placeholdersOutput = placeholders == null ? null : placeholders;
         if (!compareResult.isEmpty()) {
           if (placeholdersOutput == null) {
-            placeholdersOutput = new HashMap<>(placeholders != null ? placeholders : Collections.<String, String>emptyMap());
+            placeholdersOutput = new HashMap<>(placeholders != null ? placeholders
+                : Collections.<String, String>emptyMap());
           }
           String[] compareParams = compareResult.split(MATCH_PARAM_DIVIDER_CHAR);
           placeholdersOutput.put(compareParams[0], compareParams[1]);
@@ -97,16 +112,19 @@ public class MatchIndex {
           // If value matched we need to explore this elements children next.
           int childrenPos = getChildrenPos(currentElementStartPosition);
           if (childrenPos != -1) {
-            match = matchUri(elements, placeholdersOutput, elementIndex + 1, childrenPos, getElementBoundaryPos(currentElementStartPosition));
+            match = matchUri(elements, placeholdersOutput, elementIndex + 1,
+                childrenPos, getElementBoundaryPos(currentElementStartPosition));
           }
         } else {
-          match = new Match(getMatchIndex(currentElementStartPosition), placeholdersOutput == null ? new HashMap<String, String>(0) : placeholdersOutput);
+          match = new Match(getMatchIndex(currentElementStartPosition), placeholdersOutput == null
+              ? new HashMap<String, String>(0) : placeholdersOutput);
         }
       }
       if (match != null) {
         return match;
       }
-      currentElementStartPosition = getNextElementStartPosition(currentElementStartPosition, parentBoundryPos);
+      currentElementStartPosition = getNextElementStartPosition(currentElementStartPosition,
+          parentBoundryPos);
     } while (currentElementStartPosition != -1);
     return null;
   }
@@ -115,8 +133,9 @@ public class MatchIndex {
    * @param elementStartPos The start position of the element to compare
    * @param type            The type of the value to compare
    * @param value           The value of the value to compare
-   * @return Empty String ""  if the type, length and value of the element staring at elementStartPos is the same as
-   * the value given in in the parameter. If this was a placeholder match the value of thee placeholder, null otherwise.
+   * @return Empty String ""  if the type, length and value of the element staring at
+   * elementStartPos is the same as the value given in in the parameter. If this was a placeholder
+   * match the value of thee placeholder, null otherwise.
    */
   private @Nullable
   String compareValue(int elementStartPos, byte type, @NonNull byte[] value) {
@@ -126,16 +145,17 @@ public class MatchIndex {
     int valueLength = getValueLength(elementStartPos);
     if (valueLength > 0 && byteArray[valuePos] == IDX_PLACEHOLDER) {
       valuePos += 1; // The actual value starts at +1 if we have a placeholder indicator
-      valueLength -= 1; // The value is one byte shorter than the actual value if we have a placeholder
+      valueLength -= 1; // IF placeholder the value is one byte shorter
       containsPlaceholder = true;
       if (valueLength == 2) {
         return null; // Empty placeholder id does not match
       }
-      if (value.length == 0){
+      if (value.length == 0) {
         return null; // Empty string does not match the placeholder
       }
     }
-    if (byteArray[elementStartPos] != type || (valueLength != value.length && !containsPlaceholder)) {
+    if (byteArray[elementStartPos] != type || (valueLength != value.length
+        && !containsPlaceholder)) {
       return null; // Does not match
     }
     // i index over value array forward
@@ -150,10 +170,13 @@ public class MatchIndex {
             // Text behind the placholder fully matches. Now we just need to get the placeholer
             // string and can return.
             byte[] placeholderValue = new byte[k - i + 1];
-            byte[] placeholder = new byte[(valuePos + j) - (valuePos + i) - 1]; // Size is without braces
+            // Size is without braces
+            byte[] placeholder = new byte[(valuePos + j) - (valuePos + i) - 1];
             System.arraycopy(value, i, placeholderValue, 0, placeholderValue.length);
             System.arraycopy(byteArray, valuePos + i + 1, placeholder, 0, placeholder.length);
-            return new StringBuilder(placeholderValue.length + placeholder.length + 1).append(new String(placeholder)).append(MATCH_PARAM_DIVIDER_CHAR).append(new String(placeholderValue)).toString();
+            return new StringBuilder(placeholderValue.length + placeholder.length + 1)
+                .append(new String(placeholder)).append(MATCH_PARAM_DIVIDER_CHAR)
+                .append(new String(placeholderValue)).toString();
           }
           if (byteArray[valuePos + j] != value[k]) {
             return null;
@@ -171,7 +194,8 @@ public class MatchIndex {
    * Get the next entries position, or -1 if there are no further entries.
    *
    * @param elementStartPos   The start postion of the current element.
-   * @param parentBoundaryPos The parent elements boundry (i.e. the first elementStartPos that is not part of the parent element anhymore)
+   * @param parentBoundaryPos The parent elements boundry (i.e. the first elementStartPos that is
+   *                          not part of the parent element anhymore)
    * @return
    */
   private int getNextElementStartPosition(int elementStartPos, int parentBoundaryPos) {
@@ -188,13 +212,15 @@ public class MatchIndex {
   }
 
   /**
-   * The elements boundary is the first elementStartPos that is not part of the parent element anymore.
+   * The elements boundary is the first elementStartPos that is not part of the parent element
+   * anymore.
    *
    * @param elementStartPos
    * @return
    */
   private int getElementBoundaryPos(int elementStartPos) {
-    return elementStartPos + HEADER_LENGTH + getValueLength(elementStartPos) + getChildrenLenght(elementStartPos);
+    return elementStartPos + HEADER_LENGTH + getValueLength(elementStartPos)
+        + getChildrenLenght(elementStartPos);
   }
 
   /**
@@ -233,10 +259,12 @@ public class MatchIndex {
 
   /**
    * @param elementStartPos
-   * @return The match index for this element. It is either the match index or MAX_SHORT if no match.
+   * @return The match index for this element. It is either the match index or MAX_SHORT if no
+   * match.
    */
   private int getMatchIndex(int elementStartPos) {
-    return readTwoBytesAsInt(elementStartPos + HEADER_TYPE_LENGTH + HEADER_VALUE_LENGHT + HEADER_CHILDREN_LENGTH);
+    return readTwoBytesAsInt(elementStartPos + HEADER_TYPE_LENGTH + HEADER_VALUE_LENGHT
+        + HEADER_CHILDREN_LENGTH);
   }
 
   public int length() {
@@ -248,15 +276,15 @@ public class MatchIndex {
   }
 
   private int readTwoBytesAsInt(int pos) {
-    return (byteArray[pos] & 0xFF) << 8 |
-        (byteArray[pos + 1] & 0xFF);
+    return (byteArray[pos] & 0xFF) << 8
+        | (byteArray[pos + 1] & 0xFF);
   }
 
   private int readFourBytesAsInt(int pos) {
-    return (byteArray[pos] & 0xFF) << 24 |
-        (byteArray[pos + 1] & 0xFF) << 16 |
-        (byteArray[pos + 2] & 0xFF) << 8 |
-        (byteArray[pos + 3] & 0xFF);
+    return (byteArray[pos] & 0xFF) << 24
+        | (byteArray[pos + 1] & 0xFF) << 16
+        | (byteArray[pos + 2] & 0xFF) << 8
+        | (byteArray[pos + 3] & 0xFF);
   }
 
   /**
