@@ -16,14 +16,14 @@ import java.util.Map;
  * Byte array format is:
  *
  * <pre><
- * 1 byte  2 bytes       4 bytes                     2 bytres      n bytes       n bytes
+ * 1 byte  2 bytes       4 bytes                     2 bytes       n bytes       n bytes
  * +------+-------------+---------------------------+-------------+-------------+--------------
  * |      |             |                           |             |             |
  * | Type |Value length | Children length           | Match idx   | Value       | Children
  * |      |             |                           |             |             |
  * +------+-------------+---------------------------+-------------+-------------+--------------
  *
- * <----------------------+  8 byte header  +--------------------->             +------+-------
+ * <----------------------+  9 byte header  +--------------------->             +------+-------
  *                                                                              |      |
  *                                                                              | Type |Value
  *                                                                              |      |
