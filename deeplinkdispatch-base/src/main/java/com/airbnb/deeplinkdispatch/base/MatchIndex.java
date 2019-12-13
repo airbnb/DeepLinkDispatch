@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * This is a wrapper class around the byte array matgch index.
+ * This is a wrapper class around the byte array match index.
  * <p>
  * Byte array format is:
  *
