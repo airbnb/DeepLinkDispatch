@@ -78,7 +78,7 @@ public class MatchIndex {
   @NonNull
   public static final String ROOT_VALUE = "r";
 
-  // Used to separate param and param value in comapre return value (record separator)
+  // Used to separate param and param value in compare return value (record separator)
   @NonNull
   public static final String MATCH_PARAM_DIVIDER_CHAR = String.valueOf((char) 0x1e);
 
