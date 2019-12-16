@@ -31,6 +31,8 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeSpec;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -310,17 +312,7 @@ public class DeepLinkProcessor extends AbstractProcessor {
         .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
         .superclass(ClassName.get(BaseLoader.class));
 
-    int i = 0;
-    StringBuilder stringMethodNames = new StringBuilder();
-    for (String string : urisTrie.getStrings()) {
-      String methodName = "matchIndex" + i;
-      stringMethodNames.append(methodName).append("(), ");
-      deeplinkLoaderBuilder.addMethod(MethodSpec.methodBuilder(methodName)
-          .addModifiers(Modifier.PRIVATE, Modifier.STATIC)
-          .returns(String.class)
-          .addCode(CodeBlock.builder().add("return $S;", string).build()).build());
-      i++;
-    }
+    StringBuilder stringMethodNames = getStringMethodNames(urisTrie, deeplinkLoaderBuilder);
 
     MethodSpec constructor = MethodSpec.constructorBuilder()
         .addModifiers(Modifier.PUBLIC)
@@ -341,6 +333,33 @@ public class DeepLinkProcessor extends AbstractProcessor {
     JavaFile.builder(packageName, deepLinkLoader)
         .build()
         .writeTo(filer);
+  }
+
+  /**
+   * Add methods containing the Strings to store the match index to the deeplinkLoaderBuilder and
+   * return a string which contains the calls to those methods.
+   *
+   * e.g. "method1(), method2()" etc.
+   *
+   * @param urisTrie The {@link UrlTrieKt} containing all Urls that can be matched.
+   * @param deeplinkLoaderBuilder The builder used to add the methods
+   * @return
+   */
+  @NotNull
+  private StringBuilder getStringMethodNames(Root urisTrie,
+                                             TypeSpec.Builder deeplinkLoaderBuilder) {
+    int i = 0;
+    StringBuilder stringMethodNames = new StringBuilder();
+    for (String string : urisTrie.getStrings()) {
+      String methodName = "matchIndex" + i;
+      stringMethodNames.append(methodName).append("(), ");
+      deeplinkLoaderBuilder.addMethod(MethodSpec.methodBuilder(methodName)
+          .addModifiers(Modifier.PRIVATE, Modifier.STATIC)
+          .returns(String.class)
+          .addCode(CodeBlock.builder().add("return $S;", string).build()).build());
+      i++;
+    }
+    return stringMethodNames;
   }
 
   private static String moduleNameToLoaderName(TypeElement typeElement) {

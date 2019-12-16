@@ -9,16 +9,16 @@ import kotlin.text.Charsets.UTF_8
 data class UriMatch(val uri: DeepLinkUri, val matchId: Int)
 
 @kotlin.ExperimentalUnsignedTypes
-open class TrieNode(open val id: String = "", val type: UByte, open val placeholder: Boolean = false) {
+open class TrieNode(open val id: String, val type: UByte, open val placeholder: Boolean = false) {
 
     val children = mutableSetOf<TrieNode>()
     var match: UriMatch? = null
         set(value) {
-            if (match != null) error("Ambiguous URI. Same match for two URIs ($match vs $value)") else field = value
+            if (field != null) error("Ambiguous URI. Same match for two URIs ($field vs $value)") else field = value
         }
 
     fun addNode(node: TrieNode): TrieNode {
-        return if (children.add(node)) node else children.find { it.equals(node) }!!
+        return if (children.add(node)) node else children.first { it == node }
     }
 
     /**
@@ -30,9 +30,9 @@ open class TrieNode(open val id: String = "", val type: UByte, open val placehol
      * 8..(8+value length)                                  value
      * (8+value length)..((8+value length)+children length) children
      */
-    fun toByteArray(): UByteArray {
+    fun toUByteArray(): UByteArray {
         val childrenByteArrays: List<UByteArray> = generateChildrenByteArrays()
-        val valueByteArray = (if (placeholder) IDX_PLACEHOLDER + id else id ).let { it.toByteArray(UTF_8).toUByteArray() }
+        val valueByteArray = (if (placeholder) IDX_PLACEHOLDER + id else id).let { it.toByteArray(UTF_8).toUByteArray() }
         val header = generateHeader(type, valueByteArray, childrenByteArrays, match)
         val resultByteArray = UByteArray(arrayLength(
                 childrenByteArrays,
@@ -41,7 +41,7 @@ open class TrieNode(open val id: String = "", val type: UByte, open val placehol
         ))
         header.copyInto(resultByteArray)
         var position = header.size
-        with(valueByteArray){
+        with(valueByteArray) {
             copyInto(resultByteArray, position)
             position += size
         }
@@ -53,42 +53,35 @@ open class TrieNode(open val id: String = "", val type: UByte, open val placehol
     }
 
     private fun arrayLength(childArrays: List<UByteArray>, value: UByteArray, header: UByteArray): Int {
-        var length = header.size + value.size
-        childArrays.forEach { child ->
-            length += child.size
-        }
-        return length
+        return header.size + value.size + childArrays.sumBy { it.size }
     }
 
-    private fun generateChildrenByteArrays(): List<UByteArray> = children.map { it.toByteArray() }
+    private fun generateChildrenByteArrays(): List<UByteArray> = children.map { it.toUByteArray() }
 
     private fun generateHeader(type: UByte, value: UByteArray, children: List<UByteArray>? = null, match: UriMatch?): UByteArray {
-        var childrenLength: UInt = 0u
-        children?.forEach { child ->
-            childrenLength += child.size.toUInt()
+        var childrenLength: Int = children?.sumBy { it.size } ?: 0
+        return UByteArray(HEADER_LENGTH).apply {
+            set(0, type)
+            set(1, value.size.toUByte()) // If this is a placeholder we will only save one byte
+            writeUIntAt(2, childrenLength.toUInt())
+            writeUShortAt(6, if (match == null) UShort.MAX_VALUE else match.matchId.toUShort())
         }
-        val header = UByteArray(HEADER_LENGTH)
-        header.set(0, type)
-        header.set(1, value.size.toUByte()) // If this is a placeholder we will only save one byte
-        header.writeUIntAt(2, childrenLength)
-        header.writeUShortAt(6, if (match == null) UShort.MAX_VALUE else match.matchId.toUShort())
-        return header
     }
 
 }
 
 private val MAX_EXPOT_STRING_SIZE = 60000
 
-data class Root(val bla: String = "") : TrieNode(ROOT_VALUE, TYPE_ROOT.toUByte()) {
+data class Root(override val id: String = "r") : TrieNode(ROOT_VALUE, TYPE_ROOT.toUByte()) {
     fun writeToOutoutStream(openOutputStream: OutputStream) {
-        openOutputStream.write(this.toByteArray().toByteArray())
+        openOutputStream.write(this.toUByteArray().toByteArray())
     }
 
     /**
      * Convert the byte array into a string return as max 60k length sset of strings.
      */
     fun getStrings(): List<String> {
-        return String(bytes = this.toByteArray().toByteArray(), charset = Charset.forName(MatchIndex.MATCH_INDEX_ENCODING)).chunked(MAX_EXPOT_STRING_SIZE)
+        return String(bytes = this.toUByteArray().toByteArray(), charset = Charset.forName(MatchIndex.MATCH_INDEX_ENCODING)).chunked(MAX_EXPOT_STRING_SIZE)
     }
 
     /**
@@ -113,16 +106,16 @@ data class Root(val bla: String = "") : TrieNode(ROOT_VALUE, TYPE_ROOT.toUByte()
     private fun hasPlaceholders(pathSegment: String): Boolean {
         val placeholderStart = pathSegment.contains("{")
         val placeholderEnd = pathSegment.contains("}")
-        require(!(placeholderStart xor placeholderEnd)) { "Placeholders need to be complete (need to contain { and }" }
+        require(!(placeholderStart xor placeholderEnd)) { "Placeholders need to be complete (need to contain { and })" }
         return placeholderStart && placeholderEnd
     }
 }
 
-data class Scheme(override val id: String) : TrieNode(type = TYPE_SCHEME.toUByte())
+data class Scheme(override val id: String) : TrieNode(id = id, type = TYPE_SCHEME.toUByte())
 
-data class Host(override val id: String, override val placeholder: Boolean = false) : TrieNode(type = TYPE_HOST.toUByte())
+data class Host(override val id: String, override val placeholder: Boolean = false) : TrieNode(id = id, type = TYPE_HOST.toUByte())
 
-data class PathSegment(override val id: String, override val placeholder: Boolean = false) : TrieNode(type = TYPE_PATH_SEGMENT.toUByte())
+data class PathSegment(override val id: String, override val placeholder: Boolean = false) : TrieNode(id = id, type = TYPE_PATH_SEGMENT.toUByte())
 
 fun UByteArray.writeUIntAt(startIndex: Int, value: UInt) {
     val ubyte3: UByte = value.and(0x000000FFu).toUByte().toUByte()

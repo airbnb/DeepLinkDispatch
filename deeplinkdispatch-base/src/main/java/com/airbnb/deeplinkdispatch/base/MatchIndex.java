@@ -40,6 +40,13 @@ import java.util.Map;
  *        |             |                           |             |                           |
  * -------+---------------------------+-------------+-------------+---------------------------+
  * </pre>
+ *
+ * This is implemenmted in Java for speed reasons. Converting this class to Kotlin made the
+ * whole lookup operation multiple times slower.
+ * This is most likely not a Kotlin issue but some syntactic sugar used must have crated some
+ * overhead.
+ * As this is very "bare metal" anyway it was "safer" to write this in Java to avoid any
+ * instructions to be added that are not necessary.
  */
 public class MatchIndex {
 
@@ -98,14 +105,17 @@ public class MatchIndex {
       String compareResult = compareValue(currentElementStartPosition, urlElement.getType(),
           urlElement.getValue());
       if (compareResult != null) {
-        // Need to hand down a new Hashmap, but only if we already have one.
-        Map<String, String> placeholdersOutput = placeholders == null ? null : placeholders;
+        Map<String, String> placeholdersOutput = placeholders;
+        // If the compareResult is not empty we found a match with a placeholder. We need to save
+        // that placeholder -- and the value it was placeholding for -- in a map and possibly
+        // hand it down to the next level of recursion.
         if (!compareResult.isEmpty()) {
-          if (placeholdersOutput == null) {
+          // We need to have a new HashMap for every aprtial match to make sure that the
+          // placeholders found in other partial matches do not overlap with the actual final match.
             placeholdersOutput = new HashMap<>(placeholders != null ? placeholders
                 : Collections.<String, String>emptyMap());
-          }
           String[] compareParams = compareResult.split(MATCH_PARAM_DIVIDER_CHAR);
+          // Add the found placeholder set to the map.
           placeholdersOutput.put(compareParams[0], compareParams[1]);
         }
         if (elementIndex < elements.size() - 1) {
@@ -203,9 +213,6 @@ public class MatchIndex {
     if (nextElementPos == parentBoundaryPos) {
       // This was the last element
       return -1;
-    } else if (nextElementPos > parentBoundaryPos) {
-      // TODO Remove this check for prod
-      throw new IllegalStateException("Element size error at index " + elementStartPos);
     } else {
       return nextElementPos;
     }
@@ -220,7 +227,7 @@ public class MatchIndex {
    */
   private int getElementBoundaryPos(int elementStartPos) {
     return elementStartPos + HEADER_LENGTH + getValueLength(elementStartPos)
-        + getChildrenLenght(elementStartPos);
+        + getChildrenLength(elementStartPos);
   }
 
   /**
@@ -230,7 +237,7 @@ public class MatchIndex {
    * @return children pos or -1 if there are no children.
    */
   private int getChildrenPos(int elementStartPos) {
-    if (getChildrenLenght(elementStartPos) == 0) {
+    if (getChildrenLength(elementStartPos) == 0) {
       return -1;
     } else {
       return elementStartPos + HEADER_LENGTH + getValueLength(elementStartPos);
@@ -253,7 +260,7 @@ public class MatchIndex {
    * @param elementStartPos Starting positon of element to process
    * @return The length of the children section of this element.
    */
-  private int getChildrenLenght(int elementStartPos) {
+  private int getChildrenLength(int elementStartPos) {
     return readFourBytesAsInt(elementStartPos + HEADER_TYPE_LENGTH + HEADER_VALUE_LENGHT);
   }
 
@@ -290,12 +297,12 @@ public class MatchIndex {
   /**
    * Get filename for match index.
    *
-   * @param moduleName
-   * @return
+   * @param moduleName The module name the match index is for.
+   * @return The filename used to store the match index.
    */
   public static @NonNull
   String getMatchIdxFileName(@NonNull String moduleName) {
-    return ("dld_match_" + moduleName + ".idx").toLowerCase();
+    return "dld_match_" + moduleName.toLowerCase() + ".idx";
   }
 
   public static class Match {

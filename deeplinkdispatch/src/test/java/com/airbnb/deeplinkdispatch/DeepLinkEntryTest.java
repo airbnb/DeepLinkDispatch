@@ -208,6 +208,20 @@ public class DeepLinkEntryTest {
       .contains(entry("foo", "baz"), entry("bar", "qux"));
   }
 
+  @Test public void placeholderOverlapBetweenMatchAndNonMach() {
+    DeepLinkEntry entryMatch = deepLinkEntry("airbnb://{foo}/{bar}/match");
+    DeepLinkEntry entryNoMatch = deepLinkEntry("airbnb://{hey}/{ho}/noMatch");
+
+    TestDeepLinkLoader testLoader = getTestDelgate(Arrays.asList(new DeepLinkEntry[] {entryNoMatch,entryMatch}));
+    DeepLinkUri matchUri = DeepLinkUri.parse("airbnb://baz/qux/match");
+    DeepLinkEntry match = testLoader.idxMatch(matchUri);
+
+    Map<String, String> parameters = match.getParameters(matchUri);
+    assertThat(parameters)
+        .hasSize(2)
+        .contains(entry("foo", "baz"), entry("bar", "qux"));
+  }
+
   @Test public void templateWithoutParameters() {
     DeepLinkEntry entry = deepLinkEntry("airbnb://something");
     assertThat("airbnb://something".equals(entry.getUriTemplate())).isTrue();
@@ -243,7 +257,7 @@ public class DeepLinkEntryTest {
       for (int i = 0; i < registry.size(); i++) {
         trieRoot.addToTrie(i, DeepLinkUri.parse(registry.get(i).getUriTemplate()));
       }
-      return trieRoot.toByteArray();
+      return trieRoot.toUByteArray();
     }
   }
 

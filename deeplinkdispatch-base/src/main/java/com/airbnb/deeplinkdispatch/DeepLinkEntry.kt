@@ -15,7 +15,8 @@
  */
 package com.airbnb.deeplinkdispatch
 
-class DeepLinkEntry(val uriTemplate: String, val type: Type,
+class DeepLinkEntry(val uriTemplate: String,
+                    val type: Type,
                     /**
                      * The class where the annotation corresponding to where an instance of DeepLinkEntry is declared.
                      */
@@ -26,7 +27,7 @@ class DeepLinkEntry(val uriTemplate: String, val type: Type,
         METHOD
     }
 
-    private val parameterMap: MutableMap<DeepLinkUri,Map<String, String>> = mutableMapOf()
+    private val parameterMap: MutableMap<DeepLinkUri, Map<String, String>> = mutableMapOf()
 
     /**
      * Generates a map of parameters and the values from the given deep link.
@@ -35,11 +36,11 @@ class DeepLinkEntry(val uriTemplate: String, val type: Type,
      * @return the map of parameter values, where all values will be strings.
      */
     fun getParameters(inputUri: DeepLinkUri): Map<String, String> {
-        return parameterMap.get(inputUri)?: emptyMap()
+        return parameterMap.get(inputUri) ?: emptyMap()
     }
 
     fun setParameters(deepLinkUri: DeepLinkUri, parameterMap: MutableMap<String, String>) {
-        this.parameterMap.put(deepLinkUri,parameterMap)
+        this.parameterMap.put(deepLinkUri, parameterMap)
     }
 
 }

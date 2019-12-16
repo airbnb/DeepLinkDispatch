@@ -9,13 +9,17 @@ import com.airbnb.deeplinkdispatch.base.MatchIndex
  * not thread safe for speed improvement.
  */
 class SchemeHostAndPath(val uri: DeepLinkUri) {
-    val schemeHostAndPath by lazy(LazyThreadSafetyMode.NONE) {
+    val schemeHostAndPath: String by lazy(LazyThreadSafetyMode.NONE) {
         uri.scheme() + "://" + uri.encodedHost() + uri.encodedPath()
     }
 
-    val matchList by lazy(LazyThreadSafetyMode.NONE) {
-        val list = mutableListOf(UrlElement(MatchIndex.TYPE_ROOT,MatchIndex.ROOT_VALUE.toByteArray()),UrlElement(MatchIndex.TYPE_SCHEME, uri.scheme().toByteArray()),UrlElement(MatchIndex.TYPE_HOST, uri.encodedHost().toByteArray()))
-        uri.encodedPathSegments().forEach({pathElement -> list.add(UrlElement(MatchIndex.TYPE_PATH_SEGMENT, pathElement.toByteArray()))})
+    val matchList: List<UrlElement> by lazy(LazyThreadSafetyMode.NONE) {
+        val list = mutableListOf(UrlElement(MatchIndex.TYPE_ROOT, MatchIndex.ROOT_VALUE.toByteArray()),
+                UrlElement(MatchIndex.TYPE_SCHEME, uri.scheme().toByteArray()),
+                UrlElement(MatchIndex.TYPE_HOST, uri.encodedHost().toByteArray()))
+        uri.encodedPathSegments().forEach { pathElement ->
+            list.add(UrlElement(MatchIndex.TYPE_PATH_SEGMENT, pathElement.toByteArray()))
+        }
         list
     }
 }
