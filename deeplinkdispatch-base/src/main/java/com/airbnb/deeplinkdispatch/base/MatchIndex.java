@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * This is a wrapper class around the byte array matgch index.
+ * This is a wrapper class around the byte array match index.
  * <p>
  * Byte array format is:
  *
@@ -85,7 +85,7 @@ public class MatchIndex {
   @NonNull
   public static final String ROOT_VALUE = "r";
 
-  // Used to separate param and param value in comapre return value (record separator)
+  // Used to separate param and param value in compare return value (record separator)
   @NonNull
   public static final String MATCH_PARAM_DIVIDER_CHAR = String.valueOf((char) 0x1e);
 
