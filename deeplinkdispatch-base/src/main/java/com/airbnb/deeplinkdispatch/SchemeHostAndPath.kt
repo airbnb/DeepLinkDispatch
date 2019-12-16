@@ -1,6 +1,7 @@
 package com.airbnb.deeplinkdispatch
 
 import com.airbnb.deeplinkdispatch.base.MatchIndex
+import com.sun.corba.se.impl.protocol.giopmsgheaders.MessageBase.typeToString
 
 /**
  * Used to encapsulate the scheme host and path of a DeepLinkUri into a type.
@@ -24,4 +25,19 @@ class SchemeHostAndPath(val uri: DeepLinkUri) {
     }
 }
 
-data class UrlElement(val type: Byte, val value: ByteArray)
+class UrlElement(val type: Byte, val value: ByteArray) {
+
+    override fun toString(): String {
+        return "Type: ${typeToString()}, Value: ${String(value)}"
+    }
+
+    private fun typeToString(): String {
+        return when(type){
+            MatchIndex.TYPE_ROOT -> "root"
+            MatchIndex.TYPE_SCHEME -> "scheme"
+            MatchIndex.TYPE_HOST    -> "host"
+            MatchIndex.TYPE_PATH_SEGMENT -> "path_segment"
+            else -> "unknown"
+        }
+    }
+}
