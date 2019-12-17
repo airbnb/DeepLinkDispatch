@@ -10,7 +10,7 @@ import static com.google.common.truth.Truth.assertAbout;
 import static com.google.testing.compile.JavaSourceSubjectFactory.javaSource;
 import static com.google.testing.compile.JavaSourcesSubjectFactory.javaSources;
 
-public class DeepLinkProcessorTest {
+public class DeepLinkProcessorNonIncrementalTest {
   private static final JavaFileObject SIMPLE_DEEPLINK_ACTIVITY = JavaFileObjects
       .forSourceString("SampleActivity", "package com.example;"
           + "import com.airbnb.deeplinkdispatch.DeepLink;\n"
@@ -27,6 +27,14 @@ public class DeepLinkProcessorTest {
           + "public class SampleModule {\n"
           + "}");
 
+  private static final JavaFileObject SIMPLE_DEEPLINK_MODULE_UPPERCASE_PACKAGE =
+      JavaFileObjects.forSourceString(
+      "SampleModule", "package com.Example;"
+          + "import com.airbnb.deeplinkdispatch.DeepLinkModule;\n\n"
+          + "@DeepLinkModule\n"
+          + "public class SampleModule {\n"
+          + "}");
+
   @Test public void testProcessor() {
     JavaFileObject sampleActivity = JavaFileObjects
         .forSourceString("SampleActivity", "package com.example;"
@@ -38,15 +46,8 @@ public class DeepLinkProcessorTest {
             + "public class SampleActivity {\n"
             + "}");
 
-    JavaFileObject module = JavaFileObjects.forSourceString(
-        "SampleModule", "package com.example;"
-            + "import com.airbnb.deeplinkdispatch.DeepLinkModule;\n\n"
-            + "@DeepLinkModule\n"
-            + "public class SampleModule {\n"
-            + "}");
-
     assertAbout(javaSources())
-        .that(Arrays.asList(module, sampleActivity))
+        .that(Arrays.asList(SIMPLE_DEEPLINK_MODULE, sampleActivity))
         .processedWith(new DeepLinkProcessor())
         .compilesWithoutError()
         .and()
@@ -106,16 +107,9 @@ public class DeepLinkProcessorTest {
             + "public class SampleActivity {\n"
             + "}");
 
-    JavaFileObject module = JavaFileObjects.forSourceString(
-        "SampleModule", "package com.example;"
-            + "import com.airbnb.deeplinkdispatch.DeepLinkModule;\n\n"
-            + "@DeepLinkModule\n"
-            + "public class SampleModule {\n"
-            + "}");
-
     assertAbout(javaSources())
         .that(Arrays.asList(customAnnotationAppLink, customAnnotationWebLink,
-            module, sampleActivity))
+            SIMPLE_DEEPLINK_MODULE, sampleActivity))
         .processedWith(new DeepLinkProcessor())
         .compilesWithoutError()
         .and()
@@ -229,15 +223,8 @@ public class DeepLinkProcessorTest {
             + "public class SampleActivity {\n"
             + "}");
 
-    JavaFileObject module = JavaFileObjects.forSourceString(
-        "SampleModule", "package com.Example;"
-            + "import com.airbnb.deeplinkdispatch.DeepLinkModule;\n\n"
-            + "@DeepLinkModule\n"
-            + "public class SampleModule {\n"
-            + "}");
-
     assertAbout(javaSources())
-        .that(Arrays.asList(module, activityWithUppercasePackage))
+        .that(Arrays.asList(SIMPLE_DEEPLINK_MODULE_UPPERCASE_PACKAGE, activityWithUppercasePackage))
         .processedWith(new DeepLinkProcessor())
         .compilesWithoutError()
         .and()
@@ -356,15 +343,8 @@ public class DeepLinkProcessorTest {
             + "}"
         );
 
-    JavaFileObject module = JavaFileObjects.forSourceString(
-        "SampleModule", "package com.example;"
-            + "import com.airbnb.deeplinkdispatch.DeepLinkModule;\n\n"
-            + "@DeepLinkModule\n"
-            + "public class SampleModule {\n"
-            + "}");
-
     assertAbout(javaSources())
-        .that(Arrays.asList(module, sampleActivity))
+        .that(Arrays.asList(SIMPLE_DEEPLINK_MODULE, sampleActivity))
         .processedWith(new DeepLinkProcessor())
         .compilesWithoutError()
         .and()
