@@ -6,7 +6,7 @@ import java.io.OutputStream
 import java.nio.charset.Charset
 import kotlin.text.Charsets.UTF_8
 
-data class UriMatch(val uri: DeepLinkUri, val matchId: Int)
+data class UriMatch(val uri: DeepLinkUri, val matchId: Int, val annotatedElement: String, val annotatedMethod: String?)
 
 @kotlin.ExperimentalUnsignedTypes
 open class TreeNode(open val id: String, val type: UByte, open val placeholder: Boolean = false) {
@@ -87,19 +87,19 @@ data class Root(override val id: String = "r") : TreeNode(ROOT_VALUE, TYPE_ROOT.
     /**
      * Add the given DeepLinkUri to the the trie
      */
-    fun addToTrie(matchIndex: Int, deeplinkUri: DeepLinkUri) {
+    fun addToTrie(matchIndex: Int, deeplinkUri: DeepLinkUri, annotatedElement: String, annotatedMethod: String?) {
         var node = this.addNode(Scheme(deeplinkUri.scheme()))
         if (!deeplinkUri.host().isNullOrEmpty()) {
             node = node.addNode(Host(deeplinkUri.host(), hasPlaceholders(deeplinkUri.host())))
             if (deeplinkUri.pathSegments().isNullOrEmpty()) {
-                node.match = UriMatch(deeplinkUri, matchIndex)
+                node.match = UriMatch(deeplinkUri, matchIndex, annotatedElement, annotatedMethod)
             }
         }
         if (!deeplinkUri.pathSegments().isNullOrEmpty()) {
             for (pathSegment in deeplinkUri.pathSegments()) {
                 node = node.addNode(PathSegment(pathSegment, hasPlaceholders(pathSegment)))
             }
-            node.match = UriMatch(deeplinkUri, matchIndex)
+            node.match = UriMatch(deeplinkUri, matchIndex, annotatedElement, annotatedMethod)
         }
     }
 

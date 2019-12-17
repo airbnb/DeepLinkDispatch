@@ -342,7 +342,8 @@ public class DeepLinkProcessor extends AbstractProcessor {
       String uri = element.getUri();
       DeepLinkUri deeplinkUri = DeepLinkUri.parse(uri);
 
-      urisTrie.addToTrie(i, deeplinkUri);
+      urisTrie.addToTrie(i, deeplinkUri, element.getAnnotatedElement().toString(),
+          element.getMethod());
 
       deeplinks.add("new DeepLinkEntry($S, $L, $T.class, $S)$L\n",
           uri, type, activity, method, (i < totalElements - 1) ? "," : "");

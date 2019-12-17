@@ -2,8 +2,6 @@ package com.airbnb.deeplinkdispatch
 
 import com.airbnb.deeplinkdispatch.base.MatchIndex
 
-import java.util.Collections
-
 /**
  * BaseLoader classes are used for keeping a registry of deep links and dispatching them
  * from Intents.

@@ -255,7 +255,7 @@ public class DeepLinkEntryTest {
     private static byte[] getSearchIndex(List<DeepLinkEntry> registry) {
       Root trieRoot = new Root();
       for (int i = 0; i < registry.size(); i++) {
-        trieRoot.addToTrie(i, DeepLinkUri.parse(registry.get(i).getUriTemplate()));
+        trieRoot.addToTrie(i, DeepLinkUri.parse(registry.get(i).getUriTemplate()),registry.get(i).getActivityClass().toString(), registry.get(i).getMethod());
       }
       return trieRoot.toUByteArray();
     }
