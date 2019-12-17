@@ -16,7 +16,6 @@ dependencies {
   implementation deps.appCompat
   testImplementation deps.junit
   testImplementation deps.assertJ
-  testApi project(':deeplinkdispatch-processor')
 }
 
 checkstyle {
