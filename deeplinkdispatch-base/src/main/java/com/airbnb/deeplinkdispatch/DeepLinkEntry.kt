@@ -39,8 +39,7 @@ class DeepLinkEntry(val uriTemplate: String,
         return parameterMap.get(inputUri) ?: emptyMap()
     }
 
-    fun setParameters(deepLinkUri: DeepLinkUri, parameterMap: MutableMap<String, String>) {
-        this.parameterMap.put(deepLinkUri, parameterMap)
+    fun setParameters(deepLinkUri: DeepLinkUri, parameterMap: Map<String, String>) {
+        this.parameterMap[deepLinkUri] = parameterMap
     }
-
 }

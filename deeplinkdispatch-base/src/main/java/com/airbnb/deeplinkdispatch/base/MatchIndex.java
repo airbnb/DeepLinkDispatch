@@ -60,11 +60,11 @@ public class MatchIndex {
    * Lenght of header elements in bytes
    */
   private static final int HEADER_TYPE_LENGTH = 1;
-  private static final int HEADER_VALUE_LENGHT = 1;
+  private static final int HEADER_VALUE_LENGTH = 1;
   private static final int HEADER_CHILDREN_LENGTH = 4;
   private static final int HEADER_MATCH_ID_LENGTH = 2;
 
-  public static final int HEADER_LENGTH = HEADER_TYPE_LENGTH + HEADER_VALUE_LENGHT
+  public static final int HEADER_LENGTH = HEADER_TYPE_LENGTH + HEADER_VALUE_LENGTH
       + HEADER_CHILDREN_LENGTH + HEADER_MATCH_ID_LENGTH;
 
   /**
@@ -261,7 +261,7 @@ public class MatchIndex {
    * @return The length of the children section of this element.
    */
   private int getChildrenLength(int elementStartPos) {
-    return readFourBytesAsInt(elementStartPos + HEADER_TYPE_LENGTH + HEADER_VALUE_LENGHT);
+    return readFourBytesAsInt(elementStartPos + HEADER_TYPE_LENGTH + HEADER_VALUE_LENGTH);
   }
 
   /**
@@ -270,7 +270,7 @@ public class MatchIndex {
    * match.
    */
   private int getMatchIndex(int elementStartPos) {
-    return readTwoBytesAsInt(elementStartPos + HEADER_TYPE_LENGTH + HEADER_VALUE_LENGHT
+    return readTwoBytesAsInt(elementStartPos + HEADER_TYPE_LENGTH + HEADER_VALUE_LENGTH
         + HEADER_CHILDREN_LENGTH);
   }
 

@@ -5,7 +5,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.SystemClock;
 import android.util.Log;
 
 import androidx.core.app.TaskStackBuilder;
@@ -32,19 +31,14 @@ public class BaseDeepLinkDelegate {
   }
 
   private DeepLinkEntry findEntry(String uriString) {
-    SchemeHostAndPath schemeHostAndPath = new SchemeHostAndPath(DeepLinkUri.parse(uriString));
     DeepLinkEntry entryRegExpMatch = null;
     DeepLinkEntry entryIdxMatch = null;
-    long regExSearchStart = SystemClock.elapsedRealtime();
-    long regExSearchEnd = SystemClock.elapsedRealtime();
-    long idxSearchStart = SystemClock.elapsedRealtime();
     for (BaseLoader loader : loaders) {
       entryIdxMatch = loader.idxMatch(DeepLinkUri.parse(uriString));
       if (entryIdxMatch != null) {
         break;
       }
     }
-    long idxSearchEnd = SystemClock.elapsedRealtime();
     return entryIdxMatch;
   }
 
