@@ -4,6 +4,7 @@ apply plugin: 'kotlin'
 sourceCompatibility = 1.7
 
 apply plugin: 'checkstyle'
+apply plugin: 'com.vanniktech.maven.publish'
 
 dependencies {
   implementation deps.okio
