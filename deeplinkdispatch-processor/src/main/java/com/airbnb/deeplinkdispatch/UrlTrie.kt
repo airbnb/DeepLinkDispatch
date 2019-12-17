@@ -70,7 +70,7 @@ open class TrieNode(open val id: String, val type: UByte, open val placeholder: 
 
 }
 
-private val MAX_EXPOT_STRING_SIZE = 60000
+private val MAX_EXPOT_STRING_SIZE = 50000
 
 data class Root(override val id: String = "r") : TrieNode(ROOT_VALUE, TYPE_ROOT.toUByte()) {
     fun writeToOutoutStream(openOutputStream: OutputStream) {
