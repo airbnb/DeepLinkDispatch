@@ -9,15 +9,15 @@ import kotlin.text.Charsets.UTF_8
 data class UriMatch(val uri: DeepLinkUri, val matchId: Int)
 
 @kotlin.ExperimentalUnsignedTypes
-open class TrieNode(open val id: String, val type: UByte, open val placeholder: Boolean = false) {
+open class TreeNode(open val id: String, val type: UByte, open val placeholder: Boolean = false) {
 
-    val children = mutableSetOf<TrieNode>()
+    val children = mutableSetOf<TreeNode>()
     var match: UriMatch? = null
         set(value) {
             if (field != null) error("Ambiguous URI. Same match for two URIs ($field vs $value)") else field = value
         }
 
-    fun addNode(node: TrieNode): TrieNode {
+    fun addNode(node: TreeNode): TreeNode {
         return if (children.add(node)) node else children.first { it == node }
     }
 
@@ -72,7 +72,7 @@ open class TrieNode(open val id: String, val type: UByte, open val placeholder: 
 
 private val MAX_EXPOT_STRING_SIZE = 50000
 
-data class Root(override val id: String = "r") : TrieNode(ROOT_VALUE, TYPE_ROOT.toUByte()) {
+data class Root(override val id: String = "r") : TreeNode(ROOT_VALUE, TYPE_ROOT.toUByte()) {
     fun writeToOutoutStream(openOutputStream: OutputStream) {
         openOutputStream.write(this.toUByteArray().toByteArray())
     }
@@ -111,11 +111,11 @@ data class Root(override val id: String = "r") : TrieNode(ROOT_VALUE, TYPE_ROOT.
     }
 }
 
-data class Scheme(override val id: String) : TrieNode(id = id, type = TYPE_SCHEME.toUByte())
+data class Scheme(override val id: String) : TreeNode(id = id, type = TYPE_SCHEME.toUByte())
 
-data class Host(override val id: String, override val placeholder: Boolean = false) : TrieNode(id = id, type = TYPE_HOST.toUByte())
+data class Host(override val id: String, override val placeholder: Boolean = false) : TreeNode(id = id, type = TYPE_HOST.toUByte())
 
-data class PathSegment(override val id: String, override val placeholder: Boolean = false) : TrieNode(id = id, type = TYPE_PATH_SEGMENT.toUByte())
+data class PathSegment(override val id: String, override val placeholder: Boolean = false) : TreeNode(id = id, type = TYPE_PATH_SEGMENT.toUByte())
 
 fun UByteArray.writeUIntAt(startIndex: Int, value: UInt) {
     val ubyte3: UByte = value.and(0x000000FFu).toUByte().toUByte()

@@ -341,7 +341,7 @@ public class DeepLinkProcessor extends AbstractProcessor {
    *
    * e.g. "method1(), method2()" etc.
    *
-   * @param urisTrie The {@link UrlTrieKt} containing all Urls that can be matched.
+   * @param urisTrie The {@link UrlTreeKt} containing all Urls that can be matched.
    * @param deeplinkLoaderBuilder The builder used to add the methods
    * @return
    */
