@@ -64,7 +64,7 @@ open class TreeNode(open val id: String, val type: UByte, open val placeholder: 
             set(0, type)
             set(1, value.size.toUByte()) // If this is a placeholder we will only save one byte
             writeUIntAt(2, childrenLength.toUInt())
-            writeUShortAt(6, if (match == null) UShort.MAX_VALUE else match.matchId.toUShort())
+            writeUShortAt(6, if (match == null) MatchIndex.NO_MATH.toUShort() else match.matchId.toUShort())
         }
     }
 

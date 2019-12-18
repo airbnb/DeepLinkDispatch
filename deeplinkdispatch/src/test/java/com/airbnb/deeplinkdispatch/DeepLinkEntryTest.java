@@ -169,6 +169,15 @@ public class DeepLinkEntryTest {
     assertThat(match).isNull();
   }
 
+  @Test public void testNoMatchForPartialOfRealMatch() {
+    DeepLinkEntry entry = deepLinkEntry("airbnb://host/something/something");
+
+    TestDeepLinkLoader testLoader = getTestDelgate(Arrays.asList(new DeepLinkEntry[] {entry}));
+    DeepLinkEntry match = testLoader.idxMatch(DeepLinkUri.parse("airbnb://host/something"));
+
+    assertThat(match).isNull();
+  }
+
   @Test public void invalidUrl() {
     DeepLinkEntry entry = deepLinkEntry("airbnb://something");
 

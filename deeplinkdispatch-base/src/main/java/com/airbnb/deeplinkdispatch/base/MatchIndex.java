@@ -40,7 +40,7 @@ import java.util.Map;
  *        |             |                           |             |                           |
  * -------+---------------------------+-------------+-------------+---------------------------+
  * </pre>
- *
+ * <p>
  * This is implemenmted in Java for speed reasons. Converting this class to Kotlin made the
  * whole lookup operation multiple times slower.
  * This is most likely not a Kotlin issue but some syntactic sugar used must have crated some
@@ -74,6 +74,11 @@ public class MatchIndex {
   public static final byte TYPE_SCHEME = (byte) 1;
   public static final byte TYPE_HOST = (byte) 2;
   public static final byte TYPE_PATH_SEGMENT = (byte) 3;
+
+  /**
+   * Marker for no match
+   */
+  public static final int NO_MATH = 0xffff;
 
   /**
    * Used as a value placeholder to indicate the value is a placeholder
@@ -112,8 +117,8 @@ public class MatchIndex {
         if (!compareResult.isEmpty()) {
           // We need to have a new HashMap for every aprtial match to make sure that the
           // placeholders found in other partial matches do not overlap with the actual final match.
-            placeholdersOutput = new HashMap<>(placeholders != null ? placeholders
-                : Collections.<String, String>emptyMap());
+          placeholdersOutput = new HashMap<>(placeholders != null ? placeholders
+              : Collections.<String, String>emptyMap());
           String[] compareParams = compareResult.split(MATCH_PARAM_DIVIDER_CHAR);
           // Add the found placeholder set to the map.
           placeholdersOutput.put(compareParams[0], compareParams[1]);
@@ -126,7 +131,12 @@ public class MatchIndex {
                 childrenPos, getElementBoundaryPos(currentElementStartPosition));
           }
         } else {
-          match = new Match(getMatchIndex(currentElementStartPosition), placeholdersOutput == null
+          int matchIndex = getMatchIndex(currentElementStartPosition);
+          // Url is a partial match.
+          if (matchIndex == NO_MATH) {
+            return null;
+          }
+          match = new Match(matchIndex, placeholdersOutput == null
               ? new HashMap<String, String>(0) : placeholdersOutput);
         }
       }
