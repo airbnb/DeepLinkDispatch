@@ -246,7 +246,7 @@ public class DeepLinkEntryTest {
     return new TestDeepLinkLoader(deepLinkEntries);
   }
 
-  private static class TestDeepLinkLoader extends BaseLoader {
+  private static class TestDeepLinkLoader extends BaseRegistry {
     public TestDeepLinkLoader(List<DeepLinkEntry> registry) {
       super(registry, getSearchIndex(registry));
     }

@@ -3,15 +3,15 @@ package com.airbnb.deeplinkdispatch
 import com.airbnb.deeplinkdispatch.base.MatchIndex
 
 /**
- * BaseLoader classes are used for keeping a registry of deep links and dispatching them
+ * BaseRegistry classes are used for keeping a registry of deep links and dispatching them
  * from Intents.
  *
  * This uses a List of DeepLinkEntries collected from a Module. And a binary match index.
  *
- * Both of them are initialzied by annotation processor generated children of this class.
+ * Both of them are initialized by annotation processor generated children of this class.
  */
-abstract class BaseLoader(val registeredDeepLinks: List<DeepLinkEntry>,
-                          /**
+abstract class BaseRegistry(val registeredDeepLinks: List<DeepLinkEntry>,
+                            /**
                            * A binary match index, created by the annotation processor.
                            * In a wrapper to make handling it easier
                            */

@@ -53,18 +53,18 @@ public class DeepLinkProcessorNonIncrementalTest {
         .and()
         .generatesSources(
             JavaFileObjects.forResource("DeepLinkDelegate.java"),
-            JavaFileObjects.forSourceString("/SOURCE_OUTPUT.com.example.SampleModuleLoader",
+            JavaFileObjects.forSourceString("/SOURCE_OUTPUT.com.example.SampleModuleRegistry",
                 "package com.example;\n"
                     + "\n"
-                    + "import com.airbnb.deeplinkdispatch.BaseLoader;\n"
+                    + "import com.airbnb.deeplinkdispatch.BaseRegistry;\n"
                     + "import com.airbnb.deeplinkdispatch.DeepLinkEntry;\n"
                     + "import com.airbnb.deeplinkdispatch.base.Utils;\n"
                     + "import java.lang.String;\n"
                     + "import java.util.Arrays;\n"
                     + "import java.util.Collections;\n"
                     + "\n"
-                    + "public final class SampleModuleLoader extends BaseLoader {\n"
-                    + "  public SampleModuleLoader() {\n"
+                    + "public final class SampleModuleRegistry extends BaseRegistry {\n"
+                    + "  public SampleModuleRegistry() {\n"
                     + "    super(Collections.unmodifiableList(Arrays.<DeepLinkEntry>asList(\n"
                     + "      new DeepLinkEntry(\"airbnb://example.com/deepLink\", DeepLinkEntry."
                     + "Type.CLASS, SampleActivity.class, null)\n"
@@ -115,18 +115,18 @@ public class DeepLinkProcessorNonIncrementalTest {
         .and()
         .generatesSources(
             JavaFileObjects.forResource("DeepLinkDelegate.java"),
-            JavaFileObjects.forSourceString("/SOURCE_OUTPUT.com.example.SampleModuleLoader",
+            JavaFileObjects.forSourceString("/SOURCE_OUTPUT.com.example.SampleModuleRegistry",
                 "package com.example;\n"
                     + "\n"
-                    + "import com.airbnb.deeplinkdispatch.BaseLoader;\n"
+                    + "import com.airbnb.deeplinkdispatch.BaseRegistry;\n"
                     + "import com.airbnb.deeplinkdispatch.DeepLinkEntry;\n"
                     + "import com.airbnb.deeplinkdispatch.base.Utils;\n"
                     + "import java.lang.String;\n"
                     + "import java.util.Arrays;\n"
                     + "import java.util.Collections;\n"
                     + "\n"
-                    + "public final class SampleModuleLoader extends BaseLoader {\n"
-                    + "  public SampleModuleLoader() {\n"
+                    + "public final class SampleModuleRegistry extends BaseRegistry {\n"
+                    + "  public SampleModuleRegistry() {\n"
                     + "    super(Collections.unmodifiableList(Arrays.<DeepLinkEntry>asList(\n"
                     + "      new DeepLinkEntry(\"airbnb://example.com/deepLink\", DeepLinkEntry."
                     + "Type.CLASS, SampleActivity.class, null),\n"
@@ -232,18 +232,18 @@ public class DeepLinkProcessorNonIncrementalTest {
         .and()
         .generatesSources(
             JavaFileObjects.forSourceString("/SOURCE_OUTPUT.com.Example."
-                    + "SampleModuleLoader",
+                    + "SampleModuleRegistry",
                 "package com.Example;\n"
                     + "\n"
-                    + "import com.airbnb.deeplinkdispatch.BaseLoader;\n"
+                    + "import com.airbnb.deeplinkdispatch.BaseRegistry;\n"
                     + "import com.airbnb.deeplinkdispatch.DeepLinkEntry;\n"
                     + "import com.airbnb.deeplinkdispatch.base.Utils;\n"
                     + "import java.lang.String;\n"
                     + "import java.util.Arrays;\n"
                     + "import java.util.Collections;\n"
                     + "\n"
-                    + "public final class SampleModuleLoader extends BaseLoader {\n"
-                    + "  public SampleModuleLoader() {\n"
+                    + "public final class SampleModuleRegistry extends BaseRegistry {\n"
+                    + "  public SampleModuleRegistry() {\n"
                     + "    super(Collections.unmodifiableList(Arrays.<DeepLinkEntry>asList(\n"
                     + "      new DeepLinkEntry(\"airbnb://example.com/deepLink\", DeepLinkEntry."
                     + "Type.CLASS, SampleActivity.class, null)\n"
@@ -353,18 +353,18 @@ public class DeepLinkProcessorNonIncrementalTest {
         .generatesSources(
             JavaFileObjects.forResource("DeepLinkDelegate.java"),
             JavaFileObjects.forSourceString("/SOURCE_OUTPUT.com.example."
-                    + "SampleModuleLoader",
+                    + "SampleModuleRegistry",
                 "package com.example;\n"
                     + "\n"
-                    + "import com.airbnb.deeplinkdispatch.BaseLoader;\n"
+                    + "import com.airbnb.deeplinkdispatch.BaseRegistry;\n"
                     + "import com.airbnb.deeplinkdispatch.DeepLinkEntry;\n"
                     + "import com.airbnb.deeplinkdispatch.base.Utils;\n"
                     + "import java.lang.String;\n"
                     + "import java.util.Arrays;\n"
                     + "import java.util.Collections;\n"
                     + "\n"
-                    + "public final class SampleModuleLoader extends BaseLoader {\n"
-                    + "  public SampleModuleLoader() {\n"
+                    + "public final class SampleModuleRegistry extends BaseRegistry {\n"
+                    + "  public SampleModuleRegistry() {\n"
                     + "    super(Collections.unmodifiableList(Arrays.<DeepLinkEntry>asList(\n"
                     + "      new DeepLinkEntry(\"airbnb://host/path1/path3?q={q}\", DeepLinkEntry."
                     + "Type.METHOD, SampleActivity.class, \"intentFromTwoPathWithQuery\"),\n"

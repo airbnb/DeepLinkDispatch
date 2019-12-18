@@ -5,7 +5,7 @@ import android.content.Intent;
 import android.net.Uri;
 
 import com.airbnb.deeplinkdispatch.DeepLink;
-import com.airbnb.deeplinkdispatch.sample.library.LibraryDeepLinkModuleLoader;
+import com.airbnb.deeplinkdispatch.sample.library.LibraryDeepLinkModuleRegistry;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -161,8 +161,8 @@ public class MainActivityTest {
 
   @Test
   public void testSupportsUri() throws Exception {
-    DeepLinkDelegate deepLinkDelegate = new DeepLinkDelegate(new SampleModuleLoader(),
-        new LibraryDeepLinkModuleLoader());
+    DeepLinkDelegate deepLinkDelegate = new DeepLinkDelegate(new SampleModuleRegistry(),
+        new LibraryDeepLinkModuleRegistry());
     assertThat(deepLinkDelegate.supportsUri("dld://classDeepLink"), equalTo(true));
     assertThat(deepLinkDelegate.supportsUri("some://weirdNonExistentUri"), equalTo(false));
   }

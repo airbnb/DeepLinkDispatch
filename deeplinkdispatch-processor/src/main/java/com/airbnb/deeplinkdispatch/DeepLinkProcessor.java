@@ -84,6 +84,7 @@ public class DeepLinkProcessor extends AbstractProcessor {
       = ClassName.get(PACKAGE_NAME, DeepLinkEntry.class.getSimpleName());
   private static final Class<DeepLink> DEEP_LINK_CLASS = DeepLink.class;
   private static final Class<DeepLinkSpec> DEEP_LINK_SPEC_CLASS = DeepLinkSpec.class;
+  public static final String REGISTRY_CLASS_SUFFIX = "Registry";
 
   private Filer filer;
   private Messager messager;
@@ -349,9 +350,9 @@ public class DeepLinkProcessor extends AbstractProcessor {
           uri, type, activity, method, (i < totalElements - 1) ? "," : "");
     }
 
-    TypeSpec.Builder deeplinkLoaderBuilder = TypeSpec.classBuilder(className + "Loader")
-        .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
-        .superclass(ClassName.get(BaseLoader.class));
+    TypeSpec.Builder deeplinkLoaderBuilder = TypeSpec.classBuilder(className
+        + REGISTRY_CLASS_SUFFIX).addModifiers(Modifier.PUBLIC, Modifier.FINAL)
+        .superclass(ClassName.get(BaseRegistry.class));
 
     StringBuilder stringMethodNames = getStringMethodNames(urisTrie, deeplinkLoaderBuilder);
 
@@ -404,12 +405,12 @@ public class DeepLinkProcessor extends AbstractProcessor {
   }
 
   private static String moduleNameToLoaderName(TypeElement typeElement) {
-    return typeElement.getSimpleName().toString() + "Loader";
+    return typeElement.getSimpleName().toString() + REGISTRY_CLASS_SUFFIX;
   }
 
   private static ClassName moduleElementToLoaderClassName(TypeElement element) {
     return ClassName.get(getPackage(element).getQualifiedName().toString(),
-        element.getSimpleName().toString() + "Loader");
+        element.getSimpleName().toString() + REGISTRY_CLASS_SUFFIX);
   }
 
   private static PackageElement getPackage(Element type) {

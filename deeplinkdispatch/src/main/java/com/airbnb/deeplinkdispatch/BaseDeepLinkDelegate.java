@@ -20,20 +20,20 @@ public class BaseDeepLinkDelegate {
 
   protected static final String TAG = "DeepLinkDelegate";
 
-  protected final List<? extends BaseLoader> loaders;
+  protected final List<? extends BaseRegistry> loaders;
 
-  public List<? extends BaseLoader> getLoaders() {
+  public List<? extends BaseRegistry> getLoaders() {
     return loaders;
   }
 
-  public BaseDeepLinkDelegate(List<? extends BaseLoader> loaders) {
+  public BaseDeepLinkDelegate(List<? extends BaseRegistry> loaders) {
     this.loaders = loaders;
   }
 
   private DeepLinkEntry findEntry(String uriString) {
     DeepLinkEntry entryRegExpMatch = null;
     DeepLinkEntry entryIdxMatch = null;
-    for (BaseLoader loader : loaders) {
+    for (BaseRegistry loader : loaders) {
       entryIdxMatch = loader.idxMatch(DeepLinkUri.parse(uriString));
       if (entryIdxMatch != null) {
         break;

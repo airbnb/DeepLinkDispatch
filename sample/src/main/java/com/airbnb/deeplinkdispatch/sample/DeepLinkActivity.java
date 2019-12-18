@@ -9,7 +9,7 @@ import android.util.Log;
 
 import com.airbnb.deeplinkdispatch.DeepLinkHandler;
 import com.airbnb.deeplinkdispatch.sample.library.LibraryDeepLinkModule;
-import com.airbnb.deeplinkdispatch.sample.library.LibraryDeepLinkModuleLoader;
+import com.airbnb.deeplinkdispatch.sample.library.LibraryDeepLinkModuleRegistry;
 
 @DeepLinkHandler({SampleModule.class, LibraryDeepLinkModule.class})
 public class DeepLinkActivity extends Activity {
@@ -17,9 +17,9 @@ public class DeepLinkActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
     Debug.startMethodTracing("deeplink.trace",90000000);
-        LibraryDeepLinkModuleLoader libraryDeepLinkModuleLoader = new LibraryDeepLinkModuleLoader();
+        LibraryDeepLinkModuleRegistry libraryDeepLinkModuleLoader = new LibraryDeepLinkModuleRegistry();
         DeepLinkDelegate deepLinkDelegate = new DeepLinkDelegate(
-                new SampleModuleLoader(), libraryDeepLinkModuleLoader);
+                new SampleModuleRegistry(), libraryDeepLinkModuleLoader);
 
         deepLinkDelegate.dispatchFrom(this);
     Debug.stopMethodTracing();
