@@ -12,6 +12,7 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -109,7 +110,7 @@ public class BaseDeepLinkDelegate {
         null, null, null);
     }
     DeepLinkUri deepLinkUri = DeepLinkUri.parse(uriString);
-    Map<String, String> parameterMap = deepLinkEntry.getParameters(deepLinkUri);
+    Map<String, String> parameterMap = new HashMap<>(deepLinkEntry.getParameters(deepLinkUri));
     for (String queryParameter : deepLinkUri.queryParameterNames()) {
       for (String queryParameterValue : deepLinkUri.queryParameterValues(queryParameter)) {
         if (parameterMap.containsKey(queryParameter)) {
