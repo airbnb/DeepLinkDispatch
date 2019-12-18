@@ -4,8 +4,6 @@ import java.io.InputStream
 
 object Utils {
 
-    private val TAG = "Utils"
-
     @JvmStatic
     fun readMatchIndexFromStrings(strings: Array<String>): ByteArray? {
         if (strings.size == 0) {
