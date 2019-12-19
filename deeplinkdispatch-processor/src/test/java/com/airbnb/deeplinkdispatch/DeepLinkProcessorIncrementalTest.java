@@ -55,20 +55,31 @@ public class DeepLinkProcessorIncrementalTest {
         .and()
         .generatesSources(
             JavaFileObjects.forResource("DeepLinkDelegate.java"),
-            JavaFileObjects.forSourceString("/SOURCE_OUTPUT.com.example.SampleModuleLoader",
+            JavaFileObjects.forSourceString("/SOURCE_OUTPUT.com.example"
+                    + ".SampleModuleRegistry",
                 "package com.example;\n"
                     + "\n"
+                    + "import com.airbnb.deeplinkdispatch.BaseRegistry;\n"
                     + "import com.airbnb.deeplinkdispatch.DeepLinkEntry;\n"
-                    + "import com.airbnb.deeplinkdispatch.Parser;\n"
+                    + "import com.airbnb.deeplinkdispatch.base.Utils;\n"
+                    + "import java.lang.String;\n"
                     + "import java.util.Arrays;\n"
                     + "import java.util.Collections;\n"
                     + "\n"
-                    + "public final class SampleModuleLoader extends Parser {\n"
-                    + "  public SampleModuleLoader() {"
+                    + "public final class SampleModuleRegistry extends BaseRegistry {\n"
+                    + "  public SampleModuleRegistry() {\n"
                     + "    super(Collections.unmodifiableList(Arrays.<DeepLinkEntry>asList(\n"
-                    + "    new DeepLinkEntry(\"example://example.com/deepLink\", DeepLinkEntry.Type"
-                    + ".CLASS, SampleActivity.class, null)));\n"
+                    + "      new DeepLinkEntry(\"example://example.com/deepLink\", "
+                    + "DeepLinkEntry.Type.CLASS, SampleActivity.class, null)\n"
+                    + "    )), Utils.readMatchIndexFromStrings( new String[] "
+                    + "{matchIndex0(), } ));\n"
                     + "  }\n"
+                    + "\n"
+                    + "  private static String matchIndex0() {\n"
+                    + "    return \"\\u0000\\u0001\\u0000\\u0000\\u00002ÿÿr\\u0001\\u0007\\u0000"
+                    + "\\u0000\\u0000#ÿÿexample\\u0002\\u000b\\u0000\\u0000\\u0000"
+                    + "\\u0010ÿÿexample.com\\u0003\\b\\u0000\\u0000\\u0000\\u0000\\u0000"
+                    + "\\u0000deepLink\";}\n"
                     + "}"
             ));
   }
@@ -82,19 +93,26 @@ public class DeepLinkProcessorIncrementalTest {
         .and()
         .generatesSources(
             JavaFileObjects.forResource("DeepLinkDelegate.java"),
-            JavaFileObjects.forSourceString("/SOURCE_OUTPUT.com.example.SampleModuleLoader",
+            JavaFileObjects.forSourceString("/SOURCE_OUTPUT.com.example"
+                    + ".SampleModuleRegistry",
                 "package com.example;\n"
                     + "\n"
+                    + "import com.airbnb.deeplinkdispatch.BaseRegistry;\n"
                     + "import com.airbnb.deeplinkdispatch.DeepLinkEntry;\n"
-                    + "import com.airbnb.deeplinkdispatch.Parser;\n"
+                    + "import com.airbnb.deeplinkdispatch.base.Utils;\n"
+                    + "import java.lang.String;\n"
                     + "import java.util.Arrays;\n"
                     + "import java.util.Collections;\n"
                     + "\n"
-                    + "public final class SampleModuleLoader extends Parser {\n"
-                    + "  public SampleModuleLoader() {"
+                    + "public final class SampleModuleRegistry extends BaseRegistry {\n"
+                    + "  public SampleModuleRegistry() {\n"
                     + "    super(Collections.unmodifiableList(Arrays.<DeepLinkEntry>asList(\n"
-                    + "    )));"
+                    + "    )), Utils.readMatchIndexFromStrings( new String[] "
+                    + "{matchIndex0(), } ));\n"
                     + "  }\n"
+                    + "\n"
+                    + "  private static String matchIndex0() {\n"
+                    + "    return \"\\u0000\\u0001\\u0000\\u0000\\u0000\\u0000ÿÿr\";}\n"
                     + "}"
             ));
   }

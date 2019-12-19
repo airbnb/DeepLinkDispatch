@@ -27,6 +27,14 @@ public class DeepLinkProcessorNonIncrementalTest {
           + "public class SampleModule {\n"
           + "}");
 
+  private static final JavaFileObject SIMPLE_DEEPLINK_MODULE_UPPERCASE_PACKAGE =
+      JavaFileObjects.forSourceString(
+      "SampleModule", "package com.Example;"
+          + "import com.airbnb.deeplinkdispatch.DeepLinkModule;\n\n"
+          + "@DeepLinkModule\n"
+          + "public class SampleModule {\n"
+          + "}");
+
   @Test public void testProcessor() {
     JavaFileObject sampleActivity = JavaFileObjects
         .forSourceString("SampleActivity", "package com.example;"
@@ -45,23 +53,31 @@ public class DeepLinkProcessorNonIncrementalTest {
         .and()
         .generatesSources(
             JavaFileObjects.forResource("DeepLinkDelegate.java"),
-            JavaFileObjects.forSourceString("/SOURCE_OUTPUT.com.example.SampleModuleLoader",
+            JavaFileObjects.forSourceString("/SOURCE_OUTPUT.com.example.SampleModuleRegistry",
                 "package com.example;\n"
                     + "\n"
+                    + "import com.airbnb.deeplinkdispatch.BaseRegistry;\n"
                     + "import com.airbnb.deeplinkdispatch.DeepLinkEntry;\n"
-                    + "import com.airbnb.deeplinkdispatch.Parser;\n"
+                    + "import com.airbnb.deeplinkdispatch.base.Utils;\n"
+                    + "import java.lang.String;\n"
                     + "import java.util.Arrays;\n"
                     + "import java.util.Collections;\n"
                     + "\n"
-                    + "public final class SampleModuleLoader extends Parser {\n"
-                    + "  public SampleModuleLoader() {"
+                    + "public final class SampleModuleRegistry extends BaseRegistry {\n"
+                    + "  public SampleModuleRegistry() {\n"
                     + "    super(Collections.unmodifiableList(Arrays.<DeepLinkEntry>asList(\n"
                     + "      new DeepLinkEntry(\"airbnb://example.com/deepLink\", DeepLinkEntry."
                     + "Type.CLASS, SampleActivity.class, null)\n"
-                    + "    )));\n"
-                    + "  }\n"
+                    + "    )), Utils.readMatchIndexFromStrings( new String[] {matchIndex0(), }"
+                    + " ));\n }\n"
+                    + "\n"
+                    + "  private static String matchIndex0() {\n"
+                    + "    return \"\\u0000\\u0001\\u0000\\u0000\\u00001ÿÿr\\u0001\\u0006\\u0000"
+                    + "\\u0000\\u0000#ÿÿairbnb\\u0002\\u000b\\u0000\\u0000\\u0000"
+                    + "\\u0010ÿÿexample.com\\u0003\\b\\u0000\\u0000\\u0000\\u0000\\u0000"
+                    + "\\u0000deepLink\";}\n"
                     + "}"
-                    ));
+            ));
   }
 
   @Test public void testProcessorWithDefaultAndCustomAnnotations() {
@@ -99,68 +115,146 @@ public class DeepLinkProcessorNonIncrementalTest {
         .and()
         .generatesSources(
             JavaFileObjects.forResource("DeepLinkDelegate.java"),
-            JavaFileObjects.forSourceString("/SOURCE_OUTPUT.com.example.SampleModuleLoader",
+            JavaFileObjects.forSourceString("/SOURCE_OUTPUT.com.example.SampleModuleRegistry",
                 "package com.example;\n"
                     + "\n"
+                    + "import com.airbnb.deeplinkdispatch.BaseRegistry;\n"
                     + "import com.airbnb.deeplinkdispatch.DeepLinkEntry;\n"
-                    + "import com.airbnb.deeplinkdispatch.Parser;\n"
+                    + "import com.airbnb.deeplinkdispatch.base.Utils;\n"
+                    + "import java.lang.String;\n"
                     + "import java.util.Arrays;\n"
                     + "import java.util.Collections;\n"
                     + "\n"
-                    + "public final class SampleModuleLoader extends Parser {\n"
-                    + "  public SampleModuleLoader() {"
+                    + "public final class SampleModuleRegistry extends BaseRegistry {\n"
+                    + "  public SampleModuleRegistry() {\n"
                     + "    super(Collections.unmodifiableList(Arrays.<DeepLinkEntry>asList(\n"
-                    + "    new DeepLinkEntry(\"airbnb://example.com/deepLink\", DeepLinkEntry.Type"
-                    + ".CLASS, SampleActivity.class, null),\n"
-                    + "    new DeepLinkEntry(\"example://example.com/another\", DeepLinkEntry.Type"
-                    + ".CLASS, SampleActivity.class, null),\n"
-                    + "    new DeepLinkEntry(\"example://example.com/deepLink\", DeepLinkEntry.Type"
-                    + ".CLASS, SampleActivity.class, null),\n"
-                    + "    new DeepLinkEntry(\"http://example.com/another\", DeepLinkEntry.Type"
-                    + ".CLASS, SampleActivity.class, null),\n"
-                    + "    new DeepLinkEntry(\"http://example.com/deepLink\", DeepLinkEntry.Type"
-                    + ".CLASS, SampleActivity.class, null),\n"
-                    + "    new DeepLinkEntry(\"https://example.com/another\", DeepLinkEntry.Type"
-                    + ".CLASS, SampleActivity.class, null),\n"
-                    + "    new DeepLinkEntry(\"https://example.com/deepLink\", DeepLinkEntry.Type"
-                    + ".CLASS, SampleActivity.class, null)));\n"
-                    + "  }\n"
+                    + "      new DeepLinkEntry(\"airbnb://example.com/deepLink\", DeepLinkEntry."
+                    + "Type.CLASS, SampleActivity.class, null),\n"
+                    + "      new DeepLinkEntry(\"example://example.com/another\", DeepLinkEntry."
+                    + "Type.CLASS, SampleActivity.class, null),\n"
+                    + "      new DeepLinkEntry(\"example://example.com/deepLink\", DeepLinkEntry.T"
+                    + "ype.CLASS, SampleActivity.class, null),\n"
+                    + "      new DeepLinkEntry(\"http://example.com/another\", DeepLinkEntry.Type."
+                    + "CLASS, SampleActivity.class, null),\n"
+                    + "      new DeepLinkEntry(\"http://example.com/deepLink\", DeepLinkEntry.Type."
+                    + "CLASS, SampleActivity.class, null),\n"
+                    + "      new DeepLinkEntry(\"https://example.com/another\", DeepLinkEntry.Type."
+                    + "CLASS, SampleActivity.class, null),\n"
+                    + "      new DeepLinkEntry(\"https://example.com/deepLink\", DeepLinkEntry."
+                    + "Type.CLASS, SampleActivity.class, null)\n"
+                    + "    )), Utils.readMatchIndexFromStrings( new String[] {matchIndex0(), }"
+                    + " ));\n}\n"
+                    + " \n"
+                    + "  private static String matchIndex0() {\n"
+                    + "    return \"\\u0000\\u0001\\u0000\\u0000\\u0000ïÿÿr\\u0001\\u0006\\u0000"
+                    + "\\u0000\\u0000#ÿÿairbnb\\u0002\\u000b\\u0000\\u0000\\u0000"
+                    + "\\u0010ÿÿexample.com\\u0003\\b\\u0000\\u0000\\u0000\\u0000\\u0000"
+                    + "\\u0000deepLink\\u0001\\u0007\\u0000\\u0000\\u00002ÿÿexample\\u0002\\u000b"
+                    + "\\u0000\\u0000\\u0000\\u001fÿÿexample.com\\u0003\\u0007\\u0000\\u0000"
+                    + "\\u0000\\u0000\\u0000\\u0001another\\u0003\\b\\u0000\\u0000\\u0000\\u0000"
+                    + "\\u0000\\u0002deepLink\\u0001\\u0004\\u0000\\u0000\\u00002ÿÿhttp\\u0002"
+                    + "\\u000b\\u0000\\u0000\\u0000\\u001fÿÿexample.com\\u0003\\u0007\\u0000"
+                    + "\\u0000\\u0000\\u0000\\u0000\\u0003another\\u0003\\b\\u0000\\u0000\\u0000"
+                    + "\\u0000\\u0000\\u0004deepLink\\u0001\\u0005\\u0000\\u0000\\u00002ÿÿhttps"
+                    + "\\u0002\\u000b\\u0000\\u0000\\u0000\\u001fÿÿexample.com\\u0003\\u0007"
+                    + "\\u0000\\u0000\\u0000\\u0000\\u0000\\u0005another\\u0003\\b\\u0000\\u0000"
+                    + "\\u0000\\u0000\\u0000\\u0006deepLink\";}\n"
                     + "}"
             ));
   }
 
+  @Test public void testDuplicatedUriMatch() {
+    JavaFileObject sampleActivity = JavaFileObjects
+        .forSourceString("SampleActivity", "package com.example;"
+            + "import android.content.Context;\n"
+            + "import android.content.Intent;\n"
+            + "import com.airbnb.deeplinkdispatch.DeepLink;\n"
+            + "import com.airbnb.deeplinkdispatch.DeepLinkHandler;\n"
+            + "import com.example.SampleModule;\n\n"
+            + "@DeepLinkHandler({ SampleModule.class })\n"
+            + "public class SampleActivity {\n"
+            + "  @DeepLink(\"airbnb://host/{var}\")"
+            + "  public static Intent intentFromOnePathWithOneParam(Context context){"
+            + "    return new Intent();"
+            + "  }"
+            + "  @DeepLink(\"airbnb://host/path\")"
+            + "  public static Intent intentFromOnePath(Context context){"
+            + "    return new Intent();"
+            + "  }"
+            + "  @DeepLink(\"airbnb://host/path1/path2\")"
+            + "  public static Intent intentFromTwoPath(Context context){"
+            + "    return new Intent();"
+            + "  }"
+            + "  @DeepLink(\"airbnb://host/path1/path2?q={q}\")"
+            + "  public static Intent intentFromTwoPathWithQuery(Context context){"
+            + "    return new Intent();"
+            + "  }"
+            + "  @DeepLink(\"airbnb://host/{var1}/{var2}\")"
+            + "  public static Intent intentFromTwoPathWithTwoParams(Context context){"
+            + "    return new Intent();"
+            + "  }"
+            + "}"
+        );
+
+    JavaFileObject module = JavaFileObjects.forSourceString(
+        "SampleModule", "package com.example;"
+            + "import com.airbnb.deeplinkdispatch.DeepLinkModule;\n\n"
+            + "@DeepLinkModule\n"
+            + "public class SampleModule {\n"
+            + "}");
+
+    assertAbout(javaSources())
+        .that(Arrays.asList(module, sampleActivity))
+        .processedWith(new DeepLinkProcessor())
+        .failsToCompile().withErrorContaining("Internal error during annotation "
+        + "processing: java.lang.IllegalStateException: Ambiguous URI. Same match for two URIs "
+        + "(UriMatch(uri=airbnb://host/path1/path2?q={q}, matchId=0, annotatedElement=com.example."
+        + "SampleActivity, annotatedMethod=intentFromTwoPathWithQuery) vs UriMatch(uri="
+        + "airbnb://host/path1/path2, matchId=1, annotatedElement=com.example.SampleActivity, "
+        + "annotatedMethod=intentFromTwoPath))");
+  }
+
   @Test public void uppercasePackage() {
     JavaFileObject activityWithUppercasePackage = JavaFileObjects
-        .forSourceString("SampleActivity", "package com.example;"
+        .forSourceString("SampleActivity", "package com.Example;"
             + "import com.airbnb.deeplinkdispatch.DeepLink;\n"
             + "import com.airbnb.deeplinkdispatch.DeepLinkHandler;\n\n"
-            + "import com.example.SampleModule;\n\n"
+            + "import com.Example.SampleModule;\n\n"
             + "@DeepLink(\"airbnb://example.com/deepLink\")"
             + "@DeepLinkHandler({ SampleModule.class })\n"
             + "public class SampleActivity {\n"
             + "}");
 
     assertAbout(javaSources())
-        .that(Arrays.asList(SIMPLE_DEEPLINK_MODULE, activityWithUppercasePackage))
+        .that(Arrays.asList(SIMPLE_DEEPLINK_MODULE_UPPERCASE_PACKAGE, activityWithUppercasePackage))
         .processedWith(new DeepLinkProcessor())
         .compilesWithoutError()
         .and()
         .generatesSources(
-            JavaFileObjects.forSourceString("/SOURCE_OUTPUT.com.example.SampleModuleLoader",
-                "package com.example;\n"
+            JavaFileObjects.forSourceString("/SOURCE_OUTPUT.com.Example."
+                    + "SampleModuleRegistry",
+                "package com.Example;\n"
                     + "\n"
+                    + "import com.airbnb.deeplinkdispatch.BaseRegistry;\n"
                     + "import com.airbnb.deeplinkdispatch.DeepLinkEntry;\n"
-                    + "import com.airbnb.deeplinkdispatch.Parser;\n"
+                    + "import com.airbnb.deeplinkdispatch.base.Utils;\n"
+                    + "import java.lang.String;\n"
                     + "import java.util.Arrays;\n"
                     + "import java.util.Collections;\n"
                     + "\n"
-                    + "public final class SampleModuleLoader extends Parser {\n"
-                    + "  public SampleModuleLoader() {"
+                    + "public final class SampleModuleRegistry extends BaseRegistry {\n"
+                    + "  public SampleModuleRegistry() {\n"
                     + "    super(Collections.unmodifiableList(Arrays.<DeepLinkEntry>asList(\n"
                     + "      new DeepLinkEntry(\"airbnb://example.com/deepLink\", DeepLinkEntry."
                     + "Type.CLASS, SampleActivity.class, null)\n"
-                    + "    )));\n"
-                    + "  }\n"
+                    + "    )), Utils.readMatchIndexFromStrings( new String[] {matchIndex0(),"
+                    + " } ));\n}\n"
+                    + "\n"
+                    + "  private static String matchIndex0() {\n"
+                    + "    return \"\\u0000\\u0001\\u0000\\u0000\\u00001ÿÿr\\u0001\\u0006\\u0000\\"
+                    + "u0000\\u0000#ÿÿairbnb\\u0002\\u000b\\u0000\\u0000\\u0000\\"
+                    + "u0010ÿÿexample.com\\u0003\\b\\u0000\\u0000\\u0000\\u0000\\u0000"
+                    + "\\u0000deepLink\";}\n"
                     + "}"
             )
         );
@@ -240,7 +334,7 @@ public class DeepLinkProcessorNonIncrementalTest {
             + "  public static Intent intentFromTwoPath(Context context){"
             + "    return new Intent();"
             + "  }"
-            + "  @DeepLink(\"airbnb://host/path1/path2?q={q}\")"
+            + "  @DeepLink(\"airbnb://host/path1/path3?q={q}\")"
             + "  public static Intent intentFromTwoPathWithQuery(Context context){"
             + "    return new Intent();"
             + "  }"
@@ -258,34 +352,42 @@ public class DeepLinkProcessorNonIncrementalTest {
         .and()
         .generatesSources(
             JavaFileObjects.forResource("DeepLinkDelegate.java"),
-            JavaFileObjects.forSourceString("/SOURCE_OUTPUT.com.example.SampleModuleLoader",
+            JavaFileObjects.forSourceString("/SOURCE_OUTPUT.com.example."
+                    + "SampleModuleRegistry",
                 "package com.example;\n"
                     + "\n"
+                    + "import com.airbnb.deeplinkdispatch.BaseRegistry;\n"
                     + "import com.airbnb.deeplinkdispatch.DeepLinkEntry;\n"
-                    + "import com.airbnb.deeplinkdispatch.Parser;\n"
+                    + "import com.airbnb.deeplinkdispatch.base.Utils;\n"
+                    + "import java.lang.String;\n"
                     + "import java.util.Arrays;\n"
                     + "import java.util.Collections;\n"
                     + "\n"
-                    + "public final class SampleModuleLoader extends Parser {\n"
-                    + "  public SampleModuleLoader() {"
+                    + "public final class SampleModuleRegistry extends BaseRegistry {\n"
+                    + "  public SampleModuleRegistry() {\n"
                     + "    super(Collections.unmodifiableList(Arrays.<DeepLinkEntry>asList(\n"
-                    + "    new DeepLinkEntry(\"airbnb://host/path1/path2?q={q}\","
-                    + " DeepLinkEntry.Type.METHOD, SampleActivity.class,"
-                    + " \"intentFromTwoPathWithQuery\"),\n"
-                    + "    new DeepLinkEntry(\"airbnb://host/path1/path2\","
-                    + " DeepLinkEntry.Type.METHOD, SampleActivity.class,"
-                    + " \"intentFromTwoPath\"),\n"
-                    + "    new DeepLinkEntry(\"airbnb://host/{var1}/{var2}\","
-                    + " DeepLinkEntry.Type.METHOD, SampleActivity.class,"
-                    + " \"intentFromTwoPathWithTwoParams\"),\n"
-                    + "    new DeepLinkEntry(\"airbnb://host/path\","
-                    + " DeepLinkEntry.Type.METHOD, SampleActivity.class,"
-                    + " \"intentFromOnePath\"),\n"
-                    + "    new DeepLinkEntry(\"airbnb://host/{var}\","
-                    + " DeepLinkEntry.Type.METHOD, SampleActivity.class,"
-                    + " \"intentFromOnePathWithOneParam\")\n"
-                    + "  ));\n"
+                    + "      new DeepLinkEntry(\"airbnb://host/path1/path3?q={q}\", DeepLinkEntry."
+                    + "Type.METHOD, SampleActivity.class, \"intentFromTwoPathWithQuery\"),\n"
+                    + "      new DeepLinkEntry(\"airbnb://host/path1/path2\", DeepLinkEntry.Type."
+                    + "METHOD, SampleActivity.class, \"intentFromTwoPath\"),\n"
+                    + "      new DeepLinkEntry(\"airbnb://host/{var1}/{var2}\", DeepLinkEntry.Type."
+                    + "METHOD, SampleActivity.class, \"intentFromTwoPathWithTwoParams\"),\n"
+                    + "      new DeepLinkEntry(\"airbnb://host/path\", DeepLinkEntry.Type.METHOD, "
+                    + "SampleActivity.class, \"intentFromOnePath\"),\n"
+                    + "      new DeepLinkEntry(\"airbnb://host/{var}\", DeepLinkEntry.Type.METHOD, "
+                    + "SampleActivity.class, \"intentFromOnePathWithOneParam\")\n"
+                    + "    )), Utils.readMatchIndexFromStrings( new String[] {matchIndex0(), }"
+                    + " ));\n}\n"
                     + "\n"
+                    + "  private static String matchIndex0() {\n"
+                    + "    return \"\\u0000\\u0001\\u0000\\u0000\\u0000yÿÿr\\u0001\\u0006\\u0000"
+                    + "\\u0000\\u0000kÿÿairbnb\\u0002\\u0004\\u0000\\u0000\\u0000_ÿÿhost\\u0003"
+                    + "\\u0005\\u0000\\u0000\\u0000\\u001aÿÿpath1\\u0003\\u0005\\u0000\\u0000"
+                    + "\\u0000\\u0000\\u0000\\u0000path3\\u0003\\u0005\\u0000\\u0000\\u0000"
+                    + "\\u0000\\u0000\\u0001path2\\u0003\\u0007\\u0000\\u0000\\u0000\\u000fÿÿ"
+                    + "\\u001a{var1}\\u0003\\u0007\\u0000\\u0000\\u0000\\u0000\\u0000\\u0002"
+                    + "\\u001a{var2}\\u0003\\u0004\\u0000\\u0000\\u0000\\u0000\\u0000\\u0003path"
+                    + "\\u0003\\u0006\\u0000\\u0000\\u0000\\u0000\\u0000\\u0004\\u001a{var}\";}\n"
                     + "}"));
   }
 

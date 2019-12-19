@@ -16,6 +16,8 @@
 
 package com.airbnb.deeplinkdispatch;
 
+import androidx.annotation.Nullable;
+
 import java.net.IDN;
 import java.net.InetAddress;
 import java.net.MalformedURLException;
@@ -77,7 +79,7 @@ public final class DeepLinkUri {
    * non-empty, but never null. Values are null if the name has no corresponding '=' separator, or
    * empty, or non-empty.
    */
-  private final List<String> queryNamesAndValues;
+  private final @Nullable List<String> queryNamesAndValues;
 
   /** Decoded fragment. */
   private final String fragment;
@@ -293,6 +295,11 @@ public final class DeepLinkUri {
     StringBuilder result = new StringBuilder();
     namesAndValuesToQueryString(result, queryNamesAndValues);
     return result.toString();
+  }
+
+  @Nullable
+  List<String> getQueryNamesAndValues() {
+    return queryNamesAndValues;
   }
 
   int querySize() {

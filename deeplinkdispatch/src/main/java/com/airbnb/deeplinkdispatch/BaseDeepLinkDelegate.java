@@ -12,6 +12,7 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -20,24 +21,26 @@ public class BaseDeepLinkDelegate {
 
   protected static final String TAG = "DeepLinkDelegate";
 
-  protected final List<? extends Parser> loaders;
+  protected final List<? extends BaseRegistry> loaders;
 
-  public List<? extends Parser> getLoaders() {
+  public List<? extends BaseRegistry> getLoaders() {
     return loaders;
   }
 
-  public BaseDeepLinkDelegate(List<? extends Parser> loaders) {
+  public BaseDeepLinkDelegate(List<? extends BaseRegistry> loaders) {
     this.loaders = loaders;
   }
 
   private DeepLinkEntry findEntry(String uriString) {
-    for (Parser loader : loaders) {
-      DeepLinkEntry entry = loader.parseUri(uriString);
-      if (entry != null) {
-        return entry;
+    DeepLinkEntry entryRegExpMatch = null;
+    DeepLinkEntry entryIdxMatch = null;
+    for (BaseRegistry loader : loaders) {
+      entryIdxMatch = loader.idxMatch(DeepLinkUri.parse(uriString));
+      if (entryIdxMatch != null) {
+        break;
       }
     }
-    return null;
+    return entryIdxMatch;
   }
 
   /**
@@ -72,7 +75,8 @@ public class BaseDeepLinkDelegate {
       activity.startActivity(result.getIntent());
     }
     notifyListener(activity, !result.isSuccessful(), sourceIntent.getData(),
-      result.getDeepLinkEntry().getUriTemplate(), result.getError());
+      result.getDeepLinkEntry() != null ? result.getDeepLinkEntry().getUriTemplate()
+          : null, result.getError());
     return result;
   }
 
@@ -106,7 +110,7 @@ public class BaseDeepLinkDelegate {
         null, null, null);
     }
     DeepLinkUri deepLinkUri = DeepLinkUri.parse(uriString);
-    Map<String, String> parameterMap = deepLinkEntry.getParameters(uriString);
+    Map<String, String> parameterMap = new HashMap<>(deepLinkEntry.getParameters(deepLinkUri));
     for (String queryParameter : deepLinkUri.queryParameterNames()) {
       for (String queryParameterValue : deepLinkUri.queryParameterValues(queryParameter)) {
         if (parameterMap.containsKey(queryParameter)) {

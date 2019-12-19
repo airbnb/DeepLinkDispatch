@@ -28,7 +28,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.TaskStackBuilder;
 
-@DeepLink({ "dld://classDeepLink", "http://example.com/foo{arg}", "dld://example.com/deepLink" })
+@DeepLink({ "dld://classDeepLink", "http://example.com/foo{arg_end}", "http://example.com/{arg_start}bar", "dld://example.com/deepLink" })
 public class MainActivity extends AppCompatActivity {
   private static final String ACTION_DEEP_LINK_METHOD = "deep_link_method";
   private static final String ACTION_DEEP_LINK_COMPLEX = "deep_link_complex";
@@ -76,7 +76,6 @@ public class MainActivity extends AppCompatActivity {
   public static Intent intentForDeepLinkMethod(Context context) {
     return new Intent(context, MainActivity.class).setAction(ACTION_DEEP_LINK_METHOD);
   }
-
 
   @DeepLink("dld://host/somePath/{arbitraryNumber}")
   public static Intent intentForParamDeepLinkMethod(Context context) {

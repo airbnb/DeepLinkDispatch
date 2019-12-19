@@ -15,6 +15,7 @@
  */
 package com.airbnb.deeplinkdispatch;
 
+import com.airbnb.deeplinkdispatch.base.Utils;
 import com.google.auto.common.AnnotationMirrors;
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
@@ -29,7 +30,11 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeSpec;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -61,7 +66,8 @@ import javax.tools.Diagnostic;
 
 import static com.airbnb.deeplinkdispatch.MoreAnnotationMirrors.asAnnotationValues;
 import static com.airbnb.deeplinkdispatch.MoreAnnotationMirrors.getTypeValue;
-import static com.airbnb.deeplinkdispatch.Utils.decapitalize;
+import static com.airbnb.deeplinkdispatch.ProcessorUtils.decapitalize;
+import static com.airbnb.deeplinkdispatch.ProcessorUtils.hasEmptyOrNullString;
 import static com.google.auto.common.MoreElements.getAnnotationMirror;
 
 @SupportedOptions(Documentor.DOC_OUTPUT_PROPERTY_NAME)
@@ -70,20 +76,23 @@ public class DeepLinkProcessor extends AbstractProcessor {
   private static final String OPTION_CUSTOM_ANNOTATIONS = "deepLink.customAnnotations";
   private static final String OPTION_INCREMENTAL = "deepLink.incremental";
   private static final ClassName CLASS_BASE_DEEP_LINK_DELEGATE
-    = ClassName.get(PACKAGE_NAME, "BaseDeepLinkDelegate");
+      = ClassName.get(PACKAGE_NAME, "BaseDeepLinkDelegate");
   private static final ClassName CLASS_ARRAYS = ClassName.get(Arrays.class);
   private static final ClassName CLASS_COLLECTIONS = ClassName.get(Collections.class);
+  private static final ClassName CLASS_UTILS = ClassName.get(Utils.class);
   private static final ClassName CLASS_DEEP_LINK_ENTRY
-    = ClassName.get(PACKAGE_NAME, DeepLinkEntry.class.getSimpleName());
+      = ClassName.get(PACKAGE_NAME, DeepLinkEntry.class.getSimpleName());
   private static final Class<DeepLink> DEEP_LINK_CLASS = DeepLink.class;
   private static final Class<DeepLinkSpec> DEEP_LINK_SPEC_CLASS = DeepLinkSpec.class;
+  public static final String REGISTRY_CLASS_SUFFIX = "Registry";
 
   private Filer filer;
   private Messager messager;
   private Documentor documentor;
   private IncrementalMetadata incrementalMetadata;
 
-  @Override public synchronized void init(ProcessingEnvironment processingEnv) {
+  @Override
+  public synchronized void init(ProcessingEnvironment processingEnv) {
     super.init(processingEnv);
     filer = processingEnv.getFiler();
     messager = processingEnv.getMessager();
@@ -116,7 +125,8 @@ public class DeepLinkProcessor extends AbstractProcessor {
     }
   }
 
-  @Override public SourceVersion getSupportedSourceVersion() {
+  @Override
+  public SourceVersion getSupportedSourceVersion() {
     return SourceVersion.latestSupported();
   }
 
@@ -155,7 +165,7 @@ public class DeepLinkProcessor extends AbstractProcessor {
             DEEP_LINK_SPEC_CLASS.getSimpleName());
       }
       String[] prefix = customAnnotation.getAnnotation(DEEP_LINK_SPEC_CLASS).prefix();
-      if (Utils.hasEmptyOrNullString(prefix)) {
+      if (hasEmptyOrNullString(prefix)) {
         error(customAnnotation, "Prefix property cannot have null or empty strings");
       }
       if (prefix.length == 0) {
@@ -188,7 +198,7 @@ public class DeepLinkProcessor extends AbstractProcessor {
         if (!qualifiedName.equals("android.content.Intent")
             && !qualifiedName.equals("androidx.core.app.TaskStackBuilder")) {
           error(element, "Only `Intent` or `androidx.core.app.TaskStackBuilder` are supported."
-                  + " Please double check your imports and try again.");
+              + " Please double check your imports and try again.");
         }
       }
 
@@ -217,7 +227,8 @@ public class DeepLinkProcessor extends AbstractProcessor {
         Iterable<TypeMirror> klasses = getTypeValue(annotationMirror.get(), "value");
         List<TypeElement> typeElements = FluentIterable.from(klasses).transform(
             new Function<TypeMirror, TypeElement>() {
-              @Override public TypeElement apply(TypeMirror klass) {
+              @Override
+              public TypeElement apply(TypeMirror klass) {
                 return MoreTypes.asTypeElement(klass);
               }
             }).toList();
@@ -228,8 +239,11 @@ public class DeepLinkProcessor extends AbstractProcessor {
         } catch (IOException e) {
           messager.printMessage(Diagnostic.Kind.ERROR, "Error creating file");
         } catch (RuntimeException e) {
+          StringWriter sw = new StringWriter();
+          PrintWriter pw = new PrintWriter(sw);
+          e.printStackTrace(pw);
           messager.printMessage(Diagnostic.Kind.ERROR,
-              "Internal error during annotation processing: " + e.getClass().getSimpleName());
+              "Internal error during annotation processing: " + sw.toString());
         }
       }
     }
@@ -245,14 +259,17 @@ public class DeepLinkProcessor extends AbstractProcessor {
       } catch (IOException e) {
         messager.printMessage(Diagnostic.Kind.ERROR, "Error creating file");
       } catch (RuntimeException e) {
+        StringWriter sw = new StringWriter();
+        PrintWriter pw = new PrintWriter(sw);
+        e.printStackTrace(pw);
         messager.printMessage(Diagnostic.Kind.ERROR,
-            "Internal error during annotation processing: " + e.getClass().getSimpleName());
+            "Internal error during annotation processing: " + sw.toString());
       }
     }
   }
 
   private static List<String> enumerateCustomDeepLinks(Element element,
-      Map<Element, String[]> prefixesMap) {
+                                                       Map<Element, String[]> prefixesMap) {
     Set<? extends AnnotationMirror> annotationMirrors =
         AnnotationMirrors.getAnnotatedAnnotations(element, DEEP_LINK_SPEC_CLASS);
     final List<String> deepLinks = new ArrayList<>();
@@ -286,12 +303,12 @@ public class DeepLinkProcessor extends AbstractProcessor {
   }
 
   private void generateDeepLinkLoader(String packageName, String className,
-      List<DeepLinkAnnotatedElement> elements)
+                                      List<DeepLinkAnnotatedElement> elements)
       throws IOException {
     CodeBlock.Builder deeplinks = CodeBlock.builder()
-      .add("super($T.unmodifiableList($T.<$T>asList(\n",
-        CLASS_COLLECTIONS, CLASS_ARRAYS, CLASS_DEEP_LINK_ENTRY)
-      .indent();
+        .add("super($T.unmodifiableList($T.<$T>asList(\n",
+            CLASS_COLLECTIONS, CLASS_ARRAYS, CLASS_DEEP_LINK_ENTRY)
+        .indent();
     Collections.sort(elements, new Comparator<DeepLinkAnnotatedElement>() {
       @Override
       public int compare(DeepLinkAnnotatedElement element1, DeepLinkAnnotatedElement element2) {
@@ -303,13 +320,13 @@ public class DeepLinkProcessor extends AbstractProcessor {
         }
         if (comparisonResult == 0) {
           comparisonResult =
-            uri1.encodedPath().split("%7B").length - uri2.encodedPath().split("%7B").length;
+              uri1.encodedPath().split("%7B").length - uri2.encodedPath().split("%7B").length;
         }
         if (comparisonResult == 0) {
           String element1Representation =
-            element1.getUri() + element1.getMethod() + element1.getAnnotationType();
+              element1.getUri() + element1.getMethod() + element1.getAnnotationType();
           String element2Representation =
-            element2.getUri() + element2.getMethod() + element2.getAnnotationType();
+              element2.getUri() + element2.getMethod() + element2.getAnnotationType();
           comparisonResult = element1Representation.compareTo(element2Representation);
         }
         return comparisonResult;
@@ -317,39 +334,83 @@ public class DeepLinkProcessor extends AbstractProcessor {
     });
     documentor.write(elements);
     int totalElements = elements.size();
+    Root urisTrie = new Root();
     for (int i = 0; i < totalElements; i++) {
       DeepLinkAnnotatedElement element = elements.get(i);
       String type = "DeepLinkEntry.Type." + element.getAnnotationType().toString();
       ClassName activity = ClassName.get(element.getAnnotatedElement());
       Object method = element.getMethod();
       String uri = element.getUri();
+      DeepLinkUri deeplinkUri = DeepLinkUri.parse(uri);
+
+      urisTrie.addToTrie(i, deeplinkUri, element.getAnnotatedElement().toString(),
+          element.getMethod());
+
       deeplinks.add("new DeepLinkEntry($S, $L, $T.class, $S)$L\n",
-        uri, type, activity, method, (i < totalElements - 1) ? "," : "");
+          uri, type, activity, method, (i < totalElements - 1) ? "," : "");
     }
 
-    MethodSpec constructor = MethodSpec.constructorBuilder()
-      .addModifiers(Modifier.PUBLIC)
-      .addCode(deeplinks.unindent().add(")));\n").build())
-      .build();
+    TypeSpec.Builder deeplinkLoaderBuilder = TypeSpec.classBuilder(className
+        + REGISTRY_CLASS_SUFFIX).addModifiers(Modifier.PUBLIC, Modifier.FINAL)
+        .superclass(ClassName.get(BaseRegistry.class));
 
-    TypeSpec deepLinkLoader = TypeSpec.classBuilder(className + "Loader")
-        .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
-        .superclass(ClassName.get(Parser.class))
-        .addMethod(constructor)
+    StringBuilder stringMethodNames = getStringMethodNames(urisTrie, deeplinkLoaderBuilder);
+
+    MethodSpec constructor = MethodSpec.constructorBuilder()
+        .addModifiers(Modifier.PUBLIC)
+        .addCode(deeplinks.unindent().add(")), $T.readMatchIndexFromStrings( new String[] {"
+            + stringMethodNames + "} ));\n", CLASS_UTILS).build())
         .build();
+
+    // For debugging it is nice to have a file version of the index, just comment this in to get
+    // on in the classpath
+//    FileObject indexResource = filer.createResource(StandardLocation.CLASS_OUTPUT, "",
+//    MatchIndex.getMatchIdxFileName(className));
+//    urisTrie.writeToOutoutStream(indexResource.openOutputStream());
+
+    deeplinkLoaderBuilder.addMethod(constructor);
+
+    TypeSpec deepLinkLoader = deeplinkLoaderBuilder.build();
 
     JavaFile.builder(packageName, deepLinkLoader)
         .build()
         .writeTo(filer);
   }
 
+  /**
+   * Add methods containing the Strings to store the match index to the deeplinkLoaderBuilder and
+   * return a string which contains the calls to those methods.
+   *
+   * e.g. "method1(), method2()" etc.
+   *
+   * @param urisTrie The {@link UrlTreeKt} containing all Urls that can be matched.
+   * @param deeplinkLoaderBuilder The builder used to add the methods
+   * @return
+   */
+  @NotNull
+  private StringBuilder getStringMethodNames(Root urisTrie,
+                                             TypeSpec.Builder deeplinkLoaderBuilder) {
+    int i = 0;
+    StringBuilder stringMethodNames = new StringBuilder();
+    for (String string : urisTrie.getStrings()) {
+      String methodName = "matchIndex" + i;
+      stringMethodNames.append(methodName).append("(), ");
+      deeplinkLoaderBuilder.addMethod(MethodSpec.methodBuilder(methodName)
+          .addModifiers(Modifier.PRIVATE, Modifier.STATIC)
+          .returns(String.class)
+          .addCode(CodeBlock.builder().add("return $S;", string).build()).build());
+      i++;
+    }
+    return stringMethodNames;
+  }
+
   private static String moduleNameToLoaderName(TypeElement typeElement) {
-    return typeElement.getSimpleName().toString() + "Loader";
+    return typeElement.getSimpleName().toString() + REGISTRY_CLASS_SUFFIX;
   }
 
   private static ClassName moduleElementToLoaderClassName(TypeElement element) {
     return ClassName.get(getPackage(element).getQualifiedName().toString(),
-        element.getSimpleName().toString() + "Loader");
+        element.getSimpleName().toString() + REGISTRY_CLASS_SUFFIX);
   }
 
   private static PackageElement getPackage(Element type) {
@@ -375,7 +436,8 @@ public class DeepLinkProcessor extends AbstractProcessor {
         .addModifiers(Modifier.PUBLIC)
         .addParameters(FluentIterable.from(loaderClasses).transform(
             new Function<TypeElement, ParameterSpec>() {
-              @Override public ParameterSpec apply(TypeElement typeElement) {
+              @Override
+              public ParameterSpec apply(TypeElement typeElement) {
                 return ParameterSpec.builder(moduleElementToLoaderClassName(typeElement),
                     decapitalize(moduleNameToLoaderName(typeElement))).build();
               }

@@ -5,8 +5,8 @@ import java.util.Arrays;
 
 public final class DeepLinkDelegate extends BaseDeepLinkDelegate {
 
-  public DeepLinkDelegate(SampleModuleLoader sampleModuleLoader) {
-    super(Arrays.asList(sampleModuleLoader));
+  public DeepLinkDelegate(SampleModuleRegistry sampleModuleRegistry) {
+    super(Arrays.asList(sampleModuleRegistry));
   }
 
 }
