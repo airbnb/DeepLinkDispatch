@@ -196,13 +196,15 @@ public class CustomPrefixesActivity extends AppCompatActivity {
 
 ## Usage
 
-Add to your project `build.gradle` file:
+Add to your project `build.gradle` file (Latest version is [![DeeplinkDispatch version](https://badge.fury.io/gh/airbnb%2FDeepLinkDispatch.svg)](https://badge.fury.io/gh/airbnb%2FDeepLinkDispatch)
+): 
 ```groovy
 dependencies {
-  implementation 'com.airbnb:deeplinkdispatch:3.1.1'
-  annotationProcessor 'com.airbnb:deeplinkdispatch-processor:3.1.1'
+  implementation 'com.airbnb:deeplinkdispatch:x.x.x'
+  annotationProcessor 'com.airbnb:deeplinkdispatch-processor:x.x.x'
 }
 ```
+
 _For **Kotlin** you should use_ `kapt` _instead of_ `annotationProcessor`
 
 Create your deep link module(s) (**new on DeepLinkDispatch v3**). For every class you annotate with `@DeepLinkModule`, DeepLinkDispatch will generate a "Loader" class, which contains a registry of all your `@DeepLink` annotations.
