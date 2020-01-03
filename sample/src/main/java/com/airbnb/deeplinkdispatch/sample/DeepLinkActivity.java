@@ -17,9 +17,9 @@ public class DeepLinkActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
     Debug.startMethodTracing("deeplink.trace",90000000);
-        LibraryDeepLinkModuleRegistry libraryDeepLinkModuleLoader = new LibraryDeepLinkModuleRegistry();
+        LibraryDeepLinkModuleRegistry libraryDeepLinkModuleRegistry = new LibraryDeepLinkModuleRegistry();
         DeepLinkDelegate deepLinkDelegate = new DeepLinkDelegate(
-                new SampleModuleRegistry(), libraryDeepLinkModuleLoader);
+                new SampleModuleRegistry(), libraryDeepLinkModuleRegistry);
 
         deepLinkDelegate.dispatchFrom(this);
     Debug.stopMethodTracing();

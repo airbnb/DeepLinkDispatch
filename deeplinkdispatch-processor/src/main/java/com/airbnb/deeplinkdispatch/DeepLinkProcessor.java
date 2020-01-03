@@ -254,7 +254,7 @@ public class DeepLinkProcessor extends AbstractProcessor {
       String packageName = processingEnv.getElementUtils()
           .getPackageOf(deepLinkModuleElement).getQualifiedName().toString();
       try {
-        generateDeepLinkLoader(packageName, deepLinkModuleElement.getSimpleName().toString(),
+        generateDeepLinkRegistry(packageName, deepLinkModuleElement.getSimpleName().toString(),
             deepLinkElements);
       } catch (IOException e) {
         messager.printMessage(Diagnostic.Kind.ERROR, "Error creating file");
@@ -302,8 +302,8 @@ public class DeepLinkProcessor extends AbstractProcessor {
     messager.printMessage(Diagnostic.Kind.ERROR, String.format(msg, args), e);
   }
 
-  private void generateDeepLinkLoader(String packageName, String className,
-                                      List<DeepLinkAnnotatedElement> elements)
+  private void generateDeepLinkRegistry(String packageName, String className,
+                                        List<DeepLinkAnnotatedElement> elements)
       throws IOException {
     CodeBlock.Builder deeplinks = CodeBlock.builder()
         .add("super($T.unmodifiableList($T.<$T>asList(\n",
@@ -350,11 +350,11 @@ public class DeepLinkProcessor extends AbstractProcessor {
           uri, type, activity, method, (i < totalElements - 1) ? "," : "");
     }
 
-    TypeSpec.Builder deeplinkLoaderBuilder = TypeSpec.classBuilder(className
+    TypeSpec.Builder deeplinkRegistryBuilder = TypeSpec.classBuilder(className
         + REGISTRY_CLASS_SUFFIX).addModifiers(Modifier.PUBLIC, Modifier.FINAL)
         .superclass(ClassName.get(BaseRegistry.class));
 
-    StringBuilder stringMethodNames = getStringMethodNames(urisTrie, deeplinkLoaderBuilder);
+    StringBuilder stringMethodNames = getStringMethodNames(urisTrie, deeplinkRegistryBuilder);
 
     MethodSpec constructor = MethodSpec.constructorBuilder()
         .addModifiers(Modifier.PUBLIC)
@@ -368,34 +368,34 @@ public class DeepLinkProcessor extends AbstractProcessor {
 //    MatchIndex.getMatchIdxFileName(className));
 //    urisTrie.writeToOutoutStream(indexResource.openOutputStream());
 
-    deeplinkLoaderBuilder.addMethod(constructor);
+    deeplinkRegistryBuilder.addMethod(constructor);
 
-    TypeSpec deepLinkLoader = deeplinkLoaderBuilder.build();
+    TypeSpec deepLinkRegistry = deeplinkRegistryBuilder.build();
 
-    JavaFile.builder(packageName, deepLinkLoader)
+    JavaFile.builder(packageName, deepLinkRegistry)
         .build()
         .writeTo(filer);
   }
 
   /**
-   * Add methods containing the Strings to store the match index to the deeplinkLoaderBuilder and
+   * Add methods containing the Strings to store the match index to the deeplinkRegistryBuilder and
    * return a string which contains the calls to those methods.
    *
    * e.g. "method1(), method2()" etc.
    *
    * @param urisTrie The {@link UrlTreeKt} containing all Urls that can be matched.
-   * @param deeplinkLoaderBuilder The builder used to add the methods
+   * @param deeplinkRegistryBuilder The builder used to add the methods
    * @return
    */
   @NotNull
   private StringBuilder getStringMethodNames(Root urisTrie,
-                                             TypeSpec.Builder deeplinkLoaderBuilder) {
+                                             TypeSpec.Builder deeplinkRegistryBuilder) {
     int i = 0;
     StringBuilder stringMethodNames = new StringBuilder();
     for (String string : urisTrie.getStrings()) {
       String methodName = "matchIndex" + i;
       stringMethodNames.append(methodName).append("(), ");
-      deeplinkLoaderBuilder.addMethod(MethodSpec.methodBuilder(methodName)
+      deeplinkRegistryBuilder.addMethod(MethodSpec.methodBuilder(methodName)
           .addModifiers(Modifier.PRIVATE, Modifier.STATIC)
           .returns(String.class)
           .addCode(CodeBlock.builder().add("return $S;", string).build()).build());
@@ -404,11 +404,11 @@ public class DeepLinkProcessor extends AbstractProcessor {
     return stringMethodNames;
   }
 
-  private static String moduleNameToLoaderName(TypeElement typeElement) {
+  private static String moduleNameToRegistryName(TypeElement typeElement) {
     return typeElement.getSimpleName().toString() + REGISTRY_CLASS_SUFFIX;
   }
 
-  private static ClassName moduleElementToLoaderClassName(TypeElement element) {
+  private static ClassName moduleElementToRegistryClassName(TypeElement element) {
     return ClassName.get(getPackage(element).getQualifiedName().toString(),
         element.getSimpleName().toString() + REGISTRY_CLASS_SUFFIX);
   }
@@ -420,29 +420,29 @@ public class DeepLinkProcessor extends AbstractProcessor {
     return (PackageElement) type;
   }
 
-  private void generateDeepLinkDelegate(String packageName, List<TypeElement> loaderClasses)
+  private void generateDeepLinkDelegate(String packageName, List<TypeElement> registryClasses)
       throws IOException {
-    CodeBlock.Builder loadersInitializer = CodeBlock.builder()
+    CodeBlock.Builder registriesInitializer = CodeBlock.builder()
         .add("super($T.asList(\n", ClassName.get(Arrays.class))
         .indent();
-    int totalElements = loaderClasses.size();
+    int totalElements = registryClasses.size();
     for (int i = 0; i < totalElements; i++) {
-      loadersInitializer.add("$L$L",
-          decapitalize(moduleNameToLoaderName(loaderClasses.get(i))),
+      registriesInitializer.add("$L$L",
+          decapitalize(moduleNameToRegistryName(registryClasses.get(i))),
           i < totalElements - 1 ? ",\n" : "\n");
     }
 
     MethodSpec constructor = MethodSpec.constructorBuilder()
         .addModifiers(Modifier.PUBLIC)
-        .addParameters(FluentIterable.from(loaderClasses).transform(
+        .addParameters(FluentIterable.from(registryClasses).transform(
             new Function<TypeElement, ParameterSpec>() {
               @Override
               public ParameterSpec apply(TypeElement typeElement) {
-                return ParameterSpec.builder(moduleElementToLoaderClassName(typeElement),
-                    decapitalize(moduleNameToLoaderName(typeElement))).build();
+                return ParameterSpec.builder(moduleElementToRegistryClassName(typeElement),
+                    decapitalize(moduleNameToRegistryName(typeElement))).build();
               }
             }).toList())
-        .addCode(loadersInitializer.unindent().add("));\n").build())
+        .addCode(registriesInitializer.unindent().add("));\n").build())
         .build();
 
     TypeSpec deepLinkDelegate = TypeSpec.classBuilder("DeepLinkDelegate")

@@ -13,15 +13,15 @@ import static org.assertj.core.api.Assertions.entry;
 public class DeepLinkEntryTest {
   @Test public void testSingleParam() {
     DeepLinkEntry entry = deepLinkEntry("airbnb://foo/{bar}");
-    TestDeepLinkLoader testLoader = getTestDelgate(Arrays.asList(new DeepLinkEntry[] {entry}));
-    DeepLinkEntry match = testLoader.idxMatch(DeepLinkUri.parse("airbnb://foo/myData"));
+    TestDeepLinkRegistry testRegistry = getTestDelgate(Arrays.asList(new DeepLinkEntry[] {entry}));
+    DeepLinkEntry match = testRegistry.idxMatch(DeepLinkUri.parse("airbnb://foo/myData"));
     assertThat(match.getParameters(DeepLinkUri.parse("airbnb://foo/myData")).get("bar")).isEqualTo("myData");
   }
 
   @Test public void testTwoParams() {
     DeepLinkEntry entry = deepLinkEntry("airbnb://test/{param1}/{param2}");
-    TestDeepLinkLoader testLoader = getTestDelgate(Arrays.asList(new DeepLinkEntry[] {entry}));
-    DeepLinkEntry match = testLoader.idxMatch(DeepLinkUri.parse("airbnb://test/12345/alice"));
+    TestDeepLinkRegistry testRegistry = getTestDelgate(Arrays.asList(new DeepLinkEntry[] {entry}));
+    DeepLinkEntry match = testRegistry.idxMatch(DeepLinkUri.parse("airbnb://test/12345/alice"));
 
     Map<String, String> parameters = match.getParameters(DeepLinkUri.parse("airbnb://test/12345/alice"));
     assertThat(parameters.get("param1")).isEqualTo("12345");
@@ -30,8 +30,8 @@ public class DeepLinkEntryTest {
 
   @Test public void testParamWithSpecialCharacters() throws Exception {
     DeepLinkEntry entry = deepLinkEntry("airbnb://foo/{bar}");
-    TestDeepLinkLoader testLoader = getTestDelgate(Arrays.asList(new DeepLinkEntry[] {entry}));
-    DeepLinkEntry match = testLoader.idxMatch(DeepLinkUri.parse("airbnb://foo/hyphens-and_underscores123"));
+    TestDeepLinkRegistry testRegistry = getTestDelgate(Arrays.asList(new DeepLinkEntry[] {entry}));
+    DeepLinkEntry match = testRegistry.idxMatch(DeepLinkUri.parse("airbnb://foo/hyphens-and_underscores123"));
 
     Map<String, String> parameters = match.getParameters(DeepLinkUri.parse("airbnb://foo/hyphens-and_underscores123"));
     assertThat(parameters.get("bar")).isEqualTo("hyphens-and_underscores123");
@@ -39,8 +39,8 @@ public class DeepLinkEntryTest {
 
   @Test public void testParamWithTildeAndDollarSign() {
     DeepLinkEntry entry = deepLinkEntry("airbnb://test/{param1}");
-    TestDeepLinkLoader testLoader = getTestDelgate(Arrays.asList(new DeepLinkEntry[] {entry}));
-    DeepLinkEntry match = testLoader.idxMatch(DeepLinkUri.parse("airbnb://test/tilde~dollar$ign"));
+    TestDeepLinkRegistry testRegistry = getTestDelgate(Arrays.asList(new DeepLinkEntry[] {entry}));
+    DeepLinkEntry match = testRegistry.idxMatch(DeepLinkUri.parse("airbnb://test/tilde~dollar$ign"));
 
     Map<String, String> parameters = match.getParameters(DeepLinkUri.parse("airbnb://test/tilde~dollar$ign"));
     assertThat(parameters.get("param1")).isEqualTo("tilde~dollar$ign");
@@ -48,8 +48,8 @@ public class DeepLinkEntryTest {
 
   @Test public void testParamWithDotAndComma() {
     DeepLinkEntry entry = deepLinkEntry("airbnb://test/{param1}");
-    TestDeepLinkLoader testLoader = getTestDelgate(Arrays.asList(new DeepLinkEntry[] {entry}));
-    DeepLinkEntry match = testLoader.idxMatch(DeepLinkUri.parse("airbnb://test/N1.55,22.11"));
+    TestDeepLinkRegistry testRegistry = getTestDelgate(Arrays.asList(new DeepLinkEntry[] {entry}));
+    DeepLinkEntry match = testRegistry.idxMatch(DeepLinkUri.parse("airbnb://test/N1.55,22.11"));
 
     Map<String, String> parameters = match.getParameters(DeepLinkUri.parse("airbnb://test/N1.55,22.11"));
     assertThat(parameters.get("param1")).isEqualTo("N1.55,22.11");
@@ -57,8 +57,8 @@ public class DeepLinkEntryTest {
 
   @Test public void testParamForAtSign() {
     DeepLinkEntry entry = deepLinkEntry("airbnb://test/{param1}");
-    TestDeepLinkLoader testLoader = getTestDelgate(Arrays.asList(new DeepLinkEntry[] {entry}));
-    DeepLinkEntry match = testLoader.idxMatch(DeepLinkUri.parse("airbnb://test/somename@gmail.com"));
+    TestDeepLinkRegistry testRegistry = getTestDelgate(Arrays.asList(new DeepLinkEntry[] {entry}));
+    DeepLinkEntry match = testRegistry.idxMatch(DeepLinkUri.parse("airbnb://test/somename@gmail.com"));
 
     Map<String, String> parameters = match.getParameters(DeepLinkUri.parse("airbnb://test/somename@gmail.com"));
     assertThat(parameters.get("param1")).isEqualTo("somename@gmail.com");
@@ -66,8 +66,8 @@ public class DeepLinkEntryTest {
 
   @Test public void testParamForColon() {
     DeepLinkEntry entry = deepLinkEntry("airbnb://test/{param1}");
-    TestDeepLinkLoader testLoader = getTestDelgate(Arrays.asList(new DeepLinkEntry[] {entry}));
-    DeepLinkEntry match = testLoader.idxMatch(DeepLinkUri.parse("airbnb://test/a1:b2:c3"));
+    TestDeepLinkRegistry testRegistry = getTestDelgate(Arrays.asList(new DeepLinkEntry[] {entry}));
+    DeepLinkEntry match = testRegistry.idxMatch(DeepLinkUri.parse("airbnb://test/a1:b2:c3"));
 
     Map<String, String> parameters = match.getParameters(DeepLinkUri.parse("airbnb://test/a1:b2:c3"));
     assertThat(parameters.get("param1")).isEqualTo("a1:b2:c3");
@@ -75,8 +75,8 @@ public class DeepLinkEntryTest {
 
   @Test public void testParamWithSlash() {
     DeepLinkEntry entry = deepLinkEntry("airbnb://test/{param1}/foo");
-    TestDeepLinkLoader testLoader = getTestDelgate(Arrays.asList(new DeepLinkEntry[] {entry}));
-    DeepLinkEntry match = testLoader.idxMatch(DeepLinkUri.parse("airbnb://test/123/foo"));
+    TestDeepLinkRegistry testRegistry = getTestDelgate(Arrays.asList(new DeepLinkEntry[] {entry}));
+    DeepLinkEntry match = testRegistry.idxMatch(DeepLinkUri.parse("airbnb://test/123/foo"));
 
     Map<String, String> parameters = match.getParameters(DeepLinkUri.parse("airbnb://test/123/foo"));
     assertThat(parameters.get("param1")).isEqualTo("123");
@@ -84,8 +84,8 @@ public class DeepLinkEntryTest {
 
   @Test public void testNoMatchesFound() {
     DeepLinkEntry entry = deepLinkEntry("airbnb://foo/{bar}");
-    TestDeepLinkLoader testLoader = getTestDelgate(Arrays.asList(new DeepLinkEntry[] {entry}));
-    assertThat(testLoader.idxMatch(DeepLinkUri.parse("airbnb://test.com"))).isNull();
+    TestDeepLinkRegistry testRegistry = getTestDelgate(Arrays.asList(new DeepLinkEntry[] {entry}));
+    assertThat(testRegistry.idxMatch(DeepLinkUri.parse("airbnb://test.com"))).isNull();
     assertThat(entry.getParameters(DeepLinkUri.parse("airbnb://test.com")).isEmpty()).isTrue();
   }
 
@@ -93,8 +93,8 @@ public class DeepLinkEntryTest {
   public void testEmptyParametersDontMatch() throws Exception {
     DeepLinkEntry entry = deepLinkEntry("dld://foo/{id}/bar");
 
-    TestDeepLinkLoader testLoader = getTestDelgate(Arrays.asList(new DeepLinkEntry[] {entry}));
-    DeepLinkEntry match = testLoader.idxMatch(DeepLinkUri.parse("dld://foo//bar"));
+    TestDeepLinkRegistry testRegistry = getTestDelgate(Arrays.asList(new DeepLinkEntry[] {entry}));
+    DeepLinkEntry match = testRegistry.idxMatch(DeepLinkUri.parse("dld://foo//bar"));
 
     assertThat(match).isNull();
   }
@@ -103,8 +103,8 @@ public class DeepLinkEntryTest {
   public void testEmptyParametersNameDontMatch() throws Exception {
     DeepLinkEntry entry = deepLinkEntry("dld://foo/{}/bar");
 
-    TestDeepLinkLoader testLoader = getTestDelgate(Arrays.asList(new DeepLinkEntry[] {entry}));
-    DeepLinkEntry match = testLoader.idxMatch(DeepLinkUri.parse("dld://foo/bla/bar"));
+    TestDeepLinkRegistry testRegistry = getTestDelgate(Arrays.asList(new DeepLinkEntry[] {entry}));
+    DeepLinkEntry match = testRegistry.idxMatch(DeepLinkUri.parse("dld://foo/bla/bar"));
 
     assertThat(match).isNull();
   }
@@ -114,11 +114,11 @@ public class DeepLinkEntryTest {
     DeepLinkEntry entry = deepLinkEntry("dld://foo/{id}");
     DeepLinkEntry entryNoParam = deepLinkEntry("dld://foo");
 
-    TestDeepLinkLoader testLoader = getTestDelgate(Arrays.asList(new DeepLinkEntry[] {entry}));
-    DeepLinkEntry match = testLoader.idxMatch(DeepLinkUri.parse("dld://foo"));
+    TestDeepLinkRegistry testRegistry = getTestDelgate(Arrays.asList(new DeepLinkEntry[] {entry}));
+    DeepLinkEntry match = testRegistry.idxMatch(DeepLinkUri.parse("dld://foo"));
 
-    TestDeepLinkLoader testLoaderNoParm = getTestDelgate(Arrays.asList(new DeepLinkEntry[] {entryNoParam}));
-    DeepLinkEntry matchNoParam = testLoaderNoParm.idxMatch(DeepLinkUri.parse("dld://foo"));
+    TestDeepLinkRegistry testRegistryNoParm = getTestDelgate(Arrays.asList(new DeepLinkEntry[] {entryNoParam}));
+    DeepLinkEntry matchNoParam = testRegistryNoParm.idxMatch(DeepLinkUri.parse("dld://foo"));
 
     assertThat(match).isNull();
     assertThat(matchNoParam).isEqualTo(entryNoParam);
@@ -134,8 +134,8 @@ public class DeepLinkEntryTest {
   @Test public void noMatches() {
     DeepLinkEntry entry = deepLinkEntry("airbnb://something.com/some-path");
 
-    TestDeepLinkLoader testLoader = getTestDelgate(Arrays.asList(new DeepLinkEntry[] {entry}));
-    DeepLinkEntry match = testLoader.idxMatch(DeepLinkUri.parse("airbnb://something.com/something-else"));
+    TestDeepLinkRegistry testRegistry = getTestDelgate(Arrays.asList(new DeepLinkEntry[] {entry}));
+    DeepLinkEntry match = testRegistry.idxMatch(DeepLinkUri.parse("airbnb://something.com/something-else"));
 
     assertThat(match).isNull();
   }
@@ -143,8 +143,8 @@ public class DeepLinkEntryTest {
   @Test public void pathParamAndQueryString() {
     DeepLinkEntry entry = deepLinkEntry("airbnb://foo/{bar}");
 
-    TestDeepLinkLoader testLoader = getTestDelgate(Arrays.asList(new DeepLinkEntry[] {entry}));
-    DeepLinkEntry match = testLoader.idxMatch(DeepLinkUri.parse("airbnb://foo/baz?kit=kat"));
+    TestDeepLinkRegistry testRegistry = getTestDelgate(Arrays.asList(new DeepLinkEntry[] {entry}));
+    DeepLinkEntry match = testRegistry.idxMatch(DeepLinkUri.parse("airbnb://foo/baz?kit=kat"));
 
     Map<String, String> parameters = match.getParameters(DeepLinkUri.parse("airbnb://foo/baz?kit=kat"));
     assertThat(parameters.get("bar")).isEqualTo("baz");
@@ -153,8 +153,8 @@ public class DeepLinkEntryTest {
   @Test public void urlWithSpaces() {
     DeepLinkEntry entry = deepLinkEntry("http://example.com/{query}");
 
-    TestDeepLinkLoader testLoader = getTestDelgate(Arrays.asList(new DeepLinkEntry[] {entry}));
-    DeepLinkEntry match = testLoader.idxMatch(DeepLinkUri.parse("http://example.com/search%20paris"));
+    TestDeepLinkRegistry testRegistry = getTestDelgate(Arrays.asList(new DeepLinkEntry[] {entry}));
+    DeepLinkEntry match = testRegistry.idxMatch(DeepLinkUri.parse("http://example.com/search%20paris"));
 
     Map<String, String> parameters = match.getParameters(DeepLinkUri.parse("http://example.com/search%20paris"));
     assertThat(parameters.get("query")).isEqualTo("search%20paris");
@@ -163,8 +163,8 @@ public class DeepLinkEntryTest {
   @Test public void noMatchesDifferentScheme() {
     DeepLinkEntry entry = deepLinkEntry("airbnb://something");
 
-    TestDeepLinkLoader testLoader = getTestDelgate(Arrays.asList(new DeepLinkEntry[] {entry}));
-    DeepLinkEntry match = testLoader.idxMatch(DeepLinkUri.parse("http://something"));
+    TestDeepLinkRegistry testRegistry = getTestDelgate(Arrays.asList(new DeepLinkEntry[] {entry}));
+    DeepLinkEntry match = testRegistry.idxMatch(DeepLinkUri.parse("http://something"));
 
     assertThat(match).isNull();
   }
@@ -172,8 +172,8 @@ public class DeepLinkEntryTest {
   @Test public void testNoMatchForPartialOfRealMatch() {
     DeepLinkEntry entry = deepLinkEntry("airbnb://host/something/something");
 
-    TestDeepLinkLoader testLoader = getTestDelgate(Arrays.asList(new DeepLinkEntry[] {entry}));
-    DeepLinkEntry match = testLoader.idxMatch(DeepLinkUri.parse("airbnb://host/something"));
+    TestDeepLinkRegistry testRegistry = getTestDelgate(Arrays.asList(new DeepLinkEntry[] {entry}));
+    DeepLinkEntry match = testRegistry.idxMatch(DeepLinkUri.parse("airbnb://host/something"));
 
     assertThat(match).isNull();
   }
@@ -181,8 +181,8 @@ public class DeepLinkEntryTest {
   @Test public void invalidUrl() {
     DeepLinkEntry entry = deepLinkEntry("airbnb://something");
 
-    TestDeepLinkLoader testLoader = getTestDelgate(Arrays.asList(new DeepLinkEntry[] {entry}));
-    DeepLinkEntry match = testLoader.idxMatch(DeepLinkUri.parse("airbnb://"));
+    TestDeepLinkRegistry testRegistry = getTestDelgate(Arrays.asList(new DeepLinkEntry[] {entry}));
+    DeepLinkEntry match = testRegistry.idxMatch(DeepLinkUri.parse("airbnb://"));
 
     assertThat(match).isNull();
   }
@@ -190,8 +190,8 @@ public class DeepLinkEntryTest {
   @Test public void pathWithQuotes() {
     DeepLinkEntry entry = deepLinkEntry("airbnb://s/{query}");
 
-    TestDeepLinkLoader testLoader = getTestDelgate(Arrays.asList(new DeepLinkEntry[] {entry}));
-    DeepLinkEntry match = testLoader.idxMatch(DeepLinkUri.parse("airbnb://s/Sant'Eufemia-a-Maiella--Italia"));
+    TestDeepLinkRegistry testRegistry = getTestDelgate(Arrays.asList(new DeepLinkEntry[] {entry}));
+    DeepLinkEntry match = testRegistry.idxMatch(DeepLinkUri.parse("airbnb://s/Sant'Eufemia-a-Maiella--Italia"));
 
     assertThat(match).isEqualTo(entry);
   }
@@ -199,8 +199,8 @@ public class DeepLinkEntryTest {
   @Test public void schemeWithNumbers() {
     DeepLinkEntry entry = deepLinkEntry("jackson5://example.com");
 
-    TestDeepLinkLoader testLoader = getTestDelgate(Arrays.asList(new DeepLinkEntry[] {entry}));
-    DeepLinkEntry match = testLoader.idxMatch(DeepLinkUri.parse("jackson5://example.com"));
+    TestDeepLinkRegistry testRegistry = getTestDelgate(Arrays.asList(new DeepLinkEntry[] {entry}));
+    DeepLinkEntry match = testRegistry.idxMatch(DeepLinkUri.parse("jackson5://example.com"));
 
     assertThat(match).isEqualTo(entry);
   }
@@ -208,8 +208,8 @@ public class DeepLinkEntryTest {
   @Test public void multiplePathParams() {
     DeepLinkEntry entry = deepLinkEntry("airbnb://{foo}/{bar}");
 
-    TestDeepLinkLoader testLoader = getTestDelgate(Arrays.asList(new DeepLinkEntry[] {entry}));
-    DeepLinkEntry match = testLoader.idxMatch(DeepLinkUri.parse("airbnb://baz/qux"));
+    TestDeepLinkRegistry testRegistry = getTestDelgate(Arrays.asList(new DeepLinkEntry[] {entry}));
+    DeepLinkEntry match = testRegistry.idxMatch(DeepLinkUri.parse("airbnb://baz/qux"));
 
     Map<String, String> parameters = match.getParameters(DeepLinkUri.parse("airbnb://baz/qux"));
     assertThat(parameters)
@@ -221,9 +221,9 @@ public class DeepLinkEntryTest {
     DeepLinkEntry entryMatch = deepLinkEntry("airbnb://{foo}/{bar}/match");
     DeepLinkEntry entryNoMatch = deepLinkEntry("airbnb://{hey}/{ho}/noMatch");
 
-    TestDeepLinkLoader testLoader = getTestDelgate(Arrays.asList(new DeepLinkEntry[] {entryNoMatch,entryMatch}));
+    TestDeepLinkRegistry testRegistry = getTestDelgate(Arrays.asList(new DeepLinkEntry[] {entryNoMatch,entryMatch}));
     DeepLinkUri matchUri = DeepLinkUri.parse("airbnb://baz/qux/match");
-    DeepLinkEntry match = testLoader.idxMatch(matchUri);
+    DeepLinkEntry match = testRegistry.idxMatch(matchUri);
 
     Map<String, String> parameters = match.getParameters(matchUri);
     assertThat(parameters)
@@ -251,12 +251,12 @@ public class DeepLinkEntryTest {
    * @param deepLinkEntries
    * @return
    */
-  private static TestDeepLinkLoader getTestDelgate(List<DeepLinkEntry> deepLinkEntries){
-    return new TestDeepLinkLoader(deepLinkEntries);
+  private static TestDeepLinkRegistry getTestDelgate(List<DeepLinkEntry> deepLinkEntries){
+    return new TestDeepLinkRegistry(deepLinkEntries);
   }
 
-  private static class TestDeepLinkLoader extends BaseRegistry {
-    public TestDeepLinkLoader(List<DeepLinkEntry> registry) {
+  private static class TestDeepLinkRegistry extends BaseRegistry {
+    public TestDeepLinkRegistry(List<DeepLinkEntry> registry) {
       super(registry, getSearchIndex(registry));
     }
 
