@@ -207,19 +207,19 @@ dependencies {
 
 _For **Kotlin** you should use_ `kapt` _instead of_ `annotationProcessor`
 
-Create your deep link module(s) (**new on DeepLinkDispatch v3**). For every class you annotate with `@DeepLinkModule`, DeepLinkDispatch will generate a "Loader" class, which contains a registry of all your `@DeepLink` annotations.
+Create your deep link module(s) (**new on DeepLinkDispatch v3**). For every class you annotate with `@DeepLinkModule`, DeepLinkDispatch will generate a "Registry" class, which contains a registry of all your `@DeepLink` annotations.
 
 ```java
-/** This will generate a AppDeepLinkModuleLoader class */
+/** This will generate a AppDeepLinkModuleRegistry class */
 @DeepLinkModule
 public class AppDeepLinkModule {
 }
 ```
 
-**Optional**: If your Android application contains multiple modules (eg. separated Android library projects), you'll want to add one `@DeepLinkModule` class for every module in your application, so that DeepLinkDispatch can collect all your annotations in one "loader" class per module:
+**Optional**: If your Android application contains multiple modules (eg. separated Android library projects), you'll want to add one `@DeepLinkModule` class for every module in your application, so that DeepLinkDispatch can collect all your annotations in one "Registry" class per module:
 
 ```java
-/** This will generate a LibraryDeepLinkModuleLoader class */
+/** This will generate a LibraryDeepLinkModuleRegistry class */
 @DeepLinkModule
 public class LibraryDeepLinkModule {
 }
@@ -248,10 +248,10 @@ Annotate your `DeepLinkActivity` with `@DeepLinkHandler` and provide it a list o
 public class DeepLinkActivity extends Activity {
   @Override protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    // DeepLinkDelegate, LibraryDeepLinkModuleLoader and AppDeepLinkModuleLoader
+    // DeepLinkDelegate, LibraryDeepLinkModuleRegistry and AppDeepLinkModuleRegistry
     // are generated at compile-time.
     DeepLinkDelegate deepLinkDelegate = 
-        new DeepLinkDelegate(new AppDeepLinkModuleLoader(), new LibraryDeepLinkModuleLoader());
+        new DeepLinkDelegate(new AppDeepLinkModuleRegistry(), new LibraryDeepLinkModuleRegistry());
     // Delegate the deep link handling to DeepLinkDispatch. 
     // It will start the correct Activity based on the incoming Intent URI
     deepLinkDelegate.dispatchFrom(this);

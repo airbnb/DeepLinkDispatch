@@ -17,10 +17,8 @@ public class DeepLinkActivity extends Activity {
 //    Debug.startMethodTracing("deeplink.trace",90000000);
         DeepLinkDelegate deepLinkDelegate = new DeepLinkDelegate(
                 new SampleModuleRegistry(), new LibraryDeepLinkModuleRegistry(), new BenchmarkDeepLinkModuleRegistry());
-
         deepLinkDelegate.dispatchFrom(this);
 //    Debug.stopMethodTracing();
-
         finish();
     }
 }

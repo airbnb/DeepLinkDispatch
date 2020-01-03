@@ -22,21 +22,21 @@ public class BaseDeepLinkDelegate {
 
   protected static final String TAG = "DeepLinkDelegate";
 
-  protected final List<? extends BaseRegistry> loaders;
+  protected final List<? extends BaseRegistry> registries;
 
-  public List<? extends BaseRegistry> getLoaders() {
-    return loaders;
+  public List<? extends BaseRegistry> getRegistries() {
+    return registries;
   }
 
-  public BaseDeepLinkDelegate(List<? extends BaseRegistry> loaders) {
-    this.loaders = loaders;
+  public BaseDeepLinkDelegate(List<? extends BaseRegistry> registries) {
+    this.registries = registries;
   }
 
   private DeepLinkEntry findEntry(String uriString) {
     DeepLinkEntry entryRegExpMatch = null;
     DeepLinkEntry entryIdxMatch = null;
-    for (BaseRegistry loader : loaders) {
-      entryIdxMatch = loader.idxMatch(DeepLinkUri.parse(uriString));
+    for (BaseRegistry registry : registries) {
+      entryIdxMatch = registry.idxMatch(DeepLinkUri.parse(uriString));
       if (entryIdxMatch != null) {
         break;
       }
