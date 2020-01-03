@@ -217,7 +217,7 @@ public class AppDeepLinkModule {
 **Optional**: If your Android application contains multiple modules (eg. separated Android library projects), you'll want to add one `@DeepLinkModule` class for every module in your application, so that DeepLinkDispatch can collect all your annotations in one "Registry" class per module:
 
 ```java
-/** This will generate a LibraryDeepLinkModuleLRegistry class */
+/** This will generate a LibraryDeepLinkModuleRegistry class */
 @DeepLinkModule
 public class LibraryDeepLinkModule {
 }
