@@ -36,7 +36,7 @@ public class MainActivity extends AppCompatActivity {
 
   @Override protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    setContentView(R.layout.activity_main);
+    setContentView(R.layout.sample_activity_main);
 
     Intent intent = getIntent();
     if (intent.getBooleanExtra(DeepLink.IS_DEEP_LINK, false)) {

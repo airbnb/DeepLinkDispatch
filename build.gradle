@@ -1,18 +1,20 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 
 buildscript {
-  apply from: rootProject.file("dependencies.gradle")
 
-  repositories {
-    google()
-    jcenter()
-    maven { url "https://oss.sonatype.org/service/local/repositories/snapshots/content/" }
-  }
-  dependencies {
-    classpath deps.androidPlugin
-    classpath deps.kotlinGradlePlugin
-    classpath deps.gradleMavenPublishPlugin
-  }
+    apply from: rootProject.file("dependencies.gradle")
+
+    repositories {
+        google()
+        jcenter()
+        maven { url "https://oss.sonatype.org/service/local/repositories/snapshots/content/" }
+    }
+    dependencies {
+        classpath deps.androidPlugin
+        classpath deps.kotlinGradlePlugin
+        classpath deps.gradleMavenPublishPlugin
+        classpath deps.benchmarkGradlePlugin
+    }
 }
 
 allprojects {

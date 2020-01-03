@@ -9,7 +9,7 @@ data class DeepLinkResult(
          */
         val isSuccessful: Boolean,
         val uriString: String?,
-        val error: String?,
+        val error: String,
         /**
          * The intent for the Deep Link's destination. eg. [com.airbnb.deeplinkdispatch.sample.DeepLinkActivity]
          */

@@ -1,0 +1,120 @@
+package com.airbnb.deeplinkdispatch.sample.benchmark
+
+import android.content.Intent
+import androidx.benchmark.junit4.BenchmarkRule
+import androidx.benchmark.junit4.measureRepeated
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.rule.ActivityTestRule
+import com.airbnb.deeplinkdispatch.BaseDeepLinkDelegate
+import com.airbnb.deeplinkdispatch.BaseRegistry
+import com.airbnb.deeplinkdispatch.DeepLinkEntry
+import com.airbnb.deeplinkdispatch.DeepLinkResult
+import com.airbnb.deeplinkdispatch.DeepLinkUri
+import com.airbnb.deeplinkdispatch.sample.benchmarkable.BenchmarkDeepLinkModuleRegistry
+import com.airbnb.deeplinkdispatch.sample.benchmarkable.ScaleTestActivity
+import org.junit.Assert
+import org.junit.Rule
+import org.junit.Test
+import org.junit.runner.RunWith
+
+/**
+* Benchmark, which will execute on an Android device.
+*
+* The body of [BenchmarkRule.measureRepeated] is measured in a loop, and Studio will
+* output the result. Modify your code to see how it affects performance.
+*/
+@RunWith(AndroidJUnit4::class)
+class DeeplinkBenchmarks {
+
+    private val DEEPLINK_1 = "dld://methodDeepLink1/test1234"
+    private val DEEPLINK_500 = "dld://methodDeepLink500/test1234"
+    private val DEEPLINK_1000 = "dld://methodDeepLink1000/test1234"
+    private val DEEPLINK_1500 = "dld://methodDeepLink1500/test1234"
+    private val DEEPLINK_2000 = "dld://methodDeepLink2000/test1234"
+
+    @get:Rule
+    val benchmarkRule = BenchmarkRule()
+
+    @get:Rule
+    val activityRule = ActivityTestRule(ScaleTestActivity::class.java)
+
+    @Test
+    fun newRegistry() {
+        benchmarkRule.measureRepeated {
+            BenchmarkDeepLinkModuleRegistry()
+        }
+    }
+
+    @Test
+    fun parseDeeplinkUrl() {
+        benchmarkRule.measureRepeated {
+            DeepLinkUri.parse(DEEPLINK_1)
+        }
+    }
+
+    @Test
+    fun match1() {
+        Assert.assertNotNull(testMatch(DeepLinkUri.parse(DEEPLINK_1)))
+    }
+
+    @Test
+    fun match500() {
+        Assert.assertNotNull(testMatch(DeepLinkUri.parse(DEEPLINK_500)))
+    }
+
+    @Test
+    fun match1000() {
+        Assert.assertNotNull(testMatch(DeepLinkUri.parse(DEEPLINK_1000)))
+    }
+
+    @Test
+    fun match1500() {
+        Assert.assertNotNull(testMatch(DeepLinkUri.parse(DEEPLINK_1500)))
+    }
+
+    @Test
+    fun match2000() {
+        Assert.assertNotNull(testMatch(DeepLinkUri.parse(DEEPLINK_2000)))
+    }
+
+    /**
+     * Note: This contains a call to match for DEEPLINK_1
+     */
+    @Test
+    fun createResultDeeplink1() {
+        val delegate = DeepLinkDelegate()
+        val intent = intent(DEEPLINK_1)
+        val entry = entry(DEEPLINK_1)
+        val activity = activityRule.activity
+        var result : DeepLinkResult? = null
+        benchmarkRule.measureRepeated {
+            result = delegate.createResult(activity, intent, entry)
+        }
+        Assert.assertEquals("",  result?.error)
+    }
+
+    fun registry() = BenchmarkDeepLinkModuleRegistry()
+
+    fun intent(uri: String) : Intent {
+        val intent = Intent.parseUri(DEEPLINK_1,0)
+        intent.setAction(Intent.ACTION_VIEW)
+        return intent
+    }
+
+    fun entry(uri: String) : DeepLinkEntry?{
+        return registry().idxMatch(DeepLinkUri.parse(uri))
+    }
+
+    fun testMatch(uri : DeepLinkUri) : DeepLinkEntry? {
+        var result : DeepLinkEntry? = null
+        val registry = registry()
+        benchmarkRule.measureRepeated {
+            result = registry.idxMatch(uri)
+        }
+        return result
+    }
+}
+
+class DeepLinkDelegate() : BaseDeepLinkDelegate(listOf<BaseRegistry>(BenchmarkDeepLinkModuleRegistry()))
+
+

@@ -7,6 +7,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
 import androidx.core.app.TaskStackBuilder;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
@@ -90,7 +91,7 @@ public class BaseDeepLinkDelegate {
    *                      {@link #findEntry(String)}. Can be injected for testing.
    * @return DeepLinkResult
    */
-  public DeepLinkResult createResult(
+  public @NonNull DeepLinkResult createResult(
     Activity activity, Intent sourceIntent, DeepLinkEntry deepLinkEntry
   ) {
     if (activity == null) {
