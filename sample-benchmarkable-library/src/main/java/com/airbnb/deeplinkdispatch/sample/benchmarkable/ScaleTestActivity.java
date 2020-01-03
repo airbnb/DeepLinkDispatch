@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.airbnb.deeplinkdispatch.sample;
+package com.airbnb.deeplinkdispatch.sample.benchmarkable;
 
 import android.content.Context;
 import android.content.Intent;
@@ -24,7 +24,6 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
-import androidx.core.app.TaskStackBuilder;
 
 import com.airbnb.deeplinkdispatch.DeepLink;
 
@@ -38,7 +37,7 @@ public class ScaleTestActivity extends AppCompatActivity {
 
   @Override protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    setContentView(R.layout.activity_main);
+    setContentView(R.layout.scale_activity_main);
 
     Intent intent = getIntent();
     if (intent.getBooleanExtra(DeepLink.IS_DEEP_LINK, false)) {

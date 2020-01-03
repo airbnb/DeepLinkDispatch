@@ -1,0 +1,5 @@
+<resources>
+  <string name="app_name">sample-benchmark</string>
+  <string name="benchmark_hello_world">Hello world!</string>
+
+</resources>
