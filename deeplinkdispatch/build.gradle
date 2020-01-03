@@ -1,6 +1,6 @@
 apply plugin: 'com.android.library'
 
-sourceCompatibility = 1.7
+sourceCompatibility = 1.8
 
 apply plugin: 'checkstyle'
 

@@ -17,7 +17,7 @@ public class SecondActivity extends AppCompatActivity {
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    setContentView(R.layout.activity_main);
+    setContentView(R.layout.sample_activity_main);
 
     if (getIntent().getBooleanExtra(DeepLink.IS_DEEP_LINK, false)) {
       Bundle parameters = getIntent().getExtras();

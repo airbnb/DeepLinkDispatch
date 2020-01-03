@@ -3,6 +3,7 @@ apply plugin: 'checkstyle'
 apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-kapt'
 
+
 checkstyle {
   configFile rootProject.file('checkstyle.xml')
   showViolations true
@@ -26,6 +27,10 @@ android {
   lintOptions {
     disable 'InvalidPackage'
   }
+
+  kotlinOptions {
+    jvmTarget = "1.8"
+  }
 }
 
 dependencies {
@@ -33,7 +38,9 @@ dependencies {
   implementation project(':deeplinkdispatch')
   kapt project(':deeplinkdispatch-processor')
   implementation project(':sample-library')
+  implementation project(':sample-benchmarkable-library')
   implementation deps.appCompat
+  implementation deps.localBroadcastManager
 
   testImplementation deps.roboelectric
   testImplementation deps.junit

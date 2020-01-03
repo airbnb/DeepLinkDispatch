@@ -9,7 +9,7 @@
                 tools:context=".MainActivity">
 
     <TextView
-            android:text="@string/hello_world"
+            android:text="@string/sample_hello_world"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"/>
 

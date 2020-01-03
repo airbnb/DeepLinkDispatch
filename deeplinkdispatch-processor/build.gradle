@@ -1,7 +1,7 @@
 apply plugin: 'java'
 apply plugin: 'kotlin'
 
-sourceCompatibility = 1.7
+sourceCompatibility = 1.8
 
 apply plugin: 'checkstyle'
 apply plugin: 'com.vanniktech.maven.publish'
@@ -20,6 +20,7 @@ dependencies {
   implementation deps.kotlinStdLib
   implementation deps.javaPoet
   implementation deps.autoCommon
+  implementation deps.androidXAnnotations
 
   testImplementation deps.junit
   testImplementation deps.assertJ
