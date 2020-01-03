@@ -25,25 +25,26 @@ import javax.tools.Diagnostic;
  * {@link ProcessingEnvironment}'s compiler argument options by deepLinkDoc.output.
  */
 final class Documentor {
-  private static final String PROPERTY_DELIMITER = "\\n|#|\\n";
-  private static final String ELEMENT_DELIMITER = "\\n|##|\\n";
-  private static final String CLASS_METHOD_NAME_DELIMITER = "#";
-  private static final String PARAM = "@param";
-  private static final String RETURN = "@return";
-  @VisibleForTesting static final String DOC_OUTPUT_PROPERTY_NAME = "deepLinkDoc.output";
+  protected static final String PROPERTY_DELIMITER = "\\n|#|\\n";
+  protected static final String ELEMENT_DELIMITER = "\\n|##|\\n";
+  protected static final String CLASS_METHOD_NAME_DELIMITER = "#";
+  protected static final String PARAM = "@param";
+  protected static final String RETURN = "@return";
+  @VisibleForTesting
+  static final String DOC_OUTPUT_PROPERTY_NAME = "deepLinkDoc.output";
 
   private final ProcessingEnvironment processingEnv;
   private final Messager messager;
 
   @Nullable private File file;
 
-  Documentor(ProcessingEnvironment processingEnv) {
+  Documentor(final ProcessingEnvironment processingEnv) {
     this.processingEnv = processingEnv;
     messager = processingEnv.getMessager();
     initFile();
   }
 
-  void write(List<DeepLinkAnnotatedElement> elements) {
+  void write(final List<DeepLinkAnnotatedElement> elements) {
     if (file == null) {
       messager.printMessage(Diagnostic.Kind.NOTE,
           "Output file is null, DeepLink doc not generated.");
@@ -55,22 +56,23 @@ final class Documentor {
       return;
     }
     try (PrintWriter writer = new PrintWriter(new FileWriter(file), true)) {
-      for (DeepLinkAnnotatedElement element : elements) {
-        writer.print(element.getUri() + PROPERTY_DELIMITER);
-        String doc = formatJavaDoc(
-            processingEnv.getElementUtils().getDocComment(element.getElement()));
-        if (doc != null) {
-          writer.print(doc);
-        }
-        writer.print(PROPERTY_DELIMITER);
-        writer.print(element.getAnnotatedElement().getSimpleName());
-        if (element.getAnnotationType().equals(DeepLinkEntry.Type.METHOD)) {
-          writer.print(CLASS_METHOD_NAME_DELIMITER);
-          writer.print(element.getMethod());
-        }
-        writer.print(ELEMENT_DELIMITER);
+
+      final String fileName = file.getName();
+      final int extIndex = fileName.lastIndexOf(".");
+
+      DocumetationWriter docWriter;
+
+      // markdown writer if .md file extension is used
+      if (extIndex >= 0 && extIndex < fileName.length()
+              && fileName.substring(extIndex + 1).equalsIgnoreCase("md")) {
+        docWriter = new MarkdownWriter();
+      } else {
+          // else default writer
+        docWriter = new GenericWriter();
       }
-      writer.flush();
+
+      docWriter.write(processingEnv, writer, elements);
+
     } catch (IOException e) {
       messager.printMessage(Diagnostic.Kind.ERROR,
           "DeepLink doc not generated: " + e.getMessage());
@@ -102,7 +104,7 @@ final class Documentor {
   }
 
   /* Strips off {@link #PARAM} and {@link #RETURN}. */
-  private static String formatJavaDoc(String str) {
+  protected static String formatJavaDoc(String str) {
     if (str != null) {
       int paramPos = str.indexOf(PARAM);
       if (paramPos != -1) {
@@ -122,4 +124,18 @@ final class Documentor {
   File getFile() {
     return file;
   }
+
+  /**
+   * Implement this interface if you want to provide own documentation writer.
+   */
+  interface DocumetationWriter {
+    /**
+     * Compose documentation with help of provided environment, writer and collection of
+     * found deeplink elements.
+     */
+    void write(ProcessingEnvironment env,
+               PrintWriter writer,
+               List<DeepLinkAnnotatedElement> elements);
+  }
+
 }
