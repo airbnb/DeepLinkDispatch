@@ -278,11 +278,23 @@ tasks.withType(JavaCompile) {
   options.compilerArgs << "-AdeepLinkDoc.output=${buildDir}/doc/deeplinks.txt"
 }
 ```
+
+If you are using Kotlin this is how you can enable it for kapt
+```groovy
+kapt {
+  arguments {
+    arg("deepLinkDoc.output", "${buildDir}/doc/deeplinks.txt")
+  }
+}
+```
+
 The documentation will be generated in the following format:
 ```
 * {DeepLink1}\n|#|\n[Description part of javadoc]\n|#|\n{ClassName}#[MethodName]\n|##|\n
 * {DeepLink2}\n|#|\n[Description part of javadoc]\n|#|\n{ClassName}#[MethodName]\n|##|\n
 ```
+
+You can also generate the output in a much more readable Markdown format by naming the output file `*.md` (e.g. `deeplinks.md`). Make sure that your Markdown viewer understands tables.
 
 ## Proguard Rules
 
