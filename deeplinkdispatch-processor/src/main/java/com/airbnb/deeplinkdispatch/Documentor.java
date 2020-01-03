@@ -133,9 +133,9 @@ final class Documentor {
      * Compose documentation with help of provided environment, writer and collection of
      * found deeplink elements.
      */
-    void write(final ProcessingEnvironment env,
-               final PrintWriter writer,
-               final List<DeepLinkAnnotatedElement> elements);
+    void write(ProcessingEnvironment env,
+               PrintWriter writer,
+               List<DeepLinkAnnotatedElement> elements);
   }
 
 }
