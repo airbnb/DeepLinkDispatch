@@ -11,8 +11,8 @@ import java.lang.annotation.Target;
  * registry. This registry is then used by {@code DeepLinkDelegate} in order to decide which
  * Activity will receive each incoming deep link.
  * For example, if you annotated a class {@code FooBar} with {@link DeepLinkModule}, then
- * DeepLinkDispatch will generate a class called {@code FooBarRegistry}. Also, {@code FooBar} will be
- * added as a constructor argument to the {@code DeepLinkDelegate} class, so it can be used for
+ * DeepLinkDispatch will generate a class called {@code FooBarRegistry}. Also, {@code FooBar} will
+ * be added as a constructor argument to the {@code DeepLinkDelegate} class, so it can be used for
  * Intent delivery.
  */
 @Target({ ElementType.TYPE })
