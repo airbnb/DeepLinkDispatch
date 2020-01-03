@@ -9,8 +9,11 @@
 
       In a com.android.library project, this flag must be disabled from this
       manifest, as it is not possible to override this flag from Gradle.
+
+      Setting requestLegacyExternalStorage to true allows us to target api 29 (Android 10)
     -->
     <application
+        android:requestLegacyExternalStorage="true"
         android:debuggable="false"
         tools:ignore="HardcodedDebugMode"
         tools:replace="android:debuggable"/>

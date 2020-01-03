@@ -12,8 +12,7 @@ ext.androidConfig = [
     compileSdkVersion                   : 29,
     buildToolsVersion                   : '29.0.2',
     minSdkVersion                       : 16,
-    targetSdkVersion                    : 29,
-    targetSdkVersionPerformanceTests    : 28
+    targetSdkVersion                    : 29
 ]
 
 ext.deps = [
