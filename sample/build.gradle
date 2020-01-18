@@ -55,5 +55,7 @@ kapt {
             + "com.airbnb.deeplinkdispatch.sample.WebDeepLink,"
             + "com.airbnb.deeplinkdispatch.sample.library.LibraryDeepLink"
     )
+    arg("deepLink.uriPathPlaceholder", "<sampleAppPathPlaceholder>")
+    arg("deepLink.uriPathPlaceholderValue", "obamaOs")
   }
 }

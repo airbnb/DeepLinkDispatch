@@ -1,11 +1,16 @@
 package com.airbnb.deeplinkdispatch;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import jdk.nashorn.internal.runtime.regexp.RegExp;
+
 public final class ProcessorUtils {
 
   static String decapitalize(String str) {
     if (str != null && str.length() != 0) {
       if (str.length() > 1 && Character.isUpperCase(str.charAt(1))
-          && Character.isUpperCase(str.charAt(0))) {
+        && Character.isUpperCase(str.charAt(0))) {
         return str;
       } else {
         char[] var1 = str.toCharArray();
@@ -24,5 +29,10 @@ public final class ProcessorUtils {
       }
     }
     return false;
+  }
+
+  /** Constrain the allowable characters for a path segment placeholder replacement. */
+  static boolean containsUnsafe(String s) {
+    return !s.matches("[a-zA-Z0-9/-]*");
   }
 }

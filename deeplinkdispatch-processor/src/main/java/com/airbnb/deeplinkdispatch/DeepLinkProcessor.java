@@ -51,7 +51,6 @@ import javax.annotation.processing.Filer;
 import javax.annotation.processing.Messager;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.RoundEnvironment;
-import javax.annotation.processing.SupportedOptions;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
@@ -66,11 +65,11 @@ import javax.tools.Diagnostic;
 
 import static com.airbnb.deeplinkdispatch.MoreAnnotationMirrors.asAnnotationValues;
 import static com.airbnb.deeplinkdispatch.MoreAnnotationMirrors.getTypeValue;
+import static com.airbnb.deeplinkdispatch.ProcessorUtils.containsUnsafe;
 import static com.airbnb.deeplinkdispatch.ProcessorUtils.decapitalize;
 import static com.airbnb.deeplinkdispatch.ProcessorUtils.hasEmptyOrNullString;
 import static com.google.auto.common.MoreElements.getAnnotationMirror;
 
-@SupportedOptions(Documentor.DOC_OUTPUT_PROPERTY_NAME)
 public class DeepLinkProcessor extends AbstractProcessor {
   private static final String PACKAGE_NAME = "com.airbnb.deeplinkdispatch";
   private static final String OPTION_CUSTOM_ANNOTATIONS = "deepLink.customAnnotations";
@@ -85,6 +84,28 @@ public class DeepLinkProcessor extends AbstractProcessor {
   private static final Class<DeepLink> DEEP_LINK_CLASS = DeepLink.class;
   private static final Class<DeepLinkSpec> DEEP_LINK_SPEC_CLASS = DeepLinkSpec.class;
   public static final String REGISTRY_CLASS_SUFFIX = "Registry";
+  /**
+   * <p>Path placeholder for DLD to be able to dynamically configure paths by substituting the
+   * compiler-arg passed in placeholder into paths.</p>
+   * <p>Example</p>
+   * Given:
+   * <ul>
+   *   <li><xmp>compileJava.options.compilerArgs +=-AdeepLink.uriPathPlaceholder="
+<sampleAppPlaceholder>"
+   *   </xmp></li>
+   *   <li>compileJava.options.compilerArgs +=
+   *   "-AdeepLink.uriPathPlaceholderValue=obamaOs"</li>
+   *   <li><xmp>https://www.example.com/<sampleAppPlaceholder>/users/{param1}</xmp></li>
+   * </ul>
+   * Then:
+   * <ul><li>https://www.example.com/obamaOs/users/{param1}</li></ul>
+   */
+  public static final String URI_PATH_PLACEHOLDER = "deepLink.uriPathPlaceholder";
+  /**
+   * Value you want to replace usages of {@link DeepLinkProcessor#URI_PATH_PLACEHOLDER} with.
+   */
+  public static final String URI_PATH_PLACEHOLDER_DECLARED_VALUE =
+    "deepLink.uriPathPlaceholderValue";
 
   private Filer filer;
   private Messager messager;
@@ -131,10 +152,15 @@ public class DeepLinkProcessor extends AbstractProcessor {
   }
 
   @Override public Set<String> getSupportedOptions() {
-    HashSet<String> supportedOptions = Sets.newHashSet(Documentor.DOC_OUTPUT_PROPERTY_NAME);
+    HashSet<String> supportedOptions = Sets.newHashSet(
+      Documentor.DOC_OUTPUT_PROPERTY_NAME,
+      URI_PATH_PLACEHOLDER,
+      URI_PATH_PLACEHOLDER_DECLARED_VALUE
+    );
     if (incrementalMetadata != null) {
       supportedOptions.add("org.gradle.annotation.processing.aggregating");
     }
+// TODO: 2020-01-16 adellhk enforce <path> or some other naming convention with compile error
     return supportedOptions;
   }
 
@@ -178,6 +204,7 @@ public class DeepLinkProcessor extends AbstractProcessor {
 
     elementsToProcess.addAll(roundEnv.getElementsAnnotatedWith(DEEP_LINK_CLASS));
 
+    validateUriPathPlaceholder();
     List<DeepLinkAnnotatedElement> deepLinkElements = new ArrayList<>();
     for (Element element : elementsToProcess) {
       ElementKind kind = element.getKind();
@@ -268,6 +295,32 @@ public class DeepLinkProcessor extends AbstractProcessor {
     }
   }
 
+  /**
+   * Validate a user's configuration of URI_PATH_PLACEHOLDER and URI_PATH_PLACEHOLDER_DECLARED_VALUE
+   * . If they didn't configure a URI_PATH_PLACEHOLDER, there is no need to validate it or
+   * URI_PATH_PLACEHOLDER_DECLARED_VALUE, so return early.
+   */
+  private void validateUriPathPlaceholder() {
+    String pathPlaceholder = processingEnv.getOptions().get(URI_PATH_PLACEHOLDER);
+    if (pathPlaceholder == null) {
+      return;
+    }
+
+    if (!pathPlaceholder.startsWith("<") || !pathPlaceholder.endsWith(">")) {
+      throw new DeepLinkProcessorException("You must prefix and suffix your " + URI_PATH_PLACEHOLDER
+        + " with < and >, respectively. It is currently " + pathPlaceholder);
+    }
+    String declaredValue = processingEnv.getOptions().get(URI_PATH_PLACEHOLDER_DECLARED_VALUE);
+    if (declaredValue == null || declaredValue.isEmpty())
+      throw new DeepLinkProcessorException("If " +
+        "you include a " + URI_PATH_PLACEHOLDER + "you must also specify a non-empty " +
+        URI_PATH_PLACEHOLDER_DECLARED_VALUE);
+    if (containsUnsafe(declaredValue))
+      throw new DeepLinkProcessorException("Only a-z, A-Z, 0-9, and" +
+        " - are allowed in " + URI_PATH_PLACEHOLDER_DECLARED_VALUE + ". Currently it is: " +
+        declaredValue);
+  }
+
   private static List<String> enumerateCustomDeepLinks(Element element,
                                                        Map<Element, String[]> prefixesMap) {
     Set<? extends AnnotationMirror> annotationMirrors =
@@ -335,6 +388,8 @@ public class DeepLinkProcessor extends AbstractProcessor {
     documentor.write(elements);
     int totalElements = elements.size();
     Root urisTrie = new Root();
+    String pathPlaceholder = processingEnv.getOptions().get(URI_PATH_PLACEHOLDER);
+    String declaredValue = processingEnv.getOptions().get(URI_PATH_PLACEHOLDER_DECLARED_VALUE);
     for (int i = 0; i < totalElements; i++) {
       DeepLinkAnnotatedElement element = elements.get(i);
       String type = "DeepLinkEntry.Type." + element.getAnnotationType().toString();
@@ -344,7 +399,7 @@ public class DeepLinkProcessor extends AbstractProcessor {
       DeepLinkUri deeplinkUri = DeepLinkUri.parse(uri);
 
       urisTrie.addToTrie(i, deeplinkUri, element.getAnnotatedElement().toString(),
-          element.getMethod());
+          element.getMethod(), pathPlaceholder, declaredValue);
 
       deeplinks.add("new DeepLinkEntry($S, $L, $T.class, $S)$L\n",
           uri, type, activity, method, (i < totalElements - 1) ? "," : "");

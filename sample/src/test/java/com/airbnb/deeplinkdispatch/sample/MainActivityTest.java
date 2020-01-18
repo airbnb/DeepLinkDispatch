@@ -167,4 +167,11 @@ public class MainActivityTest {
     assertThat(deepLinkDelegate.supportsUri("dld://classDeepLink"), equalTo(true));
     assertThat(deepLinkDelegate.supportsUri("some://weirdNonExistentUri"), equalTo(false));
   }
+
+  @Test
+  public void testPlaceholderSubstitution() {
+    DeepLinkDelegate deepLinkDelegate = new DeepLinkDelegate(new SampleModuleRegistry(),
+      new LibraryDeepLinkModuleRegistry(), new BenchmarkDeepLinkModuleRegistry());
+    assertThat(deepLinkDelegate.supportsUri("https://example.com/obamaOs/bar"), equalTo(true));
+  }
 }
