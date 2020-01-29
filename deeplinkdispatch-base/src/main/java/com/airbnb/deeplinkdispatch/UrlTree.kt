@@ -87,7 +87,7 @@ data class Root(override val id: String = "r") : TreeNode(ROOT_VALUE, TYPE_ROOT.
     /**
      * Add the given DeepLinkUri to the the trie
      */
-    fun addToTrie(matchIndex: Int, deeplinkUri: DeepLinkUri, annotatedElement: String, annotatedMethod: String?, uriPathPlaceholder: String?, uriPathPlaceholderDeclaredValue: String?) {
+    fun addToTrie(matchIndex: Int, deeplinkUri: DeepLinkUri, annotatedElement: String, annotatedMethod: String?) {
         var node = this.addNode(Scheme(deeplinkUri.scheme()))
         if (!deeplinkUri.host().isNullOrEmpty()) {
             node = node.addNode(Host(deeplinkUri.host(), hasPlaceholders(deeplinkUri.host())))
@@ -97,7 +97,7 @@ data class Root(override val id: String = "r") : TreeNode(ROOT_VALUE, TYPE_ROOT.
         }
         if (!deeplinkUri.pathSegments().isNullOrEmpty()) {
             for (pathSegment in deeplinkUri.pathSegments()) {
-                node = node.addNode(PathSegment(pathSegment, hasPlaceholders(pathSegment), uriPathPlaceholder, uriPathPlaceholderDeclaredValue))
+                node = node.addNode(PathSegment(pathSegment, hasPlaceholders(pathSegment)))
             }
             node.match = UriMatch(deeplinkUri, matchIndex, annotatedElement, annotatedMethod)
         }
@@ -115,16 +115,7 @@ data class Scheme(override val id: String) : TreeNode(id = id, type = TYPE_SCHEM
 
 data class Host(override val id: String, override val placeholder: Boolean = false) : TreeNode(id = id, type = TYPE_HOST.toUByte())
 
-data class PathSegment(override val id: String, override val placeholder: Boolean = false) : TreeNode(id = id, type = TYPE_PATH_SEGMENT.toUByte()) {
-    constructor(id: String, placeholder: Boolean = false, uriPathPlaceholder: String?, uriPathPlaceholderDeclaredValue: String?) : this(
-            if (uriPathPlaceholder != null &&
-                    id == uriPathPlaceholder &&
-                    uriPathPlaceholderDeclaredValue != null) {
-                uriPathPlaceholderDeclaredValue
-            } else {
-                id
-            }, placeholder)
-}
+data class PathSegment(override val id: String, override val placeholder: Boolean = false) : TreeNode(id = id, type = TYPE_PATH_SEGMENT.toUByte())
 
 fun UByteArray.writeUIntAt(startIndex: Int, value: UInt) {
     val ubyte3: UByte = value.and(0x000000FFu).toUByte().toUByte()

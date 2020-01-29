@@ -17,5 +17,5 @@ lib
 local.properties
 .gradle
 
-#
-.idx
+# deepLinkDispatch
+*.idx

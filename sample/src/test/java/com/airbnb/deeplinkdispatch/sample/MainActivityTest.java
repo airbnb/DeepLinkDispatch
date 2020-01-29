@@ -17,6 +17,9 @@ import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowActivity;
 import org.robolectric.shadows.ShadowApplication;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -170,8 +173,10 @@ public class MainActivityTest {
 
   @Test
   public void testPlaceholderSubstitution() {
+    Map<String, String> pathVariables = new HashMap<>();
+    pathVariables.put("<sampleAppVariable>", "obamaOs");
     DeepLinkDelegate deepLinkDelegate = new DeepLinkDelegate(new SampleModuleRegistry(),
-      new LibraryDeepLinkModuleRegistry(), new BenchmarkDeepLinkModuleRegistry());
+      new LibraryDeepLinkModuleRegistry(), new BenchmarkDeepLinkModuleRegistry(), pathVariables);
     assertThat(deepLinkDelegate.supportsUri("https://example.com/obamaOs/bar"), equalTo(true));
   }
 }

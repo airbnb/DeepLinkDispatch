@@ -28,6 +28,7 @@ import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterSpec;
+import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeSpec;
 
 import org.jetbrains.annotations.NotNull;
@@ -45,6 +46,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Filer;
@@ -312,13 +314,11 @@ public class DeepLinkProcessor extends AbstractProcessor {
     }
     String declaredValue = processingEnv.getOptions().get(URI_PATH_PLACEHOLDER_DECLARED_VALUE);
     if (declaredValue == null || declaredValue.isEmpty())
-      throw new DeepLinkProcessorException("If " +
-        "you include a " + URI_PATH_PLACEHOLDER + "you must also specify a non-empty " +
-        URI_PATH_PLACEHOLDER_DECLARED_VALUE);
+      throw new DeepLinkProcessorException("If you include a " + URI_PATH_PLACEHOLDER
+        + "you must also specify a non-empty " + URI_PATH_PLACEHOLDER_DECLARED_VALUE);
     if (containsUnsafe(declaredValue))
-      throw new DeepLinkProcessorException("Only a-z, A-Z, 0-9, and" +
-        " - are allowed in " + URI_PATH_PLACEHOLDER_DECLARED_VALUE + ". Currently it is: " +
-        declaredValue);
+      throw new DeepLinkProcessorException("Only a-z, A-Z, 0-9, and - are allowed in "
+        + URI_PATH_PLACEHOLDER_DECLARED_VALUE + ". Currently it is: " + declaredValue);
   }
 
   private static List<String> enumerateCustomDeepLinks(Element element,
@@ -399,7 +399,7 @@ public class DeepLinkProcessor extends AbstractProcessor {
       DeepLinkUri deeplinkUri = DeepLinkUri.parse(uri);
 
       urisTrie.addToTrie(i, deeplinkUri, element.getAnnotatedElement().toString(),
-          element.getMethod(), pathPlaceholder, declaredValue);
+          element.getMethod());
 
       deeplinks.add("new DeepLinkEntry($S, $L, $T.class, $S)$L\n",
           uri, type, activity, method, (i < totalElements - 1) ? "," : "");
@@ -435,10 +435,10 @@ public class DeepLinkProcessor extends AbstractProcessor {
   /**
    * Add methods containing the Strings to store the match index to the deeplinkRegistryBuilder and
    * return a string which contains the calls to those methods.
-   *
+   * <p>
    * e.g. "method1(), method2()" etc.
    *
-   * @param urisTrie The {@link UrlTreeKt} containing all Urls that can be matched.
+   * @param urisTrie                The {@link UrlTreeKt} containing all Urls that can be matched.
    * @param deeplinkRegistryBuilder The builder used to add the methods
    * @return
    */
@@ -477,15 +477,28 @@ public class DeepLinkProcessor extends AbstractProcessor {
 
   private void generateDeepLinkDelegate(String packageName, List<TypeElement> registryClasses)
       throws IOException {
-    CodeBlock.Builder registriesInitializer = CodeBlock.builder()
-        .add("super($T.asList(\n", ClassName.get(Arrays.class))
-        .indent();
+
+    CodeBlock.Builder moduleRegistriesArgument = CodeBlock.builder();
     int totalElements = registryClasses.size();
     for (int i = 0; i < totalElements; i++) {
-      registriesInitializer.add("$L$L",
-          decapitalize(moduleNameToRegistryName(registryClasses.get(i))),
-          i < totalElements - 1 ? ",\n" : "\n");
+      moduleRegistriesArgument.add("$L$L",
+        decapitalize(moduleNameToRegistryName(registryClasses.get(i))),
+        i < totalElements - 1 ? ",\n" : "");
     }
+
+    CodeBlock registriesInitializerBuilder = CodeBlock.builder()
+      .add("super($T.asList(\n", ClassName.get(Arrays.class))
+      .indent()
+      .add(moduleRegistriesArgument.build())
+      .add("\n").unindent().add("));\n")
+      .build();
+
+    CodeBlock registriesInitializerBuilderWithPathVariables = CodeBlock.builder()
+      .add("super($T.asList(\n", ClassName.get(Arrays.class))
+      .indent()
+      .add(moduleRegistriesArgument.build())
+      .add("),\npathVariables").unindent().add("\n);\n")
+      .build();
 
     MethodSpec constructor = MethodSpec.constructorBuilder()
         .addModifiers(Modifier.PUBLIC)
@@ -497,13 +510,33 @@ public class DeepLinkProcessor extends AbstractProcessor {
                     decapitalize(moduleNameToRegistryName(typeElement))).build();
               }
             }).toList())
-        .addCode(registriesInitializer.unindent().add("));\n").build())
+        .addCode(registriesInitializerBuilder)
         .build();
+
+    ParameterSpec pathVariablesParam = ParameterSpec.builder(
+      ParameterizedTypeName.get(Map.class, String.class, String.class),
+      "pathVariables")
+    .build();
+
+    MethodSpec constructorWithPathVariables = MethodSpec.constructorBuilder()
+      .addModifiers(Modifier.PUBLIC)
+      .addParameters(
+        registryClasses.stream().map(typeElement ->
+          ParameterSpec.builder(moduleElementToRegistryClassName(typeElement),
+            decapitalize(moduleNameToRegistryName(typeElement)))
+            .build())
+          .collect(Collectors.toList())
+        )
+      .addParameter(pathVariablesParam)
+      .addCode(registriesInitializerBuilderWithPathVariables)
+      .build();
+
 
     TypeSpec deepLinkDelegate = TypeSpec.classBuilder("DeepLinkDelegate")
         .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
         .superclass(CLASS_BASE_DEEP_LINK_DELEGATE)
         .addMethod(constructor)
+        .addMethod(constructorWithPathVariables)
         .build();
 
     JavaFile.builder(packageName, deepLinkDelegate)

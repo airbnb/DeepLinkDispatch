@@ -23,6 +23,7 @@ public class BaseDeepLinkDelegate {
   protected static final String TAG = "DeepLinkDelegate";
 
   protected final List<? extends BaseRegistry> registries;
+  protected final Map<String, String> pathVariables;
 
   public List<? extends BaseRegistry> getRegistries() {
     return registries;
@@ -30,13 +31,23 @@ public class BaseDeepLinkDelegate {
 
   public BaseDeepLinkDelegate(List<? extends BaseRegistry> registries) {
     this.registries = registries;
+    this.pathVariables = null;
+  }
+
+  public BaseDeepLinkDelegate(
+    List<? extends BaseRegistry> registries,
+    Map<String, String> pathVariables
+  ) {
+    this.registries = registries;
+    this.pathVariables = pathVariables;
   }
 
   private DeepLinkEntry findEntry(String uriString) {
     DeepLinkEntry entryRegExpMatch = null;
     DeepLinkEntry entryIdxMatch = null;
+    DeepLinkUri parse = DeepLinkUri.parse(uriString);
     for (BaseRegistry registry : registries) {
-      entryIdxMatch = registry.idxMatch(DeepLinkUri.parse(uriString));
+      entryIdxMatch = registry.idxMatch(parse);
       if (entryIdxMatch != null) {
         break;
       }
