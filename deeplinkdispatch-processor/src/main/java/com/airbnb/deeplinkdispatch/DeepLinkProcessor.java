@@ -28,7 +28,6 @@ import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterSpec;
-import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeSpec;
 
 import org.jetbrains.annotations.NotNull;
@@ -67,7 +66,6 @@ import javax.tools.Diagnostic;
 
 import static com.airbnb.deeplinkdispatch.MoreAnnotationMirrors.asAnnotationValues;
 import static com.airbnb.deeplinkdispatch.MoreAnnotationMirrors.getTypeValue;
-import static com.airbnb.deeplinkdispatch.ProcessorUtils.containsUnsafe;
 import static com.airbnb.deeplinkdispatch.ProcessorUtils.decapitalize;
 import static com.airbnb.deeplinkdispatch.ProcessorUtils.hasEmptyOrNullString;
 import static com.google.auto.common.MoreElements.getAnnotationMirror;
@@ -86,28 +84,6 @@ public class DeepLinkProcessor extends AbstractProcessor {
   private static final Class<DeepLink> DEEP_LINK_CLASS = DeepLink.class;
   private static final Class<DeepLinkSpec> DEEP_LINK_SPEC_CLASS = DeepLinkSpec.class;
   public static final String REGISTRY_CLASS_SUFFIX = "Registry";
-  /**
-   * <p>Path placeholder for DLD to be able to dynamically configure paths by substituting the
-   * compiler-arg passed in placeholder into paths.</p>
-   * <p>Example</p>
-   * Given:
-   * <ul>
-   *   <li><xmp>compileJava.options.compilerArgs +=-AdeepLink.uriPathPlaceholder="
-<sampleAppPlaceholder>"
-   *   </xmp></li>
-   *   <li>compileJava.options.compilerArgs +=
-   *   "-AdeepLink.uriPathPlaceholderValue=obamaOs"</li>
-   *   <li><xmp>https://www.example.com/<sampleAppPlaceholder>/users/{param1}</xmp></li>
-   * </ul>
-   * Then:
-   * <ul><li>https://www.example.com/obamaOs/users/{param1}</li></ul>
-   */
-  public static final String URI_PATH_PLACEHOLDER = "deepLink.uriPathPlaceholder";
-  /**
-   * Value you want to replace usages of {@link DeepLinkProcessor#URI_PATH_PLACEHOLDER} with.
-   */
-  public static final String URI_PATH_PLACEHOLDER_DECLARED_VALUE =
-    "deepLink.uriPathPlaceholderValue";
 
   private Filer filer;
   private Messager messager;
@@ -155,14 +131,11 @@ public class DeepLinkProcessor extends AbstractProcessor {
 
   @Override public Set<String> getSupportedOptions() {
     HashSet<String> supportedOptions = Sets.newHashSet(
-      Documentor.DOC_OUTPUT_PROPERTY_NAME,
-      URI_PATH_PLACEHOLDER,
-      URI_PATH_PLACEHOLDER_DECLARED_VALUE
+      Documentor.DOC_OUTPUT_PROPERTY_NAME
     );
     if (incrementalMetadata != null) {
       supportedOptions.add("org.gradle.annotation.processing.aggregating");
     }
-// TODO: 2020-01-16 adellhk enforce <path> or some other naming convention with compile error
     return supportedOptions;
   }
 
@@ -206,7 +179,6 @@ public class DeepLinkProcessor extends AbstractProcessor {
 
     elementsToProcess.addAll(roundEnv.getElementsAnnotatedWith(DEEP_LINK_CLASS));
 
-    validateUriPathPlaceholder();
     List<DeepLinkAnnotatedElement> deepLinkElements = new ArrayList<>();
     for (Element element : elementsToProcess) {
       ElementKind kind = element.getKind();
@@ -297,30 +269,6 @@ public class DeepLinkProcessor extends AbstractProcessor {
     }
   }
 
-  /**
-   * Validate a user's configuration of URI_PATH_PLACEHOLDER and URI_PATH_PLACEHOLDER_DECLARED_VALUE
-   * . If they didn't configure a URI_PATH_PLACEHOLDER, there is no need to validate it or
-   * URI_PATH_PLACEHOLDER_DECLARED_VALUE, so return early.
-   */
-  private void validateUriPathPlaceholder() {
-    String pathPlaceholder = processingEnv.getOptions().get(URI_PATH_PLACEHOLDER);
-    if (pathPlaceholder == null) {
-      return;
-    }
-
-    if (!pathPlaceholder.startsWith("<") || !pathPlaceholder.endsWith(">")) {
-      throw new DeepLinkProcessorException("You must prefix and suffix your " + URI_PATH_PLACEHOLDER
-        + " with < and >, respectively. It is currently " + pathPlaceholder);
-    }
-    String declaredValue = processingEnv.getOptions().get(URI_PATH_PLACEHOLDER_DECLARED_VALUE);
-    if (declaredValue == null || declaredValue.isEmpty())
-      throw new DeepLinkProcessorException("If you include a " + URI_PATH_PLACEHOLDER
-        + "you must also specify a non-empty " + URI_PATH_PLACEHOLDER_DECLARED_VALUE);
-    if (containsUnsafe(declaredValue))
-      throw new DeepLinkProcessorException("Only a-z, A-Z, 0-9, and - are allowed in "
-        + URI_PATH_PLACEHOLDER_DECLARED_VALUE + ". Currently it is: " + declaredValue);
-  }
-
   private static List<String> enumerateCustomDeepLinks(Element element,
                                                        Map<Element, String[]> prefixesMap) {
     Set<? extends AnnotationMirror> annotationMirrors =
@@ -388,8 +336,6 @@ public class DeepLinkProcessor extends AbstractProcessor {
     documentor.write(elements);
     int totalElements = elements.size();
     Root urisTrie = new Root();
-    String pathPlaceholder = processingEnv.getOptions().get(URI_PATH_PLACEHOLDER);
-    String declaredValue = processingEnv.getOptions().get(URI_PATH_PLACEHOLDER_DECLARED_VALUE);
     for (int i = 0; i < totalElements; i++) {
       DeepLinkAnnotatedElement element = elements.get(i);
       String type = "DeepLinkEntry.Type." + element.getAnnotationType().toString();
@@ -497,7 +443,7 @@ public class DeepLinkProcessor extends AbstractProcessor {
       .add("super($T.asList(\n", ClassName.get(Arrays.class))
       .indent()
       .add(moduleRegistriesArgument.build())
-      .add("),\npathVariables").unindent().add("\n);\n")
+      .add("),\npathVariableReplacementValue").unindent().add("\n);\n")
       .build();
 
     MethodSpec constructor = MethodSpec.constructorBuilder()
@@ -513,9 +459,9 @@ public class DeepLinkProcessor extends AbstractProcessor {
         .addCode(registriesInitializerBuilder)
         .build();
 
-    ParameterSpec pathVariablesParam = ParameterSpec.builder(
-      ParameterizedTypeName.get(Map.class, String.class, String.class),
-      "pathVariables")
+    ParameterSpec pathVariableReplacementValueParam = ParameterSpec.builder(
+      String.class,
+      "pathVariableReplacementValue")
     .build();
 
     MethodSpec constructorWithPathVariables = MethodSpec.constructorBuilder()
@@ -527,10 +473,9 @@ public class DeepLinkProcessor extends AbstractProcessor {
             .build())
           .collect(Collectors.toList())
         )
-      .addParameter(pathVariablesParam)
+      .addParameter(pathVariableReplacementValueParam)
       .addCode(registriesInitializerBuilderWithPathVariables)
       .build();
-
 
     TypeSpec deepLinkDelegate = TypeSpec.classBuilder("DeepLinkDelegate")
         .addModifiers(Modifier.PUBLIC, Modifier.FINAL)

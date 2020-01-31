@@ -173,10 +173,8 @@ public class MainActivityTest {
 
   @Test
   public void testPlaceholderSubstitution() {
-    Map<String, String> pathVariables = new HashMap<>();
-    pathVariables.put("<sampleAppVariable>", "obamaOs");
     DeepLinkDelegate deepLinkDelegate = new DeepLinkDelegate(new SampleModuleRegistry(),
-      new LibraryDeepLinkModuleRegistry(), new BenchmarkDeepLinkModuleRegistry(), pathVariables);
-    assertThat(deepLinkDelegate.supportsUri("https://example.com/obamaOs/bar"), equalTo(true));
+      new LibraryDeepLinkModuleRegistry(), new BenchmarkDeepLinkModuleRegistry(), "obamaOs");
+    assertThat(deepLinkDelegate.supportsUri("https://www.example.com/obamaOs/bar"), equalTo(true));
   }
 }

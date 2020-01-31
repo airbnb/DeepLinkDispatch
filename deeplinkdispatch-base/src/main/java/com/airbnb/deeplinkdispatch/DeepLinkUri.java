@@ -41,6 +41,7 @@ import okio.Buffer;
  *https://github.com/square/okhttp/blob/master/okhttp/src/main/java/com/squareup/okhttp/HttpUri.java
  */
 public final class DeepLinkUri {
+  static final String PATH_VARIABLE_PLACEHOLDER_VALUE = "-replaceable-path-variable-";
   private static final char[] HEX_DIGITS =
       { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
   static final String USERNAME_ENCODE_SET = " \"':;<=>@[]^`{}|/\\?#";
@@ -86,6 +87,9 @@ public final class DeepLinkUri {
 
   /** Canonical URL. */
   private final String url;
+
+  /** Cached copy of the last Builder, set in {@link #parse }. */
+  private static Builder lastBuilder;
 
   private DeepLinkUri(Builder builder) {
     this.scheme = builder.scheme;
@@ -386,7 +390,48 @@ public final class DeepLinkUri {
   public static DeepLinkUri parse(String url) {
     Builder builder = new Builder();
     Builder.ParseResult result = builder.parse(null, url);
-    return result == Builder.ParseResult.SUCCESS ? builder.build() : null;
+    if (result == Builder.ParseResult.SUCCESS) {
+      lastBuilder = builder;
+      return builder.build();
+    } else {
+      lastBuilder = null;
+      return null;
+    }
+  }
+
+  /**
+   * Replace path segments that match pathVariableReplacementValue with the pathVariablePlaceholder
+   * that would be present in a DeepLinkEntry. {@linkplain #PATH_VARIABLE_PLACEHOLDER_VALUE}.
+   * <p/>
+   * Given:
+   * <ul>
+   *   <li>path segments like: "/obamaOs/cereals"</li>
+   *   <li>pathVariableReplacementValue = "obamaOs"</li>
+   * </ul>
+   * Then produce URI with path segments like:
+   * <li><xmp>/-replaceable-path-variable-/users/{param1}")</xmp></li>
+   * @return URI or null if no replacements could be made.
+   */
+  public static DeepLinkUri parseWithReplacement(String pathVariableReplacementValue) {
+    if (lastBuilder == null
+      || pathVariableReplacementValue == null
+      || pathVariableReplacementValue.isEmpty()
+    ) {
+      return null;
+    }
+    List<String> segments = lastBuilder.encodedPathSegments;
+    if (segments.isEmpty()) {
+      return null;
+    }
+
+    boolean replaceableSectionFound = false;
+    for (int i = 0; i < segments.size(); i++) {
+      if (segments.get(i).equals(pathVariableReplacementValue)) {
+        replaceableSectionFound = true;
+        lastBuilder.setEncodedPathSegment(i, PATH_VARIABLE_PLACEHOLDER_VALUE);
+      }
+    }
+    return replaceableSectionFound ? lastBuilder.build() : null;
   }
 
   /**

@@ -23,7 +23,19 @@ public class BaseDeepLinkDelegate {
   protected static final String TAG = "DeepLinkDelegate";
 
   protected final List<? extends BaseRegistry> registries;
-  protected final Map<String, String> pathVariables;
+  /**
+   * <p>Value for DLD to substitute for declared replaceablePathVariables.</p>
+   * <p>Example</p>
+   * Given:
+   * <ul>
+   * <li><xmp>@DeepLink("https://www.example.com/-replaceable-path-variable-/users/{param1}")
+   * </xmp></li>
+   * <li>pathVariableReplacementValue = "obamaOs"</li>
+   * </ul>
+   * Then:
+   * <ul><li><xmp>https://www.example.com/obamaOs/users/{param1}</xmp> will match.</li></ul>
+   */
+  protected final String pathVariableReplacementValue;
 
   public List<? extends BaseRegistry> getRegistries() {
     return registries;
@@ -31,15 +43,15 @@ public class BaseDeepLinkDelegate {
 
   public BaseDeepLinkDelegate(List<? extends BaseRegistry> registries) {
     this.registries = registries;
-    this.pathVariables = null;
+    this.pathVariableReplacementValue = null;
   }
 
   public BaseDeepLinkDelegate(
     List<? extends BaseRegistry> registries,
-    Map<String, String> pathVariables
+    String pathVariableReplacementValue
   ) {
     this.registries = registries;
-    this.pathVariables = pathVariables;
+    this.pathVariableReplacementValue = pathVariableReplacementValue;
   }
 
   private DeepLinkEntry findEntry(String uriString) {
@@ -49,10 +61,26 @@ public class BaseDeepLinkDelegate {
     for (BaseRegistry registry : registries) {
       entryIdxMatch = registry.idxMatch(parse);
       if (entryIdxMatch != null) {
-        break;
+        return entryIdxMatch;
       }
     }
-    return entryIdxMatch;
+
+    // If we didn't find a match, try again with substituting pathVariableReplacementValue.
+    // Since optimized idxMatch is so absurdly fast, this will have no impact on overall
+    // performance.
+    if (entryIdxMatch == null) {
+      DeepLinkUri deepLinkUri = DeepLinkUri.parseWithReplacement(pathVariableReplacementValue);
+      if (deepLinkUri == null) {
+        return null;
+      }
+      for (BaseRegistry registry : registries) {
+        entryIdxMatch = registry.idxMatch(deepLinkUri);
+        if (entryIdxMatch != null) {
+          return entryIdxMatch;
+        }
+      }
+    }
+    return null;
   }
 
   /**
@@ -88,7 +116,7 @@ public class BaseDeepLinkDelegate {
     }
     notifyListener(activity, !result.isSuccessful(), sourceIntent.getData(),
       result.getDeepLinkEntry() != null ? result.getDeepLinkEntry().getUriTemplate()
-          : null, result.getError());
+        : null, result.getError());
     return result;
   }
 
@@ -102,7 +130,8 @@ public class BaseDeepLinkDelegate {
    *                      {@link #findEntry(String)}. Can be injected for testing.
    * @return DeepLinkResult
    */
-  public @NonNull DeepLinkResult createResult(
+  public @NonNull
+  DeepLinkResult createResult(
     Activity activity, Intent sourceIntent, DeepLinkEntry deepLinkEntry
   ) {
     if (activity == null) {
@@ -220,5 +249,14 @@ public class BaseDeepLinkDelegate {
 
   public boolean supportsUri(String uriString) {
     return findEntry(uriString) != null;
+  }
+
+  /**
+   * Validate a user's configuration of pathVariableReplacementValue.
+   */
+  private void validatePathVariableReplacementValue(String pathVariableReplacementValue) {
+    if (pathVariableReplacementValue.matches("[a-zA-Z0-9/-]*"))
+      throw new RuntimeException("Only a-z, A-Z, 0-9, and - are allowed in a "
+        + "pathVariableReplacementValue. Currently it is: " + pathVariableReplacementValue);
   }
 }

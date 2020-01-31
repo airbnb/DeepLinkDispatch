@@ -33,7 +33,7 @@ import androidx.core.app.TaskStackBuilder;
   "http://example.com/foo{arg_end}",
   "http://example.com/{arg_start}bar",
   "dld://example.com/deepLink",
-  "https://example.com/<sampleAppPathPlaceholder>/bar"
+  "https://www.example.com/-replaceable-path-variable-/bar"
 })
 public class MainActivity extends AppCompatActivity {
   private static final String ACTION_DEEP_LINK_METHOD = "deep_link_method";
