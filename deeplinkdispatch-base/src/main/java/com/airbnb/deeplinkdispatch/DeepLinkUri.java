@@ -87,6 +87,9 @@ public final class DeepLinkUri {
   /** Canonical URL. */
   private final String url;
 
+  /** Cached copy of the last Builder, set in {@link #parse }. */
+  private static Builder lastBuilder;
+
   private DeepLinkUri(Builder builder) {
     this.scheme = builder.scheme;
     this.username = percentDecode(builder.encodedUsername);
@@ -386,7 +389,13 @@ public final class DeepLinkUri {
   public static DeepLinkUri parse(String url) {
     Builder builder = new Builder();
     Builder.ParseResult result = builder.parse(null, url);
-    return result == Builder.ParseResult.SUCCESS ? builder.build() : null;
+    if (result == Builder.ParseResult.SUCCESS) {
+      lastBuilder = builder;
+      return builder.build();
+    } else {
+      lastBuilder = null;
+      return null;
+    }
   }
 
   /**

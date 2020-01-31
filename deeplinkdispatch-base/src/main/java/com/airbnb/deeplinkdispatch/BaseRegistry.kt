@@ -12,16 +12,13 @@ import com.airbnb.deeplinkdispatch.base.MatchIndex
  */
 abstract class BaseRegistry(val registeredDeepLinks: List<DeepLinkEntry>,
                             /**
-                           * A binary match index, created by the annotation processor.
-                           * In a wrapper to make handling it easier
-                           */
-                          matchIndexArray: ByteArray) {
+                             * A binary match index, created by the annotation processor.
+                             * In a wrapper to make handling it easier
+                             */
+                            matchIndexArray: ByteArray,
+                            val pathSegmentKeysInRegistry: Set<String>) {
 
-    private val matchIndex: MatchIndex
-
-    init {
-        this.matchIndex = MatchIndex(matchIndexArray)
-    }
+    private val matchIndex: MatchIndex = MatchIndex(matchIndexArray)
 
     /**
      * Use a binary match index to match the given URL. Defaults can be find in [MatchIndex].
@@ -29,14 +26,16 @@ abstract class BaseRegistry(val registeredDeepLinks: List<DeepLinkEntry>,
      * @param deepLinkUri The input [DeepLinkUri] to match
      * @return A [DeepLinkEntry] if a match was found or null if not.
      */
-    fun idxMatch(deepLinkUri: DeepLinkUri?): DeepLinkEntry? {
+    @JvmOverloads
+    fun idxMatch(deepLinkUri: DeepLinkUri?, pathSegmentReplacements: Map<String, String> = mapOf()): DeepLinkEntry? {
         if (deepLinkUri == null) {
-            return null;
+            return null
         }
         // Generating a match list (list of elements in to be matched URL starting with an
         // (artificial) root.
         val match = matchIndex.matchUri(SchemeHostAndPath(deepLinkUri).matchList,
-                null, 0, 0, matchIndex.length())
+                null, 0, 0, matchIndex.length(),
+                pathSegmentReplacements)
         if (match != null) {
             val matchedEntry = registeredDeepLinks[match.matchIndex]
             matchedEntry.setParameters(deepLinkUri, match.parameterMap)

@@ -14,6 +14,7 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -23,7 +24,19 @@ public class BaseDeepLinkDelegate {
   protected static final String TAG = "DeepLinkDelegate";
 
   protected final List<? extends BaseRegistry> registries;
-  protected final Map<String, String> pathVariables;
+  /**
+   * <p>Value for DLD to substitute for declared replaceablePathVariables.</p>
+   * <p>Example</p>
+   * Given:
+   * <ul>
+   * <li><xmp>@DeepLink("https://www.example.com/-replaceable-path-variable-/users/{param1}")
+   * </xmp></li>
+   * <li>pathVariableReplacementValue = "obamaOs"</li>
+   * </ul>
+   * Then:
+   * <ul><li><xmp>https://www.example.com/obamaOs/users/{param1}</xmp> will match.</li></ul>
+   */
+  protected final Map<String, String> pathVariableReplacements;
 
   public List<? extends BaseRegistry> getRegistries() {
     return registries;
@@ -31,28 +44,29 @@ public class BaseDeepLinkDelegate {
 
   public BaseDeepLinkDelegate(List<? extends BaseRegistry> registries) {
     this.registries = registries;
-    this.pathVariables = null;
+    pathVariableReplacements = new HashMap<>();
   }
 
   public BaseDeepLinkDelegate(
     List<? extends BaseRegistry> registries,
-    Map<String, String> pathVariables
+    Map<String, String> pathVariableReplacements
   ) {
     this.registries = registries;
-    this.pathVariables = pathVariables;
+    this.pathVariableReplacements = pathVariableReplacements;
+    validatePathVariableReplacements(registries, pathVariableReplacements);
   }
 
   private DeepLinkEntry findEntry(String uriString) {
     DeepLinkEntry entryRegExpMatch = null;
-    DeepLinkEntry entryIdxMatch = null;
+    DeepLinkEntry entryIdxMatch;
     DeepLinkUri parse = DeepLinkUri.parse(uriString);
     for (BaseRegistry registry : registries) {
-      entryIdxMatch = registry.idxMatch(parse);
+      entryIdxMatch = registry.idxMatch(parse, pathVariableReplacements);
       if (entryIdxMatch != null) {
-        break;
+        return entryIdxMatch;
       }
     }
-    return entryIdxMatch;
+    return null;
   }
 
   /**
@@ -88,7 +102,7 @@ public class BaseDeepLinkDelegate {
     }
     notifyListener(activity, !result.isSuccessful(), sourceIntent.getData(),
       result.getDeepLinkEntry() != null ? result.getDeepLinkEntry().getUriTemplate()
-          : null, result.getError());
+        : null, result.getError());
     return result;
   }
 
@@ -102,7 +116,8 @@ public class BaseDeepLinkDelegate {
    *                      {@link #findEntry(String)}. Can be injected for testing.
    * @return DeepLinkResult
    */
-  public @NonNull DeepLinkResult createResult(
+  public @NonNull
+  DeepLinkResult createResult(
     Activity activity, Intent sourceIntent, DeepLinkEntry deepLinkEntry
   ) {
     if (activity == null) {
@@ -220,5 +235,48 @@ public class BaseDeepLinkDelegate {
 
   public boolean supportsUri(String uriString) {
     return findEntry(uriString) != null;
+  }
+
+  /**
+   * Validate a user's configuration of pathVariableReplacementValue.
+   */
+  private void validatePathVariableReplacementValue(String pathVariableReplacementValue) {
+    if (pathVariableReplacementValue.matches("[a-zA-Z0-9/-]*"))
+      throw new RuntimeException("Only a-z, A-Z, 0-9, and - are allowed in a "
+        + "pathVariableReplacementValue. Currently it is: " + pathVariableReplacementValue);
+  }
+
+  /**
+   * Ensure that every key-to-be-replaced declared by all registries have a corresponding key in
+   * the user's injected mapping of pathVariableReplacements. If not, throw an exception and tell
+   * the user which keys aren't present.
+   * @param registries
+   * @param pathVariableReplacements
+   */
+  private void validatePathVariableReplacements(List<? extends BaseRegistry> registries, Map<String,
+    String> pathVariableReplacements) {
+    HashSet<String> keysUnion = new HashSet<>();
+    for (BaseRegistry registry : registries) {
+      keysUnion.addAll(registry.getPathSegmentKeysInRegistry());
+    }
+    StringBuilder keysMissing = new StringBuilder();
+    StringBuilder keysInMapping = new StringBuilder();
+    for (String key : keysUnion) {
+      if (!pathVariableReplacements.containsKey(key)) {
+        keysMissing.append(key).append(",\n");
+      }
+    }
+    if (keysMissing.length() > 0) {
+      //We only need this list if we're reporting an error
+      for (String s : pathVariableReplacements.keySet()) {
+        keysInMapping.append(s).append(", ");
+      }
+      keysInMapping.delete(keysInMapping.length() - 2, keysInMapping.length() - 1);
+      keysMissing.delete(keysMissing.length() - 2, keysMissing.length() - 1);
+
+      throw new IllegalArgumentException("Keys not found in BaseDeepLinkDelegate's mapping of "
+        + "PathVariableReplacementValues. Missing keys are:\n" + keysMissing.toString()
+        + "Keys in mapping are: " + keysInMapping.toString() + ".");
+    }
   }
 }

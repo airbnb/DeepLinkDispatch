@@ -3,18 +3,18 @@ package com.airbnb.deeplinkdispatch
 import com.airbnb.deeplinkdispatch.base.MatchIndex
 
 /**
- * Used to encapsulate the scheme host and path of a DeepLinkUri into a type.
+ * Used to categorize a DeepLinkUri's components into the types: scheme, host, and path.
  *
  * All operations are happening on the UI thread by definition so it is ok to make the lazies
  * not thread safe for speed improvement.
  */
 class SchemeHostAndPath(val uri: DeepLinkUri) {
 
-    val matchList: List<UrlElement> = listOf(UrlElement(MatchIndex.TYPE_ROOT, MatchIndex.ROOT_VALUE.toByteArray()),
-            UrlElement(MatchIndex.TYPE_SCHEME, uri.scheme().toByteArray()),
-            UrlElement(MatchIndex.TYPE_HOST, uri.encodedHost().toByteArray())) +
+    val matchList: List<UrlElement> = listOf(UrlElement(MatchIndex.COMPONENT_ROOT, MatchIndex.ROOT_VALUE.toByteArray()),
+            UrlElement(MatchIndex.COMPONENT_SCHEME, uri.scheme().toByteArray()),
+            UrlElement(MatchIndex.COMPONENT_HOST, uri.encodedHost().toByteArray())) +
             uri.encodedPathSegments().map { pathElement ->
-                UrlElement(MatchIndex.TYPE_PATH_SEGMENT, pathElement.toByteArray())
+                UrlElement(MatchIndex.COMPONENT_PATH_SEGMENT, pathElement.toByteArray())
             }
 }
 
@@ -29,10 +29,10 @@ class UrlElement(val type: Byte, val value: ByteArray) {
 
     private fun typeToString(): String {
         return when (type) {
-            MatchIndex.TYPE_ROOT -> "root"
-            MatchIndex.TYPE_SCHEME -> "scheme"
-            MatchIndex.TYPE_HOST -> "host"
-            MatchIndex.TYPE_PATH_SEGMENT -> "path_segment"
+            MatchIndex.COMPONENT_ROOT -> "root"
+            MatchIndex.COMPONENT_SCHEME -> "scheme"
+            MatchIndex.COMPONENT_HOST -> "host"
+            MatchIndex.COMPONENT_PATH_SEGMENT -> "path_segment"
             else -> "unknown"
         }
     }

@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static org.hamcrest.core.IsEqual.equalTo;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
@@ -173,10 +174,39 @@ public class MainActivityTest {
 
   @Test
   public void testPlaceholderSubstitution() {
-    Map<String, String> pathVariables = new HashMap<>();
-    pathVariables.put("<sampleAppVariable>", "obamaOs");
+    Map<String, String> pathVariableReplacements = new HashMap<>();
+    pathVariableReplacements.put("replaceable-path-variable", "obamaOs");
     DeepLinkDelegate deepLinkDelegate = new DeepLinkDelegate(new SampleModuleRegistry(),
-      new LibraryDeepLinkModuleRegistry(), new BenchmarkDeepLinkModuleRegistry(), pathVariables);
-    assertThat(deepLinkDelegate.supportsUri("https://example.com/obamaOs/bar"), equalTo(true));
+      new LibraryDeepLinkModuleRegistry(), new BenchmarkDeepLinkModuleRegistry(), pathVariableReplacements);
+    assertThat(deepLinkDelegate.supportsUri("https://www.example.com/capnMcCains/bar"), equalTo(false));
+    assertThat(deepLinkDelegate.supportsUri("https://www.example.com/obamaOs/bar"), equalTo(true));
+  }
+
+  @Test
+  public void testPercentsNoMatch() {
+    String message = "";
+    try {
+      Map<String, String> pathVariableReplacements = new HashMap<>();
+      pathVariableReplacements.put("%%%replaceable-path-variable%%%", "obamaOs");
+      DeepLinkDelegate deepLinkDelegate = new DeepLinkDelegate(new SampleModuleRegistry(),
+        new LibraryDeepLinkModuleRegistry(), new BenchmarkDeepLinkModuleRegistry(), pathVariableReplacements);
+    } catch (IllegalArgumentException e) {
+      message = e.getMessage();
+    }
+
+    //Alternatively, we could have used @Test(expected = IllegalArgumentException.class), but I wanted to assert this message.
+    assertEquals("Keys not found in BaseDeepLinkDelegate's mapping of PathVariableReplacementValues. Missing keys are:\n" +
+      "replaceable-path-variable\n" +
+      "Keys in mapping are: %%%replaceable-path-variable%%% .", message);
+  }
+
+  @Test
+  public void testPathSegmentUriNoMatch() {
+    Map<String, String> pathVariableReplacements = new HashMap<>();
+    pathVariableReplacements.put("replaceable-path-variable", "obamaOs");
+    DeepLinkDelegate deepLinkDelegate = new DeepLinkDelegate(new SampleModuleRegistry(),
+      new LibraryDeepLinkModuleRegistry(), new BenchmarkDeepLinkModuleRegistry(), pathVariableReplacements);
+    assertThat(deepLinkDelegate.supportsUri("https://www.example.com/%%%capnMccains%%%/bar"), equalTo(false));
+    assertThat(deepLinkDelegate.supportsUri("https://www.example.com/%%%obamaOs%%%/bar"), equalTo(false));
   }
 }

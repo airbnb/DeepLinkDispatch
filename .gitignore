@@ -18,4 +18,4 @@ local.properties
 .gradle
 
 # deepLinkDispatch
-*.idx
+dld_match_*.idx

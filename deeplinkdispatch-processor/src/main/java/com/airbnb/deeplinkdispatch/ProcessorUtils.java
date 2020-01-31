@@ -26,10 +26,4 @@ public final class ProcessorUtils {
     return false;
   }
 
-  /**
-   * Constrain the allowable characters for a path segment placeholder replacement.
-   */
-  static boolean containsUnsafe(String s) {
-    return !s.matches("[a-zA-Z0-9/-]*");
-  }
 }
