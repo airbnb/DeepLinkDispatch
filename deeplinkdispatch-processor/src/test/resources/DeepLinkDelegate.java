@@ -13,10 +13,10 @@ public final class DeepLinkDelegate extends BaseDeepLinkDelegate {
   }
 
   public DeepLinkDelegate(SampleModuleRegistry sampleModuleRegistry,
-                          Map<String, String> pathVariableReplacements) {
+                          Map<String, String> configurablePathSegmentReplacements) {
     super(Arrays.asList(
       sampleModuleRegistry),
-      pathVariableReplacements
+      configurablePathSegmentReplacements
     );
   }
 }

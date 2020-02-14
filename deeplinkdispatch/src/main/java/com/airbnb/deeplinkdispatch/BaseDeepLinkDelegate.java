@@ -25,18 +25,19 @@ public class BaseDeepLinkDelegate {
 
   protected final List<? extends BaseRegistry> registries;
   /**
-   * <p>Value for DLD to substitute for declared replaceablePathVariables.</p>
+   * <p>Mapping of values for DLD to substitute for annotation-declared configurablePathSegments.
+   * </p>
    * <p>Example</p>
    * Given:
    * <ul>
-   * <li><xmp>@DeepLink("https://www.example.com/-replaceable-path-variable-/users/{param1}")
+   * <li><xmp>@DeepLink("https://www.example.com/%%%replaceable-path-variable%%%/users/{param1}")
    * </xmp></li>
-   * <li>pathVariableReplacementValue = "obamaOs"</li>
+   * <li>mapOf("pathVariableReplacementValue" to "obamaOs")</li>
    * </ul>
    * Then:
    * <ul><li><xmp>https://www.example.com/obamaOs/users/{param1}</xmp> will match.</li></ul>
    */
-  protected final Map<String, String> pathVariableReplacements;
+  protected final Map<String, String> configurablePathSegmentReplacements;
 
   public List<? extends BaseRegistry> getRegistries() {
     return registries;
@@ -44,16 +45,16 @@ public class BaseDeepLinkDelegate {
 
   public BaseDeepLinkDelegate(List<? extends BaseRegistry> registries) {
     this.registries = registries;
-    pathVariableReplacements = new HashMap<>();
+    configurablePathSegmentReplacements = new HashMap<>();
   }
 
   public BaseDeepLinkDelegate(
     List<? extends BaseRegistry> registries,
-    Map<String, String> pathVariableReplacements
+    Map<String, String> configurablePathSegmentReplacements
   ) {
     this.registries = registries;
-    this.pathVariableReplacements = pathVariableReplacements;
-    validatePathVariableReplacements(registries, pathVariableReplacements);
+    this.configurablePathSegmentReplacements = configurablePathSegmentReplacements;
+    validateConfigurablePathSegmentReplacements(registries, configurablePathSegmentReplacements);
   }
 
   private DeepLinkEntry findEntry(String uriString) {
@@ -61,7 +62,7 @@ public class BaseDeepLinkDelegate {
     DeepLinkEntry entryIdxMatch;
     DeepLinkUri parse = DeepLinkUri.parse(uriString);
     for (BaseRegistry registry : registries) {
-      entryIdxMatch = registry.idxMatch(parse, pathVariableReplacements);
+      entryIdxMatch = registry.idxMatch(parse, configurablePathSegmentReplacements);
       if (entryIdxMatch != null) {
         return entryIdxMatch;
       }
@@ -238,23 +239,16 @@ public class BaseDeepLinkDelegate {
   }
 
   /**
-   * Validate a user's configuration of pathVariableReplacementValue.
-   */
-  private void validatePathVariableReplacementValue(String pathVariableReplacementValue) {
-    if (pathVariableReplacementValue.matches("[a-zA-Z0-9/-]*"))
-      throw new RuntimeException("Only a-z, A-Z, 0-9, and - are allowed in a "
-        + "pathVariableReplacementValue. Currently it is: " + pathVariableReplacementValue);
-  }
-
-  /**
    * Ensure that every key-to-be-replaced declared by all registries have a corresponding key in
-   * the user's injected mapping of pathVariableReplacements. If not, throw an exception and tell
-   * the user which keys aren't present.
+   * the user's injected mapping of configurablePathSegmentReplacements. If not, throw an exception
+   * and tell the user which keys aren't present.
    * @param registries
-   * @param pathVariableReplacements
+   * @param configurablePathSegmentReplacements
    */
-  private void validatePathVariableReplacements(List<? extends BaseRegistry> registries, Map<String,
-    String> pathVariableReplacements) {
+  private void validateConfigurablePathSegmentReplacements(
+    List<? extends BaseRegistry> registries, Map<String, String> configurablePathSegmentReplacements
+  ) {
+    //Collect all path segment keys across all registries
     HashSet<String> keysUnion = new HashSet<>();
     for (BaseRegistry registry : registries) {
       keysUnion.addAll(registry.getPathSegmentKeysInRegistry());
@@ -262,13 +256,13 @@ public class BaseDeepLinkDelegate {
     StringBuilder keysMissing = new StringBuilder();
     StringBuilder keysInMapping = new StringBuilder();
     for (String key : keysUnion) {
-      if (!pathVariableReplacements.containsKey(key)) {
+      if (!configurablePathSegmentReplacements.containsKey(key)) {
         keysMissing.append(key).append(",\n");
       }
     }
     if (keysMissing.length() > 0) {
       //We only need this list if we're reporting an error
-      for (String s : pathVariableReplacements.keySet()) {
+      for (String s : configurablePathSegmentReplacements.keySet()) {
         keysInMapping.append(s).append(", ");
       }
       keysInMapping.delete(keysInMapping.length() - 2, keysInMapping.length() - 1);

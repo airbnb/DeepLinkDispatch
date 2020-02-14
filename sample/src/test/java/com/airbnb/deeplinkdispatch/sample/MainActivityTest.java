@@ -173,11 +173,13 @@ public class MainActivityTest {
   }
 
   @Test
-  public void testPlaceholderSubstitution() {
-    Map<String, String> pathVariableReplacements = new HashMap<>();
-    pathVariableReplacements.put("replaceable-path-variable", "obamaOs");
+  public void testConfigurablePathSegmentMatch() {
+    Map<String, String> configurablePathSegmentReplacements = new HashMap<>();
+    configurablePathSegmentReplacements.put("replaceable-path-variable", "obamaOs");
+    configurablePathSegmentReplacements.put("configure-path-segment-one", "belong");
+    configurablePathSegmentReplacements.put("configure-path-segment-two", "anywhere");
     DeepLinkDelegate deepLinkDelegate = new DeepLinkDelegate(new SampleModuleRegistry(),
-      new LibraryDeepLinkModuleRegistry(), new BenchmarkDeepLinkModuleRegistry(), pathVariableReplacements);
+      new LibraryDeepLinkModuleRegistry(), new BenchmarkDeepLinkModuleRegistry(), configurablePathSegmentReplacements);
     assertThat(deepLinkDelegate.supportsUri("https://www.example.com/capnMcCains/bar"), equalTo(false));
     assertThat(deepLinkDelegate.supportsUri("https://www.example.com/obamaOs/bar"), equalTo(true));
   }
@@ -186,27 +188,43 @@ public class MainActivityTest {
   public void testPercentsNoMatch() {
     String message = "";
     try {
-      Map<String, String> pathVariableReplacements = new HashMap<>();
-      pathVariableReplacements.put("%%%replaceable-path-variable%%%", "obamaOs");
+      Map<String, String> configurablePathSegmentReplacements = new HashMap<>();
+      configurablePathSegmentReplacements.put("%%%replaceable-path-variable%%%", "obamaOs");
       DeepLinkDelegate deepLinkDelegate = new DeepLinkDelegate(new SampleModuleRegistry(),
-        new LibraryDeepLinkModuleRegistry(), new BenchmarkDeepLinkModuleRegistry(), pathVariableReplacements);
+        new LibraryDeepLinkModuleRegistry(), new BenchmarkDeepLinkModuleRegistry(), configurablePathSegmentReplacements);
     } catch (IllegalArgumentException e) {
       message = e.getMessage();
     }
 
     //Alternatively, we could have used @Test(expected = IllegalArgumentException.class), but I wanted to assert this message.
     assertEquals("Keys not found in BaseDeepLinkDelegate's mapping of PathVariableReplacementValues. Missing keys are:\n" +
+      "configure-path-segment-one,\n" +
+      "configure-path-segment-two,\n" +
       "replaceable-path-variable\n" +
       "Keys in mapping are: %%%replaceable-path-variable%%% .", message);
   }
 
   @Test
   public void testPathSegmentUriNoMatch() {
-    Map<String, String> pathVariableReplacements = new HashMap<>();
-    pathVariableReplacements.put("replaceable-path-variable", "obamaOs");
+    Map<String, String> configurablePathSegmentReplacements = new HashMap<>();
+    configurablePathSegmentReplacements.put("replaceable-path-variable", "obamaOs");
+    configurablePathSegmentReplacements.put("configure-path-segment-one", "belong");
+    configurablePathSegmentReplacements.put("configure-path-segment-two", "anywhere");
     DeepLinkDelegate deepLinkDelegate = new DeepLinkDelegate(new SampleModuleRegistry(),
-      new LibraryDeepLinkModuleRegistry(), new BenchmarkDeepLinkModuleRegistry(), pathVariableReplacements);
+      new LibraryDeepLinkModuleRegistry(), new BenchmarkDeepLinkModuleRegistry(), configurablePathSegmentReplacements);
     assertThat(deepLinkDelegate.supportsUri("https://www.example.com/%%%capnMccains%%%/bar"), equalTo(false));
     assertThat(deepLinkDelegate.supportsUri("https://www.example.com/%%%obamaOs%%%/bar"), equalTo(false));
+  }
+
+  @Test
+  public void testTwoConfigurablePathSegmentsMatch() {
+    Map<String, String> configurablePathSegmentReplacements = new HashMap<>();
+    configurablePathSegmentReplacements.put("replaceable-path-variable", "obamaOs");
+    configurablePathSegmentReplacements.put("configure-path-segment-one", "belong");
+    configurablePathSegmentReplacements.put("configure-path-segment-two", "anywhere");
+    DeepLinkDelegate deepLinkDelegate = new DeepLinkDelegate(new SampleModuleRegistry(),
+      new LibraryDeepLinkModuleRegistry(), new BenchmarkDeepLinkModuleRegistry(), configurablePathSegmentReplacements);
+    assertThat(deepLinkDelegate.supportsUri("https://www.example.com/anywhere/belong"), equalTo(false));
+    assertThat(deepLinkDelegate.supportsUri("https://www.example.com/belong/anywhere"), equalTo(true));
   }
 }

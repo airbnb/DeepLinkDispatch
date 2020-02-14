@@ -77,9 +77,9 @@ public class DeepLinkProcessorIncrementalTest {
             + "  }\n"
             + "\n"
             + "  private static String matchIndex0() {\n"
-            + "    return \"\\u0000\\u0002\\u0001\\u0000\\u0000\\u00005ÿÿr\\u0001\\u0002\\u0007\\"
-            + "u0000\\u0000\\u0000%ÿÿexample\\u0002\\u0002\\u000b\\u0000\\u0000\\u0000\\u0011ÿÿexam"
-            + "ple.com\\u0003\\u0002\\b\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000deepLink\";}\n"
+            + "    return \"\\u0001\\u0001\\u0000\\u0000\\u00002ÿÿr\\u0002\\u0007\\u0000\\u0000\\u0"
+            + "000#ÿÿexample\\u0004\\u000b\\u0000\\u0000\\u0000\\u0010ÿÿexample.com\\b\\b\\u0000\\u"
+            + "0000\\u0000\\u0000\\u0000\\u0000deepLink\";}\n"
             + "}"
         ));
   }
@@ -113,7 +113,7 @@ public class DeepLinkProcessorIncrementalTest {
             + "  }\n"
             + "\n"
             + "  private static String matchIndex0() {\n"
-            + "    return \"\\u0000\\u0002\\u0001\\u0000\\u0000\\u0000\\u0000ÿÿr\";}\n"
+            + "    return \"\\u0001\\u0001\\u0000\\u0000\\u0000\\u0000ÿÿr\";}\n"
             + "}\n"));
   }
 
