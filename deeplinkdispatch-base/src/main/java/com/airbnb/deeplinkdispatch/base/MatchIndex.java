@@ -4,49 +4,44 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.airbnb.deeplinkdispatch.UrlElement;
+import com.airbnb.deeplinkdispatch.UrlTreeKt;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.airbnb.deeplinkdispatch.NodeMetadataConverters.isComponentParam;
+import static com.airbnb.deeplinkdispatch.NodeMetadataConverters.isConfigurablePathSegment;
+
 /**
  * This is a wrapper class around the byte array match index.
+ * <p>Byte array format is:</p>
+ * <hr/>
+ * <table border="1">
+ * <tr>
+ * <td>Node's metadata flags</td>
+ * <td>value length</td>
+ * <td>children length</td><td>match id</td><td>value</td><td>children</td>
+ * </tr>
+ * <tr>
+ * <td>1 byte</td><td>1 byte</td><td>4 bytes</td><td>2 bytes</td>
+ * <td>9 + value length bytes</td><td>9 + value length + children length bytes</td>
+ * </tr>
+ * <tr>
+ * <td>{@linkplain com.airbnb.deeplinkdispatch.NodeMetadata}
+ * e.g. scheme, authority, path segment, transformation</td><td>length of the
+ * node's (string) value, in bytes</td>
+ * </tr>
+ * </table>
+ * <hr/>
  * <p>
- * Byte array format is:
- *
- * <pre><
- * 1 byte  2 bytes       4 bytes                     2 bytes       n bytes       n bytes
- * +------+-------------+---------------------------+-------------+-------------+--------------
- * |      |             |                           |             |             |
- * | Type |Value length | Children length           | Match idx   | Value       | Children
- * |      |             |                           |             |             |
- * +------+-------------+---------------------------+-------------+-------------+--------------
- *
- * <----------------------+  9 byte header  +--------------------->             +------+-------
- *                                                                              |      |
- *                                                                              | Type |Value
- *                                                                              |      |
- *                                                                              +------+-------
- * -------------------------------------------------------------------------------------------+
- *                                                                                            |
- *                                                                                            |
- *                                                                                            |
- * -------------------------------------------------------------------------------------------+
- *
- * -------+---------------------------+-------------+-------------+---------------------------+
- *        |                           |             |             |                           |
- * length | Children length           | Match idx   | Value       | Children                  |
- *        |                           |             |             |                           |
- * -------+---------------------------+-------------+-------------+---------------------------+
- * </pre>
- * <p>
- * This is implemenmted in Java for speed reasons. Converting this class to Kotlin made the
+ * This is implemented in Java for speed reasons. Converting this class to Kotlin made the
  * whole lookup operation multiple times slower.
  * This is most likely not a Kotlin issue but some syntactic sugar used must have crated some
  * overhead.
  * As this is very "bare metal" anyway it was "safer" to write this in Java to avoid any
- * instructions to be added that are not necessary.
+ * instructions to be added that are not necessary.</p>
  */
 public class MatchIndex {
 
@@ -57,35 +52,20 @@ public class MatchIndex {
   public static final String MATCH_INDEX_ENCODING = "ISO_8859_1";
 
   /**
-   * Lenght of header elements in bytes
+   * Length of header elements in bytes
    */
-  private static final int HEADER_TYPE_LENGTH = 1;
+  private static final int HEADER_NODE_METADATA_LENGTH = 1;
   private static final int HEADER_VALUE_LENGTH = 1;
   private static final int HEADER_CHILDREN_LENGTH = 4;
   private static final int HEADER_MATCH_ID_LENGTH = 2;
 
-  public static final int HEADER_LENGTH = HEADER_TYPE_LENGTH + HEADER_VALUE_LENGTH
-      + HEADER_CHILDREN_LENGTH + HEADER_MATCH_ID_LENGTH;
-
-  /**
-   * Type constants used in match index
-   */
-  public static final byte TYPE_ROOT = (byte) 0;
-  public static final byte TYPE_SCHEME = (byte) 1;
-  public static final byte TYPE_HOST = (byte) 2;
-  public static final byte TYPE_PATH_SEGMENT = (byte) 3;
+  public static final int HEADER_LENGTH = HEADER_NODE_METADATA_LENGTH + HEADER_VALUE_LENGTH
+    + HEADER_CHILDREN_LENGTH + HEADER_MATCH_ID_LENGTH;
 
   /**
    * Marker for no match
    */
-  public static final int NO_MATH = 0xffff;
-
-  /**
-   * Used as a value placeholder to indicate the value is a placeholder
-   * e.g. in dld://host/{param1} "{param1}" would be encoded as this character.
-   */
-  @NonNull
-  public static final char IDX_PLACEHOLDER = 0x1a; // ASCII substitute
+  public static final int NO_MATCH = 0xffff;
 
   @NonNull
   public static final String ROOT_VALUE = "r";
@@ -102,13 +82,14 @@ public class MatchIndex {
   }
 
   public Match matchUri(@NonNull List<UrlElement> elements, @Nullable Map<String, String>
-      placeholders, int elementIndex, int elementStartPosition, int parentBoundryPos) {
+    placeholders, int elementIndex, int elementStartPosition, int parentBoundryPos,
+                        Map<String, String> pathSegmentReplacements) {
     Match match = null;
     int currentElementStartPosition = elementStartPosition;
     do {
       UrlElement urlElement = elements.get(elementIndex);
-      String compareResult = compareValue(currentElementStartPosition, urlElement.getType(),
-          urlElement.getValue());
+      String compareResult = compareValue(currentElementStartPosition, urlElement.getTypeFlag(),
+        urlElement.getValue(), pathSegmentReplacements);
       if (compareResult != null) {
         Map<String, String> placeholdersOutput = placeholders;
         // If the compareResult is not empty we found a match with a placeholder. We need to save
@@ -118,7 +99,7 @@ public class MatchIndex {
           // We need to have a new HashMap for every aprtial match to make sure that the
           // placeholders found in other partial matches do not overlap with the actual final match.
           placeholdersOutput = new HashMap<>(placeholders != null ? placeholders
-              : Collections.<String, String>emptyMap());
+            : Collections.<String, String>emptyMap());
           String[] compareParams = compareResult.split(MATCH_PARAM_DIVIDER_CHAR);
           // Add the found placeholder set to the map.
           placeholdersOutput.put(compareParams[0], compareParams[1]);
@@ -128,83 +109,128 @@ public class MatchIndex {
           int childrenPos = getChildrenPos(currentElementStartPosition);
           if (childrenPos != -1) {
             match = matchUri(elements, placeholdersOutput, elementIndex + 1,
-                childrenPos, getElementBoundaryPos(currentElementStartPosition));
+              childrenPos, getElementBoundaryPos(currentElementStartPosition),
+              pathSegmentReplacements);
           }
         } else {
           int matchIndex = getMatchIndex(currentElementStartPosition);
           // Url is a partial match.
-          if (matchIndex == NO_MATH) {
+          if (matchIndex == NO_MATCH) {
             return null;
           }
           match = new Match(matchIndex, placeholdersOutput == null
-              ? new HashMap<String, String>(0) : placeholdersOutput);
+            ? new HashMap<String, String>(0) : placeholdersOutput);
         }
       }
       if (match != null) {
         return match;
       }
       currentElementStartPosition = getNextElementStartPosition(currentElementStartPosition,
-          parentBoundryPos);
+        parentBoundryPos);
     } while (currentElementStartPosition != -1);
     return null;
   }
 
   /**
-   * @param elementStartPos The start position of the element to compare
-   * @param type            The type of the value to compare
-   * @param value           The value of the value to compare
-   * @return Empty String ""  if the type, length and value of the element staring at
-   * elementStartPos is the same as the value given in in the parameter. If this was a placeholder
-   * match the value of thee placeholder, null otherwise.
+   * @param elementStartPos         The start position of the element to compare
+   * @param inboundUriComponentType A flag for the URI component type of the inboundValue to
+   *                                compare (like scheme, host, or path segment)
+   * @param inboundValue            The byte array of the inbound URI
+   * @return Empty String ""  if the type, length and inboundValue of the element staring at
+   * elementStartPos is the same as the inboundValue given in in the parameter. If this was a
+   * placeholder match the inboundValue of thee placeholder, null otherwise.
    */
-  private @Nullable
-  String compareValue(int elementStartPos, byte type, @NonNull byte[] value) {
+  @Nullable
+  private String compareValue(int elementStartPos, byte inboundUriComponentType, @NonNull byte[]
+    inboundValue, Map<String, String> pathSegmentReplacements) {
     // Placeholder always matches
-    int valuePos = elementStartPos + HEADER_LENGTH;
-    boolean containsPlaceholder = false;
+    int valueStartPos = elementStartPos + HEADER_LENGTH;
+    byte nodeMetadata = byteArray[elementStartPos];
+    boolean isComponentParam = isComponentParam(nodeMetadata);
+    boolean isConfigurablePathSegment = isConfigurablePathSegment(nodeMetadata);
+    boolean isValueLiteralValue = !(isComponentParam || isConfigurablePathSegment);
     int valueLength = getValueLength(elementStartPos);
-    if (valueLength > 0 && byteArray[valuePos] == IDX_PLACEHOLDER) {
-      valuePos += 1; // The actual value starts at +1 if we have a placeholder indicator
-      valueLength -= 1; // IF placeholder the value is one byte shorter
-      containsPlaceholder = true;
-      if (valueLength == 2) {
-        return null; // Empty placeholder id does not match
-      }
-      if (value.length == 0) {
-        return null; // Empty string does not match the placeholder
-      }
+    boolean isComponentTypeMismatch = nodeMetadata != inboundUriComponentType;
+    boolean isValueLengthMismatch = valueLength != inboundValue.length;
+
+    if ((isComponentTypeMismatch || isValueLengthMismatch) && isValueLiteralValue) {
+      //Opportunistically skip comparing this node before walking the two values if we can infer
+      // that they will not match.
+      return null;
     }
-    if (byteArray[elementStartPos] != type || (valueLength != value.length
-        && !containsPlaceholder)) {
-      return null; // Does not match
+    if (isComponentParam) {
+      return compareComponentParam(valueStartPos, valueLength, inboundValue);
+    } else if (isConfigurablePathSegment) {
+      return compareConfigurablePathSegment(inboundValue, pathSegmentReplacements, valueStartPos,
+        valueLength);
     }
-    // i index over value array forward
-    // j index over search byte arrays value element forward
-    // k index over value array backward
-    for (int i = 0; i < value.length; i++) {
-      if (containsPlaceholder && byteArray[valuePos + i] == '{') {
+    return ""; // Matches but is no placeholder
+  }
+
+  @Nullable
+  private String compareConfigurablePathSegment(@NonNull byte[] inboundValue,
+                                                Map<String, String> pathSegmentReplacements,
+                                                int valueStartPos, int valueLength) {
+    // Copy a chunk of values from byteArray to use as a key for looking up path segment from
+    // pathSegmentReplacements.
+    byte[] byteArrayValue = new byte[valueLength];
+    System.arraycopy(byteArray, valueStartPos, byteArrayValue, 0, valueLength);
+    String pathSegmentKey = new String(byteArrayValue).substring(
+      UrlTreeKt.pathSegmentStartingSequence.length(),
+      valueLength - UrlTreeKt.pathSegmentEndingSequence.length()
+    );
+
+    String replacementValue = pathSegmentReplacements.get(pathSegmentKey);
+    if (new String(inboundValue).equals(replacementValue)) {
+      return "";
+    } else {
+      return null;
+    }
+  }
+
+  @Nullable
+  private String compareComponentParam(
+    int valueStartPos, int valueLength, @NonNull byte[] inboundValue
+  ) {
+    if ((
+      //Per com.airbnb.deeplinkdispatch.DeepLinkEntryTest.testEmptyParametersNameDontMatch
+      //We should not return a match if the param (aka placeholder) is empty.
+      byteArray[valueStartPos] == '{' && byteArray[valueStartPos + 1] == '}'
+    ) || (
+      //Per com.airbnb.deeplinkdispatch.DeepLinkEntryTest.testEmptyPathPresentParams
+      //We expect an empty path to not be a match
+      inboundValue.length == 0
+    )) {
+      return null;
+    }
+    // i index over inboundValue array forward
+    // j index over search byte arrays inboundValue element forward
+    // k index over inboundValue array backward
+    for (int i = 0; i < inboundValue.length; i++) {
+      if (byteArray[valueStartPos + i] == '{') {
         // Until here every char in front for the placeholder matched.
-        // Now lets see of all chars behind thje placeholer also match
-        for (int j = valueLength - 1, k = value.length - 1; j >= 0; j--, k--) {
-          if (byteArray[valuePos + j] == '}') {
-            // Text behind the placholder fully matches. Now we just need to get the placeholer
+        // Now let's see if all chars within the placeholder also match.
+        for (int j = valueLength - 1, k = inboundValue.length - 1; j >= 0; j--, k--) {
+          if (byteArray[valueStartPos + j] == '}') {
+            // Text within the placeholder fully matches. Now we just need to get the placeholder
             // string and can return.
             byte[] placeholderValue = new byte[k - i + 1];
             // Size is without braces
-            byte[] placeholder = new byte[(valuePos + j) - (valuePos + i) - 1];
-            System.arraycopy(value, i, placeholderValue, 0, placeholderValue.length);
-            System.arraycopy(byteArray, valuePos + i + 1, placeholder, 0, placeholder.length);
+            byte[] placeholder = new byte[(valueStartPos + j) - (valueStartPos + i) - 1];
+            System.arraycopy(inboundValue, i, placeholderValue, 0, placeholderValue.length);
+            System.arraycopy(byteArray, valueStartPos + i + 1, placeholder, 0,
+              placeholder.length);
             return new StringBuilder(placeholderValue.length + placeholder.length + 1)
-                .append(new String(placeholder)).append(MATCH_PARAM_DIVIDER_CHAR)
-                .append(new String(placeholderValue)).toString();
+              .append(new String(placeholder)).append(MATCH_PARAM_DIVIDER_CHAR)
+              .append(new String(placeholderValue)).toString();
           }
-          if (byteArray[valuePos + j] != value[k]) {
+          if (byteArray[valueStartPos + j] != inboundValue[k]) {
             return null;
           }
         }
       }
-      if (byteArray[valuePos + i] != value[i]) {
-        return null; // Does not magch
+      if (byteArray[valueStartPos + i] != inboundValue[i]) {
+        return null; // Does not match
       }
     }
     return ""; // Matches but is no placeholder
@@ -237,7 +263,7 @@ public class MatchIndex {
    */
   private int getElementBoundaryPos(int elementStartPos) {
     return elementStartPos + HEADER_LENGTH + getValueLength(elementStartPos)
-        + getChildrenLength(elementStartPos);
+      + getChildrenLength(elementStartPos);
   }
 
   /**
@@ -261,7 +287,10 @@ public class MatchIndex {
    * @return The length of the value section of this element.
    */
   private int getValueLength(int elementStartPos) {
-    return readOneByteAsInt(elementStartPos + HEADER_TYPE_LENGTH);
+    return readOneByteAsInt(
+      elementStartPos
+        + HEADER_NODE_METADATA_LENGTH
+    );
   }
 
   /**
@@ -271,7 +300,11 @@ public class MatchIndex {
    * @return The length of the children section of this element.
    */
   private int getChildrenLength(int elementStartPos) {
-    return readFourBytesAsInt(elementStartPos + HEADER_TYPE_LENGTH + HEADER_VALUE_LENGTH);
+    return readFourBytesAsInt(
+      elementStartPos
+        + HEADER_NODE_METADATA_LENGTH
+        + HEADER_VALUE_LENGTH
+    );
   }
 
   /**
@@ -280,7 +313,10 @@ public class MatchIndex {
    * match.
    */
   private int getMatchIndex(int elementStartPos) {
-    return readTwoBytesAsInt(elementStartPos + HEADER_TYPE_LENGTH + HEADER_VALUE_LENGTH
+    return readTwoBytesAsInt(
+      elementStartPos
+        + HEADER_NODE_METADATA_LENGTH
+        + HEADER_VALUE_LENGTH
         + HEADER_CHILDREN_LENGTH);
   }
 
@@ -294,14 +330,14 @@ public class MatchIndex {
 
   private int readTwoBytesAsInt(int pos) {
     return (byteArray[pos] & 0xFF) << 8
-        | (byteArray[pos + 1] & 0xFF);
+      | (byteArray[pos + 1] & 0xFF);
   }
 
   private int readFourBytesAsInt(int pos) {
     return (byteArray[pos] & 0xFF) << 24
-        | (byteArray[pos + 1] & 0xFF) << 16
-        | (byteArray[pos + 2] & 0xFF) << 8
-        | (byteArray[pos + 3] & 0xFF);
+      | (byteArray[pos + 1] & 0xFF) << 16
+      | (byteArray[pos + 2] & 0xFF) << 8
+      | (byteArray[pos + 3] & 0xFF);
   }
 
   /**

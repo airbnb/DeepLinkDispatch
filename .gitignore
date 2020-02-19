@@ -16,3 +16,6 @@ lib
 .DS_Store
 local.properties
 .gradle
+
+# deepLinkDispatch
+dld_match_*.idx

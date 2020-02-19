@@ -5,7 +5,7 @@ public final class ProcessorUtils {
   static String decapitalize(String str) {
     if (str != null && str.length() != 0) {
       if (str.length() > 1 && Character.isUpperCase(str.charAt(1))
-          && Character.isUpperCase(str.charAt(0))) {
+        && Character.isUpperCase(str.charAt(0))) {
         return str;
       } else {
         char[] var1 = str.toCharArray();
@@ -25,4 +25,5 @@ public final class ProcessorUtils {
     }
     return false;
   }
+
 }

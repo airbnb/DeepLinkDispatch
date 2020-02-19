@@ -28,7 +28,14 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.TaskStackBuilder;
 
-@DeepLink({ "dld://classDeepLink", "http://example.com/foo{arg_end}", "http://example.com/{arg_start}bar", "dld://example.com/deepLink" })
+@DeepLink({
+  "dld://classDeepLink",
+  "http://example.com/foo{arg_end}",
+  "http://example.com/{arg_start}bar",
+  "dld://example.com/deepLink",
+  "https://www.example.com/<replaceable-path-variable>/bar",
+  "https://www.example.com/<configure-path-segment-one>/<configure-path-segment-two>"
+})
 public class MainActivity extends AppCompatActivity {
   private static final String ACTION_DEEP_LINK_METHOD = "deep_link_method";
   private static final String ACTION_DEEP_LINK_COMPLEX = "deep_link_complex";

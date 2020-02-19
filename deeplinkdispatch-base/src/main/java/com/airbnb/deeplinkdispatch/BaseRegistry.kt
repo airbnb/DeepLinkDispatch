@@ -9,34 +9,40 @@ import com.airbnb.deeplinkdispatch.base.MatchIndex
  * This uses a List of DeepLinkEntries collected from a Module. And a binary match index.
  *
  * Both of them are initialized by annotation processor generated children of this class.
+ * @param matchIndexArray ByteArray encoding of a tree of different UriComponents like scheme, host,
+ * path segment. See [TreeNode].
+ * @param pathSegmentReplacementKeysInRegistry Each registry's export of the path segments that are
+ * declared in the module's deep links. A corresponding key-value pair must be injected into
+ * [BaseDeepLinkDelegate]. The correspondent's presence will be validated at runtime by
+ * [com.airbnb.deeplinkdispatch.ValidationUtilsKt.validateConfigurablePathSegmentReplacements].
  */
 abstract class BaseRegistry(val registeredDeepLinks: List<DeepLinkEntry>,
-                            /**
-                           * A binary match index, created by the annotation processor.
-                           * In a wrapper to make handling it easier
-                           */
-                          matchIndexArray: ByteArray) {
+                            matchIndexArray: ByteArray,
+                            val pathSegmentReplacementKeysInRegistry: Set<String>) {
 
-    private val matchIndex: MatchIndex
-
-    init {
-        this.matchIndex = MatchIndex(matchIndexArray)
-    }
+    private val matchIndex: MatchIndex = MatchIndex(matchIndexArray)
 
     /**
      * Use a binary match index to match the given URL. Defaults can be find in [MatchIndex].
      *
-     * @param deepLinkUri The input [DeepLinkUri] to match
+     * @param deepLinkUri The inbound [DeepLinkUri] to match. In the typical use-case, this inbound
+     * URI comes from an Android Intent.
+     * @param pathSegmentReplacements originally injected via [BaseDeepLinkDelegate]. User provided
+     * replacement values for replaceable path segments. Ex: mapOf("replaceable" to "swish") and
+     * a://host/<replaceable> will result in a://host/swish being a match (and
+     * a://host/<replaceable> is not a match).
      * @return A [DeepLinkEntry] if a match was found or null if not.
      */
-    fun idxMatch(deepLinkUri: DeepLinkUri?): DeepLinkEntry? {
+    @JvmOverloads
+    fun idxMatch(deepLinkUri: DeepLinkUri?, pathSegmentReplacements: Map<String, String> = mapOf()): DeepLinkEntry? {
         if (deepLinkUri == null) {
-            return null;
+            return null
         }
         // Generating a match list (list of elements in to be matched URL starting with an
         // (artificial) root.
         val match = matchIndex.matchUri(SchemeHostAndPath(deepLinkUri).matchList,
-                null, 0, 0, matchIndex.length())
+                null, 0, 0, matchIndex.length(),
+                pathSegmentReplacements)
         if (match != null) {
             val matchedEntry = registeredDeepLinks[match.matchIndex]
             matchedEntry.setParameters(deepLinkUri, match.parameterMap)

@@ -23,6 +23,20 @@ public class BaseDeepLinkDelegate {
   protected static final String TAG = "DeepLinkDelegate";
 
   protected final List<? extends BaseRegistry> registries;
+  /**
+   * <p>Mapping of values for DLD to substitute for annotation-declared configurablePathSegments.
+   * </p>
+   * <p>Example</p>
+   * Given:
+   * <ul>
+   * <li><xmp>@DeepLink("https://www.example.com/<replaceable-path-variable>/users/{param1}")
+   * </xmp></li>
+   * <li>mapOf("pathVariableReplacementValue" to "obamaOs")</li>
+   * </ul>
+   * Then:
+   * <ul><li><xmp>https://www.example.com/obamaOs/users/{param1}</xmp> will match.</li></ul>
+   */
+  protected final Map<String, String> configurablePathSegmentReplacements;
 
   public List<? extends BaseRegistry> getRegistries() {
     return registries;
@@ -30,18 +44,30 @@ public class BaseDeepLinkDelegate {
 
   public BaseDeepLinkDelegate(List<? extends BaseRegistry> registries) {
     this.registries = registries;
+    configurablePathSegmentReplacements = new HashMap<>();
+  }
+
+  public BaseDeepLinkDelegate(
+    List<? extends BaseRegistry> registries,
+    Map<String, String> configurablePathSegmentReplacements
+  ) {
+    this.registries = registries;
+    this.configurablePathSegmentReplacements = configurablePathSegmentReplacements;
+    ValidationUtilsKt.validateConfigurablePathSegmentReplacements(registries,
+      configurablePathSegmentReplacements);
   }
 
   private DeepLinkEntry findEntry(String uriString) {
     DeepLinkEntry entryRegExpMatch = null;
-    DeepLinkEntry entryIdxMatch = null;
+    DeepLinkEntry entryIdxMatch;
+    DeepLinkUri parse = DeepLinkUri.parse(uriString);
     for (BaseRegistry registry : registries) {
-      entryIdxMatch = registry.idxMatch(DeepLinkUri.parse(uriString));
+      entryIdxMatch = registry.idxMatch(parse, configurablePathSegmentReplacements);
       if (entryIdxMatch != null) {
-        break;
+        return entryIdxMatch;
       }
     }
-    return entryIdxMatch;
+    return null;
   }
 
   /**
@@ -77,7 +103,7 @@ public class BaseDeepLinkDelegate {
     }
     notifyListener(activity, !result.isSuccessful(), sourceIntent.getData(),
       result.getDeepLinkEntry() != null ? result.getDeepLinkEntry().getUriTemplate()
-          : null, result.getError());
+        : null, result.getError());
     return result;
   }
 
@@ -91,7 +117,8 @@ public class BaseDeepLinkDelegate {
    *                      {@link #findEntry(String)}. Can be injected for testing.
    * @return DeepLinkResult
    */
-  public @NonNull DeepLinkResult createResult(
+  public @NonNull
+  DeepLinkResult createResult(
     Activity activity, Intent sourceIntent, DeepLinkEntry deepLinkEntry
   ) {
     if (activity == null) {
@@ -183,7 +210,7 @@ public class BaseDeepLinkDelegate {
       }
       return new DeepLinkResult(true, uriString, "", newIntent, taskStackBuilder, deepLinkEntry);
     } catch (NoSuchMethodException exception) {
-      return new DeepLinkResult(false, uriString, "Deep link to non-existent method: "
+      return new DeepLinkResult(false, uriString, "Dee3p link to non-existent method: "
         + deepLinkEntry.getMethod(), null, null, deepLinkEntry);
     } catch (IllegalAccessException exception) {
       return new DeepLinkResult(false, uriString, "Could not deep link to method: "

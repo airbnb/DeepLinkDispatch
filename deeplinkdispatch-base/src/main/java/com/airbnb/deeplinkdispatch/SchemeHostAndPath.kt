@@ -1,24 +1,29 @@
 package com.airbnb.deeplinkdispatch
 
+import com.airbnb.deeplinkdispatch.NodeMetadata.*
 import com.airbnb.deeplinkdispatch.base.MatchIndex
+import com.airbnb.deeplinkdispatch.NodeMetadataConverters.isComponentTypeHost
+import com.airbnb.deeplinkdispatch.NodeMetadataConverters.isComponentTypePathSegment
+import com.airbnb.deeplinkdispatch.NodeMetadataConverters.isComponentTypeRoot
+import com.airbnb.deeplinkdispatch.NodeMetadataConverters.isComponentTypeScheme
 
 /**
- * Used to encapsulate the scheme host and path of a DeepLinkUri into a type.
+ * Used to categorize a DeepLinkUri's components into the types: scheme, host, and path.
  *
  * All operations are happening on the UI thread by definition so it is ok to make the lazies
  * not thread safe for speed improvement.
  */
 class SchemeHostAndPath(val uri: DeepLinkUri) {
 
-    val matchList: List<UrlElement> = listOf(UrlElement(MatchIndex.TYPE_ROOT, MatchIndex.ROOT_VALUE.toByteArray()),
-            UrlElement(MatchIndex.TYPE_SCHEME, uri.scheme().toByteArray()),
-            UrlElement(MatchIndex.TYPE_HOST, uri.encodedHost().toByteArray())) +
+    val matchList: List<UrlElement> = listOf(UrlElement(IsComponentTypeRoot.flag.toByte(), MatchIndex.ROOT_VALUE.toByteArray()),
+            UrlElement(IsComponentTypeScheme.flag.toByte(), uri.scheme().toByteArray()),
+            UrlElement(IsComponentTypeHost.flag.toByte(), uri.encodedHost().toByteArray())) +
             uri.encodedPathSegments().map { pathElement ->
-                UrlElement(MatchIndex.TYPE_PATH_SEGMENT, pathElement.toByteArray())
+                UrlElement(IsComponentTypePathSegment.flag.toByte(), pathElement.toByteArray())
             }
 }
 
-class UrlElement(val type: Byte, val value: ByteArray) {
+class UrlElement(val typeFlag: Byte, val value: ByteArray) {
 
     /**
      * This is for debugging, it's actually not called at runtime
@@ -27,13 +32,11 @@ class UrlElement(val type: Byte, val value: ByteArray) {
         return "Type: ${typeToString()}, Value: ${String(value)}"
     }
 
-    private fun typeToString(): String {
-        return when (type) {
-            MatchIndex.TYPE_ROOT -> "root"
-            MatchIndex.TYPE_SCHEME -> "scheme"
-            MatchIndex.TYPE_HOST -> "host"
-            MatchIndex.TYPE_PATH_SEGMENT -> "path_segment"
-            else -> "unknown"
-        }
+    private fun typeToString(): String = when {
+        isComponentTypeRoot(typeFlag) -> "root"
+        isComponentTypeScheme(typeFlag) -> "scheme"
+        isComponentTypeHost(typeFlag) -> "host"
+        isComponentTypePathSegment(typeFlag) -> "path_segment"
+        else -> "unknown"
     }
 }

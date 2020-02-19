@@ -28,6 +28,7 @@ import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterSpec;
+import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeSpec;
 
 import org.jetbrains.annotations.NotNull;
@@ -45,13 +46,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Filer;
 import javax.annotation.processing.Messager;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.RoundEnvironment;
-import javax.annotation.processing.SupportedOptions;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
@@ -68,20 +69,22 @@ import static com.airbnb.deeplinkdispatch.MoreAnnotationMirrors.asAnnotationValu
 import static com.airbnb.deeplinkdispatch.MoreAnnotationMirrors.getTypeValue;
 import static com.airbnb.deeplinkdispatch.ProcessorUtils.decapitalize;
 import static com.airbnb.deeplinkdispatch.ProcessorUtils.hasEmptyOrNullString;
+import static com.airbnb.deeplinkdispatch.UrlTreeKt.pathSegmentEndingSequence;
+import static com.airbnb.deeplinkdispatch.UrlTreeKt.pathSegmentStartingSequence;
+import static com.airbnb.deeplinkdispatch.base.Utils.isConfigurablePathSegment;
 import static com.google.auto.common.MoreElements.getAnnotationMirror;
 
-@SupportedOptions(Documentor.DOC_OUTPUT_PROPERTY_NAME)
 public class DeepLinkProcessor extends AbstractProcessor {
   private static final String PACKAGE_NAME = "com.airbnb.deeplinkdispatch";
   private static final String OPTION_CUSTOM_ANNOTATIONS = "deepLink.customAnnotations";
   private static final String OPTION_INCREMENTAL = "deepLink.incremental";
   private static final ClassName CLASS_BASE_DEEP_LINK_DELEGATE
-      = ClassName.get(PACKAGE_NAME, "BaseDeepLinkDelegate");
+    = ClassName.get(PACKAGE_NAME, "BaseDeepLinkDelegate");
   private static final ClassName CLASS_ARRAYS = ClassName.get(Arrays.class);
   private static final ClassName CLASS_COLLECTIONS = ClassName.get(Collections.class);
   private static final ClassName CLASS_UTILS = ClassName.get(Utils.class);
   private static final ClassName CLASS_DEEP_LINK_ENTRY
-      = ClassName.get(PACKAGE_NAME, DeepLinkEntry.class.getSimpleName());
+    = ClassName.get(PACKAGE_NAME, DeepLinkEntry.class.getSimpleName());
   private static final Class<DeepLink> DEEP_LINK_CLASS = DeepLink.class;
   private static final Class<DeepLinkSpec> DEEP_LINK_SPEC_CLASS = DeepLinkSpec.class;
   public static final String REGISTRY_CLASS_SUFFIX = "Registry";
@@ -112,7 +115,8 @@ public class DeepLinkProcessor extends AbstractProcessor {
     return new IncrementalMetadata(customAnnotationOption.split(","));
   }
 
-  @Override public Set<String> getSupportedAnnotationTypes() {
+  @Override
+  public Set<String> getSupportedAnnotationTypes() {
     if (incrementalMetadata != null) {
       HashSet<String> annotationTypes = Sets.newHashSet(incrementalMetadata.customAnnotations);
       annotationTypes.add(DeepLink.class.getCanonicalName());
@@ -130,8 +134,11 @@ public class DeepLinkProcessor extends AbstractProcessor {
     return SourceVersion.latestSupported();
   }
 
-  @Override public Set<String> getSupportedOptions() {
-    HashSet<String> supportedOptions = Sets.newHashSet(Documentor.DOC_OUTPUT_PROPERTY_NAME);
+  @Override
+  public Set<String> getSupportedOptions() {
+    HashSet<String> supportedOptions = Sets.newHashSet(
+      Documentor.DOC_OUTPUT_PROPERTY_NAME
+    );
     if (incrementalMetadata != null) {
       supportedOptions.add("org.gradle.annotation.processing.aggregating");
     }
@@ -162,7 +169,7 @@ public class DeepLinkProcessor extends AbstractProcessor {
       ElementKind kind = customAnnotation.getKind();
       if (kind != ElementKind.ANNOTATION_TYPE) {
         error(customAnnotation, "Only annotation types can be annotated with @%s",
-            DEEP_LINK_SPEC_CLASS.getSimpleName());
+          DEEP_LINK_SPEC_CLASS.getSimpleName());
       }
       String[] prefix = customAnnotation.getAnnotation(DEEP_LINK_SPEC_CLASS).prefix();
       if (hasEmptyOrNullString(prefix)) {
@@ -173,7 +180,7 @@ public class DeepLinkProcessor extends AbstractProcessor {
       }
       prefixes.put(customAnnotation, prefix);
       elementsToProcess.addAll(
-          roundEnv.getElementsAnnotatedWith(MoreElements.asType(customAnnotation)));
+        roundEnv.getElementsAnnotatedWith(MoreElements.asType(customAnnotation)));
     }
 
     elementsToProcess.addAll(roundEnv.getElementsAnnotatedWith(DEEP_LINK_CLASS));
@@ -183,22 +190,22 @@ public class DeepLinkProcessor extends AbstractProcessor {
       ElementKind kind = element.getKind();
       if (kind != ElementKind.METHOD && kind != ElementKind.CLASS) {
         error(element, "Only classes and methods can be annotated with @%s",
-            DEEP_LINK_CLASS.getSimpleName());
+          DEEP_LINK_CLASS.getSimpleName());
       }
 
       if (kind == ElementKind.METHOD) {
         Set<Modifier> methodModifiers = element.getModifiers();
         if (!methodModifiers.contains(Modifier.STATIC)) {
           error(element, "Only static methods can be annotated with @%s",
-              DEEP_LINK_CLASS.getSimpleName());
+            DEEP_LINK_CLASS.getSimpleName());
         }
         ExecutableElement executableElement = MoreElements.asExecutable(element);
         TypeElement returnType = MoreTypes.asTypeElement(executableElement.getReturnType());
         String qualifiedName = returnType.getQualifiedName().toString();
         if (!qualifiedName.equals("android.content.Intent")
-            && !qualifiedName.equals("androidx.core.app.TaskStackBuilder")) {
+          && !qualifiedName.equals("androidx.core.app.TaskStackBuilder")) {
           error(element, "Only `Intent` or `androidx.core.app.TaskStackBuilder` are supported."
-              + " Please double check your imports and try again.");
+            + " Please double check your imports and try again.");
         }
       }
 
@@ -209,7 +216,7 @@ public class DeepLinkProcessor extends AbstractProcessor {
       }
       deepLinks.addAll(enumerateCustomDeepLinks(element, prefixes));
       DeepLinkEntry.Type type = kind == ElementKind.CLASS
-          ? DeepLinkEntry.Type.CLASS : DeepLinkEntry.Type.METHOD;
+        ? DeepLinkEntry.Type.CLASS : DeepLinkEntry.Type.METHOD;
       for (String deepLink : deepLinks) {
         try {
           deepLinkElements.add(new DeepLinkAnnotatedElement(deepLink, element, type));
@@ -219,21 +226,21 @@ public class DeepLinkProcessor extends AbstractProcessor {
       }
     }
     Set<? extends Element> deepLinkHandlerElements =
-        roundEnv.getElementsAnnotatedWith(DeepLinkHandler.class);
+      roundEnv.getElementsAnnotatedWith(DeepLinkHandler.class);
     for (Element deepLinkHandlerElement : deepLinkHandlerElements) {
       Optional<AnnotationMirror> annotationMirror =
-          getAnnotationMirror(deepLinkHandlerElement, DeepLinkHandler.class);
+        getAnnotationMirror(deepLinkHandlerElement, DeepLinkHandler.class);
       if (annotationMirror.isPresent()) {
         Iterable<TypeMirror> klasses = getTypeValue(annotationMirror.get(), "value");
         List<TypeElement> typeElements = FluentIterable.from(klasses).transform(
-            new Function<TypeMirror, TypeElement>() {
-              @Override
-              public TypeElement apply(TypeMirror klass) {
-                return MoreTypes.asTypeElement(klass);
-              }
-            }).toList();
+          new Function<TypeMirror, TypeElement>() {
+            @Override
+            public TypeElement apply(TypeMirror klass) {
+              return MoreTypes.asTypeElement(klass);
+            }
+          }).toList();
         String packageName = processingEnv.getElementUtils()
-            .getPackageOf(deepLinkHandlerElement).getQualifiedName().toString();
+          .getPackageOf(deepLinkHandlerElement).getQualifiedName().toString();
         try {
           generateDeepLinkDelegate(packageName, typeElements);
         } catch (IOException e) {
@@ -243,19 +250,19 @@ public class DeepLinkProcessor extends AbstractProcessor {
           PrintWriter pw = new PrintWriter(sw);
           e.printStackTrace(pw);
           messager.printMessage(Diagnostic.Kind.ERROR,
-              "Internal error during annotation processing: " + sw.toString());
+            "Internal error during annotation processing: " + sw.toString());
         }
       }
     }
 
     Set<? extends Element> deepLinkModuleElements =
-        roundEnv.getElementsAnnotatedWith(DeepLinkModule.class);
+      roundEnv.getElementsAnnotatedWith(DeepLinkModule.class);
     for (Element deepLinkModuleElement : deepLinkModuleElements) {
       String packageName = processingEnv.getElementUtils()
-          .getPackageOf(deepLinkModuleElement).getQualifiedName().toString();
+        .getPackageOf(deepLinkModuleElement).getQualifiedName().toString();
       try {
         generateDeepLinkRegistry(packageName, deepLinkModuleElement.getSimpleName().toString(),
-            deepLinkElements);
+          deepLinkElements);
       } catch (IOException e) {
         messager.printMessage(Diagnostic.Kind.ERROR, "Error creating file");
       } catch (RuntimeException e) {
@@ -263,7 +270,7 @@ public class DeepLinkProcessor extends AbstractProcessor {
         PrintWriter pw = new PrintWriter(sw);
         e.printStackTrace(pw);
         messager.printMessage(Diagnostic.Kind.ERROR,
-            "Internal error during annotation processing: " + sw.toString());
+          "Internal error during annotation processing: " + sw.toString());
       }
     }
   }
@@ -271,22 +278,22 @@ public class DeepLinkProcessor extends AbstractProcessor {
   private static List<String> enumerateCustomDeepLinks(Element element,
                                                        Map<Element, String[]> prefixesMap) {
     Set<? extends AnnotationMirror> annotationMirrors =
-        AnnotationMirrors.getAnnotatedAnnotations(element, DEEP_LINK_SPEC_CLASS);
+      AnnotationMirrors.getAnnotatedAnnotations(element, DEEP_LINK_SPEC_CLASS);
     final List<String> deepLinks = new ArrayList<>();
     for (AnnotationMirror customAnnotation : annotationMirrors) {
       List<? extends AnnotationValue> suffixes =
-          asAnnotationValues(AnnotationMirrors.getAnnotationValue(customAnnotation, "value"));
+        asAnnotationValues(AnnotationMirrors.getAnnotationValue(customAnnotation, "value"));
 
       Element customElement = customAnnotation.getAnnotationType().asElement();
       String[] prefixes = prefixesMap.get(customElement);
 
       if (prefixes == null) {
         throw new DeepLinkProcessorException(
-            "Unable to find annotation '"
-                + customElement
-                + "' you must update "
-                + "'deepLink.customAnnotations' within the build.gradle",
-            customElement);
+          "Unable to find annotation '"
+            + customElement
+            + "' you must update "
+            + "'deepLink.customAnnotations' within the build.gradle",
+          customElement);
       }
 
       for (String prefix : prefixes) {
@@ -304,11 +311,11 @@ public class DeepLinkProcessor extends AbstractProcessor {
 
   private void generateDeepLinkRegistry(String packageName, String className,
                                         List<DeepLinkAnnotatedElement> elements)
-      throws IOException {
+    throws IOException {
     CodeBlock.Builder deeplinks = CodeBlock.builder()
-        .add("super($T.unmodifiableList($T.<$T>asList(\n",
-            CLASS_COLLECTIONS, CLASS_ARRAYS, CLASS_DEEP_LINK_ENTRY)
-        .indent();
+      .add("super($T.unmodifiableList($T.<$T>asList(\n",
+        CLASS_COLLECTIONS, CLASS_ARRAYS, CLASS_DEEP_LINK_ENTRY)
+      .indent();
     Collections.sort(elements, new Comparator<DeepLinkAnnotatedElement>() {
       @Override
       public int compare(DeepLinkAnnotatedElement element1, DeepLinkAnnotatedElement element2) {
@@ -320,13 +327,13 @@ public class DeepLinkProcessor extends AbstractProcessor {
         }
         if (comparisonResult == 0) {
           comparisonResult =
-              uri1.encodedPath().split("%7B").length - uri2.encodedPath().split("%7B").length;
+            uri1.encodedPath().split("%7B").length - uri2.encodedPath().split("%7B").length;
         }
         if (comparisonResult == 0) {
           String element1Representation =
-              element1.getUri() + element1.getMethod() + element1.getAnnotationType();
+            element1.getUri() + element1.getMethod() + element1.getAnnotationType();
           String element2Representation =
-              element2.getUri() + element2.getMethod() + element2.getAnnotationType();
+            element2.getUri() + element2.getMethod() + element2.getAnnotationType();
           comparisonResult = element1Representation.compareTo(element2Representation);
         }
         return comparisonResult;
@@ -335,6 +342,7 @@ public class DeepLinkProcessor extends AbstractProcessor {
     documentor.write(elements);
     int totalElements = elements.size();
     Root urisTrie = new Root();
+    Set<String> pathVariableKeys = new HashSet<>();
     for (int i = 0; i < totalElements; i++) {
       DeepLinkAnnotatedElement element = elements.get(i);
       String type = "DeepLinkEntry.Type." + element.getAnnotationType().toString();
@@ -344,23 +352,40 @@ public class DeepLinkProcessor extends AbstractProcessor {
       DeepLinkUri deeplinkUri = DeepLinkUri.parse(uri);
 
       urisTrie.addToTrie(i, deeplinkUri, element.getAnnotatedElement().toString(),
-          element.getMethod());
+        element.getMethod());
 
+      //Keep track of pathVariables added in a module so that we can check at runtime to ensure
+      //that all pathVariables have a corresponding entry provided to BaseDeepLinkDelegate.
+      for (String pathSegment : deeplinkUri.pathSegments()) {
+        if (isConfigurablePathSegment(pathSegment)) {
+          pathVariableKeys.add(pathSegment.substring(pathSegmentStartingSequence.length(),
+            pathSegment.length() - pathSegmentEndingSequence.length()));
+        } else if (pathSegment.contains(pathSegmentStartingSequence)
+          || pathSegment.contains(pathSegmentEndingSequence)) {
+          error(element.getElement(),
+            "Malformed nodeValue: ${this@transformationType}! If it"
+              + "contains " + pathSegmentStartingSequence + " or " + pathSegmentEndingSequence + ","
+              + " it must start with" + pathSegmentStartingSequence + " and end with "
+              + pathSegmentEndingSequence + "."
+          );
+        }
+      }
       deeplinks.add("new DeepLinkEntry($S, $L, $T.class, $S)$L\n",
-          uri, type, activity, method, (i < totalElements - 1) ? "," : "");
+        uri, type, activity, method, (i < totalElements - 1) ? "," : "");
     }
 
-    TypeSpec.Builder deeplinkRegistryBuilder = TypeSpec.classBuilder(className
-        + REGISTRY_CLASS_SUFFIX).addModifiers(Modifier.PUBLIC, Modifier.FINAL)
-        .superclass(ClassName.get(BaseRegistry.class));
+    TypeSpec.Builder deepLinkRegistryBuilder = TypeSpec.classBuilder(className
+      + REGISTRY_CLASS_SUFFIX).addModifiers(Modifier.PUBLIC, Modifier.FINAL)
+      .superclass(ClassName.get(BaseRegistry.class));
 
-    StringBuilder stringMethodNames = getStringMethodNames(urisTrie, deeplinkRegistryBuilder);
+    StringBuilder stringMethodNames = getStringMethodNames(urisTrie, deepLinkRegistryBuilder);
 
     MethodSpec constructor = MethodSpec.constructorBuilder()
-        .addModifiers(Modifier.PUBLIC)
-        .addCode(deeplinks.unindent().add(")), $T.readMatchIndexFromStrings( new String[] {"
-            + stringMethodNames + "} ));\n", CLASS_UTILS).build())
-        .build();
+      .addModifiers(Modifier.PUBLIC)
+      .addCode(deeplinks.unindent().add(")), $T.readMatchIndexFromStrings( new String[] {"
+        + stringMethodNames + "})", CLASS_UTILS).build())
+      .addCode(generatePathVariableKeysBlock(pathVariableKeys))
+      .build();
 
     // For debugging it is nice to have a file version of the index, just comment this in to get
     // on in the classpath
@@ -368,37 +393,52 @@ public class DeepLinkProcessor extends AbstractProcessor {
 //    MatchIndex.getMatchIdxFileName(className));
 //    urisTrie.writeToOutoutStream(indexResource.openOutputStream());
 
-    deeplinkRegistryBuilder.addMethod(constructor);
+    deepLinkRegistryBuilder.addMethod(constructor);
 
-    TypeSpec deepLinkRegistry = deeplinkRegistryBuilder.build();
+    TypeSpec deepLinkRegistry = deepLinkRegistryBuilder.build();
 
     JavaFile.builder(packageName, deepLinkRegistry)
-        .build()
-        .writeTo(filer);
+      .build()
+      .writeTo(filer);
+  }
+
+  private CodeBlock generatePathVariableKeysBlock(Set<String> pathVariableKeys) {
+    CodeBlock.Builder pathVariableKeysBuilder = CodeBlock.builder();
+    pathVariableKeysBuilder.add(",\n" + "new $T<String>(Arrays.<String>asList(",
+      ClassName.get(HashSet.class));
+    String[] pathVariableKeysArray = pathVariableKeys.toArray(new String[0]);
+    for (int i = 0; i < pathVariableKeysArray.length; i++) {
+      pathVariableKeysBuilder.add("$S", pathVariableKeysArray[i]);
+      if (i < pathVariableKeysArray.length - 1) {
+        pathVariableKeysBuilder.add(", ");
+      }
+    }
+    pathVariableKeysBuilder.add(")));\n");
+    return pathVariableKeysBuilder.build();
   }
 
   /**
-   * Add methods containing the Strings to store the match index to the deeplinkRegistryBuilder and
+   * Add methods containing the Strings to store the match index to the deepLinkRegistryBuilder and
    * return a string which contains the calls to those methods.
-   *
+   * <p>
    * e.g. "method1(), method2()" etc.
    *
-   * @param urisTrie The {@link UrlTreeKt} containing all Urls that can be matched.
-   * @param deeplinkRegistryBuilder The builder used to add the methods
+   * @param urisTrie                The {@link UrlTreeKt} containing all Urls that can be matched.
+   * @param deepLinkRegistryBuilder The builder used to add the methods
    * @return
    */
   @NotNull
   private StringBuilder getStringMethodNames(Root urisTrie,
-                                             TypeSpec.Builder deeplinkRegistryBuilder) {
+                                             TypeSpec.Builder deepLinkRegistryBuilder) {
     int i = 0;
     StringBuilder stringMethodNames = new StringBuilder();
     for (String string : urisTrie.getStrings()) {
       String methodName = "matchIndex" + i;
       stringMethodNames.append(methodName).append("(), ");
-      deeplinkRegistryBuilder.addMethod(MethodSpec.methodBuilder(methodName)
-          .addModifiers(Modifier.PRIVATE, Modifier.STATIC)
-          .returns(String.class)
-          .addCode(CodeBlock.builder().add("return $S;", string).build()).build());
+      deepLinkRegistryBuilder.addMethod(MethodSpec.methodBuilder(methodName)
+        .addModifiers(Modifier.PRIVATE, Modifier.STATIC)
+        .returns(String.class)
+        .addCode(CodeBlock.builder().add("return $S;", string).build()).build());
       i++;
     }
     return stringMethodNames;
@@ -410,7 +450,7 @@ public class DeepLinkProcessor extends AbstractProcessor {
 
   private static ClassName moduleElementToRegistryClassName(TypeElement element) {
     return ClassName.get(getPackage(element).getQualifiedName().toString(),
-        element.getSimpleName().toString() + REGISTRY_CLASS_SUFFIX);
+      element.getSimpleName().toString() + REGISTRY_CLASS_SUFFIX);
   }
 
   private static PackageElement getPackage(Element type) {
@@ -421,39 +461,71 @@ public class DeepLinkProcessor extends AbstractProcessor {
   }
 
   private void generateDeepLinkDelegate(String packageName, List<TypeElement> registryClasses)
-      throws IOException {
-    CodeBlock.Builder registriesInitializer = CodeBlock.builder()
-        .add("super($T.asList(\n", ClassName.get(Arrays.class))
-        .indent();
+    throws IOException {
+
+    CodeBlock.Builder moduleRegistriesArgument = CodeBlock.builder();
     int totalElements = registryClasses.size();
     for (int i = 0; i < totalElements; i++) {
-      registriesInitializer.add("$L$L",
-          decapitalize(moduleNameToRegistryName(registryClasses.get(i))),
-          i < totalElements - 1 ? ",\n" : "\n");
+      moduleRegistriesArgument.add("$L$L",
+        decapitalize(moduleNameToRegistryName(registryClasses.get(i))),
+        i < totalElements - 1 ? ",\n" : "");
     }
 
+    CodeBlock registriesInitializerBuilder = CodeBlock.builder()
+      .add("super($T.asList(\n", ClassName.get(Arrays.class))
+      .indent()
+      .add(moduleRegistriesArgument.build())
+      .add("\n").unindent().add("));\n")
+      .build();
+
+    CodeBlock registriesInitializerBuilderWithPathVariables = CodeBlock.builder()
+      .add("super($T.asList(\n", ClassName.get(Arrays.class))
+      .indent()
+      .add(moduleRegistriesArgument.build())
+      .add("),\nconfigurablePathSegmentReplacements").unindent().add("\n);\n")
+      .build();
+
     MethodSpec constructor = MethodSpec.constructorBuilder()
-        .addModifiers(Modifier.PUBLIC)
-        .addParameters(FluentIterable.from(registryClasses).transform(
-            new Function<TypeElement, ParameterSpec>() {
-              @Override
-              public ParameterSpec apply(TypeElement typeElement) {
-                return ParameterSpec.builder(moduleElementToRegistryClassName(typeElement),
-                    decapitalize(moduleNameToRegistryName(typeElement))).build();
-              }
-            }).toList())
-        .addCode(registriesInitializer.unindent().add("));\n").build())
-        .build();
+      .addModifiers(Modifier.PUBLIC)
+      .addParameters(FluentIterable.from(registryClasses).transform(
+        new Function<TypeElement, ParameterSpec>() {
+          @Override
+          public ParameterSpec apply(TypeElement typeElement) {
+            return ParameterSpec.builder(moduleElementToRegistryClassName(typeElement),
+              decapitalize(moduleNameToRegistryName(typeElement))).build();
+          }
+        }).toList())
+      .addCode(registriesInitializerBuilder)
+      .build();
+
+    ParameterSpec configurablePathSegmentReplacementsParam = ParameterSpec.builder(
+      ParameterizedTypeName.get(Map.class, String.class, String.class),
+      "configurablePathSegmentReplacements")
+      .build();
+
+    MethodSpec constructorWithPathVariables = MethodSpec.constructorBuilder()
+      .addModifiers(Modifier.PUBLIC)
+      .addParameters(
+        registryClasses.stream().map(typeElement ->
+          ParameterSpec.builder(moduleElementToRegistryClassName(typeElement),
+            decapitalize(moduleNameToRegistryName(typeElement)))
+            .build())
+          .collect(Collectors.toList())
+      )
+      .addParameter(configurablePathSegmentReplacementsParam)
+      .addCode(registriesInitializerBuilderWithPathVariables)
+      .build();
 
     TypeSpec deepLinkDelegate = TypeSpec.classBuilder("DeepLinkDelegate")
-        .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
-        .superclass(CLASS_BASE_DEEP_LINK_DELEGATE)
-        .addMethod(constructor)
-        .build();
+      .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
+      .superclass(CLASS_BASE_DEEP_LINK_DELEGATE)
+      .addMethod(constructor)
+      .addMethod(constructorWithPathVariables)
+      .build();
 
     JavaFile.builder(packageName, deepLinkDelegate)
-        .build()
-        .writeTo(filer);
+      .build()
+      .writeTo(filer);
   }
 
   private static final class IncrementalMetadata {
