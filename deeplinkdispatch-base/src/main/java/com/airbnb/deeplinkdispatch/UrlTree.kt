@@ -56,38 +56,13 @@ open class TreeNode(open val id: String, internal val uriComponentType: NodeMeta
     }
 
     /**
-     * Use a UByte for [flag] so that we can easily specify and read different
-     * combinations/permutations of flags with a bit mask.
-     */
-    enum class NodeMetadata(val flag: UByte) {
-        /**
-         * Root is just used to start the tree. It does not correspond to a normal URI component.
-         */
-        IsComponentTypeRoot(1u),
-        IsComponentTypeScheme(2u),
-        IsComponentTypeHost(4u),
-        IsComponentTypePathSegment(8u),
-        /**
-         * Component params are uri components (host, path segment) that also contain a param. The
-         * param both matches a range of values and can record the value from said range.
-         */
-        IsComponentParam(16u),
-        /**
-         * IsConfigurablePathSegment type represents a path segment which will lookup a dynamic (runtime) provided
-         * replacement value when it is visited. The replacement value will replace the entire path
-         * segment (content between slashes).
-         */
-        IsConfigurablePathSegment(32u)
-    }
-
-    /**
      * Transformation types:
      * @return an ASCII encoding as a character for the flag for whichever transformation type
      * applies.
      */
     private fun String.transformationType(): UByte {
         return when {
-            startsWith(pathSegmentEnclosingSequence) && endsWith(pathSegmentEnclosingSequence) -> {
+            startsWith(pathSegmentStartingSequence) && endsWith(pathSegmentEndingSequence) -> {
                 NodeMetadata.IsConfigurablePathSegment.flag
             }
             contains("{") && contains("}") -> {
@@ -181,4 +156,5 @@ fun UByteArray.writeUShortAt(startIndex: Int, value: UShort) {
     set(startIndex + 1, ubyte1)
 }
 
-const val pathSegmentEnclosingSequence = "%%%"
+const val pathSegmentStartingSequence = "<"
+const val pathSegmentEndingSequence = ">"

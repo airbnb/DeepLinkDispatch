@@ -1,11 +1,11 @@
 package com.airbnb.deeplinkdispatch
 
-import com.airbnb.deeplinkdispatch.TreeNode.NodeMetadata.*
+import com.airbnb.deeplinkdispatch.NodeMetadata.*
 import com.airbnb.deeplinkdispatch.base.MatchIndex
-import com.airbnb.deeplinkdispatch.base.Utils.isComponentTypeHost
-import com.airbnb.deeplinkdispatch.base.Utils.isComponentTypePathSegment
-import com.airbnb.deeplinkdispatch.base.Utils.isComponentTypeRoot
-import com.airbnb.deeplinkdispatch.base.Utils.isComponentTypeScheme
+import com.airbnb.deeplinkdispatch.NodeMetadataConverters.isComponentTypeHost
+import com.airbnb.deeplinkdispatch.NodeMetadataConverters.isComponentTypePathSegment
+import com.airbnb.deeplinkdispatch.NodeMetadataConverters.isComponentTypeRoot
+import com.airbnb.deeplinkdispatch.NodeMetadataConverters.isComponentTypeScheme
 
 /**
  * Used to categorize a DeepLinkUri's components into the types: scheme, host, and path.

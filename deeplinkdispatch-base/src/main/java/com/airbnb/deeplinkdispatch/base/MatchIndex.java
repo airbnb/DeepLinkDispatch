@@ -4,14 +4,15 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.airbnb.deeplinkdispatch.UrlElement;
+import com.airbnb.deeplinkdispatch.UrlTreeKt;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.airbnb.deeplinkdispatch.base.Utils.isComponentParam;
-import static com.airbnb.deeplinkdispatch.base.Utils.isConfigurablePathSegment;
+import static com.airbnb.deeplinkdispatch.NodeMetadataConverters.isComponentParam;
+import static com.airbnb.deeplinkdispatch.NodeMetadataConverters.isConfigurablePathSegment;
 
 /**
  * This is a wrapper class around the byte array match index.
@@ -28,7 +29,7 @@ import static com.airbnb.deeplinkdispatch.base.Utils.isConfigurablePathSegment;
  * <td>9 + value length bytes</td><td>9 + value length + children length bytes</td>
  * </tr>
  * <tr>
- * <td>{@linkplain com.airbnb.deeplinkdispatch.TreeNode.NodeMetadata}
+ * <td>{@linkplain com.airbnb.deeplinkdispatch.NodeMetadata}
  * e.g. scheme, authority, path segment, transformation</td><td>length of the
  * node's (string) value, in bytes</td>
  * </tr>
@@ -158,59 +159,78 @@ public class MatchIndex {
       return null;
     }
     if (isComponentParam) {
-      if ((
-        //Per com.airbnb.deeplinkdispatch.DeepLinkEntryTest.testEmptyParametersNameDontMatch
-        //We should not return a match if the param (aka placeholder) is empty.
-        byteArray[valueStartPos] == '{' && byteArray[valueStartPos + 1] == '}'
-      ) || (
-        //Per com.airbnb.deeplinkdispatch.DeepLinkEntryTest.testEmptyPathPresentParams
-        //We expect an empty path to not be a match
-        inboundValue.length == 0
-      )) {
-        return null;
-      }
-      // i index over inboundValue array forward
-      // j index over search byte arrays inboundValue element forward
-      // k index over inboundValue array backward
-      for (int i = 0; i < inboundValue.length; i++) {
-        if (byteArray[valueStartPos + i] == '{') {
-          // Until here every char in front for the placeholder matched.
-          // Now let's see if all chars within the placeholder also match.
-          for (int j = valueLength - 1, k = inboundValue.length - 1; j >= 0; j--, k--) {
-            if (byteArray[valueStartPos + j] == '}') {
-              // Text within the placeholder fully matches. Now we just need to get the placeholder
-              // string and can return.
-              byte[] placeholderValue = new byte[k - i + 1];
-              // Size is without braces
-              byte[] placeholder = new byte[(valueStartPos + j) - (valueStartPos + i) - 1];
-              System.arraycopy(inboundValue, i, placeholderValue, 0, placeholderValue.length);
-              System.arraycopy(byteArray, valueStartPos + i + 1, placeholder, 0,
-                placeholder.length);
-              return new StringBuilder(placeholderValue.length + placeholder.length + 1)
-                .append(new String(placeholder)).append(MATCH_PARAM_DIVIDER_CHAR)
-                .append(new String(placeholderValue)).toString();
-            }
-            if (byteArray[valueStartPos + j] != inboundValue[k]) {
-              return null;
-            }
+      return compareComponentParam(valueStartPos, valueLength, inboundValue);
+    } else if (isConfigurablePathSegment) {
+      return compareConfigurablePathSegment(inboundValue, pathSegmentReplacements, valueStartPos,
+        valueLength);
+    }
+    return ""; // Matches but is no placeholder
+  }
+
+  @Nullable
+  private String compareConfigurablePathSegment(@NonNull byte[] inboundValue,
+                                                Map<String, String> pathSegmentReplacements,
+                                                int valueStartPos, int valueLength) {
+    // Copy a chunk of values from byteArray to use as a key for looking up path segment from
+    // pathSegmentReplacements.
+    byte[] byteArrayValue = new byte[valueLength];
+    System.arraycopy(byteArray, valueStartPos, byteArrayValue, 0, valueLength);
+    String pathSegmentKey = new String(byteArrayValue).substring(
+      UrlTreeKt.pathSegmentStartingSequence.length(),
+      valueLength - UrlTreeKt.pathSegmentEndingSequence.length()
+    );
+
+    String replacementValue = pathSegmentReplacements.get(pathSegmentKey);
+    if (new String(inboundValue).equals(replacementValue)) {
+      return "";
+    } else {
+      return null;
+    }
+  }
+
+  @Nullable
+  private String compareComponentParam(
+    int valueStartPos, int valueLength, @NonNull byte[] inboundValue
+  ) {
+    if ((
+      //Per com.airbnb.deeplinkdispatch.DeepLinkEntryTest.testEmptyParametersNameDontMatch
+      //We should not return a match if the param (aka placeholder) is empty.
+      byteArray[valueStartPos] == '{' && byteArray[valueStartPos + 1] == '}'
+    ) || (
+      //Per com.airbnb.deeplinkdispatch.DeepLinkEntryTest.testEmptyPathPresentParams
+      //We expect an empty path to not be a match
+      inboundValue.length == 0
+    )) {
+      return null;
+    }
+    // i index over inboundValue array forward
+    // j index over search byte arrays inboundValue element forward
+    // k index over inboundValue array backward
+    for (int i = 0; i < inboundValue.length; i++) {
+      if (byteArray[valueStartPos + i] == '{') {
+        // Until here every char in front for the placeholder matched.
+        // Now let's see if all chars within the placeholder also match.
+        for (int j = valueLength - 1, k = inboundValue.length - 1; j >= 0; j--, k--) {
+          if (byteArray[valueStartPos + j] == '}') {
+            // Text within the placeholder fully matches. Now we just need to get the placeholder
+            // string and can return.
+            byte[] placeholderValue = new byte[k - i + 1];
+            // Size is without braces
+            byte[] placeholder = new byte[(valueStartPos + j) - (valueStartPos + i) - 1];
+            System.arraycopy(inboundValue, i, placeholderValue, 0, placeholderValue.length);
+            System.arraycopy(byteArray, valueStartPos + i + 1, placeholder, 0,
+              placeholder.length);
+            return new StringBuilder(placeholderValue.length + placeholder.length + 1)
+              .append(new String(placeholder)).append(MATCH_PARAM_DIVIDER_CHAR)
+              .append(new String(placeholderValue)).toString();
+          }
+          if (byteArray[valueStartPos + j] != inboundValue[k]) {
+            return null;
           }
         }
-        if (byteArray[valueStartPos + i] != inboundValue[i]) {
-          return null; // Does not match
-        }
       }
-    } else if (isConfigurablePathSegment) {
-      // Copy a chunk of values from byteArray to use as a key for looking up path segment from
-      // pathSegmentReplacements.
-      byte[] byteArrayValue = new byte[valueLength];
-      System.arraycopy(byteArray, valueStartPos, byteArrayValue, 0, valueLength);
-      String pathSegmentKey = new String(byteArrayValue).substring(3, valueLength - 3);
-
-      String replacementValue = pathSegmentReplacements.get(pathSegmentKey);
-      if (new String(inboundValue).equals(replacementValue)) {
-        return "";
-      } else {
-        return null;
+      if (byteArray[valueStartPos + i] != inboundValue[i]) {
+        return null; // Does not match
       }
     }
     return ""; // Matches but is no placeholder

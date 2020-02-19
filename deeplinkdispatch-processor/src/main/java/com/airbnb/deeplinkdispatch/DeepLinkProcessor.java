@@ -69,7 +69,9 @@ import static com.airbnb.deeplinkdispatch.MoreAnnotationMirrors.asAnnotationValu
 import static com.airbnb.deeplinkdispatch.MoreAnnotationMirrors.getTypeValue;
 import static com.airbnb.deeplinkdispatch.ProcessorUtils.decapitalize;
 import static com.airbnb.deeplinkdispatch.ProcessorUtils.hasEmptyOrNullString;
-import static com.airbnb.deeplinkdispatch.UrlTreeKt.pathSegmentEnclosingSequence;
+import static com.airbnb.deeplinkdispatch.UrlTreeKt.pathSegmentEndingSequence;
+import static com.airbnb.deeplinkdispatch.UrlTreeKt.pathSegmentStartingSequence;
+import static com.airbnb.deeplinkdispatch.base.Utils.isConfigurablePathSegment;
 import static com.google.auto.common.MoreElements.getAnnotationMirror;
 
 public class DeepLinkProcessor extends AbstractProcessor {
@@ -355,13 +357,17 @@ public class DeepLinkProcessor extends AbstractProcessor {
       //Keep track of pathVariables added in a module so that we can check at runtime to ensure
       //that all pathVariables have a corresponding entry provided to BaseDeepLinkDelegate.
       for (String pathSegment : deeplinkUri.pathSegments()) {
-        if (pathSegment.startsWith(pathSegmentEnclosingSequence)
-          && pathSegment.endsWith(pathSegmentEnclosingSequence)) {
-          pathVariableKeys.add(pathSegment.substring(pathSegmentEnclosingSequence.length(),
-            pathSegment.length() - pathSegmentEnclosingSequence.length()));
-        } else if (pathSegment.contains(pathSegmentEnclosingSequence)) {
-          error(element.getElement(), "Malformed nodeValue: ${this@transformationType}! If it"
-            + "contains %%%, it must both start and end with %%%.");
+        if (isConfigurablePathSegment(pathSegment)) {
+          pathVariableKeys.add(pathSegment.substring(pathSegmentStartingSequence.length(),
+            pathSegment.length() - pathSegmentEndingSequence.length()));
+        } else if (pathSegment.contains(pathSegmentStartingSequence)
+          || pathSegment.contains(pathSegmentEndingSequence)) {
+          error(element.getElement(),
+            "Malformed nodeValue: ${this@transformationType}! If it"
+              + "contains " + pathSegmentStartingSequence + " or " + pathSegmentEndingSequence + ","
+              + " it must start with" + pathSegmentStartingSequence + " and end with "
+              + pathSegmentEndingSequence + "."
+          );
         }
       }
       deeplinks.add("new DeepLinkEntry($S, $L, $T.class, $S)$L\n",

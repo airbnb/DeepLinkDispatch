@@ -14,7 +14,6 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -30,7 +29,7 @@ public class BaseDeepLinkDelegate {
    * <p>Example</p>
    * Given:
    * <ul>
-   * <li><xmp>@DeepLink("https://www.example.com/%%%replaceable-path-variable%%%/users/{param1}")
+   * <li><xmp>@DeepLink("https://www.example.com/<replaceable-path-variable>/users/{param1}")
    * </xmp></li>
    * <li>mapOf("pathVariableReplacementValue" to "obamaOs")</li>
    * </ul>
@@ -54,7 +53,8 @@ public class BaseDeepLinkDelegate {
   ) {
     this.registries = registries;
     this.configurablePathSegmentReplacements = configurablePathSegmentReplacements;
-    validateConfigurablePathSegmentReplacements(registries, configurablePathSegmentReplacements);
+    ValidationUtilsKt.validateConfigurablePathSegmentReplacements(registries,
+      configurablePathSegmentReplacements);
   }
 
   private DeepLinkEntry findEntry(String uriString) {
@@ -210,7 +210,7 @@ public class BaseDeepLinkDelegate {
       }
       return new DeepLinkResult(true, uriString, "", newIntent, taskStackBuilder, deepLinkEntry);
     } catch (NoSuchMethodException exception) {
-      return new DeepLinkResult(false, uriString, "Deep link to non-existent method: "
+      return new DeepLinkResult(false, uriString, "Dee3p link to non-existent method: "
         + deepLinkEntry.getMethod(), null, null, deepLinkEntry);
     } catch (IllegalAccessException exception) {
       return new DeepLinkResult(false, uriString, "Could not deep link to method: "
@@ -236,41 +236,5 @@ public class BaseDeepLinkDelegate {
 
   public boolean supportsUri(String uriString) {
     return findEntry(uriString) != null;
-  }
-
-  /**
-   * Ensure that every key-to-be-replaced declared by all registries have a corresponding key in
-   * the user's injected mapping of configurablePathSegmentReplacements. If not, throw an exception
-   * and tell the user which keys aren't present.
-   * @param registries
-   * @param configurablePathSegmentReplacements
-   */
-  private void validateConfigurablePathSegmentReplacements(
-    List<? extends BaseRegistry> registries, Map<String, String> configurablePathSegmentReplacements
-  ) {
-    //Collect all path segment keys across all registries
-    HashSet<String> keysUnion = new HashSet<>();
-    for (BaseRegistry registry : registries) {
-      keysUnion.addAll(registry.getPathSegmentKeysInRegistry());
-    }
-    StringBuilder keysMissing = new StringBuilder();
-    StringBuilder keysInMapping = new StringBuilder();
-    for (String key : keysUnion) {
-      if (!configurablePathSegmentReplacements.containsKey(key)) {
-        keysMissing.append(key).append(",\n");
-      }
-    }
-    if (keysMissing.length() > 0) {
-      //We only need this list if we're reporting an error
-      for (String s : configurablePathSegmentReplacements.keySet()) {
-        keysInMapping.append(s).append(", ");
-      }
-      keysInMapping.delete(keysInMapping.length() - 2, keysInMapping.length() - 1);
-      keysMissing.delete(keysMissing.length() - 2, keysMissing.length() - 1);
-
-      throw new IllegalArgumentException("Keys not found in BaseDeepLinkDelegate's mapping of "
-        + "PathVariableReplacementValues. Missing keys are:\n" + keysMissing.toString()
-        + "Keys in mapping are: " + keysInMapping.toString() + ".");
-    }
   }
 }
