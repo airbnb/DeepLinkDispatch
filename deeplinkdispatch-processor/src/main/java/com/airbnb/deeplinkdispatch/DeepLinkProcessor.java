@@ -69,8 +69,10 @@ import static com.airbnb.deeplinkdispatch.MoreAnnotationMirrors.asAnnotationValu
 import static com.airbnb.deeplinkdispatch.MoreAnnotationMirrors.getTypeValue;
 import static com.airbnb.deeplinkdispatch.ProcessorUtils.decapitalize;
 import static com.airbnb.deeplinkdispatch.ProcessorUtils.hasEmptyOrNullString;
-import static com.airbnb.deeplinkdispatch.UrlTreeKt.pathSegmentEndingSequence;
-import static com.airbnb.deeplinkdispatch.UrlTreeKt.pathSegmentStartingSequence;
+import static com.airbnb.deeplinkdispatch.UrlTreeKt.componentParamSuffix;
+import static com.airbnb.deeplinkdispatch.UrlTreeKt.componentParamPrefix;
+import static com.airbnb.deeplinkdispatch.UrlTreeKt.configurablePathSegmentSuffix;
+import static com.airbnb.deeplinkdispatch.UrlTreeKt.configurablePathSegmentPrefix;
 import static com.airbnb.deeplinkdispatch.base.Utils.isConfigurablePathSegment;
 import static com.google.auto.common.MoreElements.getAnnotationMirror;
 
@@ -351,23 +353,19 @@ public class DeepLinkProcessor extends AbstractProcessor {
       String uri = element.getUri();
       DeepLinkUri deeplinkUri = DeepLinkUri.parse(uri);
 
-      urisTrie.addToTrie(i, deeplinkUri, element.getAnnotatedElement().toString(),
-        element.getMethod());
+      try {
+        urisTrie.addToTrie(i, deeplinkUri, element.getAnnotatedElement().toString(),
+          element.getMethod());
+      } catch (IllegalArgumentException e) {
+        error(element.getAnnotatedElement(), e.getMessage());
+      }
 
       //Keep track of pathVariables added in a module so that we can check at runtime to ensure
       //that all pathVariables have a corresponding entry provided to BaseDeepLinkDelegate.
       for (String pathSegment : deeplinkUri.pathSegments()) {
         if (isConfigurablePathSegment(pathSegment)) {
-          pathVariableKeys.add(pathSegment.substring(pathSegmentStartingSequence.length(),
-            pathSegment.length() - pathSegmentEndingSequence.length()));
-        } else if (pathSegment.contains(pathSegmentStartingSequence)
-          || pathSegment.contains(pathSegmentEndingSequence)) {
-          error(element.getElement(),
-            "Malformed nodeValue: ${this@transformationType}! If it"
-              + "contains " + pathSegmentStartingSequence + " or " + pathSegmentEndingSequence + ","
-              + " it must start with" + pathSegmentStartingSequence + " and end with "
-              + pathSegmentEndingSequence + "."
-          );
+          pathVariableKeys.add(pathSegment.substring(configurablePathSegmentPrefix.length(),
+            pathSegment.length() - configurablePathSegmentSuffix.length()));
         }
       }
       deeplinks.add("new DeepLinkEntry($S, $L, $T.class, $S)$L\n",
@@ -400,6 +398,21 @@ public class DeepLinkProcessor extends AbstractProcessor {
     JavaFile.builder(packageName, deepLinkRegistry)
       .build()
       .writeTo(filer);
+  }
+
+  /**
+   * Since componentParams can occur at any point in a
+   *
+   * @param pathSegment
+   * @param element
+   */
+  private void validateIfComponentParam(String pathSegment, Element element) {
+    if (pathSegment.contains(componentParamPrefix)
+      != pathSegment.contains(componentParamSuffix)) {
+      error(element, "Malformed path segment: " + pathSegment + ". If it contains "
+        + componentParamPrefix + " it must also contain " + componentParamSuffix
+        + " .");
+    }
   }
 
   private CodeBlock generatePathVariableKeysBlock(Set<String> pathVariableKeys) {

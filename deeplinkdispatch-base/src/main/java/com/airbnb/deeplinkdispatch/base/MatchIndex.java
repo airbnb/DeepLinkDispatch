@@ -3,6 +3,7 @@ package com.airbnb.deeplinkdispatch.base;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.airbnb.deeplinkdispatch.NodeMetadata;
 import com.airbnb.deeplinkdispatch.UrlElement;
 import com.airbnb.deeplinkdispatch.UrlTreeKt;
 
@@ -10,9 +11,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import static com.airbnb.deeplinkdispatch.NodeMetadataConverters.isComponentParam;
-import static com.airbnb.deeplinkdispatch.NodeMetadataConverters.isConfigurablePathSegment;
 
 /**
  * This is a wrapper class around the byte array match index.
@@ -145,26 +143,34 @@ public class MatchIndex {
     inboundValue, Map<String, String> pathSegmentReplacements) {
     // Placeholder always matches
     int valueStartPos = elementStartPos + HEADER_LENGTH;
-    byte nodeMetadata = byteArray[elementStartPos];
-    boolean isComponentParam = isComponentParam(nodeMetadata);
-    boolean isConfigurablePathSegment = isConfigurablePathSegment(nodeMetadata);
-    boolean isValueLiteralValue = !(isComponentParam || isConfigurablePathSegment);
-    int valueLength = getValueLength(elementStartPos);
-    boolean isComponentTypeMismatch = nodeMetadata != inboundUriComponentType;
-    boolean isValueLengthMismatch = valueLength != inboundValue.length;
+    NodeMetadata nodeMetadata = new NodeMetadata(byteArray[elementStartPos]);
 
-    if ((isComponentTypeMismatch || isValueLengthMismatch) && isValueLiteralValue) {
-      //Opportunistically skip comparing this node before walking the two values if we can infer
-      // that they will not match.
+    //Opportunistically skip doing more operations on this node if we can infer it will not match
+    //based on URIComponentType
+    if (nodeMetadata.isComponentTypeMismatch(inboundUriComponentType)) return null;
+
+    int valueLength = getValueLength(elementStartPos);
+    boolean isValueLengthMismatch = valueLength != inboundValue.length;
+    if (isValueLengthMismatch && nodeMetadata.isValueLiteralValue) {
+      //Opportunistically skip this node if the comparator's lengths mismatch.
       return null;
     }
-    if (isComponentParam) {
+
+    if (nodeMetadata.isComponentParam) {
       return compareComponentParam(valueStartPos, valueLength, inboundValue);
-    } else if (isConfigurablePathSegment) {
+    } else if (nodeMetadata.isConfigurablePathSegment) {
       return compareConfigurablePathSegment(inboundValue, pathSegmentReplacements, valueStartPos,
         valueLength);
+    } else {
+      return compareValues(inboundValue, valueStartPos);
     }
-    return ""; // Matches but is no placeholder
+  }
+
+  private String compareValues(byte[] inboundValue, int valueStartPos) {
+    for (int i = 0; i < inboundValue.length; i++) {
+      if (inboundValue[i] != byteArray[valueStartPos + i]) return null;
+    }
+    return "";
   }
 
   @Nullable
@@ -176,8 +182,8 @@ public class MatchIndex {
     byte[] byteArrayValue = new byte[valueLength];
     System.arraycopy(byteArray, valueStartPos, byteArrayValue, 0, valueLength);
     String pathSegmentKey = new String(byteArrayValue).substring(
-      UrlTreeKt.pathSegmentStartingSequence.length(),
-      valueLength - UrlTreeKt.pathSegmentEndingSequence.length()
+      UrlTreeKt.configurablePathSegmentPrefix.length(),
+      valueLength - UrlTreeKt.configurablePathSegmentSuffix.length()
     );
 
     String replacementValue = pathSegmentReplacements.get(pathSegmentKey);

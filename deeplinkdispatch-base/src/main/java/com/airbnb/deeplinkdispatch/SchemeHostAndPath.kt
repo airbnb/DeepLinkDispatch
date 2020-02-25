@@ -1,11 +1,14 @@
 package com.airbnb.deeplinkdispatch
 
-import com.airbnb.deeplinkdispatch.NodeMetadata.*
+import com.airbnb.deeplinkdispatch.MetadataMasks.ComponentTypeHostMask
+import com.airbnb.deeplinkdispatch.MetadataMasks.ComponentTypePathSegmentMask
+import com.airbnb.deeplinkdispatch.MetadataMasks.ComponentTypeRootMask
+import com.airbnb.deeplinkdispatch.MetadataMasks.ComponentTypeSchemeMask
+import com.airbnb.deeplinkdispatch.NodeMetadata.Companion.isComponentTypeHost
+import com.airbnb.deeplinkdispatch.NodeMetadata.Companion.isComponentTypePathSegment
+import com.airbnb.deeplinkdispatch.NodeMetadata.Companion.isComponentTypeRoot
+import com.airbnb.deeplinkdispatch.NodeMetadata.Companion.isComponentTypeScheme
 import com.airbnb.deeplinkdispatch.base.MatchIndex
-import com.airbnb.deeplinkdispatch.NodeMetadataConverters.isComponentTypeHost
-import com.airbnb.deeplinkdispatch.NodeMetadataConverters.isComponentTypePathSegment
-import com.airbnb.deeplinkdispatch.NodeMetadataConverters.isComponentTypeRoot
-import com.airbnb.deeplinkdispatch.NodeMetadataConverters.isComponentTypeScheme
 
 /**
  * Used to categorize a DeepLinkUri's components into the types: scheme, host, and path.
@@ -15,12 +18,13 @@ import com.airbnb.deeplinkdispatch.NodeMetadataConverters.isComponentTypeScheme
  */
 class SchemeHostAndPath(val uri: DeepLinkUri) {
 
-    val matchList: List<UrlElement> = listOf(UrlElement(IsComponentTypeRoot.flag.toByte(), MatchIndex.ROOT_VALUE.toByteArray()),
-            UrlElement(IsComponentTypeScheme.flag.toByte(), uri.scheme().toByteArray()),
-            UrlElement(IsComponentTypeHost.flag.toByte(), uri.encodedHost().toByteArray())) +
-            uri.encodedPathSegments().map { pathElement ->
-                UrlElement(IsComponentTypePathSegment.flag.toByte(), pathElement.toByteArray())
-            }
+    val matchList: List<UrlElement> = listOf(
+            UrlElement(ComponentTypeRootMask, MatchIndex.ROOT_VALUE.toByteArray()),
+            UrlElement(ComponentTypeSchemeMask, uri.scheme().toByteArray()),
+            UrlElement(ComponentTypeHostMask, uri.encodedHost().toByteArray())
+    ) + uri.encodedPathSegments().map { pathSegment ->
+        UrlElement(ComponentTypePathSegmentMask, pathSegment.toByteArray())
+    }
 }
 
 class UrlElement(val typeFlag: Byte, val value: ByteArray) {

@@ -1,7 +1,7 @@
 package com.airbnb.deeplinkdispatch.base
 
-import com.airbnb.deeplinkdispatch.pathSegmentEndingSequence
-import com.airbnb.deeplinkdispatch.pathSegmentStartingSequence
+import com.airbnb.deeplinkdispatch.configurablePathSegmentSuffix
+import com.airbnb.deeplinkdispatch.configurablePathSegmentPrefix
 import java.io.InputStream
 
 object Utils {
@@ -25,6 +25,6 @@ object Utils {
 
     @JvmStatic
     fun isConfigurablePathSegment(pathSegment: String) =
-            pathSegment.startsWith(pathSegmentStartingSequence)
-                    && pathSegment.endsWith(pathSegmentEndingSequence)
+            pathSegment.startsWith(configurablePathSegmentPrefix)
+                    && pathSegment.endsWith(configurablePathSegmentSuffix)
 }

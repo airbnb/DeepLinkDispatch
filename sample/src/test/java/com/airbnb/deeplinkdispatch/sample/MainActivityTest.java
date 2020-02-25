@@ -181,6 +181,14 @@ public class MainActivityTest {
   }
 
   @Test
+  public void testSameLengthComponentsMismatch() throws Exception {
+    DeepLinkDelegate deepLinkDelegate = new DeepLinkDelegate(new SampleModuleRegistry(),
+      new LibraryDeepLinkModuleRegistry(), new BenchmarkDeepLinkModuleRegistry());
+    assertThat(deepLinkDelegate.supportsUri("dld://classDeepLink"), equalTo(true));
+    assertThat(deepLinkDelegate.supportsUri("dld://classDeepLinx"), equalTo(false));
+  }
+
+  @Test
   public void testConfigurablePathSegmentMatch() {
     Map<String, String> configurablePathSegmentReplacements = new HashMap<>();
     configurablePathSegmentReplacements.put("replaceable-path-variable", "obamaOs");
