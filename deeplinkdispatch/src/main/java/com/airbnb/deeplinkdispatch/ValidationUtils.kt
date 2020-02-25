@@ -23,9 +23,9 @@ fun validateConfigurablePathSegmentReplacements(
             "are:\n${configurablePathSegmentReplacements.keys.joinToString(",\n" )}."
     }
 
-    keysUnion.filter { configurablePathSegmentReplacements[it].isNullOrEmpty() }.apply {
-        require(this.isEmpty()) {"All path segment replacements must have a non-empty replacement " +
-                "value. Please inject a valid mapping into BaseDeepLinkDelegate. These keys were " +
-                "missing values:\n${this.joinToString(",\n")}."}
-    }
+//    keysUnion.filter { configurablePathSegmentReplacements[it].isNullOrEmpty() }.apply {
+//        require(this.isEmpty()) {"All path segment replacements must have a non-empty replacement " +
+//                "value. Please inject a valid mapping into BaseDeepLinkDelegate. These keys were " +
+//                "missing values:\n${this.joinToString(",\n")}."}
+//    }
 }

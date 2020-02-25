@@ -29,7 +29,7 @@ public class BaseDeepLinkDelegate {
    * <p>Example</p>
    * Given:
    * <ul>
-   * <li><xmp>@DeepLink("https://www.example.com/<replaceable-path-variable>/users/{param1}")
+   * <li><xmp>@DeepLink("https://www.example.com/<configurable-path-segment>/users/{param1}")
    * </xmp></li>
    * <li>mapOf("pathVariableReplacementValue" to "obamaOs")</li>
    * </ul>

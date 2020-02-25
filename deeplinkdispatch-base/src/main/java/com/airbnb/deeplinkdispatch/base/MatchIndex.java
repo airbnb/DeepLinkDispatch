@@ -79,14 +79,23 @@ public class MatchIndex {
     this.byteArray = byteArray;
   }
 
-  public Match matchUri(@NonNull List<UrlElement> elements, @Nullable Map<String, String>
-    placeholders, int elementIndex, int elementStartPosition, int parentBoundryPos,
-                        Map<String, String> pathSegmentReplacements) {
+  /**
+   * Arguments in this method prefixed with "byteArray" correspond to values read from
+   * {@link #byteArray}.
+   * Arguments in this method prefixed with "inbound" correspond to values from the deep link we are
+   * trying to match against. It is received by
+   * {@link com.airbnb.deeplinkdispatch.BaseDeepLinkDelegate#findEntry(java.lang.String)}.
+   */
+  public Match matchUri(
+    @NonNull List<UrlElement> inboundElements, @Nullable Map<String, String> placeholders,
+    int inboundElementIndex, int byteArrayElementStartPosition, int byteArrayParentBoundaryPos,
+    Map<String, String> pathSegmentReplacements
+  ) {
     Match match = null;
-    int currentElementStartPosition = elementStartPosition;
+    int byteArrayCurrentElementStartPosition = byteArrayElementStartPosition;
     do {
-      UrlElement urlElement = elements.get(elementIndex);
-      String compareResult = compareValue(currentElementStartPosition, urlElement.getTypeFlag(),
+      UrlElement urlElement = inboundElements.get(inboundElementIndex);
+      String compareResult = compareValue(byteArrayCurrentElementStartPosition, urlElement.getTypeFlag(),
         urlElement.getValue(), pathSegmentReplacements);
       if (compareResult != null) {
         Map<String, String> placeholdersOutput = placeholders;
@@ -102,16 +111,28 @@ public class MatchIndex {
           // Add the found placeholder set to the map.
           placeholdersOutput.put(compareParams[0], compareParams[1]);
         }
-        if (elementIndex < elements.size() - 1) {
-          // If value matched we need to explore this elements children next.
-          int childrenPos = getChildrenPos(currentElementStartPosition);
-          if (childrenPos != -1) {
-            match = matchUri(elements, placeholdersOutput, elementIndex + 1,
-              childrenPos, getElementBoundaryPos(currentElementStartPosition),
+        int nextByteArrayElementStartPos = getChildrenPos(byteArrayCurrentElementStartPosition);
+        if (inboundElementIndex < inboundElements.size() - 1) {
+          // If value matched we need to explore this inboundElement's children next.
+          if (nextByteArrayElementStartPos != -1) {
+            match = matchUri(inboundElements, placeholdersOutput, inboundElementIndex + 1,
+              nextByteArrayElementStartPos, getElementBoundaryPos(byteArrayCurrentElementStartPosition),
               pathSegmentReplacements);
           }
+        } else if (inboundElementIndex == inboundElements.size() - 1
+          && isElementEmptyValueConfigurablePathSegment(
+          nextByteArrayElementStartPos, pathSegmentReplacements,
+          getValueLength(nextByteArrayElementStartPos)
+        )) {
+          // We're on the last element in inboundElements, but the next element in the byteArray is
+          // a configurablePathSegment. If the CPS indicates a deleted node (the value in the map is
+          // an empty string), then it can still constitute a match, so we need to explore that
+          // byteArray element.
+          match = matchUri(inboundElements, placeholdersOutput, inboundElementIndex,
+            nextByteArrayElementStartPos, getElementBoundaryPos(byteArrayCurrentElementStartPosition),
+            pathSegmentReplacements);
         } else {
-          int matchIndex = getMatchIndex(currentElementStartPosition);
+          int matchIndex = getMatchIndex(byteArrayCurrentElementStartPosition);
           // Url is a partial match.
           if (matchIndex == NO_MATCH) {
             return null;
@@ -123,10 +144,36 @@ public class MatchIndex {
       if (match != null) {
         return match;
       }
-      currentElementStartPosition = getNextElementStartPosition(currentElementStartPosition,
-        parentBoundryPos);
-    } while (currentElementStartPosition != -1);
+      byteArrayCurrentElementStartPosition = getNextElementStartPosition(byteArrayCurrentElementStartPosition,
+        byteArrayParentBoundaryPos);
+    } while (byteArrayCurrentElementStartPosition != -1);
     return null;
+  }
+
+  /**
+   * We use this method to look ahead for the case where an empty configurable path segment should
+   * be skipped. Example:
+   * <br>
+   * given:
+   * <ul>
+   * <li>https://www.configure.com/me/<configurable-path-segment-two></li>
+   * <li>https://www.configure.com/me?q=e</li>
+   * <li>mapOf("configurable-path-segment-two", "")</li>
+   * </ul>
+   * then:
+   * <ul>
+   * <li>deepLinkDelegate.supportsUri("https://www.configure.com/me//?q=e") == true</li>
+   * </ul>
+   * Corresponding test: com.airbnb.deeplinkdispatch.sample.MainActivityTest#testEmptyReplacement
+   * ValueMatchesDeletedNode()
+   */
+  private boolean isElementEmptyValueConfigurablePathSegment(
+    int elementStartPos, Map<String, String> pathSegmentReplacements, int valueLength
+  ) {
+    if (elementStartPos == -1 || elementStartPos >= byteArray.length) return false;
+    NodeMetadata nodeMetadata = new NodeMetadata(byteArray[elementStartPos]);
+    if (!nodeMetadata.isConfigurablePathSegment) return false;
+    return "".equals(getConfiguredValue(pathSegmentReplacements, elementStartPos + HEADER_LENGTH, valueLength));
   }
 
   /**
@@ -166,9 +213,9 @@ public class MatchIndex {
     }
   }
 
-  private String compareValuesWalk(byte[] inboundValue, int valueStartPos) {
+  private String compareValuesWalk(byte[] inboundValue, int byteArrayValueStartPos) {
     for (int i = 0; i < inboundValue.length; i++) {
-      if (inboundValue[i] != byteArray[valueStartPos + i]) return null;
+      if (inboundValue[i] != byteArray[byteArrayValueStartPos + i]) return null;
     }
     return "";
   }
@@ -177,21 +224,25 @@ public class MatchIndex {
   private String compareConfigurablePathSegment(@NonNull byte[] inboundValue,
                                                 Map<String, String> pathSegmentReplacements,
                                                 int valueStartPos, int valueLength) {
-    // Copy a chunk of values from byteArray to use as a key for looking up path segment from
-    // pathSegmentReplacements.
-    byte[] byteArrayValue = new byte[valueLength];
-    System.arraycopy(byteArray, valueStartPos, byteArrayValue, 0, valueLength);
-    String pathSegmentKey = new String(byteArrayValue).substring(
-      UrlTreeKt.configurablePathSegmentPrefix.length(),
-      valueLength - UrlTreeKt.configurablePathSegmentSuffix.length()
-    );
-
-    String replacementValue = pathSegmentReplacements.get(pathSegmentKey);
-    if (new String(inboundValue).equals(replacementValue)) {
-      return "";
-    } else {
-      return null;
+    String configuredValue = getConfiguredValue(pathSegmentReplacements, valueStartPos, valueLength);
+    // If we have an empty configurablePathSegment value, then we should treat this as a whole-node
+    // deletion and skip comparison.
+    if (configuredValue.isEmpty()) return "";
+    for (int i = 0; i < inboundValue.length; i++) {
+      if (inboundValue[i] != configuredValue.charAt(i)) return null;
     }
+    return "";
+  }
+
+  private String getConfiguredValue(Map<String, String> pathSegmentReplacements,
+                                    int valueStartPos, int valueLength) {
+    int trimmedValueLength = valueLength - UrlTreeKt.configurablePathSegmentPrefix.length()
+      - UrlTreeKt.configurablePathSegmentSuffix.length();
+    byte[] byteArrayEncodedKey = new byte[trimmedValueLength];
+    System.arraycopy(byteArray, valueStartPos + UrlTreeKt.configurablePathSegmentPrefix.length(),
+      byteArrayEncodedKey, 0, trimmedValueLength);
+    String pathSegmentKey = new String(byteArrayEncodedKey);
+    return pathSegmentReplacements.get(pathSegmentKey);
   }
 
   @Nullable
