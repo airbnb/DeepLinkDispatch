@@ -162,11 +162,11 @@ public class MatchIndex {
       return compareConfigurablePathSegment(inboundValue, pathSegmentReplacements, valueStartPos,
         valueLength);
     } else {
-      return compareValues(inboundValue, valueStartPos);
+      return compareValuesWalk(inboundValue, valueStartPos);
     }
   }
 
-  private String compareValues(byte[] inboundValue, int valueStartPos) {
+  private String compareValuesWalk(byte[] inboundValue, int valueStartPos) {
     for (int i = 0; i < inboundValue.length; i++) {
       if (inboundValue[i] != byteArray[valueStartPos + i]) return null;
     }
