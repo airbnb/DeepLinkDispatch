@@ -69,8 +69,6 @@ import static com.airbnb.deeplinkdispatch.MoreAnnotationMirrors.asAnnotationValu
 import static com.airbnb.deeplinkdispatch.MoreAnnotationMirrors.getTypeValue;
 import static com.airbnb.deeplinkdispatch.ProcessorUtils.decapitalize;
 import static com.airbnb.deeplinkdispatch.ProcessorUtils.hasEmptyOrNullString;
-import static com.airbnb.deeplinkdispatch.UrlTreeKt.componentParamSuffix;
-import static com.airbnb.deeplinkdispatch.UrlTreeKt.componentParamPrefix;
 import static com.airbnb.deeplinkdispatch.UrlTreeKt.configurablePathSegmentSuffix;
 import static com.airbnb.deeplinkdispatch.UrlTreeKt.configurablePathSegmentPrefix;
 import static com.airbnb.deeplinkdispatch.base.Utils.isConfigurablePathSegment;
@@ -398,21 +396,6 @@ public class DeepLinkProcessor extends AbstractProcessor {
     JavaFile.builder(packageName, deepLinkRegistry)
       .build()
       .writeTo(filer);
-  }
-
-  /**
-   * Since componentParams can occur at any point in a
-   *
-   * @param pathSegment
-   * @param element
-   */
-  private void validateIfComponentParam(String pathSegment, Element element) {
-    if (pathSegment.contains(componentParamPrefix)
-      != pathSegment.contains(componentParamSuffix)) {
-      error(element, "Malformed path segment: " + pathSegment + ". If it contains "
-        + componentParamPrefix + " it must also contain " + componentParamSuffix
-        + " .");
-    }
   }
 
   private CodeBlock generatePathVariableKeysBlock(Set<String> pathVariableKeys) {

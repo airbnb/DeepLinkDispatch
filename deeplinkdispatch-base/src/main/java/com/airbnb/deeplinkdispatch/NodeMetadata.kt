@@ -37,10 +37,10 @@ class NodeMetadata(var metadata: Byte) {
          */
         fun String.transformationType(): Byte {
             return when {
-                startsWith(configurablePathSegmentPrefix) && endsWith(configurablePathSegmentSuffix) -> {
+                validateIfConfigurablePathSegment(this) -> {
                     MetadataMasks.ConfigurablePathSegmentMask
                 }
-                contains("{") && contains("}") -> {
+                validateIfComponentParam(this) -> {
                     MetadataMasks.ComponentParamMask
                 }
                 else -> {
