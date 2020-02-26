@@ -2,6 +2,8 @@
 
 package com.airbnb.deeplinkdispatch
 
+import com.airbnb.deeplinkdispatch.base.Utils.validateIfComponentParam
+import com.airbnb.deeplinkdispatch.base.Utils.validateIfConfigurablePathSegment
 import kotlin.experimental.and
 import kotlin.experimental.or
 

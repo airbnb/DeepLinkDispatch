@@ -3,6 +3,8 @@
 package com.airbnb.deeplinkdispatch
 
 import com.airbnb.deeplinkdispatch.base.MatchIndex.*
+import com.airbnb.deeplinkdispatch.base.Utils.validateIfComponentParam
+import com.airbnb.deeplinkdispatch.base.Utils.validateIfConfigurablePathSegment
 import java.io.OutputStream
 import java.nio.charset.Charset
 import kotlin.text.Charsets.UTF_8
@@ -89,7 +91,7 @@ data class Root(override val id: String = "r") : TreeNode(ROOT_VALUE, NodeMetada
      * Add the given DeepLinkUri to the the trie
      */
     fun addToTrie(matchIndex: Int, deepLinkUri: DeepLinkUri, annotatedElement: String, annotatedMethod: String?) {
-        var node = this.addNode(Scheme(deepLinkUri.scheme()))
+        var node = this.addNode(Scheme(deepLinkUri.scheme().also { validateIfComponentParam(it) }))
         if (!deepLinkUri.host().isNullOrEmpty()) {
             validateIfComponentParam(deepLinkUri.host())
             node = node.addNode(Host(deepLinkUri.host()))
@@ -136,38 +138,3 @@ const val configurablePathSegmentPrefix = "<"
 const val configurablePathSegmentSuffix = ">"
 const val componentParamPrefix = "{"
 const val componentParamSuffix = "}"
-
-/**
- * @return true if Component Param, false if not. Throws IllegalArgumentException if contains
- * [componentParamSuffix] or [componentParamPrefix], but out of order.
- */
-fun validateIfComponentParam(uriComponent: String): Boolean {
-    val start = uriComponent.indexOf(componentParamPrefix)
-    val end = uriComponent.indexOf(componentParamSuffix)
-    // -1 is the "not found" result for String#indexOf()
-    if (start != -1 || end != -1) {
-        require(start < end) { "Invalid URI component: $uriComponent. $componentParamPrefix must come before $componentParamSuffix." }
-        require(start != -1 && end != -1) {
-            "Invalid URI component: $uriComponent. If either" +
-                    "$componentParamPrefix or $componentParamSuffix is present, then they must both be present and $componentParamPrefix must occur before $componentParamSuffix."
-        }
-        return true
-    }
-    return false
-}
-
-/**
- * If a [pathSegment] contains either [configurablePathSegmentPrefix] or [configurablePathSegmentSuffix] then it must
- * start and end with them, respectively.
- * @return true if [pathSegment] looks like a valid configurable path segment, false if it is not a configurable path segment.
- */
-fun validateIfConfigurablePathSegment(pathSegment: String): Boolean {
-    if (pathSegment.contains(Regex("$configurablePathSegmentPrefix|$configurablePathSegmentSuffix"))) {
-        require(pathSegment.startsWith(configurablePathSegmentPrefix)
-                && pathSegment.endsWith(configurablePathSegmentSuffix)) {
-            ("Malformed path segment: $pathSegment! If it contains $configurablePathSegmentPrefix or $configurablePathSegmentSuffix, it must start with $configurablePathSegmentPrefix and end with $configurablePathSegmentSuffix.")
-        }
-        return true
-    }
-    return false
-}
