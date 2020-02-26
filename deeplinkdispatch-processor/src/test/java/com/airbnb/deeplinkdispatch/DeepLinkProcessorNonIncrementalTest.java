@@ -429,4 +429,66 @@ public class DeepLinkProcessorNonIncrementalTest {
         "Only `Intent` or `androidx.core.app.TaskStackBuilder` are supported."
           + " Please double check your imports and try again.");
   }
+
+  @Test
+  public void testInvalidComponentParamInSchemeErrorMessage() {
+    JavaFileObject sampleActivity = JavaFileObjects
+      .forSourceString("SampleActivity", "package com.example;"
+        + "import com.airbnb.deeplinkdispatch.DeepLink;\n"
+        + "import com.airbnb.deeplinkdispatch.DeepLinkHandler;\n\n"
+        + "import com.example.SampleModule;\n\n"
+        + "@DeepLink(\"airbnb://example.com/d{eepLink\")\n"
+        + "@DeepLinkHandler({ SampleModule.class })\n"
+        + "public class SampleActivity {\n"
+        + "}");
+
+    assertAbout(javaSources())
+      .that(Arrays.asList(SIMPLE_DEEPLINK_MODULE, sampleActivity))
+      .processedWith(new DeepLinkProcessor())
+      .failsToCompile()
+      .withErrorContaining("Invalid URI component: d{eepLink. { must come before }.");
+  }
+
+  @Test
+  public void testInvalidComponentParamPathSegmentErrorMessage() {
+    JavaFileObject sampleActivity = JavaFileObjects
+      .forSourceString("SampleActivity", "package com.example;"
+        + "import com.airbnb.deeplinkdispatch.DeepLink;\n"
+        + "import com.airbnb.deeplinkdispatch.DeepLinkHandler;\n\n"
+        + "import com.example.SampleModule;\n\n"
+        + "@DeepLink(\"airbnb://example.com/de}{epLink\")\n"
+        + "@DeepLinkHandler({ SampleModule.class })\n"
+        + "public class SampleActivity {\n"
+        + "}");
+
+    assertAbout(javaSources())
+      .that(Arrays.asList(SIMPLE_DEEPLINK_MODULE, sampleActivity))
+      .processedWith(new DeepLinkProcessor())
+      .failsToCompile()
+      .withErrorContaining(
+"Invalid URI component: de}{epLink. { must come before }."
+      );
+  }
+
+  @Test
+  public void malformedConfigurablePathSegmentFailsWithErrorMessage() {
+    JavaFileObject simpleActivity = JavaFileObjects
+      .forSourceString("SampleActivity", "package com.example;"
+        + "import com.airbnb.deeplinkdispatch.DeepLink;\n"
+        + "import com.airbnb.deeplinkdispatch.DeepLinkHandler;\n\n"
+        + "import com.Example.SampleModule;\n\n"
+        + "@DeepLink(\"airbnb://example.com/deepL<ink\")"
+        + "@DeepLinkHandler({ SampleModule.class })\n"
+        + "public class SampleActivity {\n"
+        + "}");
+
+    assertAbout(javaSources())
+      .that(Arrays.asList(SIMPLE_DEEPLINK_MODULE, simpleActivity))
+      .processedWith(new DeepLinkProcessor())
+      .failsToCompile()
+      .withErrorContaining(
+        "Malformed path segment: deepL<ink! If it contains < or >, it must start"
+        + " with < and end with >."
+      );
+  }
 }

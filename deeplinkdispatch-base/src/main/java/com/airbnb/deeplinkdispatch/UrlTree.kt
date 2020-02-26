@@ -2,8 +2,9 @@
 
 package com.airbnb.deeplinkdispatch
 
-import com.airbnb.deeplinkdispatch.base.MatchIndex
 import com.airbnb.deeplinkdispatch.base.MatchIndex.*
+import com.airbnb.deeplinkdispatch.base.Utils.validateIfComponentParam
+import com.airbnb.deeplinkdispatch.base.Utils.validateIfConfigurablePathSegment
 import java.io.OutputStream
 import java.nio.charset.Charset
 import kotlin.text.Charsets.UTF_8
@@ -11,7 +12,7 @@ import kotlin.text.Charsets.UTF_8
 data class UriMatch(val uri: DeepLinkUri, val matchId: Int, val annotatedElement: String, val annotatedMethod: String?)
 
 @kotlin.ExperimentalUnsignedTypes
-open class TreeNode(open val id: String, internal val uriComponentType: NodeMetadata) {
+open class TreeNode(open val id: String, internal val metadata: NodeMetadata) {
 
     val children = mutableSetOf<TreeNode>()
     var match: UriMatch? = null
@@ -35,8 +36,7 @@ open class TreeNode(open val id: String, internal val uriComponentType: NodeMeta
     fun toUByteArray(): UByteArray {
         val childrenByteArrays: List<UByteArray> = generateChildrenByteArrays()
         val valueByteArray = id.toByteArray(UTF_8).toUByteArray()
-        val transformationFlag = id.transformationType()
-        val header = generateHeader(uriComponentType.flag, valueByteArray, childrenByteArrays, match, transformationFlag)
+        val header = generateHeader(metadata, valueByteArray, childrenByteArrays, match)
         val resultByteArray = UByteArray(arrayLength(
                 childrenByteArrays,
                 valueByteArray,
@@ -55,52 +55,27 @@ open class TreeNode(open val id: String, internal val uriComponentType: NodeMeta
         return resultByteArray
     }
 
-    /**
-     * Transformation types:
-     * @return an ASCII encoding as a character for the flag for whichever transformation type
-     * applies.
-     */
-    private fun String.transformationType(): UByte {
-        return when {
-            startsWith(pathSegmentStartingSequence) && endsWith(pathSegmentEndingSequence) -> {
-                NodeMetadata.IsConfigurablePathSegment.flag
-            }
-            contains("{") && contains("}") -> {
-                NodeMetadata.IsComponentParam.flag
-            }
-            else -> {
-                0u
-            }
-        }
-    }
-
     private fun arrayLength(childArrays: List<UByteArray>, value: UByteArray, header: UByteArray): Int {
         return header.size + value.size + childArrays.sumBy { it.size }
     }
 
     private fun generateChildrenByteArrays(): List<UByteArray> = children.map { it.toUByteArray() }
 
-    private fun generateHeader(uriComponentType: UByte, value: UByteArray, children: List<UByteArray>? = null, match: UriMatch?, transformationType: UByte): UByteArray {
+    private fun generateHeader(metadata: NodeMetadata, value: UByteArray, children: List<UByteArray>? = null, match: UriMatch?): UByteArray {
         val childrenLength: Int = children?.sumBy { it.size } ?: 0
         return UByteArray(HEADER_LENGTH).apply {
-            set(0, calculateNodeMetadata(uriComponentType, transformationType))
+            set(0, metadata.metadata.toUByte())
             set(1, value.size.toUByte())
             writeUIntAt(2, childrenLength.toUInt())
             writeUShortAt(6, match?.matchId?.toUShort() ?: NO_MATCH.toUShort())
         }
     }
-
-    /**
-     * Derive node's metadata bit flags. It will be stored in the first byte of the node's header.
-     */
-    private fun calculateNodeMetadata(uriComponentType: UByte, transformationType: UByte): UByte =
-            uriComponentType or transformationType
 }
 
 
 private const val MAX_EXPORT_STRING_SIZE = 50000
 
-data class Root(override val id: String = "r") : TreeNode(ROOT_VALUE, NodeMetadata.IsComponentTypeRoot) {
+data class Root(override val id: String = "r") : TreeNode(ROOT_VALUE, NodeMetadata(MetadataMasks.ComponentTypeRootMask, id)) {
     fun writeToOutoutStream(openOutputStream: OutputStream) {
         openOutputStream.write(this.toUByteArray().toByteArray())
     }
@@ -109,15 +84,16 @@ data class Root(override val id: String = "r") : TreeNode(ROOT_VALUE, NodeMetada
      * Convert the byte array into a string return as max 60k length sset of strings.
      */
     fun getStrings(): List<String> {
-        return String(bytes = this.toUByteArray().toByteArray(), charset = Charset.forName(MatchIndex.MATCH_INDEX_ENCODING)).chunked(MAX_EXPORT_STRING_SIZE)
+        return String(bytes = this.toUByteArray().toByteArray(), charset = Charset.forName(MATCH_INDEX_ENCODING)).chunked(MAX_EXPORT_STRING_SIZE)
     }
 
     /**
      * Add the given DeepLinkUri to the the trie
      */
     fun addToTrie(matchIndex: Int, deepLinkUri: DeepLinkUri, annotatedElement: String, annotatedMethod: String?) {
-        var node = this.addNode(Scheme(deepLinkUri.scheme()))
+        var node = this.addNode(Scheme(deepLinkUri.scheme().also { validateIfComponentParam(it) }))
         if (!deepLinkUri.host().isNullOrEmpty()) {
+            validateIfComponentParam(deepLinkUri.host())
             node = node.addNode(Host(deepLinkUri.host()))
             if (deepLinkUri.pathSegments().isNullOrEmpty()) {
                 node.match = UriMatch(deepLinkUri, matchIndex, annotatedElement, annotatedMethod)
@@ -125,6 +101,8 @@ data class Root(override val id: String = "r") : TreeNode(ROOT_VALUE, NodeMetada
         }
         if (!deepLinkUri.pathSegments().isNullOrEmpty()) {
             for (pathSegment in deepLinkUri.pathSegments()) {
+                validateIfComponentParam(pathSegment)
+                validateIfConfigurablePathSegment(pathSegment)
                 node = node.addNode(PathSegment(pathSegment))
             }
             node.match = UriMatch(deepLinkUri, matchIndex, annotatedElement, annotatedMethod)
@@ -132,11 +110,11 @@ data class Root(override val id: String = "r") : TreeNode(ROOT_VALUE, NodeMetada
     }
 }
 
-data class Scheme(override val id: String) : TreeNode(id = id, uriComponentType = NodeMetadata.IsComponentTypeScheme)
+data class Scheme(override val id: String) : TreeNode(id = id, metadata = NodeMetadata(MetadataMasks.ComponentTypeSchemeMask, id))
 
-data class Host(override val id: String) : TreeNode(id = id, uriComponentType = NodeMetadata.IsComponentTypeHost)
+data class Host(override val id: String) : TreeNode(id = id, metadata = NodeMetadata(MetadataMasks.ComponentTypeHostMask, id))
 
-data class PathSegment(override val id: String) : TreeNode(id = id, uriComponentType = NodeMetadata.IsComponentTypePathSegment)
+data class PathSegment(override val id: String) : TreeNode(id = id, metadata = NodeMetadata(MetadataMasks.ComponentTypePathSegmentMask, id))
 
 fun UByteArray.writeUIntAt(startIndex: Int, value: UInt) {
     val ubyte3: UByte = value.and(0x000000FFu).toUByte().toUByte()
@@ -156,5 +134,7 @@ fun UByteArray.writeUShortAt(startIndex: Int, value: UShort) {
     set(startIndex + 1, ubyte1)
 }
 
-const val pathSegmentStartingSequence = "<"
-const val pathSegmentEndingSequence = ">"
+const val configurablePathSegmentPrefix = "<"
+const val configurablePathSegmentSuffix = ">"
+const val componentParamPrefix = "{"
+const val componentParamSuffix = "}"
