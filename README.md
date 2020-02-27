@@ -120,6 +120,51 @@ public class MainActivity extends Activity {
 }
 ```
 
+### Configurable path segment placeholders
+
+Configurable path segment placeholders allow your to change configured elements of the URL path at runtime without changing the source of the library where the deeplink is defined. That way a library can be used in multiple apps that are still uniquely addressable via deeplinks. They are defined by encapsulating an id like this `<some_id>` and are only allowed as a path segment (between two slashes. `/`:
+
+```java
+@DeepLink("foo://cereal.com/<type_of_cereal>/nutritional_info")
+public static Intent intentForNutritionalDeepLinkMethod(Context context) {
+  return new Intent(context, MainActivity.class)
+      .setAction(ACTION_DEEP_LINK_METHOD);
+}
+```
+
+If you do this you do have to provide a mapping (at runtime) for which values are allowed for creating a match. This is done when you new the `DeeplinkDelegate` class like:
+
+```java
+@DeepLinkHandler({ AppDeepLinkModule.class, LibraryDeepLinkModule.class })
+public class DeepLinkActivity extends Activity {
+  @Override protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    // Configure a map for configurable placeholders if you are using any. If you do a mapping
+    // has to be provided for that are used
+    Map configurablePlaceholdersMap = new HashMap();
+    configurablePlaceholdersMap.put("type_of_cereal", "obamaos");
+    // DeepLinkDelegate, LibraryDeepLinkModuleRegistry and AppDeepLinkModuleRegistry
+    // are generated at compile-time.
+    DeepLinkDelegate deepLinkDelegate = 
+        new DeepLinkDelegate(new AppDeepLinkModuleRegistry(), new LibraryDeepLinkModuleRegistry(), configurablePlaceholdersMap);
+    // Delegate the deep link handling to DeepLinkDispatch. 
+    // It will start the correct Activity based on the incoming Intent URI
+    deepLinkDelegate.dispatchFrom(this);
+    // Finish this Activity since the correct one has been just started
+    finish();
+  }
+}
+```
+
+This app will now match the Url `foo://cereal.com/obamaos/nutritional_info` to the `intentForNutritionalDeepLinkMethod` method for that app.
+If you build another app and set `type_of_cereal` to `captnmaccains` that apps version of the `intentForNutritionalDeepLinkMethod` would be called when when opening `foo://cereal.com/captnmaccains/nutritional_info`
+
+If you are using configurable path segment placeholders, a mapping has to be provided for every placeholder used. If you are missing one the app will crash at runtime.
+
+#### Empty configurable path segment placeholders mapping
+
+A mapping can be to an empty string, in that case the element is just ignored. In the above example if `configurablePlaceholdersMap.put("type_of_cereal", "");` is defined `foo://cereal.com/nutritional_info` would map to calling the `intentForNutritionalDeepLinkMethod` method. An empty configurable path segment placeholder is not allowed as the last path element in an URL!
+
 ### Callbacks
 
 You can optionally register a `BroadcastReceiver` to be called on any incoming deep link into your
@@ -260,6 +305,32 @@ public class DeepLinkActivity extends Activity {
   }
 }
 ```
+
+of 
+
+```java
+@DeepLinkHandler({ AppDeepLinkModule.class, LibraryDeepLinkModule.class })
+public class DeepLinkActivity extends Activity {
+  @Override protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    // Configure a map for configurable placeholders if you are using any. If you do a mapping
+    // has to be provided for that are used
+    Map configurablePlaceholdersMap = new HashMap();
+    configurablePlaceholdersMap.put("your_values", "what should match");
+    // DeepLinkDelegate, LibraryDeepLinkModuleRegistry and AppDeepLinkModuleRegistry
+    // are generated at compile-time.
+    DeepLinkDelegate deepLinkDelegate = 
+        new DeepLinkDelegate(new AppDeepLinkModuleRegistry(), new LibraryDeepLinkModuleRegistry(), configurablePlaceholdersMap);
+    // Delegate the deep link handling to DeepLinkDispatch. 
+    // It will start the correct Activity based on the incoming Intent URI
+    deepLinkDelegate.dispatchFrom(this);
+    // Finish this Activity since the correct one has been just started
+    finish();
+  }
+}
+```
+
+if you use configurable path segments
 
 ### Incremental annotation processing
 
