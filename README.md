@@ -428,6 +428,8 @@ Deeplink Dispatchs matching algo is designed to match non ambiguous structured U
 
 We organize the URI data (of all URIs that are in your app) in a tree structure that is created per module. The URI is dissolved into that tree structure and inserted into that graph at build time. We do not allow duplicates inside the tree at built time and having them will fail the build. However this is currently only guaranteed for each module not across modules.)
 
+![Example of a DeeplinkDispagch match graph](images/dld_graph.png)
+
 At runtime we traverse the graph for each module to find the correct action to undertake. The algo just walks the input URI until the last element and *never* backtracks inside the graph. The children of each element are checked for matches in alphabetic order:  
 
 `elements without any variable element -> elements containing placeholders -> elements that are a configurable path segment`
