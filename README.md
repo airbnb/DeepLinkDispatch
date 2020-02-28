@@ -368,15 +368,15 @@ It is testing the `ScaleTestActivity` in the `sample-benchmarkable-library` whic
 
 ```text
 Started running tests
-Timed out waiting for process to appear on google-pixel_2.
-benchmark:        11,467 ns DeeplinkBenchmarks.match1
-benchmark:       160,382 ns DeeplinkBenchmarks.match500
-benchmark:    10,906,459 ns DeeplinkBenchmarks.newRegistry
-benchmark:        11,750 ns DeeplinkBenchmarks.match1000
-benchmark:       105,898 ns DeeplinkBenchmarks.match1500
-benchmark:       194,844 ns DeeplinkBenchmarks.match2000
-benchmark:       155,989 ns DeeplinkBenchmarks.createResultDeeplink1
-benchmark:        11,504 ns DeeplinkBenchmarks.parseDeeplinkUrl
+Timed out waiting for process to appear on google-pixel_2-FA7AW1A04466.
+benchmark:        11,520 ns DeeplinkBenchmarks.match1
+benchmark:       241,406 ns DeeplinkBenchmarks.match500
+benchmark:    12,067,970 ns DeeplinkBenchmarks.newRegistry
+benchmark:        12,076 ns DeeplinkBenchmarks.match1000
+benchmark:       140,000 ns DeeplinkBenchmarks.match1500
+benchmark:       273,230 ns DeeplinkBenchmarks.match2000
+benchmark:       148,750 ns DeeplinkBenchmarks.createResultDeeplink1
+benchmark:        11,375 ns DeeplinkBenchmarks.parseDeeplinkUrl
 
 Tests ran to completion.
 ```
