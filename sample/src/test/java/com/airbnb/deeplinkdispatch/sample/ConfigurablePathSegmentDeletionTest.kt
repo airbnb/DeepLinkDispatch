@@ -19,17 +19,38 @@ class ConfigurablePathSegmentTest {
             "configurable-path-segment-two" to ""
     )
 
-    private val configurablePathSegmentReplacementsFirstEmpty = mapOf(
+    private val configurablePathSegmentReplacementFirstSet = mapOf(
+            "configurable-path-segment" to "foo",
+            "configurable-path-segment-one" to "",
+            "configurable-path-segment-two" to ""
+    )
+
+    private val configurablePathSegmentReplacementsOneEmpty = mapOf(
             "configurable-path-segment" to "",
             "configurable-path-segment-one" to "",
             "configurable-path-segment-two" to "bar"
     )
 
-    private val configurablePathSegmentReplacementsLastEmpty = mapOf(
+    private val configurablePathSegmentReplacementsTwoEmpty = mapOf(
             "configurable-path-segment" to "",
             "configurable-path-segment-one" to "bar",
             "configurable-path-segment-two" to ""
     )
+
+    @Test
+    fun testMatchLinkwithNoPathSegmentsButOverlappingEmptyConfigurablePathSegments() {
+        val deepLinkDelegate = DeepLinkDelegate(SampleModuleRegistry(), LibraryDeepLinkModuleRegistry(), BenchmarkDeepLinkModuleRegistry(), configurablePathSegmentReplacementsAllEmpty)
+        val oneEmptyReplacementMatches = deepLinkDelegate.supportsUri("https://www.example.com/nothing-special")
+        assertThat(oneEmptyReplacementMatches, equalTo<Boolean>(true))
+    }
+
+    @Test
+    fun testReplaceableLastNonEmptyMatches() {
+        // "https://www.example.com/cereal/<configurable-path-segment>"
+        val deepLinkDelegate = DeepLinkDelegate(SampleModuleRegistry(), LibraryDeepLinkModuleRegistry(), BenchmarkDeepLinkModuleRegistry(), configurablePathSegmentReplacementFirstSet)
+        val oneEmptyReplacementMatches = deepLinkDelegate.supportsUri("https://www.example.com/cereal/foo")
+        assertThat(oneEmptyReplacementMatches, equalTo<Boolean>(true))
+    }
 
     @Test
     fun testOneEmptyReplacementMatches() {
@@ -56,14 +77,14 @@ class ConfigurablePathSegmentTest {
 
     @Test
     fun testFirstOneEmpty() {
-        val deepLinkDelegate = DeepLinkDelegate(SampleModuleRegistry(), LibraryDeepLinkModuleRegistry(), BenchmarkDeepLinkModuleRegistry(), configurablePathSegmentReplacementsFirstEmpty)
+        val deepLinkDelegate = DeepLinkDelegate(SampleModuleRegistry(), LibraryDeepLinkModuleRegistry(), BenchmarkDeepLinkModuleRegistry(), configurablePathSegmentReplacementsOneEmpty)
         val oneEmptyReplacementMatches = deepLinkDelegate.supportsUri("https://www.example.com/bar/foo?q=e")
         assertThat(oneEmptyReplacementMatches, equalTo<Boolean>(true))
     }
 
     @Test
     fun testSecondOneEmpty() {
-        val deepLinkDelegate = DeepLinkDelegate(SampleModuleRegistry(), LibraryDeepLinkModuleRegistry(), BenchmarkDeepLinkModuleRegistry(), configurablePathSegmentReplacementsLastEmpty)
+        val deepLinkDelegate = DeepLinkDelegate(SampleModuleRegistry(), LibraryDeepLinkModuleRegistry(), BenchmarkDeepLinkModuleRegistry(), configurablePathSegmentReplacementsTwoEmpty)
         val oneEmptyReplacementMatches = deepLinkDelegate.supportsUri("https://www.example.com/bar/foo?q=e")
         assertThat(oneEmptyReplacementMatches, equalTo<Boolean>(true))
     }
