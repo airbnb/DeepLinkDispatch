@@ -422,6 +422,24 @@ The documentation will be generated in the following format:
 
 You can also generate the output in a much more readable Markdown format by naming the output file `*.md` (e.g. `deeplinks.md`). Make sure that your Markdown viewer understands tables.
 
+### Matching and edge cases
+
+Deeplink Dispatchs matching algo is designed to match non ambiguous structured URI style data very fast but because of the supported featureset it comes with some edge cases.
+
+We organize the URI data (of all URIs that are in your app) in a tree structure that is created per module. The URI is dissolved into that tree structure and inserted into that graph at build time. We do not allow duplicates inside the tree at built time and having them will fail the build. However this is currently only guaranteed for each module not accress modules.)
+
+At runtime we traverse the graph for each module to find the correction action to undertake. The algo just walks the input URI until the last element and *never* backtracks inside the graph. The children of each element are checked for matches in the alphabetic order:  
+
+`elements without any variable element -> elements with placeholders -> elements that are a configurable path segment`
+
+#### Edge cases
+
+* Duplications can exist between modules only the first one found will be reported as a match. Modules are processed in the order the module registries in your `DeepLinkDelegate` creation.
+* Placeholders can lead to duplications at runtime e.g. `dld://airbnb/dontdupeme` will match both `@Deeplink('dld://airbnb/{qualifier}dupeme')` and `@Deeplink('dld://airbnb/dontdupeme')`. They can both be defined in the same module as they are not identical if the are defined in the same module the algo will match `'dld://airbnb/dontdupeme'` as it is more concrete, if they are not defined in the same module the one defined in the registry listed first in `DeeplinkDelegate` will be matched.
+* Configurable path segments can lead to duplications. e.g. `dld://airbnb/obamaos/cereal` will match both  `@Deeplink('dld://airbnb/obamaos/cereal/')` and `@Deeplink('dld://airbnb/<brand>/cereal')` if `<brand>` is configured to be `obamaos`. The same match rules as mentioned before apply here.
+* Configurable path segments can have empty values e.g. `<brand>` can be set to `""` in the previous example. Which would then match `dld://airbnb/cereal` if a link like that is defined already the same match rules as mentioned before apply to which match actually gets found.
+* Because of limitations of the algo the last path element (the item behind the last lash) cannot  be a configurable path segments with it's value set to `"""`. Currently the system will allow you to do that but will not correctly match in that case.
+
 ## Proguard Rules
 
 ```
