@@ -79,6 +79,28 @@ public class MatchIndex {
     this.byteArray = byteArray;
   }
 
+  /**
+   * Match a given {@link com.airbnb.deeplinkdispatch.DeepLinkUri} (given as a List of
+   * {@link UrlElement} aginst this serach index.
+   * Will return an instance of {@link Match} if a match was found or null if there wasn't.
+   *
+   * @param elements The {@link UrlElement} list of
+   *                 the {@link com.airbnb.deeplinkdispatch.DeepLinkUri} to match against. Must be
+   *                 in correct order (scheme -> host -> path elements)
+   * @param placeholders Placeholders (that are encoded at {name} in the Url inside the index. Used
+   *                     to collect the set of placeholders and their values as
+   *                     the {@link com.airbnb.deeplinkdispatch.DeepLinkUri} is recursively
+   *                     processed.
+   * @param elementIndex The index of the elemnt currently processed in the elements list above.
+   * @param elementStartPosition The index of the start position of the current element int he
+   *                             byte array search index.
+   * @param parentBoundryPos The last element that is still part of the parent element. While
+   *                         looking at children of a current element that is the last element of
+   *                         the last child.
+   * @param pathSegmentReplacements  A map of configuralbe path segment replacements and their
+   *                                 values.
+   * @return An instance of {@link Match} if a match was found null if it wasn't.
+   */
   public Match matchUri(@NonNull List<UrlElement> elements, @Nullable Map<String, String>
     placeholders, int elementIndex, int elementStartPosition, int parentBoundryPos,
                         Map<String, String> pathSegmentReplacements) {
@@ -86,27 +108,38 @@ public class MatchIndex {
     int currentElementStartPosition = elementStartPosition;
     do {
       UrlElement urlElement = elements.get(elementIndex);
-      String compareResult = compareValue(currentElementStartPosition, urlElement.getTypeFlag(),
+      CompareResult compareResult =
+        compareValue(currentElementStartPosition, urlElement.getTypeFlag(),
         urlElement.getValue(), pathSegmentReplacements);
       if (compareResult != null) {
         Map<String, String> placeholdersOutput = placeholders;
         // If the compareResult is not empty we found a match with a placeholder. We need to save
         // that placeholder -- and the value it was placeholding for -- in a map and possibly
         // hand it down to the next level of recursion.
-        if (!compareResult.isEmpty()) {
-          // We need to have a new HashMap for every aprtial match to make sure that the
+        if (!compareResult.getPlaceholderValue().isEmpty()) {
+          // We need to have a new HashMap for every partial match to make sure that the
           // placeholders found in other partial matches do not overlap with the actual final match.
           placeholdersOutput = new HashMap<>(placeholders != null ? placeholders
             : Collections.<String, String>emptyMap());
-          String[] compareParams = compareResult.split(MATCH_PARAM_DIVIDER_CHAR);
+          String[] compareParams =
+            compareResult.getPlaceholderValue().split(MATCH_PARAM_DIVIDER_CHAR);
           // Add the found placeholder set to the map.
           placeholdersOutput.put(compareParams[0], compareParams[1]);
         }
-        if (elementIndex < elements.size() - 1) {
+        // Only go and try to match the next element if we have one, or if we found an empty
+        // configurable path segment then we actually will go to the child element in the index
+        // but use the same elment again.
+        if (elementIndex < elements.size() - 1
+          || compareResult.isEmptyConfigurablePathSegmentMatch()) {
           // If value matched we need to explore this elements children next.
           int childrenPos = getChildrenPos(currentElementStartPosition);
           if (childrenPos != -1) {
-            match = matchUri(elements, placeholdersOutput, elementIndex + 1,
+            // Recursively call matchUri again for the next element and with the child element
+            // of the current element in the index.
+            // If this element match was based on an empty configurable path segment we want to
+            // "skip" the match and thus use the same element or the Uri for the next round.
+            match = matchUri(elements, placeholdersOutput,
+              compareResult.isEmptyConfigurablePathSegmentMatch() ? elementIndex : elementIndex + 1,
               childrenPos, getElementBoundaryPos(currentElementStartPosition),
               pathSegmentReplacements);
           }
@@ -134,12 +167,14 @@ public class MatchIndex {
    * @param inboundUriComponentType A flag for the URI component type of the inboundValue to
    *                                compare (like scheme, host, or path segment)
    * @param inboundValue            The byte array of the inbound URI
-   * @return Empty String ""  if the type, length and inboundValue of the element staring at
-   * elementStartPos is the same as the inboundValue given in in the parameter. If this was a
-   * placeholder match the inboundValue of thee placeholder, null otherwise.
+   * @return An instance of {@link CompareResult} if the type, length and inboundValue of the
+   * element staring at elementStartPos is the same as the inboundValue given in in the parameter,
+   * null otherwise.
+   * More details of the match are contained in {@link CompareResult}.
    */
   @Nullable
-  private String compareValue(int elementStartPos, byte inboundUriComponentType, @NonNull byte[]
+  private CompareResult compareValue(int elementStartPos,
+                                     byte inboundUriComponentType, @NonNull byte[]
     inboundValue, Map<String, String> pathSegmentReplacements) {
     // Placeholder always matches
     int valueStartPos = elementStartPos + HEADER_LENGTH;
@@ -166,17 +201,17 @@ public class MatchIndex {
     }
   }
 
-  private String compareValuesWalk(byte[] inboundValue, int valueStartPos, int valueLength) {
+  private CompareResult compareValuesWalk(byte[] inboundValue, int valueStartPos, int valueLength) {
     for (int i = 0; i < valueLength; i++) {
       if (inboundValue[i] != byteArray[valueStartPos + i]) return null;
     }
-    return "";
+    return new CompareResult("", false);
   }
 
   @Nullable
-  private String compareConfigurablePathSegment(@NonNull byte[] inboundValue,
-                                                Map<String, String> pathSegmentReplacements,
-                                                int valueStartPos, int valueLength) {
+  private CompareResult compareConfigurablePathSegment(@NonNull byte[] inboundValue,
+                                                       Map<String, String> pathSegmentReplacements,
+                                                       int valueStartPos, int valueLength) {
     // Copy a chunk of values from byteArray to use as a key for looking up path segment from
     // pathSegmentReplacements.
     byte[] byteArrayValue = new byte[valueLength];
@@ -187,15 +222,18 @@ public class MatchIndex {
     );
 
     String replacementValue = pathSegmentReplacements.get(pathSegmentKey);
+    if (replacementValue.equals("")) {
+      return new CompareResult("", true);
+    }
     if (new String(inboundValue).equals(replacementValue)) {
-      return "";
+      return new CompareResult("", false);
     } else {
       return null;
     }
   }
 
   @Nullable
-  private String compareComponentParam(
+  private CompareResult compareComponentParam(
     int valueStartPos, int valueLength, @NonNull byte[] inboundValue
   ) {
     if ((
@@ -226,9 +264,9 @@ public class MatchIndex {
             System.arraycopy(inboundValue, i, placeholderValue, 0, placeholderValue.length);
             System.arraycopy(byteArray, valueStartPos + i + 1, placeholder, 0,
               placeholder.length);
-            return new StringBuilder(placeholderValue.length + placeholder.length + 1)
-              .append(new String(placeholder)).append(MATCH_PARAM_DIVIDER_CHAR)
-              .append(new String(placeholderValue)).toString();
+            return new CompareResult(
+              new String(placeholder) + MATCH_PARAM_DIVIDER_CHAR
+                + new String(placeholderValue), false);
           }
           if (byteArray[valueStartPos + j] != inboundValue[k]) {
             return null;
@@ -239,7 +277,7 @@ public class MatchIndex {
         return null; // Does not match
       }
     }
-    return ""; // Matches but is no placeholder
+    return new CompareResult("", false); // Matches but is no placeholder
   }
 
   /**

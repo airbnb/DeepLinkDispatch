@@ -120,6 +120,51 @@ public class MainActivity extends Activity {
 }
 ```
 
+### Configurable path segment placeholders
+
+Configurable path segment placeholders allow your to change configured elements of the URL path at runtime without changing the source of the library where the deeplink is defined. That way a library can be used in multiple apps that are still uniquely addressable via deeplinks. They are defined by encapsulating an id like this `<some_id>` and are only allowed as a path segment (between two slashes. `/`:
+
+```java
+@DeepLink("foo://cereal.com/<type_of_cereal>/nutritional_info")
+public static Intent intentForNutritionalDeepLinkMethod(Context context) {
+  return new Intent(context, MainActivity.class)
+      .setAction(ACTION_DEEP_LINK_METHOD);
+}
+```
+
+If you do this you do have to provide a mapping (at runtime) for which values are allowed for creating a match. This is done when you new the `DeeplinkDelegate` class like:
+
+```java
+@DeepLinkHandler({ AppDeepLinkModule.class, LibraryDeepLinkModule.class })
+public class DeepLinkActivity extends Activity {
+  @Override protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    // Configure a map for configurable placeholders if you are using any. If you do a mapping
+    // has to be provided for that are used
+    Map configurablePlaceholdersMap = new HashMap();
+    configurablePlaceholdersMap.put("type_of_cereal", "obamaos");
+    // DeepLinkDelegate, LibraryDeepLinkModuleRegistry and AppDeepLinkModuleRegistry
+    // are generated at compile-time.
+    DeepLinkDelegate deepLinkDelegate = 
+        new DeepLinkDelegate(new AppDeepLinkModuleRegistry(), new LibraryDeepLinkModuleRegistry(), configurablePlaceholdersMap);
+    // Delegate the deep link handling to DeepLinkDispatch. 
+    // It will start the correct Activity based on the incoming Intent URI
+    deepLinkDelegate.dispatchFrom(this);
+    // Finish this Activity since the correct one has been just started
+    finish();
+  }
+}
+```
+
+This app will now match the Url `foo://cereal.com/obamaos/nutritional_info` to the `intentForNutritionalDeepLinkMethod` method for that app.
+If you build another app and set `type_of_cereal` to `captnmaccains` that apps version of the `intentForNutritionalDeepLinkMethod` would be called when when opening `foo://cereal.com/captnmaccains/nutritional_info`
+
+If you are using configurable path segment placeholders, a mapping has to be provided for every placeholder used. If you are missing one the app will crash at runtime.
+
+#### Empty configurable path segment placeholders mapping
+
+A mapping can be to an empty string, in that case the element is just ignored. In the above example if `configurablePlaceholdersMap.put("type_of_cereal", "");` is defined `foo://cereal.com/nutritional_info` would map to calling the `intentForNutritionalDeepLinkMethod` method. An empty configurable path segment placeholder is not allowed as the last path element in an URL!
+
 ### Callbacks
 
 You can optionally register a `BroadcastReceiver` to be called on any incoming deep link into your
@@ -261,6 +306,32 @@ public class DeepLinkActivity extends Activity {
 }
 ```
 
+of 
+
+```java
+@DeepLinkHandler({ AppDeepLinkModule.class, LibraryDeepLinkModule.class })
+public class DeepLinkActivity extends Activity {
+  @Override protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    // Configure a map for configurable placeholders if you are using any. If you do a mapping
+    // has to be provided for that are used
+    Map configurablePlaceholdersMap = new HashMap();
+    configurablePlaceholdersMap.put("your_values", "what should match");
+    // DeepLinkDelegate, LibraryDeepLinkModuleRegistry and AppDeepLinkModuleRegistry
+    // are generated at compile-time.
+    DeepLinkDelegate deepLinkDelegate = 
+        new DeepLinkDelegate(new AppDeepLinkModuleRegistry(), new LibraryDeepLinkModuleRegistry(), configurablePlaceholdersMap);
+    // Delegate the deep link handling to DeepLinkDispatch. 
+    // It will start the correct Activity based on the incoming Intent URI
+    deepLinkDelegate.dispatchFrom(this);
+    // Finish this Activity since the correct one has been just started
+    finish();
+  }
+}
+```
+
+if you use configurable path segments
+
 ### Incremental annotation processing
 
 You must update your build.gradle to opt into incremental annotation processing. When enabled, all custom deep link annotations must be registered in the build.gradle (comma separated), otherwise they will be silently ignored.
@@ -297,15 +368,15 @@ It is testing the `ScaleTestActivity` in the `sample-benchmarkable-library` whic
 
 ```text
 Started running tests
-Timed out waiting for process to appear on google-pixel_2.
-benchmark:        11,467 ns DeeplinkBenchmarks.match1
-benchmark:       160,382 ns DeeplinkBenchmarks.match500
-benchmark:    10,906,459 ns DeeplinkBenchmarks.newRegistry
-benchmark:        11,750 ns DeeplinkBenchmarks.match1000
-benchmark:       105,898 ns DeeplinkBenchmarks.match1500
-benchmark:       194,844 ns DeeplinkBenchmarks.match2000
-benchmark:       155,989 ns DeeplinkBenchmarks.createResultDeeplink1
-benchmark:        11,504 ns DeeplinkBenchmarks.parseDeeplinkUrl
+Timed out waiting for process to appear on google-pixel_2-FA7AW1A04466.
+benchmark:        11,520 ns DeeplinkBenchmarks.match1
+benchmark:       241,406 ns DeeplinkBenchmarks.match500
+benchmark:    12,067,970 ns DeeplinkBenchmarks.newRegistry
+benchmark:        12,076 ns DeeplinkBenchmarks.match1000
+benchmark:       140,000 ns DeeplinkBenchmarks.match1500
+benchmark:       273,230 ns DeeplinkBenchmarks.match2000
+benchmark:       148,750 ns DeeplinkBenchmarks.createResultDeeplink1
+benchmark:        11,375 ns DeeplinkBenchmarks.parseDeeplinkUrl
 
 Tests ran to completion.
 ```
@@ -350,6 +421,26 @@ The documentation will be generated in the following format:
 ```
 
 You can also generate the output in a much more readable Markdown format by naming the output file `*.md` (e.g. `deeplinks.md`). Make sure that your Markdown viewer understands tables.
+
+### Matching and edge cases
+
+Deeplink Dispatchs matching algo is designed to match non ambiguous structured URI style data very fast but because of the supported featureset it comes with some edge cases.
+
+We organize the URI data (of all URIs that are in your app) in a tree structure that is created per module. The URI is dissolved into that tree structure and inserted into that graph at build time. We do not allow duplicates inside the tree at built time and having them will fail the build. However this is currently only guaranteed for each module not across modules.)
+
+![Example of a DeeplinkDispagch match graph](images/dld_graph.png)
+
+At runtime we traverse the graph for each module to find the correct action to undertake. The algo just walks the input URI until the last element and *never* backtracks inside the graph. The children of each element are checked for matches in alphabetic order:  
+
+`elements without any variable element -> elements containing placeholders -> elements that are a configurable path segment`
+
+#### Edge cases
+
+* Duplicates can exist between modules. Only the first one found will be reported as a match. Modules are processed in the order the module registries are listed in your `DeepLinkDelegate` creation.
+* Placeholders can lead to duplications at runtime e.g. `dld://airbnb/dontdupeme` will match both `@Deeplink('dld://airbnb/{qualifier}dupeme')` and `@Deeplink('dld://airbnb/dontdupeme')`. They can both be defined in the same module as they are not identical. If they are defined in the same module the algo will match `@Deeplink('dld://airbnb/dontdupeme')` as it would check litereal matches before looking at elements containing placeholders. If they are not defined in the same module the one defined in the registry listed first in `DeeplinkDelegate` will be matched.
+* Configurable path segments can lead to duplicates. e.g. `dld://airbnb/obamaos/cereal` will match both  `@Deeplink('dld://airbnb/obamaos/cereal/')` and `@Deeplink('dld://airbnb/<brand>/cereal')` if `<brand>` is configured to be `obamaos`. The same match rules as mentioned before apply here.
+* Configurable path segments can have empty values e.g. `<brand>` can be set to `""` in the previous example. Which would then match `dld://airbnb/cereal`. If a deeplink like that is defined already somewhere else the same match rules as mentioned before apply to which match actually gets found.
+* Because of limitations of the algo the last path element (the item behind the last slash) cannot  be a configurable path segment with it's value set to `""`. Currently the system will allow you to do this but will not correctly match in that case.
 
 ## Proguard Rules
 
