@@ -95,7 +95,7 @@ public class MatchIndex {
         // that placeholder -- and the value it was placeholding for -- in a map and possibly
         // hand it down to the next level of recursion.
         if (!compareResult.getPlaceholderValue().isEmpty()) {
-          // We need to have a new HashMap for every aprtial match to make sure that the
+          // We need to have a new HashMap for every partial match to make sure that the
           // placeholders found in other partial matches do not overlap with the actual final match.
           placeholdersOutput = new HashMap<>(placeholders != null ? placeholders
             : Collections.<String, String>emptyMap());
