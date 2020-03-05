@@ -137,7 +137,9 @@ public class DeepLinkProcessor extends AbstractProcessor {
   @Override
   public Set<String> getSupportedOptions() {
     HashSet<String> supportedOptions = Sets.newHashSet(
-      Documentor.DOC_OUTPUT_PROPERTY_NAME
+      Documentor.DOC_OUTPUT_PROPERTY_NAME,
+      OPTION_CUSTOM_ANNOTATIONS,
+      OPTION_INCREMENTAL
     );
     if (incrementalMetadata != null) {
       supportedOptions.add("org.gradle.annotation.processing.aggregating");
