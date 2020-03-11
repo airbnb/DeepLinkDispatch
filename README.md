@@ -334,7 +334,7 @@ if you use configurable path segments
 
 ### Upgrading
 
-When upgrading to the latest version you might need to make some changes. Read about it [here](UPGRADING.md).
+When upgrading to 5.x+ you may experience some breaking API changes. Read about them [here](UPGRADING.md).
 
 ### Incremental annotation processing
 
