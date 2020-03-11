@@ -1,6 +1,6 @@
 # Upgrading
 
-When ugrading to a newer version of Deeplink Dispatch the following notes should be taken into account.
+When ugrading to a newer version of DeepLink Dispatch the following notes should be taken into account.
 
 ## To v5.x
 
