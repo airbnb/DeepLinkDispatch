@@ -332,6 +332,10 @@ public class DeepLinkActivity extends Activity {
 
 if you use configurable path segments
 
+### Upgrading
+
+When upgrading to 5.x+ you may experience some breaking API changes. Read about them [here](UPGRADING.md).
+
 ### Incremental annotation processing
 
 You must update your build.gradle to opt into incremental annotation processing. When enabled, all custom deep link annotations must be registered in the build.gradle (comma separated), otherwise they will be silently ignored.
