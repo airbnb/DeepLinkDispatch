@@ -13,9 +13,13 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import javax.annotation.Nonnull;
 
 @SuppressWarnings({"WeakerAccess", "unused"})
 public class BaseDeepLinkDelegate {
@@ -218,6 +222,30 @@ public class BaseDeepLinkDelegate {
     } catch (InvocationTargetException exception) {
       return new DeepLinkResult(false, uriString, "Could not deep link to method: "
         + deepLinkEntry.getMethod(), null, null, deepLinkEntry);
+    }
+  }
+
+  /**
+   * Get a list of Intents that match the given {@link Uri}. It will be empty if there is no match.
+   * It can contain 1-n Intents based on if this is a direct Intent match or a match that created
+   * a {@link TaskStackBuilder} with 1-n Intents.
+   *
+   * @param activity The activity you want to launch the Intent(s) from.
+   * @param uri      The deeplink Uri to match.
+   * @return List of matching intents, see description.
+   */
+  public @Nonnull
+  List<Intent> getIntents(@Nonnull Activity activity, @Nonnull Uri uri) {
+    DeepLinkResult result = createResult(activity, new Intent(Intent.ACTION_VIEW, uri),
+      findEntry(uri.toString()));
+    if (result.isSuccessful()) {
+      if (result.getTaskStackBuilder() == null) {
+        return Arrays.asList(new Intent[]{result.getIntent()});
+      } else {
+        return Arrays.asList(result.getTaskStackBuilder().getIntents());
+      }
+    } else {
+      return Collections.emptyList();
     }
   }
 
