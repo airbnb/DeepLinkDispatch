@@ -221,18 +221,18 @@ public class BaseDeepLinkDelegate {
     return null;
   }
 
-  private void validateInput(Activity activity, Intent sourceIntent){
+  private void validateInput(Activity activity, Intent sourceIntent) {
     validateInput(activity);
     validateInput(sourceIntent);
   }
 
-  private void validateInput(Activity activity){
+  private void validateInput(Activity activity) {
     if (activity == null) {
       throw new NullPointerException("activity == null");
     }
   }
 
-  private void validateInput(Intent sourceIntent){
+  private void validateInput(Intent sourceIntent) {
     if (sourceIntent == null) {
       throw new NullPointerException("sourceIntent == null");
     }
