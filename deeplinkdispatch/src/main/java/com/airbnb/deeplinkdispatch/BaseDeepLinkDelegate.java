@@ -57,19 +57,6 @@ public class BaseDeepLinkDelegate {
       configurablePathSegmentReplacements);
   }
 
-  private DeepLinkEntry findEntry(String uriString) {
-    DeepLinkEntry entryRegExpMatch = null;
-    DeepLinkEntry entryIdxMatch;
-    DeepLinkUri parse = DeepLinkUri.parse(uriString);
-    for (BaseRegistry registry : registries) {
-      entryIdxMatch = registry.idxMatch(parse, configurablePathSegmentReplacements);
-      if (entryIdxMatch != null) {
-        return entryIdxMatch;
-      }
-    }
-    return null;
-  }
-
   /**
    * Calls into {@link #dispatchFrom(Activity activity, Intent sourceIntent)}.
    *
@@ -77,9 +64,7 @@ public class BaseDeepLinkDelegate {
    * @return DeepLinkResult, whether success or error.
    */
   public DeepLinkResult dispatchFrom(Activity activity) {
-    if (activity == null) {
-      throw new NullPointerException("activity == null");
-    }
+    validateInput(activity);
     return dispatchFrom(activity, activity.getIntent());
   }
 
@@ -93,15 +78,22 @@ public class BaseDeepLinkDelegate {
    * @return DeepLinkResult
    */
   public DeepLinkResult dispatchFrom(Activity activity, Intent sourceIntent) {
-    DeepLinkResult result = createResult(activity, sourceIntent,
-      findEntry(sourceIntent.getData().toString())
-    );
+    validateInput(activity, sourceIntent);
+    Uri uri = sourceIntent.getData();
+    DeepLinkResult result;
+    if (uri == null) {
+      result = createResult(activity, sourceIntent, null);
+    } else {
+      result = createResult(activity, sourceIntent,
+        findEntry(uri.toString())
+      );
+    }
     if (result.getTaskStackBuilder() != null) {
       result.getTaskStackBuilder().startActivities();
     } else if (result.getIntent() != null) {
       activity.startActivity(result.getIntent());
     }
-    notifyListener(activity, !result.isSuccessful(), sourceIntent.getData(),
+    notifyListener(activity, !result.isSuccessful(), uri,
       result.getDeepLinkEntry() != null ? result.getDeepLinkEntry().getUriTemplate()
         : null, result.getError());
     return result;
@@ -121,12 +113,7 @@ public class BaseDeepLinkDelegate {
   DeepLinkResult createResult(
     Activity activity, Intent sourceIntent, DeepLinkEntry deepLinkEntry
   ) {
-    if (activity == null) {
-      throw new NullPointerException("activity == null");
-    }
-    if (sourceIntent == null) {
-      throw new NullPointerException("sourceIntent == null");
-    }
+    validateInput(activity, sourceIntent);
     Uri uri = sourceIntent.getData();
     if (uri == null) {
       return new DeepLinkResult(
@@ -218,6 +205,36 @@ public class BaseDeepLinkDelegate {
     } catch (InvocationTargetException exception) {
       return new DeepLinkResult(false, uriString, "Could not deep link to method: "
         + deepLinkEntry.getMethod(), null, null, deepLinkEntry);
+    }
+  }
+
+  private DeepLinkEntry findEntry(String uriString) {
+    DeepLinkEntry entryRegExpMatch = null;
+    DeepLinkEntry entryIdxMatch;
+    DeepLinkUri parse = DeepLinkUri.parse(uriString);
+    for (BaseRegistry registry : registries) {
+      entryIdxMatch = registry.idxMatch(parse, configurablePathSegmentReplacements);
+      if (entryIdxMatch != null) {
+        return entryIdxMatch;
+      }
+    }
+    return null;
+  }
+
+  private void validateInput(Activity activity, Intent sourceIntent){
+    validateInput(activity);
+    validateInput(sourceIntent);
+  }
+
+  private void validateInput(Activity activity){
+    if (activity == null) {
+      throw new NullPointerException("activity == null");
+    }
+  }
+
+  private void validateInput(Intent sourceIntent){
+    if (sourceIntent == null) {
+      throw new NullPointerException("sourceIntent == null");
     }
   }
 
