@@ -11,6 +11,8 @@ import androidx.annotation.NonNull;
 import androidx.core.app.TaskStackBuilder;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
+import com.airbnb.deeplinkdispatch.base.Utils;
+
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
@@ -36,7 +38,7 @@ public class BaseDeepLinkDelegate {
    * Then:
    * <ul><li><xmp>https://www.example.com/obamaOs/users/{param1}</xmp> will match.</li></ul>
    */
-  protected final Map<String, String> configurablePathSegmentReplacements;
+  protected final Map<byte[], byte[]> configurablePathSegmentReplacements;
 
   public List<? extends BaseRegistry> getRegistries() {
     return registries;
@@ -52,9 +54,10 @@ public class BaseDeepLinkDelegate {
     Map<String, String> configurablePathSegmentReplacements
   ) {
     this.registries = registries;
-    this.configurablePathSegmentReplacements = configurablePathSegmentReplacements;
+    this.configurablePathSegmentReplacements =
+      Utils.toByteArrayMap(configurablePathSegmentReplacements);
     ValidationUtilsKt.validateConfigurablePathSegmentReplacements(registries,
-      configurablePathSegmentReplacements);
+      this.configurablePathSegmentReplacements);
   }
 
   /**
@@ -84,9 +87,7 @@ public class BaseDeepLinkDelegate {
     if (uri == null) {
       result = createResult(activity, sourceIntent, null);
     } else {
-      result = createResult(activity, sourceIntent,
-        findEntry(uri.toString())
-      );
+      result = createResult(activity, sourceIntent, findEntry(uri.toString()));
     }
     if (result.getTaskStackBuilder() != null) {
       result.getTaskStackBuilder().startActivities();
@@ -109,8 +110,7 @@ public class BaseDeepLinkDelegate {
    *                      {@link #findEntry(String)}. Can be injected for testing.
    * @return DeepLinkResult
    */
-  public @NonNull
-  DeepLinkResult createResult(
+  public @NonNull DeepLinkResult createResult(
     Activity activity, Intent sourceIntent, DeepLinkEntry deepLinkEntry
   ) {
     validateInput(activity, sourceIntent);

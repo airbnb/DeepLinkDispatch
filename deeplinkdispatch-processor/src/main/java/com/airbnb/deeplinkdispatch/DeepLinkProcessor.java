@@ -400,8 +400,8 @@ public class DeepLinkProcessor extends AbstractProcessor {
 
   private CodeBlock generatePathVariableKeysBlock(Set<String> pathVariableKeys) {
     CodeBlock.Builder pathVariableKeysBuilder = CodeBlock.builder();
-    pathVariableKeysBuilder.add(",\n" + "new $T<String>(Arrays.<String>asList(",
-      ClassName.get(HashSet.class));
+    pathVariableKeysBuilder.add(",\n" + "new $T[]{",
+      ClassName.get(String.class));
     String[] pathVariableKeysArray = pathVariableKeys.toArray(new String[0]);
     for (int i = 0; i < pathVariableKeysArray.length; i++) {
       pathVariableKeysBuilder.add("$S", pathVariableKeysArray[i]);
@@ -409,7 +409,7 @@ public class DeepLinkProcessor extends AbstractProcessor {
         pathVariableKeysBuilder.add(", ");
       }
     }
-    pathVariableKeysBuilder.add(")));\n");
+    pathVariableKeysBuilder.add("});\n");
     return pathVariableKeysBuilder.build();
   }
 
