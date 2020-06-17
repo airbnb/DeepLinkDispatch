@@ -200,8 +200,11 @@ public class MatchIndex {
     }
   }
 
-  private CompareResult arrayCompare(byte[] byteArray, int startPos, int length, byte[] compareValue) {
-    if(length != compareValue.length){
+  private CompareResult arrayCompare(byte[] byteArray,
+                                     int startPos,
+                                     int length,
+                                     byte[] compareValue) {
+    if (length != compareValue.length) {
       return null;
     }
     for (int i = 0; i < length; i++) {
@@ -214,10 +217,9 @@ public class MatchIndex {
   private CompareResult compareConfigurablePathSegment(@NonNull byte[] inboundValue,
                                                        Map<byte[], byte[]> pathSegmentReplacements,
                                                        int valueStartPos, int valueLength) {
-
     byte[] replacementValue = null;
     for (Map.Entry<byte[], byte[]> pathSegmentEntry : pathSegmentReplacements.entrySet()) {
-      if (arrayCompare(byteArray, valueStartPos , valueLength , pathSegmentEntry.getKey()) != null) {
+      if (arrayCompare(byteArray, valueStartPos, valueLength, pathSegmentEntry.getKey()) != null) {
         replacementValue = pathSegmentEntry.getValue();
       }
     }
