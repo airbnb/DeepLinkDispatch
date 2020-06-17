@@ -217,9 +217,7 @@ public class MatchIndex {
 
     byte[] replacementValue = null;
     for (Map.Entry<byte[], byte[]> pathSegmentEntry : pathSegmentReplacements.entrySet()) {
-      // The value of the configurable path segment in the index is enclosed in < > thus our compare
-      // match starts with an offset of one and is 2 chars shorter.
-      if (arrayCompare(byteArray, valueStartPos + 1, valueLength - 2, pathSegmentEntry.getKey()) != null) {
+      if (arrayCompare(byteArray, valueStartPos , valueLength , pathSegmentEntry.getKey()) != null) {
         replacementValue = pathSegmentEntry.getValue();
       }
     }
