@@ -8,7 +8,7 @@ def versions = [
 
 ext.versions = versions
 ext.androidConfig = [
-    agpVersion                          : '3.5.3',
+    agpVersion                          : '3.6.3',
     compileSdkVersion                   : 29,
     buildToolsVersion                   : '29.0.2',
     minSdkVersion                       : 16,
@@ -30,7 +30,7 @@ ext.deps = [
     // ./gradlew clean assemble sourcesJar androidSourcesJar javadocsJar androidJavadocsJar uploadArchives --no-daemon --no-parallel
     // Need to use snapshot version and explicitly include javadoc/sources tasks until
     // https://github.com/vanniktech/gradle-maven-publish-plugin/issues/54 is fixed.
-    gradleMavenPublishPlugin : 'com.vanniktech:gradle-maven-publish-plugin:0.9.0-SNAPSHOT',
+    gradleMavenPublishPlugin : 'com.vanniktech:gradle-maven-publish-plugin:0.10.0',
 
     // Testing
     junit                    : 'junit:junit:4.12',

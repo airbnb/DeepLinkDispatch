@@ -5,6 +5,7 @@ package com.airbnb.deeplinkdispatch
 import com.airbnb.deeplinkdispatch.base.MatchIndex.*
 import com.airbnb.deeplinkdispatch.base.Utils.validateIfComponentParam
 import com.airbnb.deeplinkdispatch.base.Utils.validateIfConfigurablePathSegment
+import com.airbnb.deeplinkdispatch.base.chunkOnModifiedUtf8ByteSize
 import java.io.OutputStream
 import java.nio.charset.Charset
 import kotlin.text.Charsets.UTF_8
@@ -60,7 +61,7 @@ open class TreeNode(open val id: String, internal val metadata: NodeMetadata) {
     }
 
     // Make sure we match concrete machthes before placeholders or configurable path segments
-    private fun generateChildrenByteArrays(): List<UByteArray> = children.sortedWith(compareBy({ it.metadata.isConfigurablePathSegment }, {it.metadata.isComponentParam}, {it.id})).map { it.toUByteArray() }
+    private fun generateChildrenByteArrays(): List<UByteArray> = children.sortedWith(compareBy({ it.metadata.isConfigurablePathSegment }, { it.metadata.isComponentParam }, { it.id })).map { it.toUByteArray() }
 
     private fun generateHeader(metadata: NodeMetadata, value: UByteArray, children: List<UByteArray>? = null, match: UriMatch?): UByteArray {
         val childrenLength: Int = children?.sumBy { it.size } ?: 0
@@ -74,7 +75,7 @@ open class TreeNode(open val id: String, internal val metadata: NodeMetadata) {
 }
 
 
-private const val MAX_EXPORT_STRING_SIZE = 50000
+private const val MAX_CODE_STRING_BYTE_SIZE = 65535 // (2^16)-1 as the chunk needs to be 16 bit addressable.
 
 data class Root(override val id: String = "r") : TreeNode(ROOT_VALUE, NodeMetadata(MetadataMasks.ComponentTypeRootMask, id)) {
     fun writeToOutoutStream(openOutputStream: OutputStream) {
@@ -82,10 +83,14 @@ data class Root(override val id: String = "r") : TreeNode(ROOT_VALUE, NodeMetada
     }
 
     /**
-     * Convert the byte array into a string return as max 60k length sset of strings.
+     * Convert the byte array into a string return as max 65k length set of strings.
+     *
+     * The Java compiler saves the string constant as Modified UTF-8, with the binary representation
+     * of this not allowed to be larger than 65535. So we chunk our string exactly to that size.
      */
-    fun getStrings(): List<String> {
-        return String(bytes = this.toUByteArray().toByteArray(), charset = Charset.forName(MATCH_INDEX_ENCODING)).chunked(MAX_EXPORT_STRING_SIZE)
+    fun getStrings(): List<CharSequence> {
+        println("STRINGS_LOG ${this.toUByteArray().size} ${this.toUByteArray().toByteArray().size} ${String(bytes = this.toUByteArray().toByteArray(), charset = Charset.forName(MATCH_INDEX_ENCODING)).length}")
+        return String(bytes = this.toUByteArray().toByteArray(), charset = Charset.forName(MATCH_INDEX_ENCODING)).chunkOnModifiedUtf8ByteSize(MAX_CODE_STRING_BYTE_SIZE)
     }
 
     /**

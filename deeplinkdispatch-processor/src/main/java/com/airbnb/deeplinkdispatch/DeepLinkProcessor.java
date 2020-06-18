@@ -428,13 +428,13 @@ public class DeepLinkProcessor extends AbstractProcessor {
                                              TypeSpec.Builder deepLinkRegistryBuilder) {
     int i = 0;
     StringBuilder stringMethodNames = new StringBuilder();
-    for (String string : urisTrie.getStrings()) {
+    for (CharSequence charSequence : urisTrie.getStrings()) {
       String methodName = "matchIndex" + i;
       stringMethodNames.append(methodName).append("(), ");
       deepLinkRegistryBuilder.addMethod(MethodSpec.methodBuilder(methodName)
         .addModifiers(Modifier.PRIVATE, Modifier.STATIC)
         .returns(String.class)
-        .addCode(CodeBlock.builder().add("return $S;", string).build()).build());
+        .addCode(CodeBlock.builder().add("return $S;", charSequence).build()).build());
       i++;
     }
     return stringMethodNames;
