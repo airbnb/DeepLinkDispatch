@@ -5,7 +5,6 @@ import androidx.annotation.Nullable;
 
 import com.airbnb.deeplinkdispatch.NodeMetadata;
 import com.airbnb.deeplinkdispatch.UrlElement;
-import com.airbnb.deeplinkdispatch.UrlTreeKt;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -103,7 +102,7 @@ public class MatchIndex {
    */
   public Match matchUri(@NonNull List<UrlElement> elements, @Nullable Map<String, String>
     placeholders, int elementIndex, int elementStartPosition, int parentBoundryPos,
-                        Map<String, String> pathSegmentReplacements) {
+                        Map<byte[], byte[]> pathSegmentReplacements) {
     Match match = null;
     int currentElementStartPosition = elementStartPosition;
     do {
@@ -128,7 +127,7 @@ public class MatchIndex {
         }
         // Only go and try to match the next element if we have one, or if we found an empty
         // configurable path segment then we actually will go to the child element in the index
-        // but use the same elment again.
+        // but use the same element again.
         if (elementIndex < elements.size() - 1
           || compareResult.isEmptyConfigurablePathSegmentMatch()) {
           // If value matched we need to explore this elements children next.
@@ -175,7 +174,7 @@ public class MatchIndex {
   @Nullable
   private CompareResult compareValue(int elementStartPos,
                                      byte inboundUriComponentType, @NonNull byte[]
-    inboundValue, Map<String, String> pathSegmentReplacements) {
+    inboundValue, Map<byte[], byte[]> pathSegmentReplacements) {
     // Placeholder always matches
     int valueStartPos = elementStartPos + HEADER_LENGTH;
     NodeMetadata nodeMetadata = new NodeMetadata(byteArray[elementStartPos]);
@@ -197,35 +196,37 @@ public class MatchIndex {
       return compareConfigurablePathSegment(inboundValue, pathSegmentReplacements, valueStartPos,
         valueLength);
     } else {
-      return compareValuesWalk(inboundValue, valueStartPos, valueLength);
+      return arrayCompare(byteArray, valueStartPos, valueLength, inboundValue);
     }
   }
 
-  private CompareResult compareValuesWalk(byte[] inboundValue, int valueStartPos, int valueLength) {
-    for (int i = 0; i < valueLength; i++) {
-      if (inboundValue[i] != byteArray[valueStartPos + i]) return null;
+  private CompareResult arrayCompare(byte[] byteArray,
+                                     int startPos,
+                                     int length,
+                                     byte[] compareValue) {
+    if (length != compareValue.length) {
+      return null;
+    }
+    for (int i = 0; i < length; i++) {
+      if (compareValue[i] != byteArray[startPos + i]) return null;
     }
     return new CompareResult("", false);
   }
 
   @Nullable
   private CompareResult compareConfigurablePathSegment(@NonNull byte[] inboundValue,
-                                                       Map<String, String> pathSegmentReplacements,
+                                                       Map<byte[], byte[]> pathSegmentReplacements,
                                                        int valueStartPos, int valueLength) {
-    // Copy a chunk of values from byteArray to use as a key for looking up path segment from
-    // pathSegmentReplacements.
-    byte[] byteArrayValue = new byte[valueLength];
-    System.arraycopy(byteArray, valueStartPos, byteArrayValue, 0, valueLength);
-    String pathSegmentKey = new String(byteArrayValue).substring(
-      UrlTreeKt.configurablePathSegmentPrefix.length(),
-      valueLength - UrlTreeKt.configurablePathSegmentSuffix.length()
-    );
-
-    String replacementValue = pathSegmentReplacements.get(pathSegmentKey);
-    if (replacementValue.equals("")) {
+    byte[] replacementValue = null;
+    for (Map.Entry<byte[], byte[]> pathSegmentEntry : pathSegmentReplacements.entrySet()) {
+      if (arrayCompare(byteArray, valueStartPos, valueLength, pathSegmentEntry.getKey()) != null) {
+        replacementValue = pathSegmentEntry.getValue();
+      }
+    }
+    if (replacementValue.length == 0) {
       return new CompareResult("", true);
     }
-    if (new String(inboundValue).equals(replacementValue)) {
+    if (arrayCompare(inboundValue, 0, inboundValue.length, replacementValue) != null) {
       return new CompareResult("", false);
     } else {
       return null;
