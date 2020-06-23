@@ -8,18 +8,17 @@ package com.airbnb.deeplinkdispatch
  * @param configurablePathSegmentReplacements
  */
 fun validateConfigurablePathSegmentReplacements(
-        registries: List<BaseRegistry>, configurablePathSegmentReplacements: Map<String, String>
+        registries: List<BaseRegistry>, configurablePathSegmentReplacements: Map<ByteArray, ByteArray>
 ) = DeepLinkDispatch.validationExecutor.run {
     //Collect all path segment keys across all registries
-    val keysUnion = mutableSetOf<String>()
-    for (registry in registries) {
-        keysUnion.addAll(registry.pathSegmentReplacementKeysInRegistry)
-    }
-    val missingKeys = keysUnion.filter { key -> key !in configurablePathSegmentReplacements.keys }
-            .joinToString(",\n")
+    val keysUnion = registries.flatMap { it.pathSegmentReplacementKeysInRegistry }.toSet()
+    val missingKeys = keysUnion.filter { key ->
+        !configurablePathSegmentReplacements.keys.any { it.contentEquals(key) }
+    }.joinToString(",\n") { String(it) }
 
-    require(missingKeys.isEmpty()) { "Keys not found in BaseDeepLinkDelegate's mapping of " +
-            "PathVariableReplacementValues. Missing keys are:\n$missingKeys.\nKeys in mapping " +
-            "are:\n${configurablePathSegmentReplacements.keys.joinToString(",\n" )}."
+    require(missingKeys.isEmpty()) {
+        "Keys not found in BaseDeepLinkDelegate's mapping of " +
+                "PathVariableReplacementValues. Missing keys are:\n$missingKeys.\nKeys in mapping " +
+                "are:\n${configurablePathSegmentReplacements.keys.joinToString(",\n") { String(it) }}."
     }
 }
