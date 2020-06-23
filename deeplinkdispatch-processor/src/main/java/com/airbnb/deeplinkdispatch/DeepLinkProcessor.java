@@ -520,15 +520,17 @@ public class DeepLinkProcessor extends AbstractProcessor {
       .addCode(registriesInitializerBuilderWithPathVariables)
       .build();
 
-    TypeSpec deepLinkDelegate = TypeSpec.classBuilder("DeepLinkDelegate")
+    TypeSpec.Builder deepLinkDelegateBuilder = TypeSpec.classBuilder("DeepLinkDelegate")
       .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
       .superclass(CLASS_BASE_DEEP_LINK_DELEGATE)
       .addMethod(constructor)
       .addMethod(constructorWithPathVariables)
-      .addOriginatingElement(originatingElement)
-      .build();
+      .addOriginatingElement(originatingElement);
+    for (TypeElement registryElement : registryClasses) {
+      deepLinkDelegateBuilder.addOriginatingElement(registryElement);
+    }
 
-    JavaFile.builder(packageName, deepLinkDelegate)
+    JavaFile.builder(packageName, deepLinkDelegateBuilder.build())
       .build()
       .writeTo(filer);
   }
