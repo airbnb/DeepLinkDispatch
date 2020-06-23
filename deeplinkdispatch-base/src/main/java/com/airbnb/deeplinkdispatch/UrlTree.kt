@@ -24,6 +24,13 @@ open class TreeNode(open val id: String, internal val metadata: NodeMetadata) {
         return if (children.add(node)) node else children.first { it == node }
     }
 
+    fun serializedId(): String {
+        if (metadata.isConfigurablePathSegment) {
+            return id.substringAfter(configurablePathSegmentPrefix).substringBefore(configurablePathSegmentSuffix)
+        }
+        return id
+    }
+
     /**
      * Byte array format is:
      * 0                                                    [NodeMetadata] flags; 1 byte
@@ -35,7 +42,7 @@ open class TreeNode(open val id: String, internal val metadata: NodeMetadata) {
      */
     fun toUByteArray(): UByteArray {
         val childrenByteArrays: List<UByteArray> = generateChildrenByteArrays()
-        val valueByteArray = id.toByteArray(UTF_8).toUByteArray()
+        val valueByteArray = serializedId().toByteArray(UTF_8).toUByteArray()
         val header = generateHeader(metadata, valueByteArray, childrenByteArrays, match)
         val resultByteArray = UByteArray(arrayLength(
                 childrenByteArrays,
@@ -59,7 +66,7 @@ open class TreeNode(open val id: String, internal val metadata: NodeMetadata) {
         return header.size + value.size + childArrays.sumBy { it.size }
     }
 
-    // Make sure we match concrete machthes before placeholders or configurable path segments
+    // Make sure we match concrete matches before placeholders or configurable path segments
     private fun generateChildrenByteArrays(): List<UByteArray> = children.sortedWith(compareBy({ it.metadata.isConfigurablePathSegment }, {it.metadata.isComponentParam}, {it.id})).map { it.toUByteArray() }
 
     private fun generateHeader(metadata: NodeMetadata, value: UByteArray, children: List<UByteArray>? = null, match: UriMatch?): UByteArray {
