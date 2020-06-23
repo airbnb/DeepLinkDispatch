@@ -242,7 +242,7 @@ public class DeepLinkProcessor extends AbstractProcessor {
         String packageName = processingEnv.getElementUtils()
           .getPackageOf(deepLinkHandlerElement).getQualifiedName().toString();
         try {
-          generateDeepLinkDelegate(packageName, typeElements);
+          generateDeepLinkDelegate(packageName, typeElements, deepLinkHandlerElement);
         } catch (IOException e) {
           messager.printMessage(Diagnostic.Kind.ERROR, "Error creating file");
         } catch (RuntimeException e) {
@@ -260,9 +260,11 @@ public class DeepLinkProcessor extends AbstractProcessor {
     for (Element deepLinkModuleElement : deepLinkModuleElements) {
       String packageName = processingEnv.getElementUtils()
         .getPackageOf(deepLinkModuleElement).getQualifiedName().toString();
+      Set<Element> originatingElements = new HashSet<Element>(elementsToProcess);
+      originatingElements.add(deepLinkModuleElement);
       try {
         generateDeepLinkRegistry(packageName, deepLinkModuleElement.getSimpleName().toString(),
-          deepLinkElements);
+          deepLinkElements, originatingElements);
       } catch (IOException e) {
         messager.printMessage(Diagnostic.Kind.ERROR, "Error creating file");
       } catch (RuntimeException e) {
@@ -310,7 +312,8 @@ public class DeepLinkProcessor extends AbstractProcessor {
   }
 
   private void generateDeepLinkRegistry(String packageName, String className,
-                                        List<DeepLinkAnnotatedElement> elements)
+                                        List<DeepLinkAnnotatedElement> elements,
+                                        Set<Element> originatingElements)
     throws IOException {
     CodeBlock.Builder deeplinks = CodeBlock.builder()
       .add("super($T.unmodifiableList($T.<$T>asList(\n",
@@ -390,6 +393,9 @@ public class DeepLinkProcessor extends AbstractProcessor {
 //    urisTrie.writeToOutoutStream(indexResource.openOutputStream());
 
     deepLinkRegistryBuilder.addMethod(constructor);
+    for (Element originatingElement : originatingElements) {
+      deepLinkRegistryBuilder.addOriginatingElement(originatingElement);
+    }
 
     TypeSpec deepLinkRegistry = deepLinkRegistryBuilder.build();
 
@@ -400,8 +406,8 @@ public class DeepLinkProcessor extends AbstractProcessor {
 
   private CodeBlock generatePathVariableKeysBlock(Set<String> pathVariableKeys) {
     CodeBlock.Builder pathVariableKeysBuilder = CodeBlock.builder();
-    pathVariableKeysBuilder.add(",\n" + "new $T<String>(Arrays.<String>asList(",
-      ClassName.get(HashSet.class));
+    pathVariableKeysBuilder.add(",\n" + "new $T[]{",
+      ClassName.get(String.class));
     String[] pathVariableKeysArray = pathVariableKeys.toArray(new String[0]);
     for (int i = 0; i < pathVariableKeysArray.length; i++) {
       pathVariableKeysBuilder.add("$S", pathVariableKeysArray[i]);
@@ -409,7 +415,7 @@ public class DeepLinkProcessor extends AbstractProcessor {
         pathVariableKeysBuilder.add(", ");
       }
     }
-    pathVariableKeysBuilder.add(")));\n");
+    pathVariableKeysBuilder.add("});\n");
     return pathVariableKeysBuilder.build();
   }
 
@@ -456,7 +462,9 @@ public class DeepLinkProcessor extends AbstractProcessor {
     return (PackageElement) type;
   }
 
-  private void generateDeepLinkDelegate(String packageName, List<TypeElement> registryClasses)
+  private void generateDeepLinkDelegate(String packageName,
+                                        List<TypeElement> registryClasses,
+                                        Element originatingElement)
     throws IOException {
 
     CodeBlock.Builder moduleRegistriesArgument = CodeBlock.builder();
@@ -512,14 +520,17 @@ public class DeepLinkProcessor extends AbstractProcessor {
       .addCode(registriesInitializerBuilderWithPathVariables)
       .build();
 
-    TypeSpec deepLinkDelegate = TypeSpec.classBuilder("DeepLinkDelegate")
+    TypeSpec.Builder deepLinkDelegateBuilder = TypeSpec.classBuilder("DeepLinkDelegate")
       .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
       .superclass(CLASS_BASE_DEEP_LINK_DELEGATE)
       .addMethod(constructor)
       .addMethod(constructorWithPathVariables)
-      .build();
+      .addOriginatingElement(originatingElement);
+    for (TypeElement registryElement : registryClasses) {
+      deepLinkDelegateBuilder.addOriginatingElement(registryElement);
+    }
 
-    JavaFile.builder(packageName, deepLinkDelegate)
+    JavaFile.builder(packageName, deepLinkDelegateBuilder.build())
       .build()
       .writeTo(filer);
   }

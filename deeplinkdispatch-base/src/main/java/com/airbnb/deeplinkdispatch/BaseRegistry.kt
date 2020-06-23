@@ -1,6 +1,7 @@
 package com.airbnb.deeplinkdispatch
 
 import com.airbnb.deeplinkdispatch.base.MatchIndex
+import com.airbnb.deeplinkdispatch.base.Utils
 
 /**
  * BaseRegistry classes are used for keeping a registry of deep links and dispatching them
@@ -18,8 +19,8 @@ import com.airbnb.deeplinkdispatch.base.MatchIndex
  */
 abstract class BaseRegistry(val registeredDeepLinks: List<DeepLinkEntry>,
                             matchIndexArray: ByteArray,
-                            val pathSegmentReplacementKeysInRegistry: Set<String>) {
-
+                            pathSegmentReplacementKeys: Array<String>) {
+    val pathSegmentReplacementKeysInRegistry = Utils.toByteArraysList(pathSegmentReplacementKeys)
     private val matchIndex: MatchIndex = MatchIndex(matchIndexArray)
 
     /**
@@ -35,7 +36,7 @@ abstract class BaseRegistry(val registeredDeepLinks: List<DeepLinkEntry>,
      * @return A [DeepLinkEntry] if a match was found or null if not.
      */
     @JvmOverloads
-    fun idxMatch(deepLinkUri: DeepLinkUri?, pathSegmentReplacements: Map<String, String> = mapOf()): DeepLinkEntry? {
+    fun idxMatch(deepLinkUri: DeepLinkUri?, pathSegmentReplacements: Map<ByteArray, ByteArray> = mapOf()): DeepLinkEntry? {
         if (deepLinkUri == null) {
             return null
         }

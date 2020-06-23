@@ -151,7 +151,7 @@ public class BaseDeepLinkDelegateTest {
 
   private static class TestDeepLinkRegistry extends BaseRegistry {
     public TestDeepLinkRegistry(List<DeepLinkEntry> registry) {
-      super(registry, getSearchIndex(registry), new HashSet<String>());
+      super(registry, getSearchIndex(registry), new String[]{});
     }
 
     @NotNull

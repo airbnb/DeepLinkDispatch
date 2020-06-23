@@ -54,6 +54,16 @@ object Utils {
         return fullString.toString().toByteArray(charset(MatchIndex.MATCH_INDEX_ENCODING))
     }
 
+    @JvmStatic
+    fun toByteArrayMap(input: Map<String, String>): Map<ByteArray, ByteArray> {
+        return input.entries.associate { it.key.toByteArray() to it.value.toByteArray() }
+    }
+
+    @JvmStatic
+    fun toByteArraysList(input: Array<String>): List<ByteArray> {
+        return input.map { it.toByteArray() }.toList()
+    }
+
     private fun getBytes(inputStream: InputStream): ByteArray {
         return inputStream.readBytes()
     }
