@@ -17,8 +17,7 @@ fun CharSequence.chunkOnModifiedUtf8ByteSize(chunkSize: Int): List<CharSequence>
     var modifiedUtf8BlockSize = 0
     val result = mutableListOf<CharSequence>()
     var blockStart = 0
-    var i = 0
-    while (i in 0 until this.length) {
+    for (i in 0 until this.length) {
         // Get the byte array for every character and check how many bytes this would take up.
         // U+0000 is encoded as two bytes C080 in mModified UTF-8, which is used by Java to
         // store strings in the string table in class files.
@@ -32,7 +31,6 @@ fun CharSequence.chunkOnModifiedUtf8ByteSize(chunkSize: Int): List<CharSequence>
         } else {
             modifiedUtf8BlockSize += charByteArraySize
         }
-        i++
     }
     // If there was a block that we started but did not add yet, add the rest.
     if (blockStart != length) {
