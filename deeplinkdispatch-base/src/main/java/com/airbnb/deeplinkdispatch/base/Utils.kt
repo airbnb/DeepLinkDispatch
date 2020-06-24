@@ -8,33 +8,30 @@ import java.io.InputStream
 
 /**
  * Chunk a CharSequence based on how long it's Modified UTF-8
- * (https://en.wikipedia.org/wiki/UTF-8#Modified_UTF-8) ByteArray representaiton would be.
+ * (https://en.wikipedia.org/wiki/UTF-8#Modified_UTF-8) ByteArray representation would be.
  */
 fun CharSequence.chunkOnModifiedUtf8ByteSize(chunkSize: Int): List<CharSequence> {
-    require (chunkSize >= 3) {
+    require(chunkSize >= 3) {
         "UTF-8 chars can be up to 3 bytes wide. Minumum chunk size is 3 bytes."
     }
-    var modifiedUtf8BlockSize = 0
     val result = mutableListOf<CharSequence>()
-    var blockStart = 0
+    var nextChunkStart = 0
     for (i in 0 until this.length) {
-        // Get the byte array for every character and check how many bytes this would take up.
-        // U+0000 is encoded as two bytes C080 in mModified UTF-8, which is used by Java to
+        // Get the byte array for current chunk and check how many bytes this would take up.
+        // U+0000 is encoded as two bytes C080 in modified UTF-8, which is used by Java to
         // store strings in the string table in class files.
-        val charByteArraySize = this.substring(i, i + 1).toByteArray().size + if (this[i] == '\u0000') 1 else 0
+        val charModifiedUtf8ByteArraySize = this.substring(nextChunkStart, i + 1)
+                .let { chunk -> chunk.toByteArray().size + chunk.count { char -> char == '\u0000' } }
 
-        // See if this char would still fit into the chunk, if not not create chunk and start next one.
-        if (modifiedUtf8BlockSize + charByteArraySize > chunkSize) {
-            result.add(this.subSequence(blockStart, i))
-            blockStart = i
-            modifiedUtf8BlockSize = charByteArraySize
-        } else {
-            modifiedUtf8BlockSize += charByteArraySize
+        // See if this char would still fit into the chunk. If not, create chunk and start next one.
+        if (charModifiedUtf8ByteArraySize > chunkSize) {
+            result.add(this.subSequence(nextChunkStart, i))
+            nextChunkStart = i
         }
     }
-    // If there was a block that we started but did not add yet, add the rest.
-    if (blockStart != length) {
-        result.add(this.subSequence(blockStart, this.length))
+    // If there was a chunk that we started but did not add yet, add the rest.
+    if (nextChunkStart != length) {
+        result.add(this.subSequence(nextChunkStart, this.length))
     }
     return result
 }
