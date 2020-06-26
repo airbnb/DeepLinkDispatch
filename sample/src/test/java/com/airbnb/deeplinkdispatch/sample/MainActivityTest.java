@@ -7,6 +7,7 @@ import android.net.Uri;
 import com.airbnb.deeplinkdispatch.DeepLink;
 import com.airbnb.deeplinkdispatch.DeepLinkDispatch;
 import com.airbnb.deeplinkdispatch.sample.benchmarkable.BenchmarkDeepLinkModuleRegistry;
+import com.airbnb.deeplinkdispatch.sample.library.LibraryActivity;
 import com.airbnb.deeplinkdispatch.sample.library.LibraryDeepLinkModuleRegistry;
 
 import org.junit.Test;
@@ -174,16 +175,24 @@ public class MainActivityTest {
 
   @Test
   public void testSupportsUri() throws Exception {
+    Map<String, String> configurablePathSegmentReplacements = new HashMap<>();
+    configurablePathSegmentReplacements.put("configurable-path-segment", "obamaOs");
+    configurablePathSegmentReplacements.put("configurable-path-segment-one", "belong");
+    configurablePathSegmentReplacements.put("configurable-path-segment-two", "anywhere");
     DeepLinkDelegate deepLinkDelegate = new DeepLinkDelegate(new SampleModuleRegistry(),
-      new LibraryDeepLinkModuleRegistry(), new BenchmarkDeepLinkModuleRegistry());
+      new LibraryDeepLinkModuleRegistry(), new BenchmarkDeepLinkModuleRegistry(), configurablePathSegmentReplacements);
     assertThat(deepLinkDelegate.supportsUri("dld://classDeepLink"), equalTo(true));
     assertThat(deepLinkDelegate.supportsUri("some://weirdNonExistentUri"), equalTo(false));
   }
 
   @Test
   public void testSameLengthComponentsMismatch() throws Exception {
+    Map<String, String> configurablePathSegmentReplacements = new HashMap<>();
+    configurablePathSegmentReplacements.put("configurable-path-segment", "obamaOs");
+    configurablePathSegmentReplacements.put("configurable-path-segment-one", "belong");
+    configurablePathSegmentReplacements.put("configurable-path-segment-two", "anywhere");
     DeepLinkDelegate deepLinkDelegate = new DeepLinkDelegate(new SampleModuleRegistry(),
-      new LibraryDeepLinkModuleRegistry(), new BenchmarkDeepLinkModuleRegistry());
+      new LibraryDeepLinkModuleRegistry(), new BenchmarkDeepLinkModuleRegistry(), configurablePathSegmentReplacements);
     assertThat(deepLinkDelegate.supportsUri("dld://classDeepLink"), equalTo(true));
     assertThat(deepLinkDelegate.supportsUri("dld://classDeepLinx"), equalTo(false));
   }
@@ -243,5 +252,16 @@ public class MainActivityTest {
       new LibraryDeepLinkModuleRegistry(), new BenchmarkDeepLinkModuleRegistry(), configurablePathSegmentReplacements);
     assertThat(deepLinkDelegate.supportsUri("https://www.example.com/anywhere/belong/foo"), equalTo(false));
     assertThat(deepLinkDelegate.supportsUri("https://www.example.com/belong/anywhere/foo"), equalTo(true));
+  }
+
+  @Test
+  public void testMoreConcreteMach() {
+    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("placeholder://host/somePathOne/somePathTwo/somePathThree"));
+    DeepLinkActivity deepLinkActivity = Robolectric.buildActivity(DeepLinkActivity.class, intent)
+      .create().get();
+    ShadowActivity shadowActivity = shadowOf(deepLinkActivity);
+    Intent launchedIntent = shadowActivity.peekNextStartedActivityForResult().intent;
+    assertThat(launchedIntent.getComponent(),
+      equalTo(new ComponentName(deepLinkActivity, LibraryActivity.class)));
   }
 }

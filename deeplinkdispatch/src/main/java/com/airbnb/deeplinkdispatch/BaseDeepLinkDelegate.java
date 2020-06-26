@@ -15,6 +15,9 @@ import com.airbnb.deeplinkdispatch.base.Utils;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -47,6 +50,8 @@ public class BaseDeepLinkDelegate {
   public BaseDeepLinkDelegate(List<? extends BaseRegistry> registries) {
     this.registries = registries;
     configurablePathSegmentReplacements = new HashMap<>();
+    ValidationUtilsKt.validateConfigurablePathSegmentReplacements(registries,
+      this.configurablePathSegmentReplacements);
   }
 
   public BaseDeepLinkDelegate(
@@ -210,15 +215,34 @@ public class BaseDeepLinkDelegate {
 
   private DeepLinkEntry findEntry(String uriString) {
     DeepLinkEntry entryRegExpMatch = null;
-    DeepLinkEntry entryIdxMatch;
-    DeepLinkUri parse = DeepLinkUri.parse(uriString);
+    List<DeepLinkEntry> entryIdxMatches = new ArrayList<>();
+    DeepLinkUri uri = DeepLinkUri.parse(uriString);
     for (BaseRegistry registry : registries) {
-      entryIdxMatch = registry.idxMatch(parse, configurablePathSegmentReplacements);
+      DeepLinkEntry entryIdxMatch = registry.idxMatch(uri, configurablePathSegmentReplacements);
       if (entryIdxMatch != null) {
-        return entryIdxMatch;
+        entryIdxMatches.add(entryIdxMatch);
       }
     }
-    return null;
+    // Found no match
+    if (entryIdxMatches.isEmpty()) {
+      return null;
+    } else if (entryIdxMatches.size() == 1) {
+      // Found just one match
+      return entryIdxMatches.get(0);
+    }
+    // Found multiple matches. Sort matches by concreteness:
+    // No variable element > containing placeholders >  are a configurable path segment
+    Collections.sort(entryIdxMatches, new Comparator<DeepLinkEntry>() {
+      @Override
+      public int compare(DeepLinkEntry a, DeepLinkEntry b) {
+        return a.moreConcreteThan(b);
+      }
+    });
+    if (entryIdxMatches.get(0).moreConcreteThan(entryIdxMatches.get(1)) == 0) {
+      Log.w(TAG, "More than one match with the same concreteness!! ("
+        + entryIdxMatches.get(0).toString() + ") vs. (" + entryIdxMatches.get(1).toString() + ")");
+    }
+    return entryIdxMatches.get(0);
   }
 
   private void validateInput(Activity activity, Intent sourceIntent) {

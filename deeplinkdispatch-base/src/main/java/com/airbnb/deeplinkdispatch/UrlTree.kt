@@ -148,6 +148,10 @@ fun UByteArray.writeUShortAt(startIndex: Int, value: UShort) {
 }
 
 const val configurablePathSegmentPrefix = "<"
+const val configurablePathSegmentPrefixChar = configurablePathSegmentPrefix.get(0)
 const val configurablePathSegmentSuffix = ">"
+const val configurablePathSegmentSuffixChar = configurablePathSegmentSuffix.get(0)
 const val componentParamPrefix = "{"
+const val componentParamPrefixChar = componentParamPrefix.get(0)
 const val componentParamSuffix = "}"
+const val componentParamSuffixChar = componentParamSuffix.get(0)
