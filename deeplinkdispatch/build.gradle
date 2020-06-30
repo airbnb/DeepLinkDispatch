@@ -34,4 +34,7 @@ android {
     targetSdkVersion androidConfig.compileSdkVersion
     testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
   }
+  testOptions {
+    unitTests.returnDefaultValues = true
+  }
 }

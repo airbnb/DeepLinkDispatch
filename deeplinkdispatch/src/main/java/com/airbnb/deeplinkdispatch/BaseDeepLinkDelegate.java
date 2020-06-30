@@ -17,7 +17,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,6 +27,8 @@ public class BaseDeepLinkDelegate {
   protected static final String TAG = "DeepLinkDelegate";
 
   protected final List<? extends BaseRegistry> registries;
+
+  protected final ErrorHandler errorHandler;
   /**
    * <p>Mapping of values for DLD to substitute for annotation-declared configurablePathSegments.
    * </p>
@@ -49,6 +50,15 @@ public class BaseDeepLinkDelegate {
 
   public BaseDeepLinkDelegate(List<? extends BaseRegistry> registries) {
     this.registries = registries;
+    this.errorHandler = null;
+    configurablePathSegmentReplacements = new HashMap<>();
+    ValidationUtilsKt.validateConfigurablePathSegmentReplacements(registries,
+      this.configurablePathSegmentReplacements);
+  }
+
+  public BaseDeepLinkDelegate(List<? extends BaseRegistry> registries, ErrorHandler errorHandler) {
+    this.registries = registries;
+    this.errorHandler = errorHandler;
     configurablePathSegmentReplacements = new HashMap<>();
     ValidationUtilsKt.validateConfigurablePathSegmentReplacements(registries,
       this.configurablePathSegmentReplacements);
@@ -59,6 +69,20 @@ public class BaseDeepLinkDelegate {
     Map<String, String> configurablePathSegmentReplacements
   ) {
     this.registries = registries;
+    this.errorHandler = null;
+    this.configurablePathSegmentReplacements =
+      Utils.toByteArrayMap(configurablePathSegmentReplacements);
+    ValidationUtilsKt.validateConfigurablePathSegmentReplacements(registries,
+      this.configurablePathSegmentReplacements);
+  }
+
+  public BaseDeepLinkDelegate(
+    List<? extends BaseRegistry> registries,
+    Map<String, String> configurablePathSegmentReplacements,
+    ErrorHandler errorHandler
+  ) {
+    this.registries = registries;
+    this.errorHandler = errorHandler;
     this.configurablePathSegmentReplacements =
       Utils.toByteArrayMap(configurablePathSegmentReplacements);
     ValidationUtilsKt.validateConfigurablePathSegmentReplacements(registries,
@@ -232,13 +256,11 @@ public class BaseDeepLinkDelegate {
     }
     // Found multiple matches. Sort matches by concreteness:
     // No variable element > containing placeholders >  are a configurable path segment
-    Collections.sort(entryIdxMatches, new Comparator<DeepLinkEntry>() {
-      @Override
-      public int compare(DeepLinkEntry a, DeepLinkEntry b) {
-        return a.moreConcreteThan(b);
+    Collections.sort(entryIdxMatches);
+    if (entryIdxMatches.get(0).compareTo(entryIdxMatches.get(1)) == 0) {
+      if (errorHandler != null) {
+        errorHandler.duplicateMatch(entryIdxMatches.subList(0, 2));
       }
-    });
-    if (entryIdxMatches.get(0).moreConcreteThan(entryIdxMatches.get(1)) == 0) {
       Log.w(TAG, "More than one match with the same concreteness!! ("
         + entryIdxMatches.get(0).toString() + ") vs. (" + entryIdxMatches.get(1).toString() + ")");
     }

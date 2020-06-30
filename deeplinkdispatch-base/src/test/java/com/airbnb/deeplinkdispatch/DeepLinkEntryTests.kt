@@ -12,29 +12,29 @@ class DeepLinkEntryTests {
     private val cpsFirstPathSegment = DeepLinkEntry("scheme://host/<config>/two/three", DeepLinkEntry.Type.CLASS, this.javaClass, null)
 
     @Test fun testSameness(){
-        assertTrue(concrete.moreConcreteThan(concrete) == 0)
-        assertTrue(parmSecondPathElement.moreConcreteThan(parmSecondPathElement) == 0)
-        assertTrue(parmFirstPathElement.moreConcreteThan(parmFirstPathElement) == 0)
-        assertTrue(cpsSecondPathSegment.moreConcreteThan(cpsSecondPathSegment) == 0)
-        assertTrue(cpsFirstPathSegment.moreConcreteThan(cpsFirstPathSegment) == 0)
+        assertTrue(concrete.compareTo(concrete) == 0)
+        assertTrue(parmSecondPathElement.compareTo(parmSecondPathElement) == 0)
+        assertTrue(parmFirstPathElement.compareTo(parmFirstPathElement) == 0)
+        assertTrue(cpsSecondPathSegment.compareTo(cpsSecondPathSegment) == 0)
+        assertTrue(cpsFirstPathSegment.compareTo(cpsFirstPathSegment) == 0)
     }
 
     @Test fun testEarlierLaterPlaceholder(){
-        assertTrue(parmSecondPathElement.moreConcreteThan(parmFirstPathElement) == 1)
-        assertTrue(parmFirstPathElement.moreConcreteThan(parmSecondPathElement) == -1)
-        assertTrue(parmSecondPathElement.moreConcreteThan(cpsFirstPathSegment) == 1)
-        assertTrue(parmFirstPathElement.moreConcreteThan(cpsSecondPathSegment) == -1)
+        assertTrue(parmSecondPathElement.compareTo(parmFirstPathElement) == 1)
+        assertTrue(parmFirstPathElement.compareTo(parmSecondPathElement) == -1)
+        assertTrue(parmSecondPathElement.compareTo(cpsFirstPathSegment) == 1)
+        assertTrue(parmFirstPathElement.compareTo(cpsSecondPathSegment) == -1)
     }
 
     @Test fun testEarlierLaterCps(){
-        assertTrue(cpsSecondPathSegment.moreConcreteThan(cpsFirstPathSegment) == 1)
-        assertTrue(cpsFirstPathSegment.moreConcreteThan(cpsSecondPathSegment) == -1)
-        assertTrue(cpsSecondPathSegment.moreConcreteThan(parmFirstPathElement) == 1)
-        assertTrue(cpsFirstPathSegment.moreConcreteThan(parmSecondPathElement) == -1)
+        assertTrue(cpsSecondPathSegment.compareTo(cpsFirstPathSegment) == 1)
+        assertTrue(cpsFirstPathSegment.compareTo(cpsSecondPathSegment) == -1)
+        assertTrue(cpsSecondPathSegment.compareTo(parmFirstPathElement) == 1)
+        assertTrue(cpsFirstPathSegment.compareTo(parmSecondPathElement) == -1)
     }
 
     @Test fun testPlaceholderWinOverCps(){
-        assertTrue(cpsSecondPathSegment.moreConcreteThan(parmSecondPathElement) == -1)
-        assertTrue(parmSecondPathElement.moreConcreteThan(cpsSecondPathSegment) == 1)
+        assertTrue(cpsSecondPathSegment.compareTo(parmSecondPathElement) == -1)
+        assertTrue(parmSecondPathElement.compareTo(cpsSecondPathSegment) == 1)
     }
 }

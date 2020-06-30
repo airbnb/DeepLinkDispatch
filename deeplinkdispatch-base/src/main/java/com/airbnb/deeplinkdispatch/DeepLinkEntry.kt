@@ -22,7 +22,7 @@ class DeepLinkEntry(val uriTemplate: String,
                     /**
                      * The class where the annotation corresponding to where an instance of DeepLinkEntry is declared.
                      */
-                    val activityClass: Class<*>, val method: String?) {
+                    val activityClass: Class<*>, val method: String?) : Comparable<DeepLinkEntry> {
 
     enum class Type {
         CLASS,
@@ -40,7 +40,7 @@ class DeepLinkEntry(val uriTemplate: String,
             if (firstConfigurablePathSegmentIndex == -1) {
                 firstPlaceholderIndex
             } else {
-                if(firstPlaceholderIndex == -1){
+                if (firstPlaceholderIndex == -1) {
                     firstConfigurablePathSegmentIndex
                 } else {
                     min(firstConfigurablePathSegmentIndex, firstPlaceholderIndex)
@@ -74,11 +74,11 @@ class DeepLinkEntry(val uriTemplate: String,
      * same level and in the same "list" of elements we compare in order.
      * In this case the one with the more concete element would have won and the same is true here.
      */
-    fun moreConcreteThan(compare: DeepLinkEntry): Int {
+    override fun compareTo(other: DeepLinkEntry): Int {
         return when {
-            this.firstNonConcreteIndex < compare.firstNonConcreteIndex -> -1
-            this.firstNonConcreteIndex == compare.firstNonConcreteIndex -> {
-                if (this.firstNonConcreteIndex == -1 || uriTemplate[firstNonConcreteIndex] == compare.uriTemplate[firstNonConcreteIndex]) {
+            this.firstNonConcreteIndex < other.firstNonConcreteIndex -> -1
+            this.firstNonConcreteIndex == other.firstNonConcreteIndex -> {
+                if (this.firstNonConcreteIndex == -1 || uriTemplate[firstNonConcreteIndex] == other.uriTemplate[firstNonConcreteIndex]) {
                     0
                 } else if (this.uriTemplate[firstNonConcreteIndex] == configurablePathSegmentPrefixChar) {
                     -1
@@ -87,5 +87,4 @@ class DeepLinkEntry(val uriTemplate: String,
             else -> 1
         }
     }
-
 }
