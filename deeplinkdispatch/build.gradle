@@ -27,7 +27,6 @@ checkstyle {
 
 android {
   compileSdkVersion androidConfig.compileSdkVersion
-  buildToolsVersion androidConfig.buildToolsVersion
 
   defaultConfig {
     minSdkVersion androidConfig.minSdkVersion
