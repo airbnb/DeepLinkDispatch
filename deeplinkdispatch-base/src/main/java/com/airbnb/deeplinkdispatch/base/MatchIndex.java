@@ -223,6 +223,9 @@ public class MatchIndex {
         replacementValue = pathSegmentEntry.getValue();
       }
     }
+    if (replacementValue == null) {
+      return null;
+    }
     if (replacementValue.length == 0) {
       return new CompareResult("", true);
     }
@@ -284,10 +287,10 @@ public class MatchIndex {
   /**
    * Get the next entries position, or -1 if there are no further entries.
    *
-   * @param elementStartPos   The start postion of the current element.
+   * @param elementStartPos   The start position of the current element.
    * @param parentBoundaryPos The parent elements boundry (i.e. the first elementStartPos that is
    *                          not part of the parent element anhymore)
-   * @return
+   * @return The next entries position, or -1 if there are no further entries.
    */
   private int getNextElementStartPosition(int elementStartPos, int parentBoundaryPos) {
     int nextElementPos = getElementBoundaryPos(elementStartPos);
@@ -303,8 +306,8 @@ public class MatchIndex {
    * The elements boundary is the first elementStartPos that is not part of the parent element
    * anymore.
    *
-   * @param elementStartPos
-   * @return
+   * @param elementStartPos The start position of the current element.
+   * @return The first elementStartPos that is not part of the parent element anymore.
    */
   private int getElementBoundaryPos(int elementStartPos) {
     return elementStartPos + HEADER_LENGTH + getValueLength(elementStartPos)
@@ -328,7 +331,7 @@ public class MatchIndex {
   /**
    * The length of the value element of the element starting at elementStartPos.
    *
-   * @param elementStartPos Starting positon of element to process
+   * @param elementStartPos Starting position of element to process
    * @return The length of the value section of this element.
    */
   private int getValueLength(int elementStartPos) {
@@ -341,7 +344,7 @@ public class MatchIndex {
   /**
    * The length of the children section of the element starting at elementStartPos.
    *
-   * @param elementStartPos Starting positon of element to process
+   * @param elementStartPos Starting position of element to process
    * @return The length of the children section of this element.
    */
   private int getChildrenLength(int elementStartPos) {
@@ -353,7 +356,7 @@ public class MatchIndex {
   }
 
   /**
-   * @param elementStartPos
+   * @param elementStartPos Starting position of element to process
    * @return The match index for this element. It is either the match index or MAX_SHORT if no
    * match.
    */

@@ -122,6 +122,24 @@ public class MainActivity extends AppCompatActivity {
     return new Intent(context, MainActivity.class).setAction(ACTION_DEEP_LINK_COMPLEX);
   }
 
+  /**
+   * This method is a less concrete match for the URI dld://host/somePathOne/somePathTwo/somePathThree
+   * to a annotated method in `sample-library` that is annotated with
+   * @DeepLink("dld://host/somePathOne/somePathTwo/somePathThree") and thus will always be picked over
+   * this method when matching.
+   *
+   * @param context
+   * @param bundle
+   * @return
+   */
+  @DeepLink("placeholder://host/somePathOne/{param1}/somePathThree")
+  public static Intent lessConcreteMatch(Context context, Bundle bundle) {
+    if (bundle != null && bundle.containsKey("param1")) {
+      Log.d(TAG, "matched less concrete url in sample project :" + bundle.getString("param1"));
+    }
+    return new Intent(context, MainActivity.class).setAction(ACTION_DEEP_LINK_METHOD);
+  }
+
   private void showToast(String message) {
     Toast.makeText(this, "Deep Link: " + message, Toast.LENGTH_SHORT).show();
   }
