@@ -5,6 +5,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 
+import androidx.annotation.NonNull;
+
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
@@ -138,11 +140,13 @@ public class BaseDeepLinkDelegateTest {
   @Test
   public void testErrorHanderWithDuplicateMartch() {
     String deeplinkUrl = "airbnb://foo/{bar}";
+    String matchUrl = "airbnb://foo/bar";
+
     DeepLinkEntry entry = deepLinkEntry(deeplinkUrl);
 
     Uri uri = mock(Uri.class);
     when(uri.toString())
-      .thenReturn(deeplinkUrl);
+      .thenReturn(matchUrl);
     Intent intent = mock(Intent.class);
     when(intent.getData())
       .thenReturn(uri);
@@ -162,6 +166,7 @@ public class BaseDeepLinkDelegateTest {
     assertThat(errorHandler.getDuplicatedMatches().size()).isEqualTo(2);
     assertThat(errorHandler.getDuplicatedMatches().get(0)).isEqualTo(entry);
     assertThat(errorHandler.getDuplicatedMatches().get(1)).isEqualTo(entry);
+    assertThat(errorHandler.getUriString()).isEqualTo(matchUrl);
 
     assertThat(result.getDeepLinkEntry().equals(entry));
   }
@@ -170,12 +175,13 @@ public class BaseDeepLinkDelegateTest {
   public void testErrorHandlerNotGettingCalled() {
     String deeplinkUrl1 = "airbnb://foo/{bar}";
     String deeplinkUrl2 = "airbnb://bar/{foo}";
+    String matchUrl = "airbnb://bar/foo";
     DeepLinkEntry entry1 = deepLinkEntry(deeplinkUrl1);
     DeepLinkEntry entry2 = deepLinkEntry(deeplinkUrl2);
 
     Uri uri = mock(Uri.class);
     when(uri.toString())
-      .thenReturn(deeplinkUrl2);
+      .thenReturn(matchUrl);
     Intent intent = mock(Intent.class);
     when(intent.getData())
       .thenReturn(uri);
@@ -192,26 +198,6 @@ public class BaseDeepLinkDelegateTest {
 
     assertThat(errorHandler.duplicatedMatchCalled()).isFalse();
     assertThat(result.getDeepLinkEntry().equals(entry2));
-  }
-
-  class TestErrorHandler implements ErrorHandler {
-
-    List<DeepLinkEntry> duplicatedMatches = null;
-    boolean duplicateMatchCalled = false;
-
-    public List<DeepLinkEntry> getDuplicatedMatches() {
-      return duplicatedMatches;
-    }
-
-    public boolean duplicatedMatchCalled() {
-      return duplicateMatchCalled;
-    }
-
-    @Override
-    public void duplicateMatch(@NotNull List<DeepLinkEntry> duplicatedMatches) {
-      this.duplicatedMatches = duplicatedMatches;
-      duplicateMatchCalled = true;
-    }
   }
 
   private static DeepLinkEntry deepLinkEntry(String uri) {
@@ -250,6 +236,32 @@ public class BaseDeepLinkDelegateTest {
 
   private static TestDeepLinkDelegate getOneRegistryTestDelegate(List<DeepLinkEntry> entries, ErrorHandler errorHandler) {
     return new TestDeepLinkDelegate(Arrays.asList(getTestRegistry(entries)), errorHandler);
+  }
+
+  private static class TestErrorHandler implements ErrorHandler {
+
+    List<DeepLinkEntry> duplicatedMatches = null;
+    boolean duplicateMatchCalled = false;
+    private String uriString;
+
+    public String getUriString() {
+      return uriString;
+    }
+
+    public List<DeepLinkEntry> getDuplicatedMatches() {
+      return duplicatedMatches;
+    }
+
+    public boolean duplicatedMatchCalled() {
+      return duplicateMatchCalled;
+    }
+
+    @Override
+    public void duplicateMatch(@NonNull String uriString, @NotNull List<DeepLinkEntry> duplicatedMatches) {
+      this.uriString = uriString;
+      this.duplicatedMatches = duplicatedMatches;
+      duplicateMatchCalled = true;
+    }
   }
 
   private static class TestDeepLinkDelegate extends BaseDeepLinkDelegate {

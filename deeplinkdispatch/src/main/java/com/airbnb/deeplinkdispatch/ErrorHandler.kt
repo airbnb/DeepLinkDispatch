@@ -1,5 +1,5 @@
 package com.airbnb.deeplinkdispatch
 
 interface ErrorHandler {
-    fun duplicateMatch(duplicatedMatches: List<DeepLinkEntry>)
+    fun duplicateMatch(uriString: String, duplicatedMatches: List<DeepLinkEntry>)
 }

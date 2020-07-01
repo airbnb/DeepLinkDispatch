@@ -8,6 +8,7 @@ import android.os.Bundle;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.core.app.TaskStackBuilder;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
@@ -28,6 +29,7 @@ public class BaseDeepLinkDelegate {
 
   protected final List<? extends BaseRegistry> registries;
 
+  @Nullable
   protected final ErrorHandler errorHandler;
   /**
    * <p>Mapping of values for DLD to substitute for annotation-declared configurablePathSegments.
@@ -259,7 +261,7 @@ public class BaseDeepLinkDelegate {
     Collections.sort(entryIdxMatches);
     if (entryIdxMatches.get(0).compareTo(entryIdxMatches.get(1)) == 0) {
       if (errorHandler != null) {
-        errorHandler.duplicateMatch(entryIdxMatches.subList(0, 2));
+        errorHandler.duplicateMatch(uriString, entryIdxMatches.subList(0, 2));
       }
       Log.w(TAG, "More than one match with the same concreteness!! ("
         + entryIdxMatches.get(0).toString() + ") vs. (" + entryIdxMatches.get(1).toString() + ")");
