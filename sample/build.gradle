@@ -12,7 +12,6 @@ checkstyle {
 
 android {
   compileSdkVersion androidConfig.compileSdkVersion
-  buildToolsVersion androidConfig.buildToolsVersion
 
   defaultConfig {
     applicationId "com.airbnb.deeplinkdispatch.sample"
