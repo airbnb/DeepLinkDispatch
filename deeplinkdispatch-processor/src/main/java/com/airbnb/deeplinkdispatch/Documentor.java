@@ -30,7 +30,6 @@ final class Documentor {
   protected static final String CLASS_METHOD_NAME_DELIMITER = "#";
   protected static final String PARAM = "@param";
   protected static final String RETURN = "@return";
-  @VisibleForTesting
   static final String DOC_OUTPUT_PROPERTY_NAME = "deepLinkDoc.output";
 
   private final ProcessingEnvironment processingEnv;
