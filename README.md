@@ -385,7 +385,7 @@ benchmark:        11,375 ns DeeplinkBenchmarks.parseDeeplinkUrl
 Tests ran to completion.
 ```
 
-As you can see it taes us about 11ms to create the registry with 2000 entries. A lookup can be done in sub 1ms usually and `createResult`, which includes the lookup for the `match1` case plus actually calling the method that was annotated, can be done in 0.2ms. 
+As you can see it takes us about 11ms to create the registry with 2000 entries. A lookup can be done in sub 1ms usually and `createResult`, which includes the lookup for the `match1` case plus actually calling the method that was annotated, can be done in 0.2ms. 
 
 The performance tests can be run from Android Studio or via gradle by running `./gradlew sample-benchmark:connectedCheck` (with a device connected). The outoput can be found in `sample-benchmark/build/outputs/connected_android_test_additional_output/`.
 
