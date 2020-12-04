@@ -96,7 +96,6 @@ data class Root(override val id: String = "r") : TreeNode(ROOT_VALUE, NodeMetada
      * of this not allowed to be larger than 65535. So we chunk our string exactly to that size.
      */
     fun getStrings(): List<CharSequence> {
-        println("STRINGS_LOG ${this.toUByteArray().size} ${this.toUByteArray().toByteArray().size} ${String(bytes = this.toUByteArray().toByteArray(), charset = Charset.forName(MATCH_INDEX_ENCODING)).length}")
         return String(bytes = this.toUByteArray().toByteArray(), charset = Charset.forName(MATCH_INDEX_ENCODING)).chunkOnModifiedUtf8ByteSize(MAX_CODE_STRING_BYTE_SIZE)
     }
 
