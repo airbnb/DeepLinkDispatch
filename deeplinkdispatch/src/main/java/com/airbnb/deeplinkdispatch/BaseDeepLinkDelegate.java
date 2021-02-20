@@ -228,7 +228,7 @@ public class BaseDeepLinkDelegate {
       }
       return new DeepLinkResult(true, uriString, "", newIntent, taskStackBuilder, deepLinkEntry);
     } catch (NoSuchMethodException exception) {
-      return new DeepLinkResult(false, uriString, "Dee3p link to non-existent method: "
+      return new DeepLinkResult(false, uriString, "Deep link to non-existent method: "
         + deepLinkEntry.getMethod(), null, null, deepLinkEntry);
     } catch (IllegalAccessException exception) {
       return new DeepLinkResult(false, uriString, "Could not deep link to method: "
