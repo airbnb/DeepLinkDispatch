@@ -80,7 +80,7 @@ public class MatchIndex {
 
   /**
    * Match a given {@link com.airbnb.deeplinkdispatch.DeepLinkUri} (given as a List of
-   * {@link UrlElement} against thissearchh index.
+   * {@link UrlElement} against this searchh index.
    * Will return an instance of {@link Match} if a match was found or null if there wasn't.
    *
    * @param elements The {@link UrlElement} list of
