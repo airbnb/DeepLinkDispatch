@@ -80,7 +80,7 @@ public class MatchIndex {
 
   /**
    * Match a given {@link com.airbnb.deeplinkdispatch.DeepLinkUri} (given as a List of
-   * {@link UrlElement} aginst this serach index.
+   * {@link UrlElement} against thissearchh index.
    * Will return an instance of {@link Match} if a match was found or null if there wasn't.
    *
    * @param elements The {@link UrlElement} list of
@@ -90,13 +90,13 @@ public class MatchIndex {
    *                     to collect the set of placeholders and their values as
    *                     the {@link com.airbnb.deeplinkdispatch.DeepLinkUri} is recursively
    *                     processed.
-   * @param elementIndex The index of the elemnt currently processed in the elements list above.
+   * @param elementIndex The index of the element currently processed in the elements list above.
    * @param elementStartPosition The index of the start position of the current element int he
    *                             byte array search index.
    * @param parentBoundryPos The last element that is still part of the parent element. While
    *                         looking at children of a current element that is the last element of
    *                         the last child.
-   * @param pathSegmentReplacements  A map of configuralbe path segment replacements and their
+   * @param pathSegmentReplacements  A map of configurable path segment replacements and their
    *                                 values.
    * @return An instance of {@link Match} if a match was found null if it wasn't.
    */
@@ -144,12 +144,10 @@ public class MatchIndex {
           }
         } else {
           int matchIndex = getMatchIndex(currentElementStartPosition);
-          // Url is a partial match.
-          if (matchIndex == NO_MATCH) {
-            return null;
+          if (matchIndex != NO_MATCH) {
+            match = new Match(matchIndex, placeholdersOutput == null
+              ? new HashMap<String, String>(0) : placeholdersOutput);
           }
-          match = new Match(matchIndex, placeholdersOutput == null
-            ? new HashMap<String, String>(0) : placeholdersOutput);
         }
       }
       if (match != null) {
