@@ -29,6 +29,33 @@ public class DeepLinkEntryTest {
     assertThat(parameters.get("param2")).isEqualTo("alice");
   }
 
+  /**
+   * This test makes sure that both version of the parametrized strings are matched correctly.
+   * As match groups are sorted alphabetically in the index we need to make sure that the
+   * shorter one is in the index behind the longer one (as otherwise the test would match
+   * correctly anyway)
+   */
+  @Test public void testOneAndTwoParamsSubPath() {
+    DeepLinkEntry entryOneParams = deepLinkEntry("airbnb://test/path/{param3}");
+    DeepLinkEntry entryTwoParams = deepLinkEntry("airbnb://test/path/{param2}/{param1}");
+    TestDeepLinkRegistry testRegistry = getTestRegistry(Arrays.asList(new DeepLinkEntry[] {entryTwoParams, entryOneParams}));
+
+    String url2Params = "airbnb://test/path/bob/alice";
+    DeepLinkEntry matchTwo = testRegistry.idxMatch(DeepLinkUri.parse(url2Params));
+    assertThat(matchTwo).isNotNull();
+    Map<String, String> parameters2 = matchTwo.getParameters(DeepLinkUri.parse(url2Params));
+    assertThat(parameters2.get("param2")).isEqualTo("bob");
+    assertThat(parameters2.get("param1")).isEqualTo("alice");
+    assertThat(parameters2.size()).isEqualTo(2);
+
+    String url1Param = "airbnb://test/path/eve";
+    DeepLinkEntry matchOne = testRegistry.idxMatch(DeepLinkUri.parse(url1Param));
+    Map<String, String> parameters1 = matchOne.getParameters(DeepLinkUri.parse(url1Param));
+    assertThat(matchOne).isNotNull();
+    assertThat(parameters1.get("param3")).isEqualTo("eve");
+    assertThat(parameters1.size()).isEqualTo(1);
+  }
+
   @Test public void testParamWithSpecialCharacters() throws Exception {
     DeepLinkEntry entry = deepLinkEntry("airbnb://foo/{bar}");
     TestDeepLinkRegistry testRegistry = getTestRegistry(Arrays.asList(new DeepLinkEntry[] {entry}));
