@@ -39,7 +39,10 @@ import java.lang.annotation.Target;
  * </ul>
  */
 @Target({ ElementType.ANNOTATION_TYPE })
-@Retention(RetentionPolicy.CLASS)
+// When using tools like Dexguard we require these annotations to still be inside the .dex files
+// produced by D8 but because of this bug https://issuetracker.google.com/issues/168524920 they
+// are not so we need to mark them as RetentionPolicy.RUNTIME.
+@Retention(RetentionPolicy.RUNTIME)
 public @interface DeepLinkSpec {
   String[] prefix();
 }
