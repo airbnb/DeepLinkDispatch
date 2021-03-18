@@ -31,7 +31,7 @@ public class DeepLinkEntryTest {
 
   /**
    * This test makes sure that both version of the parametrized strings are matched correctly.
-   * As mach groups are sorted alphabetically in the index we need to make sure that the
+   * As match groups are sorted alphabetically in the index we need to make sure that the
    * shorter one is in the index behind the longer one (as otherwise the test would match
    * correctly anyway)
    */
