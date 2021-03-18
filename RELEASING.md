@@ -9,3 +9,4 @@ Releasing
  8. `git commit -am "Prepare next development version."`
  9. `git push && git push --tags`
  10. Visit [Sonatype Nexus](https://oss.sonatype.org/) and promote the artifact.
+ 11. Go to https://github.com/airbnb/DeepLinkDispatch/releases and create the release (via pushed tag)
