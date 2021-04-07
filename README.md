@@ -104,7 +104,7 @@ public static TaskStackBuilder intentForTaskStackBuilderMethods(Context context)
 Query parameters are parsed and passed along automatically, and are retrievable like any other parameter. For example, we could retrieve the query parameter passed along in the URI `foo://example.com/deepLink?qp=123`:
 
 ```java
-@DeepLink("foo://example.com/deepLink")
+@DeepLink("foo://example.com/deepLink?qp=123")
 public class MainActivity extends Activity {
   @Override protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
