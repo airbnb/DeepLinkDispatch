@@ -62,7 +62,6 @@ public class MatchIndex {
   public static final int MATCH_DATA_CLASS_LENGTH = 2;
   public static final int MATCH_DATA_METHOD_LENGTH = 1;
 
-
   public static final int HEADER_LENGTH = HEADER_NODE_METADATA_LENGTH + HEADER_VALUE_LENGTH
     + HEADER_MATCH_LENGTH + HEADER_CHILDREN_LENGTH;
 
@@ -104,16 +103,20 @@ public class MatchIndex {
    *                                 values.
    * @return An instance of {@link DeepLinkEntry} if a match was found null if it wasn't.
    */
-  public DeepLinkEntry matchUri(@NonNull DeepLinkUri deeplinkUri, @NonNull List<UrlElement> elements, @Nullable Map<String, String>
-    placeholders, int elementIndex, int elementStartPosition, int parentBoundryPos,
-                        Map<byte[], byte[]> pathSegmentReplacements) {
+  public DeepLinkEntry matchUri(@NonNull DeepLinkUri deeplinkUri,
+                                @NonNull List<UrlElement> elements,
+                                @Nullable Map<String, String> placeholders,
+                                int elementIndex,
+                                int elementStartPosition,
+                                int parentBoundryPos,
+                                Map<byte[], byte[]> pathSegmentReplacements) {
     DeepLinkEntry match = null;
     int currentElementStartPosition = elementStartPosition;
     do {
       UrlElement urlElement = elements.get(elementIndex);
       CompareResult compareResult =
         compareValue(currentElementStartPosition, urlElement.getTypeFlag(),
-        urlElement.getValue(), pathSegmentReplacements);
+          urlElement.getValue(), pathSegmentReplacements);
       if (compareResult != null) {
         Map<String, String> placeholdersOutput = placeholders;
         // If the compareResult is not empty we found a match with a placeholder. We need to save
@@ -149,9 +152,12 @@ public class MatchIndex {
         } else {
           int matchLength = getMatchLength(currentElementStartPosition);
           if (matchLength > 0) {
-            match = getDeeplinkEntryFromArray(byteArray, matchLength, getMatchDataPos(currentElementStartPosition));
+            match = getDeeplinkEntryFromArray(byteArray,
+              matchLength,
+              getMatchDataPos(currentElementStartPosition));
             if (match != null) {
-              match.setParameters(deeplinkUri, placeholdersOutput == null ? Collections.emptyMap() : placeholdersOutput);
+              match.setParameters(deeplinkUri,
+                placeholdersOutput == null ? Collections.emptyMap() : placeholdersOutput);
             }
           }
         }
@@ -166,8 +172,10 @@ public class MatchIndex {
   }
 
   @Nullable
-  public static DeepLinkEntry getDeeplinkEntryFromArray(byte[] byteArray, int matchLength, int matchStartPosition ) {
-    if(matchLength == 0){
+  public static DeepLinkEntry getDeeplinkEntryFromArray(byte[] byteArray,
+                                                        int matchLength,
+                                                        int matchStartPosition) {
+    if (matchLength == 0) {
       return null;
     }
     int position = matchStartPosition;
@@ -182,12 +190,15 @@ public class MatchIndex {
     try {
       deeplinkClass = Class.forName(className);
     } catch (ClassNotFoundException e) {
-      throw new IllegalStateException("Deeplink class " + className + " not found. If you are using Proguard/R8/Dexguard please consult README.md for correct configuration.",e);
+      throw new IllegalStateException(
+        "Deeplink class " + className + " not found. If you are using Proguard/R8/Dexguard please "
+          + "consult README.md for correct configuration.", e
+      );
     }
     position += classLength;
     int methodLength = readOneByteAsInt(byteArray, position);
     String methodName = null;
-    if (methodLength > 0 ) {
+    if (methodLength > 0) {
       position += MATCH_DATA_METHOD_LENGTH;
       methodName = getStringFromByteArray(byteArray, position, methodLength);
     }
@@ -360,7 +371,10 @@ public class MatchIndex {
     if (getChildrenLength(elementStartPos) == 0) {
       return -1;
     } else {
-      return elementStartPos + HEADER_LENGTH + getValueLength(elementStartPos) + getMatchLength(elementStartPos);
+      return elementStartPos
+        + HEADER_LENGTH
+        + getValueLength(elementStartPos)
+        + getMatchLength(elementStartPos);
     }
   }
 
