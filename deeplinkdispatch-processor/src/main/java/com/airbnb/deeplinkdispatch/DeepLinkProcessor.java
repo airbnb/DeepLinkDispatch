@@ -80,11 +80,7 @@ public class DeepLinkProcessor extends AbstractProcessor {
   private static final String OPTION_INCREMENTAL = "deepLink.incremental";
   private static final ClassName CLASS_BASE_DEEP_LINK_DELEGATE
     = ClassName.get(PACKAGE_NAME, "BaseDeepLinkDelegate");
-  private static final ClassName CLASS_ARRAYS = ClassName.get(Arrays.class);
-  private static final ClassName CLASS_COLLECTIONS = ClassName.get(Collections.class);
   private static final ClassName CLASS_UTILS = ClassName.get(Utils.class);
-  private static final ClassName CLASS_DEEP_LINK_ENTRY
-    = ClassName.get(PACKAGE_NAME, DeepLinkEntry.class.getSimpleName());
   private static final Class<DeepLink> DEEP_LINK_CLASS = DeepLink.class;
   private static final Class<DeepLinkSpec> DEEP_LINK_SPEC_CLASS = DeepLinkSpec.class;
   public static final String REGISTRY_CLASS_SUFFIX = "Registry";
@@ -317,10 +313,6 @@ public class DeepLinkProcessor extends AbstractProcessor {
                                         List<DeepLinkAnnotatedElement> elements,
                                         Set<Element> originatingElements)
     throws IOException {
-    CodeBlock.Builder deeplinks = CodeBlock.builder()
-      .add("super($T.unmodifiableList($T.<$T>asList(\n",
-        CLASS_COLLECTIONS, CLASS_ARRAYS, CLASS_DEEP_LINK_ENTRY)
-      .indent();
     Collections.sort(elements, new Comparator<DeepLinkAnnotatedElement>() {
       @Override
       public int compare(DeepLinkAnnotatedElement element1, DeepLinkAnnotatedElement element2) {
@@ -345,18 +337,16 @@ public class DeepLinkProcessor extends AbstractProcessor {
       }
     });
     documentor.write(elements);
-    int totalElements = elements.size();
     Root urisTrie = new Root();
     Set<String> pathVariableKeys = new HashSet<>();
-    for (int i = 0; i < totalElements; i++) {
-      DeepLinkAnnotatedElement element = elements.get(i);
+    for (DeepLinkAnnotatedElement element : elements) {
       String type = "DeepLinkEntry.Type." + element.getAnnotationType().toString();
       ClassName activity = ClassName.get(element.getAnnotatedElement());
       Object method = element.getMethod();
       String uri = element.getUri();
 
       try {
-        urisTrie.addToTrie(i, uri, activity.canonicalName(), element.getMethod());
+        urisTrie.addToTrie(uri, activity.canonicalName(), element.getMethod());
       } catch (IllegalArgumentException e) {
         error(element.getAnnotatedElement(), e.getMessage());
       }
@@ -370,8 +360,6 @@ public class DeepLinkProcessor extends AbstractProcessor {
             pathSegment.length() - configurablePathSegmentSuffix.length()));
         }
       }
-      deeplinks.add("new DeepLinkEntry($S, $T.class, $S)$L\n",
-        uri, activity, method, (i < totalElements - 1) ? "," : "");
     }
 
     TypeSpec.Builder deepLinkRegistryBuilder = TypeSpec.classBuilder(className
@@ -382,8 +370,9 @@ public class DeepLinkProcessor extends AbstractProcessor {
 
     MethodSpec constructor = MethodSpec.constructorBuilder()
       .addModifiers(Modifier.PUBLIC)
-      .addCode(deeplinks.unindent().add(")), $T.readMatchIndexFromStrings( new String[] {"
-        + stringMethodNames + "})", CLASS_UTILS).build())
+      .addCode(CodeBlock.builder()
+        .add("super($T.readMatchIndexFromStrings( new String[] {" + stringMethodNames + "})",
+          CLASS_UTILS).build())
       .addCode(generatePathVariableKeysBlock(pathVariableKeys))
       .build();
 

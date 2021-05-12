@@ -298,14 +298,14 @@ public class DeepLinkEntryTest {
 
   private static class TestDeepLinkRegistry extends BaseRegistry {
     public TestDeepLinkRegistry(List<DeepLinkEntry> registry) {
-      super(registry, getSearchIndex(registry), new String[]{});
+      super(getSearchIndex(registry), new String[]{});
     }
 
     @NotNull
     private static byte[] getSearchIndex(List<DeepLinkEntry> registry) {
       Root trieRoot = new Root();
-      for (int i = 0; i < registry.size(); i++) {
-        trieRoot.addToTrie(i, registry.get(i).getUriTemplate(),registry.get(i).getActivityClass().getCanonicalName(), registry.get(i).getMethod());
+      for (DeepLinkEntry entry : registry) {
+        trieRoot.addToTrie(entry.getUriTemplate(),entry.getActivityClass().getCanonicalName(), entry.getMethod());
       }
       return trieRoot.toUByteArray();
     }

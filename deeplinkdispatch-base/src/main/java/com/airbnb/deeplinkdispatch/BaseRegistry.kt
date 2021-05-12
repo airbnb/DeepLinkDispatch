@@ -17,8 +17,7 @@ import com.airbnb.deeplinkdispatch.base.Utils
  * [BaseDeepLinkDelegate]. The correspondent's presence will be validated at runtime by
  * [com.airbnb.deeplinkdispatch.ValidationUtilsKt.validateConfigurablePathSegmentReplacements].
  */
-abstract class BaseRegistry(val registeredDeepLinks: List<DeepLinkEntry>,
-                            matchIndexArray: ByteArray,
+abstract class BaseRegistry(matchIndexArray: ByteArray,
                             pathSegmentReplacementKeys: Array<String>) {
     val pathSegmentReplacementKeysInRegistry = Utils.toByteArraysList(pathSegmentReplacementKeys)
     private val matchIndex: MatchIndex = MatchIndex(matchIndexArray)

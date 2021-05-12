@@ -371,24 +371,23 @@ kapt {
 
 Starting with v5 DeeplinkDispatch is designed to be very fast in resolving deep links even if there are a lot of them. To ensure we do not regress from this benchmark tests using [`androidx.benchmark`](https://developer.android.com/studio/profile/benchmark#top_of_page) were added.
 
-It is testing the `ScaleTestActivity` in the `sample-benchmarkable-library` which has 2000 deep links. For those on a Pixel 2 running Android 10 we expect the following results:
+It is testing the `ScaleTestActivity` in the `sample-benchmarkable-library` which has 2000 deep links. For those on a Pixel 2 running Android 11 we expect the following results:
 
 ```text
 Started running tests
-Timed out waiting for process to appear on google-pixel_2-FA7AW1A04466.
-benchmark:        11,520 ns DeeplinkBenchmarks.match1
-benchmark:       241,406 ns DeeplinkBenchmarks.match500
-benchmark:    12,067,970 ns DeeplinkBenchmarks.newRegistry
-benchmark:        12,076 ns DeeplinkBenchmarks.match1000
-benchmark:       140,000 ns DeeplinkBenchmarks.match1500
-benchmark:       273,230 ns DeeplinkBenchmarks.match2000
-benchmark:       148,750 ns DeeplinkBenchmarks.createResultDeeplink1
-benchmark:        11,375 ns DeeplinkBenchmarks.parseDeeplinkUrl
 
+benchmark:        11,716 ns DeeplinkBenchmarks.match1
+benchmark:       139,375 ns DeeplinkBenchmarks.match500
+benchmark:     2,163,907 ns DeeplinkBenchmarks.newRegistry
+benchmark:        23,035 ns DeeplinkBenchmarks.match1000
+benchmark:       152,969 ns DeeplinkBenchmarks.match1500
+benchmark:       278,906 ns DeeplinkBenchmarks.match2000
+benchmark:       162,604 ns DeeplinkBenchmarks.createResultDeeplink1
+benchmark:        11,774 ns DeeplinkBenchmarks.parseDeeplinkUrl
 Tests ran to completion.
 ```
 
-As you can see it takes us about 11ms to create the registry with 2000 entries. A lookup can be done in sub 1ms usually and `createResult`, which includes the lookup for the `match1` case plus actually calling the method that was annotated, can be done in 0.2ms. 
+As you can see it takes us about 11ms to create the registry with 2000 entries. A lookup can be done in sub 1ms usually and `createResult`, which includes the lookup for the `match1` case plus actually calling the method that was annotated, can be done in under 0.2ms.
 
 The performance tests can be run from Android Studio or via gradle by running `./gradlew sample-benchmark:connectedCheck` (with a device connected). The outoput can be found in `sample-benchmark/build/outputs/connected_android_test_additional_output/`.
 

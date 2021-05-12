@@ -12,7 +12,7 @@ class DeepLinkMatchTests {
 
     @Test
     fun testMatchArraySerializationDeserializationNoMethod() {
-        val matchByteArray = matchByteArray(UriMatch(ONE_PARAM_SCHEMA, 1234, this.javaClass.name, null))
+        val matchByteArray = matchByteArray(UriMatch(ONE_PARAM_SCHEMA, this.javaClass.name, null))
         val entryFromArray = MatchIndex.getDeeplinkEntryFromArray(matchByteArray.toByteArray(), matchByteArray.size, 0)
         assertNotNull(entryFromArray)
         entryFromArray?.let {
@@ -24,7 +24,7 @@ class DeepLinkMatchTests {
 
     @Test
     fun testMatchArraySerializationDeserialization() {
-        val matchByteArray = matchByteArray(UriMatch(ONE_PARAM_SCHEMA, 1234, this.javaClass.name, METHOD_NAME))
+        val matchByteArray = matchByteArray(UriMatch(ONE_PARAM_SCHEMA, this.javaClass.name, METHOD_NAME))
         val entryFromArray = MatchIndex.getDeeplinkEntryFromArray(matchByteArray.toByteArray(), matchByteArray.size, 0)
         assertNotNull(entryFromArray)
         entryFromArray?.let {
@@ -36,7 +36,7 @@ class DeepLinkMatchTests {
 
     @Test(expected = IllegalStateException::class)
     fun testMatchArraySerializationDeserializationNonExistantClass() {
-        val matchByteArray = matchByteArray(UriMatch(ONE_PARAM_SCHEMA, 1234, "soneNonexistantClass", null))
+        val matchByteArray = matchByteArray(UriMatch(ONE_PARAM_SCHEMA, "soneNonexistantClass", null))
         val entryFromArray = MatchIndex.getDeeplinkEntryFromArray(matchByteArray.toByteArray(), matchByteArray.size, 0)
     }
 

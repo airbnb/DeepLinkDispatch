@@ -58,19 +58,13 @@ public class MatchIndex {
   public static final int HEADER_VALUE_LENGTH = 1;
   public static final int HEADER_MATCH_LENGTH = 2;
   public static final int HEADER_CHILDREN_LENGTH = 4;
-  public static final int HEADER_MATCH_ID_LENGTH = 2;
   public static final int MATCH_DATA_URL_TEMPLATE_LENGTH = 2;
   public static final int MATCH_DATA_CLASS_LENGTH = 2;
   public static final int MATCH_DATA_METHOD_LENGTH = 1;
 
 
   public static final int HEADER_LENGTH = HEADER_NODE_METADATA_LENGTH + HEADER_VALUE_LENGTH
-    + HEADER_MATCH_LENGTH + HEADER_CHILDREN_LENGTH + HEADER_MATCH_ID_LENGTH;
-
-  /**
-   * Marker for no match
-   */
-  public static final int NO_MATCH = 0xffff;
+    + HEADER_MATCH_LENGTH + HEADER_CHILDREN_LENGTH;
 
   @NonNull
   public static final String ROOT_VALUE = "r";
@@ -153,10 +147,12 @@ public class MatchIndex {
               pathSegmentReplacements);
           }
         } else {
-          int matchIndex = getMatchIndex(currentElementStartPosition);
-          if (matchIndex != NO_MATCH) {
-            match = getDeeplinkEntryFromArray(byteArray, getMatchLength(currentElementStartPosition), getMatchDataPos(currentElementStartPosition));
-            match.setParameters(deeplinkUri, placeholdersOutput == null ? Collections.emptyMap() : placeholdersOutput);
+          int matchLength = getMatchLength(currentElementStartPosition);
+          if (matchLength > 0) {
+            match = getDeeplinkEntryFromArray(byteArray, matchLength, getMatchDataPos(currentElementStartPosition));
+            if (match != null) {
+              match.setParameters(deeplinkUri, placeholdersOutput == null ? Collections.emptyMap() : placeholdersOutput);
+            }
           }
         }
       }
@@ -421,20 +417,6 @@ public class MatchIndex {
         + HEADER_VALUE_LENGTH
         + HEADER_MATCH_LENGTH
     );
-  }
-
-  /**
-   * @param elementStartPos Starting position of element to process
-   * @return The match index for this element. It is either the match index or MAX_SHORT if no
-   * match.
-   */
-  private int getMatchIndex(int elementStartPos) {
-    return readTwoBytesAsInt(
-      byteArray, elementStartPos
-        + HEADER_NODE_METADATA_LENGTH
-        + HEADER_VALUE_LENGTH
-        + HEADER_MATCH_LENGTH
-        + HEADER_CHILDREN_LENGTH);
   }
 
   public int length() {

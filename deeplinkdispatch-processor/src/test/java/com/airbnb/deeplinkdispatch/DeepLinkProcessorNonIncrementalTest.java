@@ -213,10 +213,10 @@ public class DeepLinkProcessorNonIncrementalTest {
       .processedWith(new DeepLinkProcessor())
       .failsToCompile().withErrorContaining("Internal error during annotation "
       + "processing: java.lang.IllegalStateException: Ambiguous URI. Same match for two URIs "
-      + "(UriMatch(uriTemplate=airbnb://host/path1/path2?q={q}, matchId=0, "
+      + "(UriMatch(uriTemplate=airbnb://host/path1/path2?q={q}, "
       + "annotatedClassFullyQualifiedName=com.example.SampleActivity, "
       + "annotatedMethod=intentFromTwoPathWithQuery) vs "
-      + "UriMatch(uriTemplate=airbnb://host/path1/path2, matchId=1, "
+      + "UriMatch(uriTemplate=airbnb://host/path1/path2, "
       + "annotatedClassFullyQualifiedName=com.example"
       + ".SampleActivity, annotatedMethod=intentFromTwoPath))");
   }

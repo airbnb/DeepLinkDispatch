@@ -223,14 +223,14 @@ public class BaseDeepLinkDelegateTest {
 
   private static class TestDeepLinkRegistry extends BaseRegistry {
     public TestDeepLinkRegistry(List<DeepLinkEntry> registry) {
-      super(registry, getSearchIndex(registry), new String[]{});
+      super(getSearchIndex(registry), new String[]{});
     }
 
     @NotNull
     private static byte[] getSearchIndex(List<DeepLinkEntry> deepLinkEntries) {
       Root trieRoot = new Root();
-      for (int i = 0; i < deepLinkEntries.size(); i++) {
-        trieRoot.addToTrie(i, deepLinkEntries.get(i).getUriTemplate(), deepLinkEntries.get(i).getActivityClass().getCanonicalName(), deepLinkEntries.get(i).getMethod());
+      for (DeepLinkEntry entry : deepLinkEntries) {
+        trieRoot.addToTrie(entry.getUriTemplate(), entry.getActivityClass().getCanonicalName(), entry.getMethod());
       }
       return trieRoot.toUByteArray();
     }
