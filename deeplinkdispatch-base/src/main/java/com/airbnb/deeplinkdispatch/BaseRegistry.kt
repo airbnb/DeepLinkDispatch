@@ -42,14 +42,12 @@ abstract class BaseRegistry(val registeredDeepLinks: List<DeepLinkEntry>,
         }
         // Generating a match list (list of elements in to be matched URL starting with an
         // (artificial) root.
-        val match = matchIndex.matchUri(SchemeHostAndPath(deepLinkUri).matchList,
-                null, 0, 0, matchIndex.length(),
+        return matchIndex.matchUri(deepLinkUri,
+                SchemeHostAndPath(deepLinkUri).matchList,
+                null,
+                0,
+                0,
+                matchIndex.length(),
                 pathSegmentReplacements)
-        if (match != null) {
-            val matchedEntry = registeredDeepLinks[match.matchIndex]
-            matchedEntry.setParameters(deepLinkUri, match.parameterMap)
-            return matchedEntry
-        }
-        return null
     }
 }

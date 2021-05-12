@@ -4,7 +4,8 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
 import java.util.Arrays;
-import java.util.HashSet;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -139,14 +140,18 @@ public class DeepLinkEntryTest {
 
   @Test
   public void testEmptyPathPresentParams() throws Exception {
-    DeepLinkEntry entry = deepLinkEntry("dld://foo/{id}");
-    DeepLinkEntry entryNoParam = deepLinkEntry("dld://foo");
+    String urlTemplate = "dld://foo/{id}";
+    String url = "dld://foo";
+
+    DeepLinkEntry entry = deepLinkEntry(urlTemplate);
+    DeepLinkEntry entryNoParam = deepLinkEntry(url);
+    entryNoParam.setParameters(DeepLinkUri.parse(url), Collections.<String, String>emptyMap());
 
     TestDeepLinkRegistry testRegistry = getTestRegistry(Arrays.asList(new DeepLinkEntry[] {entry}));
-    DeepLinkEntry match = testRegistry.idxMatch(DeepLinkUri.parse("dld://foo"));
+    DeepLinkEntry match = testRegistry.idxMatch(DeepLinkUri.parse(url));
 
     TestDeepLinkRegistry testRegistryNoParam = getTestRegistry(Arrays.asList(new DeepLinkEntry[] {entryNoParam}));
-    DeepLinkEntry matchNoParam = testRegistryNoParam.idxMatch(DeepLinkUri.parse("dld://foo"));
+    DeepLinkEntry matchNoParam = testRegistryNoParam.idxMatch(DeepLinkUri.parse(url));
 
     assertThat(match).isNull();
     assertThat(matchNoParam).isEqualTo(entryNoParam);
@@ -216,19 +221,27 @@ public class DeepLinkEntryTest {
   }
 
   @Test public void pathWithQuotes() {
-    DeepLinkEntry entry = deepLinkEntry("airbnb://s/{query}");
+    String matchTemplate = "airbnb://s/{query}";
+    String matchUrl = "airbnb://s/Sant'Eufemia-a-Maiella--Italia";
+    DeepLinkEntry entry = deepLinkEntry(matchTemplate);
+
+    Map<String, String> parametersMap = new HashMap(1);
+    parametersMap.put("query","Sant'Eufemia-a-Maiella--Italia");
+    entry.setParameters(DeepLinkUri.parse(matchUrl), parametersMap);
 
     TestDeepLinkRegistry testRegistry = getTestRegistry(Arrays.asList(new DeepLinkEntry[] {entry}));
-    DeepLinkEntry match = testRegistry.idxMatch(DeepLinkUri.parse("airbnb://s/Sant'Eufemia-a-Maiella--Italia"));
+    DeepLinkEntry match = testRegistry.idxMatch(DeepLinkUri.parse(matchUrl));
 
     assertThat(match).isEqualTo(entry);
   }
 
   @Test public void schemeWithNumbers() {
-    DeepLinkEntry entry = deepLinkEntry("jackson5://example.com");
+    String deeplinkUrl = "jackson5://example.com";
+    DeepLinkEntry entry = deepLinkEntry(deeplinkUrl);
+    entry.setParameters(DeepLinkUri.parse(deeplinkUrl), Collections.<String, String>emptyMap());
 
     TestDeepLinkRegistry testRegistry = getTestRegistry(Arrays.asList(new DeepLinkEntry[] {entry}));
-    DeepLinkEntry match = testRegistry.idxMatch(DeepLinkUri.parse("jackson5://example.com"));
+    DeepLinkEntry match = testRegistry.idxMatch(DeepLinkUri.parse(deeplinkUrl));
 
     assertThat(match).isEqualTo(entry);
   }
@@ -270,7 +283,7 @@ public class DeepLinkEntryTest {
   }
 
   private static DeepLinkEntry deepLinkEntry(String uri) {
-    return new DeepLinkEntry(uri, DeepLinkEntry.Type.CLASS, String.class, null);
+    return new DeepLinkEntry(uri, String.class, null);
   }
 
   /**
@@ -292,7 +305,7 @@ public class DeepLinkEntryTest {
     private static byte[] getSearchIndex(List<DeepLinkEntry> registry) {
       Root trieRoot = new Root();
       for (int i = 0; i < registry.size(); i++) {
-        trieRoot.addToTrie(i, DeepLinkUri.parse(registry.get(i).getUriTemplate()),registry.get(i).getActivityClass().toString(), registry.get(i).getMethod());
+        trieRoot.addToTrie(i, registry.get(i).getUriTemplate(),registry.get(i).getActivityClass().getCanonicalName(), registry.get(i).getMethod());
       }
       return trieRoot.toUByteArray();
     }

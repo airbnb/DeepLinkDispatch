@@ -354,15 +354,14 @@ public class DeepLinkProcessor extends AbstractProcessor {
       ClassName activity = ClassName.get(element.getAnnotatedElement());
       Object method = element.getMethod();
       String uri = element.getUri();
-      DeepLinkUri deeplinkUri = DeepLinkUri.parse(uri);
 
       try {
-        urisTrie.addToTrie(i, deeplinkUri, element.getAnnotatedElement().toString(),
-          element.getMethod());
+        urisTrie.addToTrie(i, uri, activity.canonicalName(), element.getMethod());
       } catch (IllegalArgumentException e) {
         error(element.getAnnotatedElement(), e.getMessage());
       }
 
+      DeepLinkUri deeplinkUri = DeepLinkUri.parse(uri);
       //Keep track of pathVariables added in a module so that we can check at runtime to ensure
       //that all pathVariables have a corresponding entry provided to BaseDeepLinkDelegate.
       for (String pathSegment : deeplinkUri.pathSegments()) {
@@ -371,8 +370,8 @@ public class DeepLinkProcessor extends AbstractProcessor {
             pathSegment.length() - configurablePathSegmentSuffix.length()));
         }
       }
-      deeplinks.add("new DeepLinkEntry($S, $L, $T.class, $S)$L\n",
-        uri, type, activity, method, (i < totalElements - 1) ? "," : "");
+      deeplinks.add("new DeepLinkEntry($S, $T.class, $S)$L\n",
+        uri, activity, method, (i < totalElements - 1) ? "," : "");
     }
 
     TypeSpec.Builder deepLinkRegistryBuilder = TypeSpec.classBuilder(className

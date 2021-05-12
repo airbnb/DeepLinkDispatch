@@ -31,7 +31,7 @@ dependencies {
   testImplementation deps.compileTesting
   testImplementation deps.truth
   testImplementation deps.mockito
-  testImplementation files(org.gradle.internal.jvm.Jvm.current().getToolsJar())
+  testImplementation files("${System.properties['java.home']}/../lib/tools.jar")
 }
 
 checkstyle {
