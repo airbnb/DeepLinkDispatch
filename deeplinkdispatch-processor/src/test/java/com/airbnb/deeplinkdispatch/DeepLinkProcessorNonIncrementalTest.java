@@ -37,135 +37,124 @@ public class DeepLinkProcessorNonIncrementalTest {
         + "public class SampleModule {\n"
         + "}");
 
-//  @Test
-//  public void testProcessor() {
-//    JavaFileObject sampleActivity = JavaFileObjects
-//      .forSourceString("SampleActivity", "package com.example;"
-//        + "import com.airbnb.deeplinkdispatch.DeepLink;\n"
-//        + "import com.airbnb.deeplinkdispatch.DeepLinkHandler;\n\n"
-//        + "import com.example.SampleModule;\n\n"
-//        + "@DeepLink(\"airbnb://example.com/deepLink\")\n"
-//        + "@DeepLinkHandler({ SampleModule.class })\n"
-//        + "public class SampleActivity {\n"
-//        + "}");
-//
-//    assertAbout(javaSources())
-//      .that(Arrays.asList(SIMPLE_DEEPLINK_MODULE, sampleActivity))
-//      .processedWith(new DeepLinkProcessor())
-//      .compilesWithoutError()
-//      .and()
-//      .generatesSources(
-//        JavaFileObjects.forResource("DeepLinkDelegate.java"),
-//        JavaFileObjects.forSourceString("/SOURCE_OUTPUT.com.example.SampleModuleRe"
-//            + "gistry",
-//          "package com.example;\n"
-//            + "\n"
-//            + "import com.airbnb.deeplinkdispatch.BaseRegistry;\n"
-//            + "import com.airbnb.deeplinkdispatch.DeepLinkEntry;\n"
-//            + "import com.airbnb.deeplinkdispatch.base.Utils;\n"
-//            + "import java.lang.String;\n"
-//            + "import java.util.Arrays;\n"
-//            + "import java.util.Collections;\n"
-//            + "\n"
-//            + "public final class SampleModuleRegistry extends BaseRegistry {\n"
-//            + "  public SampleModuleRegistry() {\n"
-//            + "    super(Collections.unmodifiableList(Arrays.<DeepLinkEntry>asList(\n"
-//            + "      new DeepLinkEntry(\"airbnb://example.com/deepLink\", SampleActivity.class,"
-//            + " null)\n"
-//            + "    )), Utils.readMatchIndexFromStrings( new String[] {matchIndex0(), }),\n"
-//            + "    new String[]{});\n"
-//            + "  }\n"
-//            + "\n"
-//            + "  private static String matchIndex0() {\n"
-//            + "    return \"\\u0001\\u0001\\u0000\\u0000\\u00001ÿÿr\\u0002\\u0006\\u0000\\u0000\\u0"
-//            + "000#ÿÿairbnb\\u0004\\u000b\\u0000\\u0000\\u0000\\u0010ÿÿexample.com\\b\\b\\u0000\\u0"
-//            + "000\\u0000\\u0000\\u0000\\u0000deepLink\";}\n"
-//            + "}"
-//        ));
-//  }
+  @Test
+  public void testProcessor() {
+    JavaFileObject sampleActivity = JavaFileObjects
+      .forSourceString("SampleActivity", "package com.example;"
+        + "import com.airbnb.deeplinkdispatch.DeepLink;\n"
+        + "import com.airbnb.deeplinkdispatch.DeepLinkHandler;\n\n"
+        + "import com.example.SampleModule;\n\n"
+        + "@DeepLink(\"airbnb://example.com/deepLink\")\n"
+        + "@DeepLinkHandler({ SampleModule.class })\n"
+        + "public class SampleActivity {\n"
+        + "}");
 
-//  @Test
-//  public void testProcessorWithDefaultAndCustomAnnotations() {
-//    JavaFileObject customAnnotationWebLink = JavaFileObjects
-//      .forSourceString("WebDeepLink", "package com.example;\n"
-//        + "import com.airbnb.deeplinkdispatch.DeepLinkSpec;\n"
-//        + "@DeepLinkSpec(prefix = { \"http://\", \"https://\"})\n"
-//        + "public @interface WebDeepLink {\n"
-//        + "    String[] value();\n"
-//        + "}");
-//    JavaFileObject customAnnotationAppLink = JavaFileObjects
-//      .forSourceString("AppDeepLink", "package com.example;\n"
-//        + "import com.airbnb.deeplinkdispatch.DeepLinkSpec;\n"
-//        + "@DeepLinkSpec(prefix = { \"example://\" })\n"
-//        + "public @interface AppDeepLink {\n"
-//        + "    String[] value();\n"
-//        + "}");
-//    JavaFileObject sampleActivity = JavaFileObjects
-//      .forSourceString("SampleActivity", "package com.example;"
-//        + "import com.airbnb.deeplinkdispatch.DeepLink;\n"
-//        + "import com.airbnb.deeplinkdispatch.DeepLinkHandler;\n\n"
-//        + "import com.example.SampleModule;\n\n"
-//        + "@DeepLink(\"airbnb://example.com/deepLink\")\n"
-//        + "@AppDeepLink({\"example.com/deepLink\",\"example.com/another\"})\n"
-//        + "@WebDeepLink({\"example.com/deepLink\",\"example.com/another\"})\n"
-//        + "@DeepLinkHandler({ SampleModule.class })\n"
-//        + "public class SampleActivity {\n"
-//        + "}");
-//
-//    assertAbout(javaSources())
-//      .that(Arrays.asList(customAnnotationAppLink, customAnnotationWebLink,
-//        SIMPLE_DEEPLINK_MODULE, sampleActivity))
-//      .processedWith(new DeepLinkProcessor())
-//      .compilesWithoutError()
-//      .and()
-//      .generatesSources(
-//        JavaFileObjects.forResource("DeepLinkDelegate.java"),
-//        JavaFileObjects.forSourceString("/SOURCE_OUTPUT.com.example.SampleModuleRegistry",
-//          "package com.example;\n"
-//            + "\n"
-//            + "import com.airbnb.deeplinkdispatch.BaseRegistry;\n"
-//            + "import com.airbnb.deeplinkdispatch.DeepLinkEntry;\n"
-//            + "import com.airbnb.deeplinkdispatch.base.Utils;\n"
-//            + "import java.lang.String;\n"
-//            + "import java.util.Arrays;\n"
-//            + "import java.util.Collections;\n"
-//            + "\n"
-//            + "public final class SampleModuleRegistry extends BaseRegistry {\n"
-//            + "  public SampleModuleRegistry() {\n"
-//            + "    super(Collections.unmodifiableList(Arrays.<DeepLinkEntry>asList(\n"
-//            + "      new DeepLinkEntry(\"airbnb://example.com/deepLink\", "
-//            + "SampleActivity.class, null),\n"
-//            + "      new DeepLinkEntry(\"example://example.com/another\", "
-//            + "SampleActivity.class, null),\n"
-//            + "      new DeepLinkEntry(\"example://example.com/deepLink\", "
-//            + "SampleActivity.class, null),\n"
-//            + "      new DeepLinkEntry(\"http://example.com/another\", "
-//            + "SampleActivity.class, null),\n"
-//            + "      new DeepLinkEntry(\"http://example.com/deepLink\", "
-//            + "SampleActivity.class, null),\n"
-//            + "      new DeepLinkEntry(\"https://example.com/another\", "
-//            + "SampleActivity.class, null),\n"
-//            + "      new DeepLinkEntry(\"https://example.com/deepLink\", "
-//            + "SampleActivity.class, null)\n"
-//            + "    )), Utils.readMatchIndexFromStrings( new String[] {matchIndex0(), }),\n"
-//            + "    new String[]{});\n"
-//            + "  }\n"
-//            + "\n"
-//            + "  private static String matchIndex0() {\n"
-//            + "    return \"\\u0001\\u0001\\u0000\\u0000\\u0000ïÿÿr\\u0002\\u0006\\u0000\\u0000\\u0"
-//            + "000#ÿÿairbnb\\u0004\\u000b\\u0000\\u0000\\u0000\\u0010ÿÿexample.com\\b\\b\\u0000\\u0"
-//            + "000\\u0000\\u0000\\u0000\\u0000deepLink\\u0002\\u0007\\u0000\\u0000\\u00002ÿÿexample"
-//            + "\\u0004\\u000b\\u0000\\u0000\\u0000\\u001fÿÿexample.com\\b\\u0007\\u0000\\u0000\\u00"
-//            + "00\\u0000\\u0000\\u0001another\\b\\b\\u0000\\u0000\\u0000\\u0000\\u0000\\u0002deepLi"
-//            + "nk\\u0002\\u0004\\u0000\\u0000\\u00002ÿÿhttp\\u0004\\u000b\\u0000\\u0000\\u0000\\u00"
-//            + "1fÿÿexample.com\\b\\u0007\\u0000\\u0000\\u0000\\u0000\\u0000\\u0003another\\b\\b\\u0"
-//            + "000\\u0000\\u0000\\u0000\\u0000\\u0004deepLink\\u0002\\u0005\\u0000\\u0000\\u00002ÿÿ"
-//            + "https\\u0004\\u000b\\u0000\\u0000\\u0000\\u001fÿÿexample.com\\b\\u0007\\u0000\\u0000"
-//            + "\\u0000\\u0000\\u0000\\u0005another\\b\\b\\u0000\\u0000\\u0000\\u0000\\u0000\\u0006d"
-//            + "eepLink\";}\n"
-//            + "}"
-//        ));
-//  }
+    assertAbout(javaSources())
+      .that(Arrays.asList(SIMPLE_DEEPLINK_MODULE, sampleActivity))
+      .processedWith(new DeepLinkProcessor())
+      .compilesWithoutError()
+      .and()
+      .generatesSources(
+        JavaFileObjects.forResource("DeepLinkDelegate.java"),
+        JavaFileObjects.forSourceString("/SOURCE_OUTPUT.com.example.SampleModuleRe"
+            + "gistry",
+          "package com.example;\n"
+            + "\n"
+            + "import com.airbnb.deeplinkdispatch.BaseRegistry;\n"
+            + "import com.airbnb.deeplinkdispatch.base.Utils;\n"
+            + "import java.lang.String;\n"
+            + "\n"
+            + "public final class SampleModuleRegistry extends BaseRegistry {\n"
+            + "  public SampleModuleRegistry() {\n"
+            + "    super(Utils.readMatchIndexFromStrings( new String[] {matchIndex0(), }),\n"
+            + "    new String[]{});\n"
+            + "  }\n"
+            + "\n"
+            + "  private static String matchIndex0() {\n"
+            + "    return \"\\u0001\\u0001\\u0000\\u0000\\u0000\\u0000\\u0000mr\\u0002\\u0006"
+            + "\\u0000\\u0000\\u0000\\u0000\\u0000_airbnb\\u0004\\u000b\\u0000\\u0000\\u0000\\u0000"
+            + "\\u0000Lexample.com\\b\\b\\u0000<\\u0000\\u0000\\u0000\\u0000deepLink\\u0000"
+            + "\\u001dairbnb://example.com/deepLink\\u0000"
+            + "\\u001acom.example.SampleActivity\\u0000\";\n"
+            + "  }\n"
+            + "}"
+        ));
+  }
+
+  @Test
+  public void testProcessorWithDefaultAndCustomAnnotations() {
+    JavaFileObject customAnnotationWebLink = JavaFileObjects
+      .forSourceString("WebDeepLink", "package com.example;\n"
+        + "import com.airbnb.deeplinkdispatch.DeepLinkSpec;\n"
+        + "@DeepLinkSpec(prefix = { \"http://\", \"https://\"})\n"
+        + "public @interface WebDeepLink {\n"
+        + "    String[] value();\n"
+        + "}");
+    JavaFileObject customAnnotationAppLink = JavaFileObjects
+      .forSourceString("AppDeepLink", "package com.example;\n"
+        + "import com.airbnb.deeplinkdispatch.DeepLinkSpec;\n"
+        + "@DeepLinkSpec(prefix = { \"example://\" })\n"
+        + "public @interface AppDeepLink {\n"
+        + "    String[] value();\n"
+        + "}");
+    JavaFileObject sampleActivity = JavaFileObjects
+      .forSourceString("SampleActivity", "package com.example;"
+        + "import com.airbnb.deeplinkdispatch.DeepLink;\n"
+        + "import com.airbnb.deeplinkdispatch.DeepLinkHandler;\n\n"
+        + "import com.example.SampleModule;\n\n"
+        + "@DeepLink(\"airbnb://example.com/deepLink\")\n"
+        + "@AppDeepLink({\"example.com/deepLink\",\"example.com/another\"})\n"
+        + "@WebDeepLink({\"example.com/deepLink\",\"example.com/another\"})\n"
+        + "@DeepLinkHandler({ SampleModule.class })\n"
+        + "public class SampleActivity {\n"
+        + "}");
+
+    assertAbout(javaSources())
+      .that(Arrays.asList(customAnnotationAppLink, customAnnotationWebLink,
+        SIMPLE_DEEPLINK_MODULE, sampleActivity))
+      .processedWith(new DeepLinkProcessor())
+      .compilesWithoutError()
+      .and()
+      .generatesSources(
+        JavaFileObjects.forResource("DeepLinkDelegate.java"),
+        JavaFileObjects.forSourceString("/SOURCE_OUTPUT.com.example.SampleModuleRegistry",
+          "package com.example;\n"
+            + "\n"
+            + "import com.airbnb.deeplinkdispatch.BaseRegistry;\n"
+            + "import com.airbnb.deeplinkdispatch.base.Utils;\n"
+            + "import java.lang.String;\n"
+            + "\n"
+            + "public final class SampleModuleRegistry extends BaseRegistry {\n"
+            + "  public SampleModuleRegistry() {\n"
+            + "    super(Utils.readMatchIndexFromStrings( new String[] {matchIndex0(), }),\n"
+            + "    new String[]{});\n"
+            + "  }\n"
+            + "\n"
+            + "  private static String matchIndex0() {\n"
+            + "    return \"\\u0001\\u0001\\u0000\\u0000\\u0000\\u0000\\u0002\\u008cr\\u0002\\u0006"
+            + "\\u0000\\u0000\\u0000\\u0000\\u0000_airbnb\\u0004\\u000b\\u0000\\u0000\\u0000\\u0000"
+            + "\\u0000Lexample.com\\b\\b\\u0000<\\u0000\\u0000\\u0000\\u0000deepLink\\u0000"
+            + "\\u001dairbnb://example.com/deepLink\\u0000\\u001acom.example.SampleActivity\\u0000"
+            + "\\u0002\\u0007\\u0000\\u0000\\u0000\\u0000\\u0000«example\\u0004\\u000b\\u0000\\u0000"
+            + "\\u0000\\u0000\\u0000\\u0098example.com\\b\\u0007\\u0000<\\u0000\\u0000\\u0000"
+            + "\\u0000another\\u0000\\u001dexample://example.com/another\\u0000"
+            + "\\u001acom.example.SampleActivity\\u0000\\b\\b\\u0000=\\u0000\\u0000\\u0000"
+            + "\\u0000deepLink\\u0000\\u001eexample://example.com/deepLink\\u0000"
+            + "\\u001acom.example.SampleActivity\\u0000\\u0002\\u0004\\u0000\\u0000\\u0000\\u0000"
+            + "\\u0000¥http\\u0004\\u000b\\u0000\\u0000\\u0000\\u0000\\u0000\\u0092example.com\\b"
+            + "\\u0007\\u00009\\u0000\\u0000\\u0000\\u0000another\\u0000\\u001a"
+            + "http://example.com/another\\u0000\\u001acom.example.SampleActivity\\u0000\\b\\b"
+            + "\\u0000:\\u0000\\u0000\\u0000\\u0000deepLink\\u0000\\u001b"
+            + "http://example.com/deepLink\\u0000\\u001acom.example.SampleActivity\\u0000\\u0002"
+            + "\\u0005\\u0000\\u0000\\u0000\\u0000\\u0000§https\\u0004\\u000b\\u0000\\u0000\\u0000"
+            + "\\u0000\\u0000\\u0094example.com\\b\\u0007\\u0000:\\u0000\\u0000\\u0000\\u0000another"
+            + "\\u0000\\u001bhttps://example.com/another\\u0000\\u001acom.example.SampleActivity"
+            + "\\u0000\\b\\b\\u0000;\\u0000\\u0000\\u0000\\u0000deepLink\\u0000\\u001c"
+            + "https://example.com/deepLink\\u0000\\u001acom.example.SampleActivity\\u0000\";\n"
+            + "  }\n"
+            + "}"
+        ));
+  }
 
   @Test
   public void testDuplicatedUriMatch() {
