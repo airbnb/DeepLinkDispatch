@@ -354,7 +354,8 @@ public class MatchIndex {
    * @return The first elementStartPos that is not part of the parent element anymore.
    */
   private int getElementBoundaryPos(int elementStartPos) {
-    return getChildrenPos(elementStartPos)
+    return getMatchDataPos(elementStartPos)
+      + getMatchLength(elementStartPos)
       + getChildrenLength(elementStartPos);
   }
 
