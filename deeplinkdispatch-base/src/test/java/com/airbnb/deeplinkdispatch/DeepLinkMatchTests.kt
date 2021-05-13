@@ -8,6 +8,7 @@ import java.lang.IllegalStateException
 private const val ONE_PARAM_SCHEMA = "scheme://host/one/{param}/three"
 private const val METHOD_NAME = "methodName"
 
+@kotlin.ExperimentalUnsignedTypes
 class DeepLinkMatchTests {
 
     @Test
@@ -37,7 +38,7 @@ class DeepLinkMatchTests {
     @Test(expected = IllegalStateException::class)
     fun testMatchArraySerializationDeserializationNonExistantClass() {
         val matchByteArray = matchByteArray(UriMatch(ONE_PARAM_SCHEMA, "soneNonexistantClass", null))
-        val entryFromArray = MatchIndex.getDeeplinkEntryFromArray(matchByteArray.toByteArray(), matchByteArray.size, 0)
+        MatchIndex.getDeeplinkEntryFromArray(matchByteArray.toByteArray(), matchByteArray.size, 0)
     }
 
     @Test fun testMatchArraySerializationDeserializationNoMatch(){

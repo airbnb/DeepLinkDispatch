@@ -1,5 +1,5 @@
 def versions = [
-    kotlinVersion                : '1.3.72',
+    kotlinVersion                : '1.5.0',
     appCompatVersion             : '1.2.0',
     localBroadcastManagerVersion : '1.0.0',
     roboelectricVersion          : '4.5.1',
@@ -23,7 +23,7 @@ ext.deps = [
     kotlinGradlePlugin       : "org.jetbrains.kotlin:kotlin-gradle-plugin:$versions.kotlinVersion",
     javaPoet                 : 'com.squareup:javapoet:1.13.0',
     jsr305                   : 'com.google.code.findbugs:jsr305:3.0.2',
-    okio                     : 'com.squareup.okio:okio:1.17.5',
+    okio                     : 'com.squareup.okio:okio:2.10.0',
     androidXAnnotations      : 'androidx.annotation:annotation:1.2.0',
     // Build and upload with:
     // ./gradlew clean assemble sourcesJar androidSourcesJar javadocsJar androidJavadocsJar uploadArchives --no-daemon --no-parallel

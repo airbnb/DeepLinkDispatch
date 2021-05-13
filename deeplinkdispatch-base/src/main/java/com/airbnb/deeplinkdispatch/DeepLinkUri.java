@@ -18,6 +18,7 @@ package com.airbnb.deeplinkdispatch;
 
 import androidx.annotation.Nullable;
 
+import java.io.EOFException;
 import java.net.IDN;
 import java.net.InetAddress;
 import java.net.MalformedURLException;
@@ -1346,11 +1347,16 @@ public final class DeepLinkUri {
           utf8Buffer = new Buffer();
         }
         utf8Buffer.writeUtf8CodePoint(codePoint);
-        while (!utf8Buffer.exhausted()) {
-          int b = utf8Buffer.readByte() & 0xff;
-          out.writeByte('%');
-          out.writeByte(HEX_DIGITS[(b >> 4) & 0xf]);
-          out.writeByte(HEX_DIGITS[b & 0xf]);
+        try {
+          while (!utf8Buffer.exhausted()) {
+            int b = utf8Buffer.readByte() & 0xff;
+            out.writeByte('%');
+            out.writeByte(HEX_DIGITS[(b >> 4) & 0xf]);
+            out.writeByte(HEX_DIGITS[b & 0xf]);
+          }
+        } catch (EOFException e) {
+          // Cannot happen as we never read over the end.
+          System.err.println("Unable to canonicalize deeplink url!");
         }
       } else {
         // This character doesn't need encoding. Just copy it over.
