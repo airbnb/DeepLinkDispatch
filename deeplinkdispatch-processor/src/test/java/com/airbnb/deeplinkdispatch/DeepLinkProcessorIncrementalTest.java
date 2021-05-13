@@ -11,7 +11,7 @@ import javax.tools.JavaFileObject;
 import static com.google.common.truth.Truth.assertAbout;
 import static com.google.testing.compile.JavaSourcesSubjectFactory.javaSources;
 
-public class DeepLinkProcessorIncrementalTest {
+public class DeepLinkProcessorIncrementalTest extends BaseDeepLinkProcessorTest {
   private final JavaFileObject customAnnotationAppLink = JavaFileObjects
     .forSourceString("AppDeepLink", "package com.example;\n"
       + "import com.airbnb.deeplinkdispatch.DeepLinkSpec;\n"
@@ -48,7 +48,10 @@ public class DeepLinkProcessorIncrementalTest {
   @Test
   public void testIncrementalProcessorWithCustomDeepLinkRegistration() {
     assertAbout(javaSources())
-      .that(Arrays.asList(customAnnotationAppLink, module, sampleActivityWithOnlyCustomDeepLink))
+      .that(Arrays.asList(customAnnotationAppLink,
+        module,
+        sampleActivityWithOnlyCustomDeepLink,
+        fakeBaseDeeplinkDelegate))
       .withCompilerOptions("-AdeepLink.incremental=true")
       .withCompilerOptions("-AdeepLink.customAnnotations=com.example.AppDeepLink")
       .processedWith(new DeepLinkProcessor())
@@ -59,26 +62,24 @@ public class DeepLinkProcessorIncrementalTest {
         JavaFileObjects.forSourceString("/SOURCE_OUTPUT.com.example"
             + ".SampleModuleRegistry",
           "package com.example;\n"
+            + "\n"
             + "import com.airbnb.deeplinkdispatch.BaseRegistry;\n"
-            + "import com.airbnb.deeplinkdispatch.DeepLinkEntry;\n"
             + "import com.airbnb.deeplinkdispatch.base.Utils;\n"
             + "import java.lang.String;\n"
-            + "import java.util.Arrays;\n"
-            + "import java.util.Collections;\n"
             + "\n"
             + "public final class SampleModuleRegistry extends BaseRegistry {\n"
             + "  public SampleModuleRegistry() {\n"
-            + "    super(Collections.unmodifiableList(Arrays.<DeepLinkEntry>asList(\n"
-            + "      new DeepLinkEntry(\"example://example.com/deepLink\", DeepLinkEntry.Type.CLASS"
-            + ", SampleActivity.class, null)\n"
-            + "    )), Utils.readMatchIndexFromStrings( new String[] {matchIndex0(), }),\n"
+            + "    super(Utils.readMatchIndexFromStrings( new String[] {matchIndex0(), }),\n"
             + "    new String[]{});\n"
             + "  }\n"
             + "\n"
             + "  private static String matchIndex0() {\n"
-            + "    return \"\\u0001\\u0001\\u0000\\u0000\\u00002ÿÿr\\u0002\\u0007\\u0000\\u0000\\u0"
-            + "000#ÿÿexample\\u0004\\u000b\\u0000\\u0000\\u0000\\u0010ÿÿexample.com\\b\\b\\u0000\\u"
-            + "0000\\u0000\\u0000\\u0000\\u0000deepLink\";}\n"
+            + "    return \"\\u0001\\u0001\\u0000\\u0000\\u0000\\u0000\\u0000or\\u0002\\u0007"
+            + "\\u0000\\u0000\\u0000\\u0000\\u0000`example\\u0004\\u000b\\u0000\\u0000\\u0000"
+            + "\\u0000\\u0000Mexample.com\\b\\b\\u0000=\\u0000\\u0000\\u0000\\u0000deepLink\\u0000"
+            + "\\u001eexample://example.com/deepLink"
+            + "\\u0000\\u001acom.example.SampleActivity\\u0000\";\n"
+            + "  }\n"
             + "}"
         ));
   }
@@ -86,7 +87,10 @@ public class DeepLinkProcessorIncrementalTest {
   @Test
   public void testIncrementalProcessorWithoutCustomDeepLinkRegistration() {
     assertAbout(javaSources())
-      .that(Arrays.asList(customAnnotationAppLink, module, sampleActivityWithOnlyCustomDeepLink))
+      .that(Arrays.asList(customAnnotationAppLink,
+        module,
+        sampleActivityWithOnlyCustomDeepLink,
+        fakeBaseDeeplinkDelegate))
       .withCompilerOptions("-AdeepLink.incremental=true")
       .processedWith(new DeepLinkProcessor())
       .compilesWithoutError()
@@ -95,24 +99,22 @@ public class DeepLinkProcessorIncrementalTest {
         JavaFileObjects.forResource("DeepLinkDelegate.java"),
         JavaFileObjects.forSourceString("/SOURCE_OUTPUT.com.example"
             + ".SampleModuleRegistry",
-          "package com.example;"
+          "package com.example;\n"
+            + "\n"
             + "import com.airbnb.deeplinkdispatch.BaseRegistry;\n"
-            + "import com.airbnb.deeplinkdispatch.DeepLinkEntry;\n"
             + "import com.airbnb.deeplinkdispatch.base.Utils;\n"
             + "import java.lang.String;\n"
-            + "import java.util.Arrays;\n"
-            + "import java.util.Collections;\n"
             + "\n"
             + "public final class SampleModuleRegistry extends BaseRegistry {\n"
             + "  public SampleModuleRegistry() {\n"
-            + "    super(Collections.unmodifiableList(Arrays.<DeepLinkEntry>asList(\n"
-            + "    )), Utils.readMatchIndexFromStrings( new String[] {matchIndex0(), }),\n"
+            + "    super(Utils.readMatchIndexFromStrings( new String[] {matchIndex0(), }),\n"
             + "    new String[]{});\n"
             + "  }\n"
             + "\n"
             + "  private static String matchIndex0() {\n"
-            + "    return \"\\u0001\\u0001\\u0000\\u0000\\u0000\\u0000ÿÿr\";}\n"
-            + "}\n"));
+            + "    return \"\\u0001\\u0001\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000r\";\n"
+            + "  }\n"
+            + "}"));
   }
 
   @Test

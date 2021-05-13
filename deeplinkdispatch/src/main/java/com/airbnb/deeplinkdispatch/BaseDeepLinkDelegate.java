@@ -179,7 +179,7 @@ public class BaseDeepLinkDelegate {
       Class<?> c = deepLinkEntry.getActivityClass();
       Intent newIntent = null;
       TaskStackBuilder taskStackBuilder = null;
-      if (deepLinkEntry.getType() == DeepLinkEntry.Type.CLASS) {
+      if (deepLinkEntry.getMethod() == null) {
         newIntent = new Intent(activity, c);
       } else {
         Method method;

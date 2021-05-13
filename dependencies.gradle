@@ -1,6 +1,6 @@
 def versions = [
     kotlinVersion                : '1.3.72',
-    appCompatVersion             : '1.1.0',
+    appCompatVersion             : '1.2.0',
     localBroadcastManagerVersion : '1.0.0',
     roboelectricVersion          : '4.5.1',
     benchmarkVersion             : '1.0.0'
@@ -8,36 +8,36 @@ def versions = [
 
 ext.versions = versions
 ext.androidConfig = [
-    agpVersion                          : '4.1.2',
+    agpVersion                          : '4.2.0',
     compileSdkVersion                   : 30,
     minSdkVersion                       : 16,
     targetSdkVersion                    : 30
 ]
 
 ext.deps = [
-    autoCommon               : "com.google.auto:auto-common:0.10",
+    autoCommon               : "com.google.auto:auto-common:1.0",
     androidPlugin            : "com.android.tools.build:gradle:$androidConfig.agpVersion",
     appCompat                : "androidx.appcompat:appcompat:$versions.appCompatVersion",
     localBroadcastManager    : "androidx.localbroadcastmanager:localbroadcastmanager:$versions.localBroadcastManagerVersion",
     kotlinStdLib             : "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$versions.kotlinVersion",
     kotlinGradlePlugin       : "org.jetbrains.kotlin:kotlin-gradle-plugin:$versions.kotlinVersion",
-    javaPoet                 : 'com.squareup:javapoet:1.12.1',
+    javaPoet                 : 'com.squareup:javapoet:1.13.0',
     jsr305                   : 'com.google.code.findbugs:jsr305:3.0.2',
-    okio                     : 'com.squareup.okio:okio:1.17.3',
-    androidXAnnotations      : 'androidx.annotation:annotation:1.1.0',
+    okio                     : 'com.squareup.okio:okio:1.17.5',
+    androidXAnnotations      : 'androidx.annotation:annotation:1.2.0',
     // Build and upload with:
     // ./gradlew clean assemble sourcesJar androidSourcesJar javadocsJar androidJavadocsJar uploadArchives --no-daemon --no-parallel
     // Need to use snapshot version and explicitly include javadoc/sources tasks until
     // https://github.com/vanniktech/gradle-maven-publish-plugin/issues/54 is fixed.
-    gradleMavenPublishPlugin : 'com.vanniktech:gradle-maven-publish-plugin:0.11.1',
+    gradleMavenPublishPlugin : 'com.vanniktech:gradle-maven-publish-plugin:0.15.1',
 
     // Testing
-    junit                    : 'junit:junit:4.12',
+    junit                    : 'junit:junit:4.13.2',
     assertJ                  : 'org.assertj:assertj-core:1.7.1',
     roboelectric             : "org.robolectric:robolectric:$versions.roboelectricVersion",
     mockito                  : 'org.mockito:mockito-core:1.10.19',
-    truth                    : 'com.google.truth:truth:0.30',
-    compileTesting           : 'com.google.testing.compile:compile-testing:0.18',
+    truth                    : 'com.google.truth:truth:1.1.2',
+    compileTesting           : 'com.google.testing.compile:compile-testing:0.19',
     android                  : 'com.google.android:android:4.1.1.4',
     benchmark                : "androidx.benchmark:benchmark-junit4:$versions.benchmarkVersion",
     benchmarkGradlePlugin    : "androidx.benchmark:benchmark-gradle-plugin:$versions.benchmarkVersion"

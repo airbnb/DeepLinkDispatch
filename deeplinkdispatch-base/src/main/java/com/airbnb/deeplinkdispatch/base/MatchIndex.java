@@ -3,9 +3,12 @@ package com.airbnb.deeplinkdispatch.base;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.airbnb.deeplinkdispatch.DeepLinkEntry;
+import com.airbnb.deeplinkdispatch.DeepLinkUri;
 import com.airbnb.deeplinkdispatch.NodeMetadata;
 import com.airbnb.deeplinkdispatch.UrlElement;
 
+import java.io.UnsupportedEncodingException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -51,18 +54,16 @@ public class MatchIndex {
   /**
    * Length of header elements in bytes
    */
-  private static final int HEADER_NODE_METADATA_LENGTH = 1;
-  private static final int HEADER_VALUE_LENGTH = 1;
-  private static final int HEADER_CHILDREN_LENGTH = 4;
-  private static final int HEADER_MATCH_ID_LENGTH = 2;
+  public static final int HEADER_NODE_METADATA_LENGTH = 1;
+  public static final int HEADER_VALUE_LENGTH = 1;
+  public static final int HEADER_MATCH_LENGTH = 2;
+  public static final int HEADER_CHILDREN_LENGTH = 4;
+  public static final int MATCH_DATA_URL_TEMPLATE_LENGTH = 2;
+  public static final int MATCH_DATA_CLASS_LENGTH = 2;
+  public static final int MATCH_DATA_METHOD_LENGTH = 1;
 
   public static final int HEADER_LENGTH = HEADER_NODE_METADATA_LENGTH + HEADER_VALUE_LENGTH
-    + HEADER_CHILDREN_LENGTH + HEADER_MATCH_ID_LENGTH;
-
-  /**
-   * Marker for no match
-   */
-  public static final int NO_MATCH = 0xffff;
+    + HEADER_MATCH_LENGTH + HEADER_CHILDREN_LENGTH;
 
   @NonNull
   public static final String ROOT_VALUE = "r";
@@ -81,14 +82,16 @@ public class MatchIndex {
   /**
    * Match a given {@link com.airbnb.deeplinkdispatch.DeepLinkUri} (given as a List of
    * {@link UrlElement} against this searchh index.
-   * Will return an instance of {@link Match} if a match was found or null if there wasn't.
+   * Will return an instance of {@link DeepLinkEntry} if a match was found or null if there wasn't.
    *
+   *
+   * @param deeplinkUri The uri that should be matched
    * @param elements The {@link UrlElement} list of
-   *                 the {@link com.airbnb.deeplinkdispatch.DeepLinkUri} to match against. Must be
+   *                 the {@link DeepLinkUri} to match against. Must be
    *                 in correct order (scheme -> host -> path elements)
    * @param placeholders Placeholders (that are encoded at {name} in the Url inside the index. Used
    *                     to collect the set of placeholders and their values as
-   *                     the {@link com.airbnb.deeplinkdispatch.DeepLinkUri} is recursively
+   *                     the {@link DeepLinkUri} is recursively
    *                     processed.
    * @param elementIndex The index of the element currently processed in the elements list above.
    * @param elementStartPosition The index of the start position of the current element int he
@@ -98,18 +101,22 @@ public class MatchIndex {
    *                         the last child.
    * @param pathSegmentReplacements  A map of configurable path segment replacements and their
    *                                 values.
-   * @return An instance of {@link Match} if a match was found null if it wasn't.
+   * @return An instance of {@link DeepLinkEntry} if a match was found null if it wasn't.
    */
-  public Match matchUri(@NonNull List<UrlElement> elements, @Nullable Map<String, String>
-    placeholders, int elementIndex, int elementStartPosition, int parentBoundryPos,
-                        Map<byte[], byte[]> pathSegmentReplacements) {
-    Match match = null;
+  public DeepLinkEntry matchUri(@NonNull DeepLinkUri deeplinkUri,
+                                @NonNull List<UrlElement> elements,
+                                @Nullable Map<String, String> placeholders,
+                                int elementIndex,
+                                int elementStartPosition,
+                                int parentBoundryPos,
+                                Map<byte[], byte[]> pathSegmentReplacements) {
+    DeepLinkEntry match = null;
     int currentElementStartPosition = elementStartPosition;
     do {
       UrlElement urlElement = elements.get(elementIndex);
       CompareResult compareResult =
         compareValue(currentElementStartPosition, urlElement.getTypeFlag(),
-        urlElement.getValue(), pathSegmentReplacements);
+          urlElement.getValue(), pathSegmentReplacements);
       if (compareResult != null) {
         Map<String, String> placeholdersOutput = placeholders;
         // If the compareResult is not empty we found a match with a placeholder. We need to save
@@ -137,16 +144,21 @@ public class MatchIndex {
             // of the current element in the index.
             // If this element match was based on an empty configurable path segment we want to
             // "skip" the match and thus use the same element or the Uri for the next round.
-            match = matchUri(elements, placeholdersOutput,
+            match = matchUri(deeplinkUri, elements, placeholdersOutput,
               compareResult.isEmptyConfigurablePathSegmentMatch() ? elementIndex : elementIndex + 1,
               childrenPos, getElementBoundaryPos(currentElementStartPosition),
               pathSegmentReplacements);
           }
         } else {
-          int matchIndex = getMatchIndex(currentElementStartPosition);
-          if (matchIndex != NO_MATCH) {
-            match = new Match(matchIndex, placeholdersOutput == null
-              ? new HashMap<String, String>(0) : placeholdersOutput);
+          int matchLength = getMatchLength(currentElementStartPosition);
+          if (matchLength > 0) {
+            match = getDeeplinkEntryFromArray(byteArray,
+              matchLength,
+              getMatchDataPos(currentElementStartPosition));
+            if (match != null) {
+              match.setParameters(deeplinkUri,
+                placeholdersOutput == null ? Collections.emptyMap() : placeholdersOutput);
+            }
           }
         }
       }
@@ -157,6 +169,40 @@ public class MatchIndex {
         parentBoundryPos);
     } while (currentElementStartPosition != -1);
     return null;
+  }
+
+  @Nullable
+  public static DeepLinkEntry getDeeplinkEntryFromArray(byte[] byteArray,
+                                                        int matchLength,
+                                                        int matchStartPosition) {
+    if (matchLength == 0) {
+      return null;
+    }
+    int position = matchStartPosition;
+    int urlTemplateLength = readTwoBytesAsInt(byteArray, position);
+    position += MATCH_DATA_URL_TEMPLATE_LENGTH;
+    String urlTemplate = getStringFromByteArray(byteArray, position, urlTemplateLength);
+    position += urlTemplateLength;
+    int classLength = readTwoBytesAsInt(byteArray, position);
+    position += MATCH_DATA_CLASS_LENGTH;
+    String className = getStringFromByteArray(byteArray, position, classLength);
+    Class deeplinkClass = null;
+    try {
+      deeplinkClass = Class.forName(className);
+    } catch (ClassNotFoundException e) {
+      throw new IllegalStateException(
+        "Deeplink class " + className + " not found. If you are using Proguard/R8/Dexguard please "
+          + "consult README.md for correct configuration.", e
+      );
+    }
+    position += classLength;
+    int methodLength = readOneByteAsInt(byteArray, position);
+    String methodName = null;
+    if (methodLength > 0) {
+      position += MATCH_DATA_METHOD_LENGTH;
+      methodName = getStringFromByteArray(byteArray, position, methodLength);
+    }
+    return new DeepLinkEntry(urlTemplate, deeplinkClass, methodName);
   }
 
   /**
@@ -308,7 +354,8 @@ public class MatchIndex {
    * @return The first elementStartPos that is not part of the parent element anymore.
    */
   private int getElementBoundaryPos(int elementStartPos) {
-    return elementStartPos + HEADER_LENGTH + getValueLength(elementStartPos)
+    return getMatchDataPos(elementStartPos)
+      + getMatchLength(elementStartPos)
       + getChildrenLength(elementStartPos);
   }
 
@@ -322,8 +369,24 @@ public class MatchIndex {
     if (getChildrenLength(elementStartPos) == 0) {
       return -1;
     } else {
-      return elementStartPos + HEADER_LENGTH + getValueLength(elementStartPos);
+      return getMatchDataPos(elementStartPos)
+        + getMatchLength(elementStartPos);
     }
+  }
+
+  /**
+   * The position of the match data section of the element starting at elementStartPos.
+   * <p>
+   * Note: The can be 0 length in which case getMatchDataPosition() and  getChildrenPos() will
+   * return the same value.
+   *
+   * @param elementStartPos Starting position of element to process.
+   * @return The position of the match data sub array for the given elementStartPos.
+   */
+  private int getMatchDataPos(int elementStartPos) {
+    return elementStartPos
+      + HEADER_LENGTH
+      + getValueLength(elementStartPos);
   }
 
   /**
@@ -334,8 +397,22 @@ public class MatchIndex {
    */
   private int getValueLength(int elementStartPos) {
     return readOneByteAsInt(
-      elementStartPos
+      byteArray, elementStartPos
         + HEADER_NODE_METADATA_LENGTH
+    );
+  }
+
+  /**
+   * The length of the match section of the element starting at elementStartPos.
+   *
+   * @param elementStartPos Starting position of element to process
+   * @return The length of the match section of this element.
+   */
+  private int getMatchLength(int elementStartPos) {
+    return readTwoBytesAsInt(
+      byteArray, elementStartPos
+        + HEADER_NODE_METADATA_LENGTH
+        + HEADER_VALUE_LENGTH
     );
   }
 
@@ -347,43 +424,43 @@ public class MatchIndex {
    */
   private int getChildrenLength(int elementStartPos) {
     return readFourBytesAsInt(
-      elementStartPos
+      byteArray, elementStartPos
         + HEADER_NODE_METADATA_LENGTH
         + HEADER_VALUE_LENGTH
+        + HEADER_MATCH_LENGTH
     );
-  }
-
-  /**
-   * @param elementStartPos Starting position of element to process
-   * @return The match index for this element. It is either the match index or MAX_SHORT if no
-   * match.
-   */
-  private int getMatchIndex(int elementStartPos) {
-    return readTwoBytesAsInt(
-      elementStartPos
-        + HEADER_NODE_METADATA_LENGTH
-        + HEADER_VALUE_LENGTH
-        + HEADER_CHILDREN_LENGTH);
   }
 
   public int length() {
     return byteArray.length;
   }
 
-  private int readOneByteAsInt(int pos) {
+  private static int readOneByteAsInt(byte[] byteArray, int pos) {
     return byteArray[pos] & 0xFF;
   }
 
-  private int readTwoBytesAsInt(int pos) {
-    return (byteArray[pos] & 0xFF) << 8
-      | (byteArray[pos + 1] & 0xFF);
+  private static int readTwoBytesAsInt(byte[] byteArray, int pos) {
+    return (readOneByteAsInt(byteArray, pos)) << 8
+      | (readOneByteAsInt(byteArray, pos + 1));
   }
 
-  private int readFourBytesAsInt(int pos) {
-    return (byteArray[pos] & 0xFF) << 24
-      | (byteArray[pos + 1] & 0xFF) << 16
-      | (byteArray[pos + 2] & 0xFF) << 8
-      | (byteArray[pos + 3] & 0xFF);
+  private static int readFourBytesAsInt(byte[] byteArray, int pos) {
+    return (readOneByteAsInt(byteArray, pos)) << 24
+      | (readOneByteAsInt(byteArray, pos + 1)) << 16
+      | (readOneByteAsInt(byteArray, pos + 2)) << 8
+      | (readOneByteAsInt(byteArray, pos + 3));
+  }
+
+  @Nullable
+  private static String getStringFromByteArray(byte[] byteArray, int start, int length) {
+    byte[] stringByteAray = new byte[length];
+    System.arraycopy(byteArray,  start, stringByteAray, 0, length);
+    try {
+      return new String(stringByteAray, "utf-8");
+    } catch (UnsupportedEncodingException e) {
+      // Cannot be reached.
+    }
+    return null;
   }
 
   /**
@@ -395,26 +472,5 @@ public class MatchIndex {
   public static @NonNull
   String getMatchIdxFileName(@NonNull String moduleName) {
     return "dld_match_" + moduleName.toLowerCase() + ".idx";
-  }
-
-  public static class Match {
-
-    private final int matchIndex;
-    private final Map<String, String> parameterMap;
-
-    public Match(int matchIndex, @NonNull Map<String, String> parameterMap) {
-      this.matchIndex = matchIndex;
-      this.parameterMap = parameterMap;
-    }
-
-    public int getMatchIndex() {
-      return matchIndex;
-    }
-
-    public @NonNull
-    Map<String, String> getParameterMap() {
-      return parameterMap;
-    }
-
   }
 }

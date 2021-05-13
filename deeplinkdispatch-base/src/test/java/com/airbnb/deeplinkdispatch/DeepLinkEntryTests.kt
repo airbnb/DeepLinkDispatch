@@ -5,11 +5,11 @@ import org.junit.Test
 
 class DeepLinkEntryTests {
 
-    private val concrete = DeepLinkEntry("scheme://host/one/two/three", DeepLinkEntry.Type.CLASS, this.javaClass, null)
-    private val parmSecondPathElement = DeepLinkEntry("scheme://host/one/{param}/three", DeepLinkEntry.Type.CLASS, this.javaClass, null)
-    private val parmFirstPathElement = DeepLinkEntry("scheme://host/{param}/two/three", DeepLinkEntry.Type.CLASS, this.javaClass, null)
-    private val cpsSecondPathSegment = DeepLinkEntry("scheme://host/one/<config>/three", DeepLinkEntry.Type.CLASS, this.javaClass, null)
-    private val cpsFirstPathSegment = DeepLinkEntry("scheme://host/<config>/two/three", DeepLinkEntry.Type.CLASS, this.javaClass, null)
+    private val concrete = DeepLinkEntry("scheme://host/one/two/three", this.javaClass, null)
+    private val parmSecondPathElement = DeepLinkEntry("scheme://host/one/{param}/three", this.javaClass, null)
+    private val parmFirstPathElement = DeepLinkEntry("scheme://host/{param}/two/three", this.javaClass, null)
+    private val cpsSecondPathSegment = DeepLinkEntry("scheme://host/one/<config>/three", this.javaClass, null)
+    private val cpsFirstPathSegment = DeepLinkEntry("scheme://host/<config>/two/three", this.javaClass, null)
 
     @Test fun testSameness(){
         assertTrue(concrete.compareTo(concrete) == 0)

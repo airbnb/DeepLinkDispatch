@@ -10,7 +10,7 @@ import java.io.OutputStream
 import java.nio.charset.Charset
 import kotlin.text.Charsets.UTF_8
 
-data class UriMatch(val uri: DeepLinkUri, val matchId: Int, val annotatedElement: String, val annotatedMethod: String?)
+data class UriMatch(val uriTemplate: String, val annotatedClassFullyQualifiedName: String, val annotatedMethod: String?)
 
 @kotlin.ExperimentalUnsignedTypes
 open class TreeNode(open val id: String, internal val metadata: NodeMetadata) {
@@ -34,49 +34,60 @@ open class TreeNode(open val id: String, internal val metadata: NodeMetadata) {
 
     /**
      * Byte array format is:
-     * 0                                                    [NodeMetadata] flags; 1 byte
-     * 1                                                    length of value sub-array
-     * 2...5                                                length of node's children sub-array
-     * 6...7                                                match id
-     * 8..(8+value length)                                  actual value sub-array
-     * (8+value length)..((8+value length)+children length) actual children sub-array
+     * 0                                                      [NodeMetadata] flags; 1 byte
+     * 1                                                      length of value sub-array
+     * 2..3                                                   length of match sub-array
+     * 4...7                                                  length of node's children sub-array
+     * 8..(8+value length)                                    actual value sub-array
+     * (8+value length)..
+     * ((8+value length)+children length)                     match data (can be 0 length)
+     * (8+value length+match data length)..
+     * ((8+value length+match data length)+children length)   actual children sub-array
      */
     fun toUByteArray(): UByteArray {
         val childrenByteArrays: List<UByteArray> = generateChildrenByteArrays()
         val valueByteArray = serializedId().toByteArray(UTF_8).toUByteArray()
-        val header = generateHeader(metadata, valueByteArray, childrenByteArrays, match)
+        val matchByteArray = matchByteArray(match)
+        val header = generateHeader(metadata, valueByteArray, matchByteArray, childrenByteArrays)
         val resultByteArray = UByteArray(arrayLength(
-                childrenByteArrays,
-                valueByteArray,
-                header
+                childArrays = childrenByteArrays,
+                valueArray = valueByteArray,
+                matchArray = matchByteArray,
+                headerArray = header
         ))
         header.copyInto(resultByteArray)
         var position = header.size
-        with(valueByteArray) {
-            copyInto(resultByteArray, position)
-            position += size
-        }
+        position = valueByteArray.copyIntoPosition(resultByteArray, position)
+        position = matchByteArray.copyIntoPosition(resultByteArray, position)
         for (childByteArray in childrenByteArrays) {
-            childByteArray.copyInto(resultByteArray, position)
-            position += childByteArray.size
+            position = childByteArray.copyIntoPosition(resultByteArray, position)
         }
         return resultByteArray
     }
 
-    private fun arrayLength(childArrays: List<UByteArray>, value: UByteArray, header: UByteArray): Int {
-        return header.size + value.size + childArrays.sumBy { it.size }
+    private fun UByteArray.copyIntoPosition(targetByteArray: UByteArray, position: Int): Int {
+        return with(targetByteArray) {
+            this@copyIntoPosition.copyInto(this, position)
+            position + this@copyIntoPosition.size
+        }
+    }
+
+    private fun arrayLength(childArrays: List<UByteArray>, valueArray: UByteArray, matchArray: UByteArray, headerArray: UByteArray): Int {
+        return headerArray.size + valueArray.size + matchArray.size + childArrays.sumBy { it.size }
     }
 
     // Make sure we match concrete matches before placeholders or configurable path segments
     private fun generateChildrenByteArrays(): List<UByteArray> = children.sortedWith(compareBy({ it.metadata.isConfigurablePathSegment }, { it.metadata.isComponentParam }, { it.id })).map { it.toUByteArray() }
 
-    private fun generateHeader(metadata: NodeMetadata, value: UByteArray, children: List<UByteArray>? = null, match: UriMatch?): UByteArray {
+    private fun generateHeader(metadata: NodeMetadata, value: UByteArray, matchByteArray: UByteArray, children: List<UByteArray>? = null): UByteArray {
         val childrenLength: Int = children?.sumBy { it.size } ?: 0
         return UByteArray(HEADER_LENGTH).apply {
-            set(0, metadata.metadata.toUByte())
-            set(1, value.size.toUByte())
-            writeUIntAt(2, childrenLength.toUInt())
-            writeUShortAt(6, match?.matchId?.toUShort() ?: NO_MATCH.toUShort())
+            set(0, metadata.metadata.toUByte()) // flag
+            set(HEADER_NODE_METADATA_LENGTH, value.size.toUByte()) // value length
+            writeUShortAt(startIndex = HEADER_NODE_METADATA_LENGTH + HEADER_VALUE_LENGTH,
+                    value = matchByteArray.size.toUShort()) // match length
+            writeUIntAt(startIndex = HEADER_NODE_METADATA_LENGTH + HEADER_VALUE_LENGTH + HEADER_MATCH_LENGTH,
+                    value = childrenLength.toUInt()) // children length
         }
     }
 }
@@ -102,13 +113,14 @@ data class Root(override val id: String = "r") : TreeNode(ROOT_VALUE, NodeMetada
     /**
      * Add the given DeepLinkUri to the the trie
      */
-    fun addToTrie(matchIndex: Int, deepLinkUri: DeepLinkUri, annotatedElement: String, annotatedMethod: String?) {
+    fun addToTrie(deepLinkUriTemplate: String, annotatedClassFullyQualifiedName: String, annotatedMethod: String?) {
+        val deepLinkUri = DeepLinkUri.parse(deepLinkUriTemplate)
         var node = this.addNode(Scheme(deepLinkUri.scheme().also { validateIfComponentParam(it) }))
         if (!deepLinkUri.host().isNullOrEmpty()) {
             validateIfComponentParam(deepLinkUri.host())
             node = node.addNode(Host(deepLinkUri.host()))
             if (deepLinkUri.pathSegments().isNullOrEmpty()) {
-                node.match = UriMatch(deepLinkUri, matchIndex, annotatedElement, annotatedMethod)
+                node.match = UriMatch(deepLinkUriTemplate, annotatedClassFullyQualifiedName, annotatedMethod)
             }
         }
         if (!deepLinkUri.pathSegments().isNullOrEmpty()) {
@@ -117,7 +129,7 @@ data class Root(override val id: String = "r") : TreeNode(ROOT_VALUE, NodeMetada
                 validateIfConfigurablePathSegment(pathSegment)
                 node = node.addNode(PathSegment(pathSegment))
             }
-            node.match = UriMatch(deepLinkUri, matchIndex, annotatedElement, annotatedMethod)
+            node.match = UriMatch(deepLinkUriTemplate, annotatedClassFullyQualifiedName, annotatedMethod)
         }
     }
 }
@@ -127,6 +139,50 @@ data class Scheme(override val id: String) : TreeNode(id = id, metadata = NodeMe
 data class Host(override val id: String) : TreeNode(id = id, metadata = NodeMetadata(MetadataMasks.ComponentTypeHostMask, id))
 
 data class PathSegment(override val id: String) : TreeNode(id = id, metadata = NodeMetadata(MetadataMasks.ComponentTypePathSegmentMask, id))
+
+/**
+ * Match data byte array format is:
+ * 0..1 url                                                        url template length
+ * 2..(2+url template length)                                      url template
+ * (2+url template length)..
+ * (2+url template length)+2                                       classname length
+ * (2+url template length)+2..
+ * (2+url template length)+2+classname length                      class name
+ * (2+url template length)+2+classname length..
+ * (2+url template length)+2+classname length+1                    method name length (can be 0)
+ * (2+url template length)+2+classname length+1..
+ * (2+url template length)+2+classname length+1+method name length method name
+ */
+fun matchByteArray(match: UriMatch?): UByteArray {
+    if (match == null) return UByteArray(0)
+
+    val uriTemplateByteArray = match.uriTemplate.toByteArray(UTF_8).toUByteArray()
+    val classNameByteArray = match.annotatedClassFullyQualifiedName.toByteArray(UTF_8).toUByteArray()
+    val methodNameByteArray = match.annotatedMethod?.let { it.toByteArray(UTF_8).toUByteArray() }
+            ?: UByteArray(0)
+    return UByteArray(MATCH_DATA_URL_TEMPLATE_LENGTH + uriTemplateByteArray.size
+            + MATCH_DATA_CLASS_LENGTH + classNameByteArray.size
+            + MATCH_DATA_METHOD_LENGTH + methodNameByteArray.size)
+            .apply {
+                var position = 0
+                // Uri template
+                writeUShortAt(startIndex = 0, value = uriTemplateByteArray.size.toUShort())
+                position += MATCH_DATA_URL_TEMPLATE_LENGTH
+                uriTemplateByteArray.copyInto(destination = this, destinationOffset = position)
+                position += uriTemplateByteArray.size
+
+                // Class name
+                writeUShortAt(startIndex = position, value = classNameByteArray.size.toUShort())
+                position += MATCH_DATA_CLASS_LENGTH
+                classNameByteArray.copyInto(destination = this, destinationOffset = position)
+                position += classNameByteArray.size
+
+                // method
+                this.set(position, methodNameByteArray.size.toUByte())
+                position += MATCH_DATA_METHOD_LENGTH
+                if (methodNameByteArray.size > 0) methodNameByteArray.copyInto(destination = this, destinationOffset = position)
+            }
+}
 
 fun UByteArray.writeUIntAt(startIndex: Int, value: UInt) {
     val ubyte3: UByte = value.and(0x000000FFu).toUByte().toUByte()

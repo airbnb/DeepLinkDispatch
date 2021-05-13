@@ -11,7 +11,9 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -138,11 +140,15 @@ public class BaseDeepLinkDelegateTest {
   }
 
   @Test
-  public void testErrorHanderWithDuplicateMartch() {
+  public void testErrorHandlerWithDuplicateMatch() {
     String deeplinkUrl = "airbnb://foo/{bar}";
     String matchUrl = "airbnb://foo/bar";
 
     DeepLinkEntry entry = deepLinkEntry(deeplinkUrl);
+
+    Map<String, String> parametersMap = new HashMap(1);
+    parametersMap.put("bar","bar");
+    entry.setParameters(DeepLinkUri.parse(matchUrl), parametersMap);
 
     Uri uri = mock(Uri.class);
     when(uri.toString())
@@ -201,7 +207,7 @@ public class BaseDeepLinkDelegateTest {
   }
 
   private static DeepLinkEntry deepLinkEntry(String uri) {
-    return new DeepLinkEntry(uri, DeepLinkEntry.Type.CLASS, String.class, null);
+    return new DeepLinkEntry(uri, Object.class, null);
   }
 
   /**
@@ -217,14 +223,14 @@ public class BaseDeepLinkDelegateTest {
 
   private static class TestDeepLinkRegistry extends BaseRegistry {
     public TestDeepLinkRegistry(List<DeepLinkEntry> registry) {
-      super(registry, getSearchIndex(registry), new String[]{});
+      super(getSearchIndex(registry), new String[]{});
     }
 
     @NotNull
     private static byte[] getSearchIndex(List<DeepLinkEntry> deepLinkEntries) {
       Root trieRoot = new Root();
-      for (int i = 0; i < deepLinkEntries.size(); i++) {
-        trieRoot.addToTrie(i, DeepLinkUri.parse(deepLinkEntries.get(i).getUriTemplate()), deepLinkEntries.get(i).getActivityClass().toString(), deepLinkEntries.get(i).getMethod());
+      for (DeepLinkEntry entry : deepLinkEntries) {
+        trieRoot.addToTrie(entry.getUriTemplate(), entry.getActivityClass().getCanonicalName(), entry.getMethod());
       }
       return trieRoot.toUByteArray();
     }
