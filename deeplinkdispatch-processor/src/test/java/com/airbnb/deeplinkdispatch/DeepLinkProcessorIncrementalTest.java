@@ -11,7 +11,7 @@ import javax.tools.JavaFileObject;
 import static com.google.common.truth.Truth.assertAbout;
 import static com.google.testing.compile.JavaSourcesSubjectFactory.javaSources;
 
-public class DeepLinkProcessorIncrementalTest {
+public class DeepLinkProcessorIncrementalTest extends BaseDeepLinkProcessorTest {
   private final JavaFileObject customAnnotationAppLink = JavaFileObjects
     .forSourceString("AppDeepLink", "package com.example;\n"
       + "import com.airbnb.deeplinkdispatch.DeepLinkSpec;\n"
@@ -48,7 +48,7 @@ public class DeepLinkProcessorIncrementalTest {
   @Test
   public void testIncrementalProcessorWithCustomDeepLinkRegistration() {
     assertAbout(javaSources())
-      .that(Arrays.asList(customAnnotationAppLink, module, sampleActivityWithOnlyCustomDeepLink))
+      .that(Arrays.asList(customAnnotationAppLink, module, sampleActivityWithOnlyCustomDeepLink, fakeBaseDeeplinkDelegate))
       .withCompilerOptions("-AdeepLink.incremental=true")
       .withCompilerOptions("-AdeepLink.customAnnotations=com.example.AppDeepLink")
       .processedWith(new DeepLinkProcessor())
@@ -84,7 +84,7 @@ public class DeepLinkProcessorIncrementalTest {
   @Test
   public void testIncrementalProcessorWithoutCustomDeepLinkRegistration() {
     assertAbout(javaSources())
-      .that(Arrays.asList(customAnnotationAppLink, module, sampleActivityWithOnlyCustomDeepLink))
+      .that(Arrays.asList(customAnnotationAppLink, module, sampleActivityWithOnlyCustomDeepLink, fakeBaseDeeplinkDelegate))
       .withCompilerOptions("-AdeepLink.incremental=true")
       .processedWith(new DeepLinkProcessor())
       .compilesWithoutError()

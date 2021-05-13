@@ -354,10 +354,7 @@ public class MatchIndex {
    * @return The first elementStartPos that is not part of the parent element anymore.
    */
   private int getElementBoundaryPos(int elementStartPos) {
-    return elementStartPos
-      + HEADER_LENGTH
-      + getValueLength(elementStartPos)
-      + getMatchLength(elementStartPos)
+    return getChildrenPos(elementStartPos)
       + getChildrenLength(elementStartPos);
   }
 
@@ -371,9 +368,7 @@ public class MatchIndex {
     if (getChildrenLength(elementStartPos) == 0) {
       return -1;
     } else {
-      return elementStartPos
-        + HEADER_LENGTH
-        + getValueLength(elementStartPos)
+      return getMatchDataPos(elementStartPos)
         + getMatchLength(elementStartPos);
     }
   }
@@ -388,7 +383,9 @@ public class MatchIndex {
    * @return The position of the match data sub array for the given elementStartPos.
    */
   private int getMatchDataPos(int elementStartPos) {
-    return elementStartPos + HEADER_LENGTH + getValueLength(elementStartPos);
+    return elementStartPos
+      + HEADER_LENGTH
+      + getValueLength(elementStartPos);
   }
 
   /**

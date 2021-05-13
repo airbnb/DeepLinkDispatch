@@ -154,34 +154,34 @@ data class PathSegment(override val id: String) : TreeNode(id = id, metadata = N
  * (2+url template length)+2+classname length+1+method name length method name
  */
 fun matchByteArray(match: UriMatch?): UByteArray {
-    return match?.let {
-        val uriTemplateByteArray = it.uriTemplate.toString().toByteArray(UTF_8).toUByteArray()
-        val classNameByteArray = it.annotatedClassFullyQualifiedName.toByteArray(UTF_8).toUByteArray()
-        val methodNameByteArray = it.annotatedMethod?.let { it.toByteArray(UTF_8).toUByteArray() }
-                ?: UByteArray(0)
-        UByteArray(MATCH_DATA_URL_TEMPLATE_LENGTH + uriTemplateByteArray.size
-                + MATCH_DATA_CLASS_LENGTH + classNameByteArray.size
-                + MATCH_DATA_METHOD_LENGTH + methodNameByteArray.size)
-                .apply {
-                    var position = 0
-                    // Uri template
-                    writeUShortAt(startIndex = 0, value = uriTemplateByteArray.size.toUShort())
-                    position += MATCH_DATA_URL_TEMPLATE_LENGTH
-                    uriTemplateByteArray.copyInto(destination = this, destinationOffset = position)
-                    position += uriTemplateByteArray.size
+    if (match == null) return UByteArray(0)
 
-                    // Class name
-                    writeUShortAt(startIndex = position, value = classNameByteArray.size.toUShort())
-                    position += MATCH_DATA_CLASS_LENGTH
-                    classNameByteArray.copyInto(destination = this, destinationOffset = position)
-                    position += classNameByteArray.size
+    val uriTemplateByteArray = match.uriTemplate.toByteArray(UTF_8).toUByteArray()
+    val classNameByteArray = match.annotatedClassFullyQualifiedName.toByteArray(UTF_8).toUByteArray()
+    val methodNameByteArray = match.annotatedMethod?.let { it.toByteArray(UTF_8).toUByteArray() }
+            ?: UByteArray(0)
+    return UByteArray(MATCH_DATA_URL_TEMPLATE_LENGTH + uriTemplateByteArray.size
+            + MATCH_DATA_CLASS_LENGTH + classNameByteArray.size
+            + MATCH_DATA_METHOD_LENGTH + methodNameByteArray.size)
+            .apply {
+                var position = 0
+                // Uri template
+                writeUShortAt(startIndex = 0, value = uriTemplateByteArray.size.toUShort())
+                position += MATCH_DATA_URL_TEMPLATE_LENGTH
+                uriTemplateByteArray.copyInto(destination = this, destinationOffset = position)
+                position += uriTemplateByteArray.size
 
-                    // method
-                    this.set(position, methodNameByteArray.size.toUByte())
-                    position += MATCH_DATA_METHOD_LENGTH
-                    if (methodNameByteArray.size > 0) methodNameByteArray.copyInto(destination = this, destinationOffset = position)
-                }
-    } ?: UByteArray(0)
+                // Class name
+                writeUShortAt(startIndex = position, value = classNameByteArray.size.toUShort())
+                position += MATCH_DATA_CLASS_LENGTH
+                classNameByteArray.copyInto(destination = this, destinationOffset = position)
+                position += classNameByteArray.size
+
+                // method
+                this.set(position, methodNameByteArray.size.toUByte())
+                position += MATCH_DATA_METHOD_LENGTH
+                if (methodNameByteArray.size > 0) methodNameByteArray.copyInto(destination = this, destinationOffset = position)
+            }
 }
 
 fun UByteArray.writeUIntAt(startIndex: Int, value: UInt) {

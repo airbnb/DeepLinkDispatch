@@ -2,8 +2,8 @@ package com.airbnb.deeplinkdispatch.sample
 
 import com.airbnb.deeplinkdispatch.sample.benchmarkable.BenchmarkDeepLinkModuleRegistry
 import com.airbnb.deeplinkdispatch.sample.library.LibraryDeepLinkModuleRegistry
+import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.core.IsEqual.equalTo
-import org.junit.Assert.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner

@@ -12,7 +12,7 @@ import static com.google.common.truth.Truth.assertAbout;
 import static com.google.testing.compile.JavaSourceSubjectFactory.javaSource;
 import static com.google.testing.compile.JavaSourcesSubjectFactory.javaSources;
 
-public class DeepLinkProcessorNonIncrementalTest {
+public class DeepLinkProcessorNonIncrementalTest extends BaseDeepLinkProcessorTest {
   private static final JavaFileObject SIMPLE_DEEPLINK_ACTIVITY = JavaFileObjects
     .forSourceString("SampleActivity", "package com.example;"
       + "import com.airbnb.deeplinkdispatch.DeepLink;\n"
@@ -50,7 +50,7 @@ public class DeepLinkProcessorNonIncrementalTest {
         + "}");
 
     assertAbout(javaSources())
-      .that(Arrays.asList(SIMPLE_DEEPLINK_MODULE, sampleActivity))
+      .that(Arrays.asList(SIMPLE_DEEPLINK_MODULE, sampleActivity, fakeBaseDeeplinkDelegate))
       .processedWith(new DeepLinkProcessor())
       .compilesWithoutError()
       .and()
@@ -111,7 +111,7 @@ public class DeepLinkProcessorNonIncrementalTest {
 
     assertAbout(javaSources())
       .that(Arrays.asList(customAnnotationAppLink, customAnnotationWebLink,
-        SIMPLE_DEEPLINK_MODULE, sampleActivity))
+        SIMPLE_DEEPLINK_MODULE, sampleActivity, fakeBaseDeeplinkDelegate))
       .processedWith(new DeepLinkProcessor())
       .compilesWithoutError()
       .and()
@@ -224,7 +224,7 @@ public class DeepLinkProcessorNonIncrementalTest {
         + "}");
 
     assertAbout(javaSources())
-      .that(Arrays.asList(SIMPLE_DEEPLINK_MODULE_UPPERCASE_PACKAGE, activityWithUppercasePackage))
+      .that(Arrays.asList(SIMPLE_DEEPLINK_MODULE_UPPERCASE_PACKAGE, activityWithUppercasePackage, fakeBaseDeeplinkDelegate))
       .processedWith(new DeepLinkProcessor())
       .compilesWithoutError()
       .and()
@@ -345,7 +345,7 @@ public class DeepLinkProcessorNonIncrementalTest {
       );
 
     assertAbout(javaSources())
-      .that(Arrays.asList(SIMPLE_DEEPLINK_MODULE, sampleActivity))
+      .that(Arrays.asList(SIMPLE_DEEPLINK_MODULE, sampleActivity, fakeBaseDeeplinkDelegate))
       .processedWith(new DeepLinkProcessor())
       .compilesWithoutError()
       .and()
