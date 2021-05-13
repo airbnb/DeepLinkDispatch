@@ -224,7 +224,9 @@ public class DeepLinkProcessorNonIncrementalTest extends BaseDeepLinkProcessorTe
         + "}");
 
     assertAbout(javaSources())
-      .that(Arrays.asList(SIMPLE_DEEPLINK_MODULE_UPPERCASE_PACKAGE, activityWithUppercasePackage, fakeBaseDeeplinkDelegate))
+      .that(Arrays.asList(SIMPLE_DEEPLINK_MODULE_UPPERCASE_PACKAGE,
+        activityWithUppercasePackage,
+        fakeBaseDeeplinkDelegate))
       .processedWith(new DeepLinkProcessor())
       .compilesWithoutError()
       .and()

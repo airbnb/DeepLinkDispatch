@@ -48,7 +48,10 @@ public class DeepLinkProcessorIncrementalTest extends BaseDeepLinkProcessorTest 
   @Test
   public void testIncrementalProcessorWithCustomDeepLinkRegistration() {
     assertAbout(javaSources())
-      .that(Arrays.asList(customAnnotationAppLink, module, sampleActivityWithOnlyCustomDeepLink, fakeBaseDeeplinkDelegate))
+      .that(Arrays.asList(customAnnotationAppLink,
+        module,
+        sampleActivityWithOnlyCustomDeepLink,
+        fakeBaseDeeplinkDelegate))
       .withCompilerOptions("-AdeepLink.incremental=true")
       .withCompilerOptions("-AdeepLink.customAnnotations=com.example.AppDeepLink")
       .processedWith(new DeepLinkProcessor())
@@ -84,7 +87,10 @@ public class DeepLinkProcessorIncrementalTest extends BaseDeepLinkProcessorTest 
   @Test
   public void testIncrementalProcessorWithoutCustomDeepLinkRegistration() {
     assertAbout(javaSources())
-      .that(Arrays.asList(customAnnotationAppLink, module, sampleActivityWithOnlyCustomDeepLink, fakeBaseDeeplinkDelegate))
+      .that(Arrays.asList(customAnnotationAppLink,
+        module,
+        sampleActivityWithOnlyCustomDeepLink,
+        fakeBaseDeeplinkDelegate))
       .withCompilerOptions("-AdeepLink.incremental=true")
       .processedWith(new DeepLinkProcessor())
       .compilesWithoutError()
