@@ -103,7 +103,7 @@ public class BaseDeepLinkDelegate {
   }
 
   /**
-   * Calls {@link #createResult(Activity, Intent, DeepLinkEntry)}. If the DeepLinkResult has
+   * Calls {@link #createResult(Activity, Intent, DeepLinkMatchResult)}. If the DeepLinkResult has
    * a non-null TaskStackBuilder or Intent, it starts it. It always calls
    * {@link #notifyListener(Context, boolean, Uri, String, String)}.
    *
@@ -126,7 +126,7 @@ public class BaseDeepLinkDelegate {
       activity.startActivity(result.getIntent());
     }
     notifyListener(activity, !result.isSuccessful(), uri,
-      result.getDeepLinkEntry() != null ? result.getDeepLinkEntry().getUriTemplate()
+      result.getDeepLinkEntry() != null ? result.getDeepLinkEntry().getDeeplinkEntry().getUriTemplate()
         : null, result.getError());
     return result;
   }
@@ -137,26 +137,26 @@ public class BaseDeepLinkDelegate {
    *
    * @param activity      used to startActivity() or notifyListener().
    * @param sourceIntent  inbound Intent.
-   * @param deepLinkEntry deepLinkEntry that matches the sourceIntent's URI. Derived from
+   * @param deeplinkMatchResult deeplinkMatchResult that matches the sourceIntent's URI. Derived from
    *                      {@link #findEntry(String)}. Can be injected for testing.
    * @return DeepLinkResult
    */
   public @NonNull DeepLinkResult createResult(
-    Activity activity, Intent sourceIntent, DeepLinkEntry deepLinkEntry
+    Activity activity, Intent sourceIntent, DeepLinkMatchResult deeplinkMatchResult
   ) {
     validateInput(activity, sourceIntent);
     Uri uri = sourceIntent.getData();
     if (uri == null) {
       return new DeepLinkResult(
-        false, null, "No Uri in given activity's intent.", null, null, deepLinkEntry);
+        false, null, "No Uri in given activity's intent.", null, null, deeplinkMatchResult);
     }
     String uriString = uri.toString();
-    if (deepLinkEntry == null) {
+    if (deeplinkMatchResult == null) {
       return new DeepLinkResult(false, null, "DeepLinkEntry cannot be null",
         null, null, null);
     }
     DeepLinkUri deepLinkUri = DeepLinkUri.parse(uriString);
-    Map<String, String> parameterMap = new HashMap<>(deepLinkEntry.getParameters(deepLinkUri));
+    Map<String, String> parameterMap = new HashMap<>(deeplinkMatchResult.getParameters(deepLinkUri));
     for (String queryParameter : deepLinkUri.queryParameterNames()) {
       for (String queryParameterValue : deepLinkUri.queryParameterValues(queryParameter)) {
         if (parameterMap.containsKey(queryParameter)) {
@@ -176,18 +176,19 @@ public class BaseDeepLinkDelegate {
       parameters.putString(parameterEntry.getKey(), parameterEntry.getValue());
     }
     try {
-      Class<?> c = deepLinkEntry.getActivityClass();
+      DeepLinkEntry matchedDeeplinkEntry = deeplinkMatchResult.getDeeplinkEntry();
+      Class<?> c = matchedDeeplinkEntry.getActivityClass();
       Intent newIntent = null;
       TaskStackBuilder taskStackBuilder = null;
-      if (deepLinkEntry.getMethod() == null) {
+      if (matchedDeeplinkEntry.getMethod() == null) {
         newIntent = new Intent(activity, c);
       } else {
         Method method;
         DeepLinkResult errorResult = new DeepLinkResult(false, uriString,
-          "Could not deep link to method: " + deepLinkEntry.getMethod() + " intents length == 0",
-          null, null, deepLinkEntry);
+          "Could not deep link to method: " + matchedDeeplinkEntry.getMethod() + " intents length == 0",
+          null, null, deeplinkMatchResult);
         try {
-          method = c.getMethod(deepLinkEntry.getMethod(), Context.class);
+          method = c.getMethod(matchedDeeplinkEntry.getMethod(), Context.class);
           if (method.getReturnType().equals(TaskStackBuilder.class)) {
             taskStackBuilder = (TaskStackBuilder) method.invoke(c, activity);
             if (taskStackBuilder.getIntentCount() == 0) {
@@ -198,7 +199,7 @@ public class BaseDeepLinkDelegate {
             newIntent = (Intent) method.invoke(c, activity);
           }
         } catch (NoSuchMethodException exception) {
-          method = c.getMethod(deepLinkEntry.getMethod(), Context.class, Bundle.class);
+          method = c.getMethod(matchedDeeplinkEntry.getMethod(), Context.class, Bundle.class);
           if (method.getReturnType().equals(TaskStackBuilder.class)) {
             taskStackBuilder = (TaskStackBuilder) method.invoke(c, activity, parameters);
             if (taskStackBuilder.getIntentCount() == 0) {
@@ -212,7 +213,7 @@ public class BaseDeepLinkDelegate {
       }
       if (newIntent == null) {
         return new DeepLinkResult(false, uriString, "Destination Intent is null!", null,
-          taskStackBuilder, deepLinkEntry);
+          taskStackBuilder, deeplinkMatchResult);
       }
       if (newIntent.getAction() == null) {
         newIntent.setAction(sourceIntent.getAction());
@@ -226,25 +227,25 @@ public class BaseDeepLinkDelegate {
       if (activity.getCallingActivity() != null) {
         newIntent.setFlags(Intent.FLAG_ACTIVITY_FORWARD_RESULT);
       }
-      return new DeepLinkResult(true, uriString, "", newIntent, taskStackBuilder, deepLinkEntry);
+      return new DeepLinkResult(true, uriString, "", newIntent, taskStackBuilder, deeplinkMatchResult);
     } catch (NoSuchMethodException exception) {
       return new DeepLinkResult(false, uriString, "Deep link to non-existent method: "
-        + deepLinkEntry.getMethod(), null, null, deepLinkEntry);
+        + deeplinkMatchResult.getDeeplinkEntry().getMethod(), null, null, deeplinkMatchResult);
     } catch (IllegalAccessException exception) {
       return new DeepLinkResult(false, uriString, "Could not deep link to method: "
-        + deepLinkEntry.getMethod(), null, null, deepLinkEntry);
+        + deeplinkMatchResult.getDeeplinkEntry().getMethod(), null, null, deeplinkMatchResult);
     } catch (InvocationTargetException exception) {
       return new DeepLinkResult(false, uriString, "Could not deep link to method: "
-        + deepLinkEntry.getMethod(), null, null, deepLinkEntry);
+        + deeplinkMatchResult.getDeeplinkEntry().getMethod(), null, null, deeplinkMatchResult);
     }
   }
 
-  private DeepLinkEntry findEntry(String uriString) {
+  private DeepLinkMatchResult findEntry(String uriString) {
     DeepLinkEntry entryRegExpMatch = null;
-    List<DeepLinkEntry> entryIdxMatches = new ArrayList<>();
+    List<DeepLinkMatchResult> entryIdxMatches = new ArrayList<>();
     DeepLinkUri uri = DeepLinkUri.parse(uriString);
     for (BaseRegistry registry : registries) {
-      DeepLinkEntry entryIdxMatch = registry.idxMatch(uri, configurablePathSegmentReplacements);
+      DeepLinkMatchResult entryIdxMatch = registry.idxMatch(uri, configurablePathSegmentReplacements);
       if (entryIdxMatch != null) {
         entryIdxMatches.add(entryIdxMatch);
       }

@@ -110,7 +110,6 @@ class DeepLinkEntryTest {
         val entry = deepLinkEntry("airbnb://foo/{bar}")
         val testRegistry = getTestRegistry(listOf(entry))
         assertThat(testRegistry.idxMatch(DeepLinkUri.parse("airbnb://test.com"))).isNull()
-        assertThat(entry.getParameters(DeepLinkUri.parse("airbnb://test.com")).isEmpty()).isTrue
     }
 
     @Test
@@ -138,21 +137,23 @@ class DeepLinkEntryTest {
         val url = "dld://foo"
         val entry = deepLinkEntry(urlTemplate)
         val entryNoParam = deepLinkEntry(url)
-        entryNoParam.setParameters(DeepLinkUri.parse(url), emptyMap())
+        val entryMatchNoParam = DeepLinkMatchResult(entryNoParam, mapOf(DeepLinkUri.parse(url) to emptyMap()))
         val testRegistry = getTestRegistry(listOf(entry))
         val match = testRegistry.idxMatch(DeepLinkUri.parse(url))
         val testRegistryNoParam = getTestRegistry(listOf(entryNoParam))
         val matchNoParam = testRegistryNoParam.idxMatch(DeepLinkUri.parse(url))
         assertThat(match).isNull()
-        assertThat(matchNoParam).isEqualTo(entryNoParam)
+        assertThat(matchNoParam).isEqualTo(entryMatchNoParam)
     }
 
     @Test
     fun testWithQueryParam() {
         val entry = deepLinkEntry("airbnb://something")
-
-//    assertThat(entry.matches("airbnb://something?foo=bar")).isTrue();
-        assertThat(entry.getParameters(DeepLinkUri.parse("airbnb://something?foo=bar")).isEmpty()).isTrue
+        val testRegistry = getTestRegistry(listOf(entry))
+        val matchResult = DeepLinkMatchResult(entry, mapOf(DeepLinkUri.parse("airbnb://something?foo=bar") to emptyMap()))
+        val match = testRegistry.idxMatch(DeepLinkUri.parse("airbnb://something?foo=bar"))
+        assertThat(match).isNotNull
+        assertThat(match).isEqualTo(matchResult)
     }
 
     @Test
@@ -210,21 +211,21 @@ class DeepLinkEntryTest {
         val matchTemplate = "airbnb://s/{query}"
         val matchUrl = "airbnb://s/Sant'Eufemia-a-Maiella--Italia"
         val entry = deepLinkEntry(matchTemplate)
-        val parametersMap = mapOf("query" to "Sant'Eufemia-a-Maiella--Italia")
-        entry.setParameters(DeepLinkUri.parse(matchUrl), parametersMap)
+        val parametersMap = mapOf(DeepLinkUri.parse(matchUrl) to mapOf("query" to "Sant'Eufemia-a-Maiella--Italia"))
+        val entryMatch = DeepLinkMatchResult(entry, parametersMap)
         val testRegistry = getTestRegistry(listOf(entry))
         val match = testRegistry.idxMatch(DeepLinkUri.parse(matchUrl))
-        assertThat(match).isEqualTo(entry)
+        assertThat(match).isEqualTo(entryMatch)
     }
 
     @Test
     fun schemeWithNumbers() {
         val deeplinkUrl = "jackson5://example.com"
         val entry = deepLinkEntry(deeplinkUrl)
-        entry.setParameters(DeepLinkUri.parse(deeplinkUrl), emptyMap())
+        val entryMatch = DeepLinkMatchResult(entry, mapOf(DeepLinkUri.parse(deeplinkUrl) to emptyMap()))
         val testRegistry = getTestRegistry(listOf(entry))
         val match = testRegistry.idxMatch(DeepLinkUri.parse(deeplinkUrl))
-        assertThat(match).isEqualTo(entry)
+        assertThat(match).isEqualTo(entryMatch)
     }
 
     @Test

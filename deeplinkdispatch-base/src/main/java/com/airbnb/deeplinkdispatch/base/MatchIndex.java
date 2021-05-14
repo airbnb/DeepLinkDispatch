@@ -5,6 +5,7 @@ import androidx.annotation.Nullable;
 
 import com.airbnb.deeplinkdispatch.DeepLinkEntry;
 import com.airbnb.deeplinkdispatch.DeepLinkUri;
+import com.airbnb.deeplinkdispatch.DeepLinkMatchResult;
 import com.airbnb.deeplinkdispatch.NodeMetadata;
 import com.airbnb.deeplinkdispatch.UrlElement;
 
@@ -73,7 +74,7 @@ public class MatchIndex {
   public static final String MATCH_PARAM_DIVIDER_CHAR = String.valueOf((char) 0x1e);
 
   @NonNull
-  private byte[] byteArray;
+  private final byte[] byteArray;
 
   public MatchIndex(@NonNull byte[] byteArray) {
     this.byteArray = byteArray;
@@ -103,14 +104,14 @@ public class MatchIndex {
    *                                 values.
    * @return An instance of {@link DeepLinkEntry} if a match was found null if it wasn't.
    */
-  public DeepLinkEntry matchUri(@NonNull DeepLinkUri deeplinkUri,
-                                @NonNull List<UrlElement> elements,
-                                @Nullable Map<String, String> placeholders,
-                                int elementIndex,
-                                int elementStartPosition,
-                                int parentBoundryPos,
-                                Map<byte[], byte[]> pathSegmentReplacements) {
-    DeepLinkEntry match = null;
+  public DeepLinkMatchResult matchUri(@NonNull DeepLinkUri deeplinkUri,
+                                      @NonNull List<UrlElement> elements,
+                                      @Nullable Map<String, String> placeholders,
+                                      int elementIndex,
+                                      int elementStartPosition,
+                                      int parentBoundryPos,
+                                      Map<byte[], byte[]> pathSegmentReplacements) {
+    DeepLinkMatchResult match = null;
     int currentElementStartPosition = elementStartPosition;
     do {
       UrlElement urlElement = elements.get(elementIndex);
@@ -126,7 +127,7 @@ public class MatchIndex {
           // We need to have a new HashMap for every partial match to make sure that the
           // placeholders found in other partial matches do not overlap with the actual final match.
           placeholdersOutput = new HashMap<>(placeholders != null ? placeholders
-            : Collections.<String, String>emptyMap());
+            : Collections.emptyMap());
           String[] compareParams =
             compareResult.getPlaceholderValue().split(MATCH_PARAM_DIVIDER_CHAR);
           // Add the found placeholder set to the map.
@@ -152,13 +153,12 @@ public class MatchIndex {
         } else {
           int matchLength = getMatchLength(currentElementStartPosition);
           if (matchLength > 0) {
-            match = getDeeplinkEntryFromArray(byteArray,
+            match = getMatchResultFromArray(byteArray,
               matchLength,
-              getMatchDataPos(currentElementStartPosition));
-            if (match != null) {
-              match.setParameters(deeplinkUri,
-                placeholdersOutput == null ? Collections.emptyMap() : placeholdersOutput);
-            }
+              getMatchDataPos(currentElementStartPosition),
+              deeplinkUri,
+              placeholdersOutput
+            );
           }
         }
       }
@@ -172,9 +172,12 @@ public class MatchIndex {
   }
 
   @Nullable
-  public static DeepLinkEntry getDeeplinkEntryFromArray(byte[] byteArray,
-                                                        int matchLength,
-                                                        int matchStartPosition) {
+  public static DeepLinkMatchResult
+  getMatchResultFromArray(@NonNull byte[] byteArray,
+                          int matchLength,
+                          int matchStartPosition,
+                          @NonNull DeepLinkUri deeplinkUri,
+                          @NonNull Map<String, String> placeholdersOutput) {
     if (matchLength == 0) {
       return null;
     }
@@ -202,7 +205,9 @@ public class MatchIndex {
       position += MATCH_DATA_METHOD_LENGTH;
       methodName = getStringFromByteArray(byteArray, position, methodLength);
     }
-    return new DeepLinkEntry(urlTemplate, deeplinkClass, methodName);
+    return new DeepLinkMatchResult(
+      new DeepLinkEntry(urlTemplate, deeplinkClass, methodName),
+      Collections.singletonMap(deeplinkUri, placeholdersOutput));
   }
 
   /**

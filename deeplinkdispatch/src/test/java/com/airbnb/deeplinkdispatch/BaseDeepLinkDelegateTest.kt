@@ -117,8 +117,7 @@ class BaseDeepLinkDelegateTest {
         val deeplinkUrl = "airbnb://foo/{bar}"
         val matchUrl = "airbnb://foo/bar"
         val entry = deepLinkEntry(deeplinkUrl)
-        val parametersMap = mapOf("bar" to "bar")
-        entry.setParameters(DeepLinkUri.parse(matchUrl), parametersMap)
+        val deeplinkMatchResult = DeepLinkMatchResult(entry, mapOf(DeepLinkUri.parse(matchUrl) to mapOf("bar" to "bar")))
         val uri = Mockito.mock(Uri::class.java)
         Mockito.`when`(uri.toString())
                 .thenReturn(matchUrl)
@@ -133,14 +132,14 @@ class BaseDeepLinkDelegateTest {
                 .thenReturn(appContext)
         val errorHandler = TestErrorHandler()
         val testDelegate = getTwoRegistriesTestDelegate(listOf(entry), listOf(entry), errorHandler)
-        val (_, _, _, _, _, deepLinkEntry) = testDelegate.dispatchFrom(activity, intent)
+        val (_, _, _, _, _, match) = testDelegate.dispatchFrom(activity, intent)
         assertThat(errorHandler.duplicatedMatchCalled()).isTrue
         assertThat(errorHandler.duplicatedMatches).isNotNull
         assertThat(errorHandler.duplicatedMatches!!.size).isEqualTo(2)
-        assertThat(errorHandler.duplicatedMatches!![0]).isEqualTo(entry)
-        assertThat(errorHandler.duplicatedMatches!![1]).isEqualTo(entry)
+        assertThat(errorHandler.duplicatedMatches!![0]).isEqualTo(deeplinkMatchResult)
+        assertThat(errorHandler.duplicatedMatches!![1]).isEqualTo(deeplinkMatchResult)
         assertThat(errorHandler.uriString).isEqualTo(matchUrl)
-        assertThat(deepLinkEntry!!.equals(entry))
+        assertThat(match).isEqualTo(deeplinkMatchResult)
     }
 
     @Test
@@ -182,7 +181,7 @@ class BaseDeepLinkDelegateTest {
     }
 
     private class TestErrorHandler : ErrorHandler {
-        var duplicatedMatches: List<DeepLinkEntry>? = null
+        var duplicatedMatches: List<DeepLinkMatchResult>? = null
         var duplicateMatchCalled = false
         var uriString: String? = null
             private set
@@ -191,7 +190,7 @@ class BaseDeepLinkDelegateTest {
             return duplicateMatchCalled
         }
 
-        override fun duplicateMatch(uriString: String, duplicatedMatches: List<DeepLinkEntry>) {
+        override fun duplicateMatch(uriString: String, duplicatedMatches: List<DeepLinkMatchResult>) {
             this.uriString = uriString
             this.duplicatedMatches = duplicatedMatches
             duplicateMatchCalled = true

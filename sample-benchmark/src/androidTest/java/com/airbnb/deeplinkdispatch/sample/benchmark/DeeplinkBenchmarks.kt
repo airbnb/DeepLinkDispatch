@@ -5,11 +5,7 @@ import androidx.benchmark.junit4.BenchmarkRule
 import androidx.benchmark.junit4.measureRepeated
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.rule.ActivityTestRule
-import com.airbnb.deeplinkdispatch.BaseDeepLinkDelegate
-import com.airbnb.deeplinkdispatch.BaseRegistry
-import com.airbnb.deeplinkdispatch.DeepLinkEntry
-import com.airbnb.deeplinkdispatch.DeepLinkResult
-import com.airbnb.deeplinkdispatch.DeepLinkUri
+import com.airbnb.deeplinkdispatch.*
 import com.airbnb.deeplinkdispatch.sample.benchmarkable.BenchmarkDeepLinkModuleRegistry
 import com.airbnb.deeplinkdispatch.sample.benchmarkable.ScaleTestActivity
 import org.junit.Assert
@@ -105,12 +101,12 @@ class DeeplinkBenchmarks {
         return intent
     }
 
-    fun entry(uri: String): DeepLinkEntry? {
+    fun entry(uri: String): DeepLinkMatchResult? {
         return registry().idxMatch(DeepLinkUri.parse(uri))
     }
 
-    fun testMatch(uri: DeepLinkUri): DeepLinkEntry? {
-        var result: DeepLinkEntry? = null
+    fun testMatch(uri: DeepLinkUri): DeepLinkMatchResult? {
+        var result: DeepLinkMatchResult? = null
         val registry = registry()
         benchmarkRule.measureRepeated {
             result = registry.idxMatch(uri)
