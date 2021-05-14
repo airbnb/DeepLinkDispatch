@@ -73,14 +73,14 @@ open class TreeNode(open val id: String, internal val metadata: NodeMetadata) {
     }
 
     private fun arrayLength(childArrays: List<UByteArray>, valueArray: UByteArray, matchArray: UByteArray, headerArray: UByteArray): Int {
-        return headerArray.size + valueArray.size + matchArray.size + childArrays.sumBy { it.size }
+        return headerArray.size + valueArray.size + matchArray.size + childArrays.sumOf { it.size }
     }
 
     // Make sure we match concrete matches before placeholders or configurable path segments
     private fun generateChildrenByteArrays(): List<UByteArray> = children.sortedWith(compareBy({ it.metadata.isConfigurablePathSegment }, { it.metadata.isComponentParam }, { it.id })).map { it.toUByteArray() }
 
     private fun generateHeader(metadata: NodeMetadata, value: UByteArray, matchByteArray: UByteArray, children: List<UByteArray>? = null): UByteArray {
-        val childrenLength: Int = children?.sumBy { it.size } ?: 0
+        val childrenLength: Int = children?.sumOf { it.size } ?: 0
         return UByteArray(HEADER_LENGTH).apply {
             set(0, metadata.metadata.toUByte()) // flag
             set(HEADER_NODE_METADATA_LENGTH, value.size.toUByte()) // value length

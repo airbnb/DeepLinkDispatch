@@ -14,7 +14,7 @@ data class DeepLinkResult(
          * The intent for the Deep Link's destination. eg. [com.airbnb.deeplinkdispatch.sample.DeepLinkActivity]
          */
         val intent: Intent?,
-        val taskStackBuilder: TaskStackBuilder?, val deepLinkEntry: DeepLinkEntry?
+        val taskStackBuilder: TaskStackBuilder?, val deepLinkEntry: DeepLinkMatchResult?
 ) {
     /**
      * This exists so that calls from Kotlin code [error()] are maintained across major version 4.

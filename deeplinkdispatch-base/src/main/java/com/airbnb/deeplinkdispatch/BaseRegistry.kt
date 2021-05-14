@@ -35,7 +35,7 @@ abstract class BaseRegistry(matchIndexArray: ByteArray,
      * @return A [DeepLinkEntry] if a match was found or null if not.
      */
     @JvmOverloads
-    fun idxMatch(deepLinkUri: DeepLinkUri?, pathSegmentReplacements: Map<ByteArray, ByteArray> = mapOf()): DeepLinkEntry? {
+    fun idxMatch(deepLinkUri: DeepLinkUri?, pathSegmentReplacements: Map<ByteArray, ByteArray> = mapOf()): DeepLinkMatchResult? {
         if (deepLinkUri == null) {
             return null
         }
@@ -43,7 +43,7 @@ abstract class BaseRegistry(matchIndexArray: ByteArray,
         // (artificial) root.
         return matchIndex.matchUri(deepLinkUri,
                 SchemeHostAndPath(deepLinkUri).matchList,
-                null,
+                emptyMap(),
                 0,
                 0,
                 matchIndex.length(),
