@@ -1,7 +1,7 @@
 package com.airbnb.deeplinkdispatch
 
 import com.airbnb.deeplinkdispatch.base.MatchIndex
-import junit.framework.Assert.*
+import junit.framework.TestCase.*
 import org.junit.Test
 import java.lang.IllegalStateException
 
