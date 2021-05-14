@@ -30,9 +30,9 @@ data class DeepLinkMatchResult(val deeplinkEntry: DeepLinkEntry,
     }
 
     override fun toString(): String {
-        return "uriTemplate: ${deeplinkEntry.uriTemplate} "+
-                "activity: ${deeplinkEntry.activityClass.simpleName} "+
-                "method: ${deeplinkEntry.method} "+
+        return "uriTemplate: ${deeplinkEntry.uriTemplate} " +
+                "activity: ${deeplinkEntry.activityClass.simpleName} " +
+                "method: ${deeplinkEntry.method} " +
                 "parameters: $parameterMap"
     }
 
@@ -81,7 +81,7 @@ data class DeepLinkEntry(val uriTemplate: String,
                           * The class where the annotation corresponding to where an instance of DeepLinkEntry is declared.
                           */
                          val activityClass: Class<*>,
-                         val method: String?){
+                         val method: String?) {
 
     enum class Type {
         CLASS,

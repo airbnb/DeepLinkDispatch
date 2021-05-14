@@ -3,7 +3,6 @@ package com.airbnb.deeplinkdispatch.base;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.airbnb.deeplinkdispatch.DeepLinkEntry;
 import com.airbnb.deeplinkdispatch.DeepLinkUri;
 import com.airbnb.deeplinkdispatch.DeepLinkMatchResult;
 import com.airbnb.deeplinkdispatch.NodeMetadata;
