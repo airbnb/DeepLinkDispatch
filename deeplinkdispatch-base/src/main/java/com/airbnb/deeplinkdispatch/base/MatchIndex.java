@@ -1,4 +1,4 @@
-FxFix importsFidpackage com.airbnb.deeplinkdispatch.base;
+package com.airbnb.deeplinkdispatch.base;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
