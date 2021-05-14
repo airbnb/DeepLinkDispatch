@@ -14,7 +14,7 @@ import java.util.Map;
 
 @DeepLinkHandler({SampleModule.class, LibraryDeepLinkModule.class, BenchmarkDeepLinkModule.class})
 public class DeepLinkActivity extends Activity {
-  @Override
+  @Override. 
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     //    Debug.startMethodTracing("deeplink.trace",90000000);
