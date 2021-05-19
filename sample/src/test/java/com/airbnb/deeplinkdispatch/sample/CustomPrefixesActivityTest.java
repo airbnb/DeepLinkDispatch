@@ -62,6 +62,35 @@ public class CustomPrefixesActivityTest {
     }
   }
 
+  @Test
+  public void testWebPlaceholderDeepLinkIntentPlaceholderValue() {
+
+    String uri = "https://de.airbnb.com/guests";
+    Intent launchedIntent = getLaunchedIntent(uri);
+    assertThat(launchedIntent.getComponent(),
+      equalTo(new ComponentName(ApplicationProvider.getApplicationContext(), CustomPrefixesActivity.class)));
+
+    assertThat(launchedIntent.getBooleanExtra(DeepLink.IS_DEEP_LINK, false), equalTo(true));
+    assertThat(launchedIntent.getStringExtra(DeepLink.URI), equalTo(uri));
+    assertThat(launchedIntent.getExtras().getString("scheme"), equalTo("s"));
+    assertThat(launchedIntent.getExtras().getString("host_prefix"), equalTo("de."));
+  }
+
+  @Test
+  public void testWebPlaceholderDeepLinkIntentWihtId() {
+    List<String> cases = ImmutableList.of("http://airbnb.com/guest/123", "https://airbnb.com/guest/123",
+      "http://de.airbnb.com/guest/123", "https://de.airbnb.com/guest/123");
+    for (String uri : cases) {
+      Intent launchedIntent = getLaunchedIntent(uri);
+      assertThat(launchedIntent.getComponent(),
+        equalTo(new ComponentName(ApplicationProvider.getApplicationContext(), CustomPrefixesActivity.class)));
+
+      assertThat(launchedIntent.getBooleanExtra(DeepLink.IS_DEEP_LINK, false), equalTo(true));
+      assertThat(launchedIntent.getStringExtra(DeepLink.URI), equalTo(uri));
+      assertThat(launchedIntent.getExtras().getString("id"), equalTo("123"));
+    }
+  }
+
   @Test public void testWebDeepLinkIntentWithId() {
     List<String> cases =
         ImmutableList.of("http://airbnb.com/user/123", "https://airbnb.com/user/123");
