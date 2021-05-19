@@ -3,7 +3,8 @@ package com.airbnb.deeplinkdispatch.sample;
 import android.content.Context;
 import android.content.Intent;
 import androidx.core.app.TaskStackBuilder;
-import org.robolectric.RuntimeEnvironment;
+import androidx.test.core.app.ApplicationProvider;
+
 import org.robolectric.annotation.Implementation;
 import org.robolectric.annotation.Implements;
 import org.robolectric.annotation.RealObject;
@@ -38,7 +39,7 @@ public class ShadowTaskStackBuilder {
     intents[0] = new Intent(intents[0]).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK |
         Intent.FLAG_ACTIVITY_CLEAR_TASK |
         Intent.FLAG_ACTIVITY_TASK_ON_HOME);
-    RuntimeEnvironment.application.startActivities(intents);
+    ApplicationProvider.getApplicationContext().startActivities(intents);
   }
 
   @Implementation

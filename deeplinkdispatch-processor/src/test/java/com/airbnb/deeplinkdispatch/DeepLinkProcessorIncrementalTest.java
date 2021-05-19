@@ -20,6 +20,14 @@ public class DeepLinkProcessorIncrementalTest extends BaseDeepLinkProcessorTest 
       + "    String[] value();\n"
       + "}");
 
+  private final JavaFileObject customAnnotationPlaceholderInSchemeHostAppLink = JavaFileObjects
+    .forSourceString("PlaceholderDeepLink", "package com.example;\n"
+      + "import com.airbnb.deeplinkdispatch.DeepLinkSpec;\n"
+      + "@DeepLinkSpec(prefix = { \"http{scheme}://{host}example.com/\" })\n"
+      + "public @interface PlaceholderDeepLink {\n"
+      + "    String[] value();\n"
+      + "}");
+
   private final JavaFileObject sampleActivityWithStandardAndCustomDeepLink = JavaFileObjects
     .forSourceString("SampleActivity", "package com.example;"
       + "import com.airbnb.deeplinkdispatch.DeepLink;\n"
@@ -34,6 +42,16 @@ public class DeepLinkProcessorIncrementalTest extends BaseDeepLinkProcessorTest 
       + "import com.airbnb.deeplinkdispatch.DeepLinkHandler;\n\n"
       + "import com.example.SampleModule;\n\n"
       + "@AppDeepLink({\"example.com/deepLink\"})\n"
+      + "@DeepLinkHandler({ SampleModule.class })\n"
+      + "public class SampleActivity {\n"
+      + "}");
+
+  private final JavaFileObject sampleActivityWithOnlyCustomPlaceholderDeepLink = JavaFileObjects
+    .forSourceString("SampleActivity", "package com.example;"
+      + "import com.airbnb.deeplinkdispatch.DeepLink;\n"
+      + "import com.airbnb.deeplinkdispatch.DeepLinkHandler;\n\n"
+      + "import com.example.SampleModule;\n\n"
+      + "@PlaceholderDeepLink({\"deepLink\"})\n"
       + "@DeepLinkHandler({ SampleModule.class })\n"
       + "public class SampleActivity {\n"
       + "}");
@@ -79,6 +97,45 @@ public class DeepLinkProcessorIncrementalTest extends BaseDeepLinkProcessorTest 
             + "\\u0000\\u0000Mexample.com\\b\\b\\u0000=\\u0000\\u0000\\u0000\\u0000deepLink\\u0000"
             + "\\u001eexample://example.com/deepLink"
             + "\\u0000\\u001acom.example.SampleActivity\\u0000\";\n"
+            + "  }\n"
+            + "}"
+        ));
+  }
+
+  @Test
+  public void testIncrementalProcessorWithCustomDeepLinkWithPlaceholdersRegistration() {
+    assertAbout(javaSources())
+      .that(Arrays.asList(customAnnotationPlaceholderInSchemeHostAppLink,
+        module,
+        sampleActivityWithOnlyCustomPlaceholderDeepLink,
+        fakeBaseDeeplinkDelegate))
+      .withCompilerOptions("-AdeepLink.incremental=true")
+      .withCompilerOptions("-AdeepLink.customAnnotations=com.example.PlaceholderDeepLink")
+      .processedWith(new DeepLinkProcessor())
+      .compilesWithoutError()
+      .and()
+      .generatesSources(
+        JavaFileObjects.forResource("DeepLinkDelegate.java"),
+        JavaFileObjects.forSourceString("/SOURCE_OUTPUT.com.example"
+            + ".SampleModuleRegistry",
+          "package com.example;\n"
+            + "\n"
+            + "import com.airbnb.deeplinkdispatch.BaseRegistry;\n"
+            + "import com.airbnb.deeplinkdispatch.base.Utils;\n"
+            + "import java.lang.String;\n"
+            + "\n"
+            + "public final class SampleModuleRegistry extends BaseRegistry {\n"
+            + "  public SampleModuleRegistry() {\n"
+            + "    super(Utils.readMatchIndexFromStrings( new String[] {matchIndex0(), }),\n"
+            + "    new String[]{});\n"
+            + "  }\n"
+            + "\n"
+            + "  private static String matchIndex0() {\n"
+            + "    return \"\\u0001\\u0001\\u0000\\u0000\\u0000\\u0000\\u0000\\u0085r\\u0012\\f\\"
+            + "u0000\\u0000\\u0000\\u0000\\u0000qhttp{scheme}\\u0014\\u0011\\u0000\\u0000\\u0000\\"
+            + "u0000\\u0000X{host}example.com\\b\\b\\u0000H\\u0000\\u0000\\u0000\\u0000deepLink\\"
+            + "u0000)http{scheme}://{host}example.com/deepLink\\u0000\\u001acom.example."
+            + "SampleActivity\\u0000\";\n"
             + "  }\n"
             + "}"
         ));

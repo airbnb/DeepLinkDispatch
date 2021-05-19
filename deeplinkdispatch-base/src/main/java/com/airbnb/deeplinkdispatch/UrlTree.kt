@@ -114,7 +114,7 @@ data class Root(override val id: String = "r") : TreeNode(ROOT_VALUE, NodeMetada
      * Add the given DeepLinkUri to the the trie
      */
     fun addToTrie(deepLinkUriTemplate: String, annotatedClassFullyQualifiedName: String, annotatedMethod: String?) {
-        val deepLinkUri = DeepLinkUri.parse(deepLinkUriTemplate)
+        val deepLinkUri = DeepLinkUri.parseTemplate(deepLinkUriTemplate)
         var node = this.addNode(Scheme(deepLinkUri.scheme().also { validateIfComponentParam(it) }))
         if (!deepLinkUri.host().isNullOrEmpty()) {
             validateIfComponentParam(deepLinkUri.host())

@@ -15,6 +15,45 @@ class DeepLinkEntryTest {
     }
 
     @Test
+    fun testSinglePartialParam() {
+        val entry = deepLinkEntry("airbnb://foo/pre{bar}post")
+        val testRegistry = getTestRegistry(listOf(entry))
+
+        val match = testRegistry.idxMatch(DeepLinkUri.parse("airbnb://foo/premyDatapost"))
+        assertThat(match).isNotNull
+        assertThat(match!!.getParameters(DeepLinkUri.parse("airbnb://foo/premyDatapost"))["bar"]).isEqualTo("myData")
+
+        val emptyPlaceholderMatch = testRegistry.idxMatch(DeepLinkUri.parse("airbnb://foo/prepost"))
+        assertThat(emptyPlaceholderMatch).isNotNull
+        assertThat(emptyPlaceholderMatch!!.getParameters(DeepLinkUri.parse("airbnb://foo/prepost"))["bar"]).isEqualTo("")
+
+        val noMatch = testRegistry.idxMatch(DeepLinkUri.parse("airbnb://foo/pre1"))
+        assertThat(noMatch).isNull()
+
+        val noMatchJustPre = testRegistry.idxMatch(DeepLinkUri.parse("airbnb://foo/pre"))
+        assertThat(noMatchJustPre).isNull()
+    }
+
+    @Test
+    fun testSinglePartialParamLast() {
+        val entry = deepLinkEntry("airbnb://foo/pre{bar}")
+        val testRegistry = getTestRegistry(listOf(entry))
+        val match = testRegistry.idxMatch(DeepLinkUri.parse("airbnb://foo/premyData"))
+        assertThat(match!!.getParameters(DeepLinkUri.parse("airbnb://foo/premyData"))["bar"]).isEqualTo("myData")
+    }
+
+    @Test
+    fun testSinglePartialParamLastEmpty() {
+        val entry = deepLinkEntry("airbnb://foo/pre{bar}")
+        val testRegistry = getTestRegistry(listOf(entry))
+        val noMatchLastCharDifferent = testRegistry.idxMatch(DeepLinkUri.parse("airbnb://foo/pro"))
+        assertThat(noMatchLastCharDifferent).isNull()
+
+        val match = testRegistry.idxMatch(DeepLinkUri.parse("airbnb://foo/pre"))
+        assertThat(match!!.getParameters(DeepLinkUri.parse("airbnb://foo/pre"))["bar"]).isEqualTo("")
+    }
+
+    @Test
     fun testTwoParams() {
         val entry = deepLinkEntry("airbnb://test/{param1}/{param2}")
         val testRegistry = getTestRegistry(listOf(entry))
@@ -262,6 +301,35 @@ class DeepLinkEntryTest {
     fun templateWithParameters() {
         val entry = deepLinkEntry("airbnb://test/{param1}/{param2}")
         assertThat("airbnb://test/{param1}/{param2}" == entry.uriTemplate).isTrue
+    }
+
+    @Test
+    fun testSchemaHostParam() {
+        val entryWihtPlaceholderSchemeHost = deepLinkEntry("http{scheme}://{host}airbnb.com/test")
+        val testRegistry = getTestRegistry(listOf(entryWihtPlaceholderSchemeHost))
+
+        testParametrizedUrl(testRegistry, "http://en.airbnb.com/test", mapOf("scheme" to "" , "host" to "en."))
+        testParametrizedUrl(testRegistry, "http://www.airbnb.com/test", mapOf("scheme" to "" , "host" to "www."))
+        testParametrizedUrl(testRegistry, "http://airbnb.com/test", mapOf("scheme" to "" , "host" to ""))
+
+        testParametrizedUrl(testRegistry, "https://en.airbnb.com/test", mapOf("scheme" to "s" , "host" to "en.", "scheme" to "s"))
+        testParametrizedUrl(testRegistry, "https://www.airbnb.com/test", mapOf("scheme" to "s" , "host" to "www.", "scheme" to "s"))
+        testParametrizedUrl(testRegistry, "https://airbnb.com/test", mapOf("scheme" to "s" , "host" to "", "scheme" to "s"))
+
+        val matchDeTld = testRegistry.idxMatch(DeepLinkUri.parse("http://www.airbnb.de/test"))
+        assertThat(matchDeTld).isNull()
+        val matchHttpsDeTld = testRegistry.idxMatch(DeepLinkUri.parse("https://www.airbnb.de/test"))
+        assertThat(matchHttpsDeTld).isNull()
+    }
+
+    private fun testParametrizedUrl(
+        testRegistry: TestDeepLinkRegistry, urlString: String, parameterMap: Map<String, String>
+    ) {
+        val url = DeepLinkUri.parse(urlString)
+        val matchEnHost = testRegistry.idxMatch(url)
+        assertThat(matchEnHost).isNotNull
+        assertThat(matchEnHost?.parameterMap).isNotNull
+        assertThat(matchEnHost!!.parameterMap[url]).isEqualTo(parameterMap)
     }
 
     private class TestDeepLinkRegistry(registry: List<DeepLinkEntry>) : BaseRegistry(getSearchIndex(registry), arrayOf()) {

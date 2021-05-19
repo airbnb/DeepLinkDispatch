@@ -72,6 +72,8 @@ public class MatchIndex {
   // Used to separate param and param value in compare return value (record separator)
   @NonNull
   public static final String MATCH_PARAM_DIVIDER_CHAR = String.valueOf((char) 0x1e);
+  @NonNull
+  public static final char[] VARIABLE_DELIMITER = {'{', '}'};
 
   @NonNull
   private final byte[] byteArray;
@@ -129,7 +131,7 @@ public class MatchIndex {
           placeholdersOutput = new HashMap<>(placeholders != null ? placeholders
             : Collections.emptyMap());
           String[] compareParams =
-            compareResult.getPlaceholderValue().split(MATCH_PARAM_DIVIDER_CHAR);
+            compareResult.getPlaceholderValue().split(MATCH_PARAM_DIVIDER_CHAR, -1);
           // Add the found placeholder set to the map.
           placeholdersOutput.put(compareParams[0], compareParams[1]);
         }
@@ -240,7 +242,7 @@ public class MatchIndex {
     }
 
     if (nodeMetadata.isComponentParam) {
-      return compareComponentParam(valueStartPos, valueLength, inboundValue);
+      return compareComponentParam(valueStartPos, valueLength, inboundValue, VARIABLE_DELIMITER);
     } else if (nodeMetadata.isConfigurablePathSegment) {
       return compareConfigurablePathSegment(inboundValue, pathSegmentReplacements, valueStartPos,
         valueLength);
@@ -287,46 +289,68 @@ public class MatchIndex {
 
   @Nullable
   private CompareResult compareComponentParam(
-    int valueStartPos, int valueLength, @NonNull byte[] inboundValue
+    int valueStartPos, int valueLength, @NonNull byte[] valueToMatch, char[] delimiter
   ) {
+    int valueToMatchLength = valueToMatch.length;
     if ((
       //Per com.airbnb.deeplinkdispatch.DeepLinkEntryTest.testEmptyParametersNameDontMatch
       //We should not return a match if the param (aka placeholder) is empty.
-      byteArray[valueStartPos] == '{' && byteArray[valueStartPos + 1] == '}'
+      byteArray[valueStartPos] == delimiter[0] && byteArray[valueStartPos + 1] == delimiter[1]
     ) || (
       //Per com.airbnb.deeplinkdispatch.DeepLinkEntryTest.testEmptyPathPresentParams
       //We expect an empty path to not be a match
-      inboundValue.length == 0
+      valueToMatchLength == 0
     )) {
       return null;
     }
-    // i index over inboundValue array forward
-    // j index over search byte arrays inboundValue element forward
-    // k index over inboundValue array backward
-    for (int i = 0; i < inboundValue.length; i++) {
-      if (byteArray[valueStartPos + i] == '{') {
+    // i index over valueToMatch array forward
+    // j index over search byte arrays valueToMatch element forward
+    // k index over valueToMatch array backward
+    for (int i = 0; i < valueToMatchLength; i++) {
+      // Edge case. All chars before placeholder match. And there are no more chars left in
+      // input string. But there are still chars left in value. In that case we need to look
+      // at the rest of the value as there might chars after the placeholder (e.g. pre{ph}post)
+      //or a placeholder that matches the empty string. e.g.
+      boolean fullyMatchedButThereAreMoreCharsInValue =
+        byteArray[valueStartPos + i] == valueToMatch[i]
+          && i == valueToMatchLength - 1
+          && valueLength > valueToMatchLength;
+      if (byteArray[valueStartPos + i] == delimiter[0] || fullyMatchedButThereAreMoreCharsInValue) {
         // Until here every char in front for the placeholder matched.
         // Now let's see if all chars within the placeholder also match.
-        for (int j = valueLength - 1, k = inboundValue.length - 1; j >= 0; j--, k--) {
-          if (byteArray[valueStartPos + j] == '}') {
+        for (int j = valueLength - 1, k = valueToMatchLength - 1; j >= 0; j--, k--) {
+          if (byteArray[valueStartPos + j] == delimiter[1]) {
+            // In chase we already matched all chars from valueToMatch but there are are more chars
+            // in the value inside the value array, we technically are in the next loop but need
+            // to be careful as using this to access valueToMatch[] will produce AIOOB!
+            if (fullyMatchedButThereAreMoreCharsInValue) {
+              i++;
+            }
             // Text within the placeholder fully matches. Now we just need to get the placeholder
             // string and can return.
             byte[] placeholderValue = new byte[k - i + 1];
             // Size is without braces
-            byte[] placeholder = new byte[(valueStartPos + j) - (valueStartPos + i) - 1];
-            System.arraycopy(inboundValue, i, placeholderValue, 0, placeholderValue.length);
-            System.arraycopy(byteArray, valueStartPos + i + 1, placeholder, 0,
-              placeholder.length);
+            byte[] placeholderName = new byte[(valueStartPos + j) - (valueStartPos + i) - 1];
+            System.arraycopy(valueToMatch,
+              i,
+              placeholderValue,
+              0,
+              placeholderValue.length);
+            System.arraycopy(byteArray,
+              valueStartPos + i + 1,
+              placeholderName,
+              0,
+              placeholderName.length);
             return new CompareResult(
-              new String(placeholder) + MATCH_PARAM_DIVIDER_CHAR
+              new String(placeholderName) + MATCH_PARAM_DIVIDER_CHAR
                 + new String(placeholderValue), false);
           }
-          if (byteArray[valueStartPos + j] != inboundValue[k]) {
+          if (byteArray[valueStartPos + j] != valueToMatch[k]) {
             return null;
           }
         }
       }
-      if (byteArray[valueStartPos + i] != inboundValue[i]) {
+      if (byteArray[valueStartPos + i] != valueToMatch[i]) {
         return null; // Does not match
       }
     }

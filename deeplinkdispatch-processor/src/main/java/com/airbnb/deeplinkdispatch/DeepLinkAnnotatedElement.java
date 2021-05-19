@@ -29,7 +29,7 @@ final class DeepLinkAnnotatedElement {
 
   DeepLinkAnnotatedElement(String annotation, Element element, DeepLinkEntry.Type type)
       throws MalformedURLException {
-    DeepLinkUri url = DeepLinkUri.parse(annotation);
+    DeepLinkUri url = DeepLinkUri.parseTemplate(annotation);
     if (url == null) {
       throw new MalformedURLException("Malformed Uri " + annotation);
     }
