@@ -41,6 +41,7 @@ dependencies {
   implementation deps.appCompat
   implementation deps.localBroadcastManager
 
+  testImplementation deps.androidxTestCore
   testImplementation deps.roboelectric
   testImplementation deps.junit
 }
@@ -52,6 +53,7 @@ kapt {
     arg("deepLink.customAnnotations",
         "com.airbnb.deeplinkdispatch.sample.AppDeepLink,"
             + "com.airbnb.deeplinkdispatch.sample.WebDeepLink,"
+            + "com.airbnb.deeplinkdispatch.sample.WebPlaceholderDeepLink,"
             + "com.airbnb.deeplinkdispatch.sample.library.LibraryDeepLink"
     )
   }

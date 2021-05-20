@@ -316,8 +316,8 @@ public class DeepLinkProcessor extends AbstractProcessor {
     Collections.sort(elements, new Comparator<DeepLinkAnnotatedElement>() {
       @Override
       public int compare(DeepLinkAnnotatedElement element1, DeepLinkAnnotatedElement element2) {
-        DeepLinkUri uri1 = DeepLinkUri.parse(element1.getUri());
-        DeepLinkUri uri2 = DeepLinkUri.parse(element2.getUri());
+        DeepLinkUri uri1 = DeepLinkUri.parseTemplate(element1.getUri());
+        DeepLinkUri uri2 = DeepLinkUri.parseTemplate(element2.getUri());
         int comparisonResult = uri2.pathSegments().size() - uri1.pathSegments().size();
         if (comparisonResult == 0) {
           comparisonResult = uri2.queryParameterNames().size() - uri1.queryParameterNames().size();
@@ -351,7 +351,7 @@ public class DeepLinkProcessor extends AbstractProcessor {
         error(element.getAnnotatedElement(), e.getMessage());
       }
 
-      DeepLinkUri deeplinkUri = DeepLinkUri.parse(uri);
+      DeepLinkUri deeplinkUri = DeepLinkUri.parseTemplate(uri);
       //Keep track of pathVariables added in a module so that we can check at runtime to ensure
       //that all pathVariables have a corresponding entry provided to BaseDeepLinkDelegate.
       for (String pathSegment : deeplinkUri.pathSegments()) {

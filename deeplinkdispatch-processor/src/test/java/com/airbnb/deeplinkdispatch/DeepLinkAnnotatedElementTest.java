@@ -48,4 +48,19 @@ public class DeepLinkAnnotatedElementTest {
     } catch (MalformedURLException ignored) {
     }
   }
+
+  @Test public void testPlaceholderInScheme() throws MalformedURLException {
+    DeepLinkAnnotatedElement annotatedElement = new DeepLinkAnnotatedElement(
+      "http{scheme}://example.com/{foo}/bar", element, DeepLinkEntry.Type.CLASS);
+
+    assertThat(annotatedElement.getUri()).isEqualTo("http{scheme}://example.com/{foo}/bar");
+  }
+
+  @Test public void testPlaceholderInHost() throws MalformedURLException {
+    DeepLinkAnnotatedElement annotatedElement = new DeepLinkAnnotatedElement(
+      "http://{host}example.com/{foo}/bar", element, DeepLinkEntry.Type.CLASS);
+
+    assertThat(annotatedElement.getUri()).isEqualTo("http://{host}example.com/{foo}/bar");
+  }
+
 }

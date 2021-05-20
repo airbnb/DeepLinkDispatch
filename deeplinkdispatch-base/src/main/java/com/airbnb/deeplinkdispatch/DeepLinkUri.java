@@ -37,9 +37,12 @@ import java.util.Set;
 import okio.Buffer;
 
 /**
- * Adapted from OkHttp's HttpUrl class. Only change is to allow any scheme, instead of just http or
- * https.
- *https://github.com/square/okhttp/blob/master/okhttp/src/main/java/com/squareup/okhttp/HttpUri.java
+ * Adapted from OkHttp's HttpUrl class. Changes are:
+ *  * Allow any scheme, instead of just http or https.
+ *  * when parsing via parseTemplate(url) allow placeholder chars({}) in url.
+ *
+ * https://github.com/square/okhttp/blob/master/okhttp/src/main/java/com/squareup/okhttp/
+ * HttpUri.java
  */
 public final class DeepLinkUri {
   private static final char[] HEX_DIGITS =
@@ -362,7 +365,7 @@ public final class DeepLinkUri {
   /** Returns the URL that would be retrieved by following {@code link} from this URL. */
   DeepLinkUri resolve(String link) {
     Builder builder = new Builder();
-    Builder.ParseResult result = builder.parse(this, link);
+    Builder.ParseResult result = builder.parse(this, link, false);
     return result == Builder.ParseResult.SUCCESS ? builder.build() : null;
   }
 
@@ -385,8 +388,22 @@ public final class DeepLinkUri {
    * URL, or null if it isn't.
    */
   public static DeepLinkUri parse(String url) {
+    return parse(url, false);
+  }
+
+  /**
+   * Like parse(String url) but allow '{' '}' chars in scheme to allow using placeholders in scheme.
+   *
+   * @param url
+   * @return
+   */
+  public static DeepLinkUri parseTemplate(String url) {
+    return parse(url, true);
+  }
+
+  private static DeepLinkUri parse(String url, boolean allowPlaceholderInScheme) {
     Builder builder = new Builder();
-    Builder.ParseResult result = builder.parse(null, url);
+    Builder.ParseResult result = builder.parse(null, url, allowPlaceholderInScheme);
     return result == Builder.ParseResult.SUCCESS ? builder.build() : null;
   }
 
@@ -407,7 +424,7 @@ public final class DeepLinkUri {
    */
   static DeepLinkUri getChecked(String url) throws MalformedURLException, UnknownHostException {
     Builder builder = new Builder();
-    Builder.ParseResult result = builder.parse(null, url);
+    Builder.ParseResult result = builder.parse(null, url, false);
     switch (result) {
       case SUCCESS:
         return builder.build();
@@ -706,12 +723,15 @@ public final class DeepLinkUri {
       INVALID_HOST,
     }
 
-    ParseResult parse(DeepLinkUri base, String input) {
+    ParseResult parse(DeepLinkUri base, String input, boolean allowPlaceholderInScheme) {
       int pos = skipLeadingAsciiWhitespace(input, 0, input.length());
       int limit = skipTrailingAsciiWhitespace(input, pos, input.length());
 
       // Scheme.
-      int schemeDelimiterOffset = schemeDelimiterOffset(input, pos, limit);
+      int schemeDelimiterOffset = schemeDelimiterOffset(input,
+        pos,
+        limit,
+        allowPlaceholderInScheme);
       if (schemeDelimiterOffset != -1) {
         if (input.regionMatches(true, pos, "https:", 0, 6)) {
           this.scheme = "https";
@@ -956,7 +976,10 @@ public final class DeepLinkUri {
      * Returns the index of the ':' in {@code input} that is after scheme characters. Returns -1 if
      * {@code input} does not have a scheme that starts at {@code pos}.
      */
-    private static int schemeDelimiterOffset(String input, int pos, int limit) {
+    private static int schemeDelimiterOffset(String input,
+                                             int pos,
+                                             int limit,
+                                             boolean allowPlaceholderInScheme) {
       if (limit - pos < 2) return -1;
 
       char c0 = input.charAt(pos);
@@ -966,11 +989,14 @@ public final class DeepLinkUri {
         char c = input.charAt(i);
 
         if ((c >= 'a' && c <= 'z')
-            || (c >= 'A' && c <= 'Z')
-            || (c >= '0' && c <= '9')
-            || c == '+'
-            || c == '-'
-            || c == '.') {
+          || (c >= 'A' && c <= 'Z')
+          || (c >= '0' && c <= '9')
+          || c == '+'
+          || c == '-'
+          || c == '.'
+          || (c == '{' && allowPlaceholderInScheme)
+          || (c == '}' && allowPlaceholderInScheme)
+        ) {
           continue; // Scheme character. Keep going.
         } else if (c == ':') {
           return i; // Scheme prefix!

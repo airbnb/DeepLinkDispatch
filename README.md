@@ -219,14 +219,22 @@ public @interface AppDeepLink {
 }
 ```
 
+You can use placeholders (like in paths) in the scheme and host section of prefixes listed in the
+`DeepLinkSpec`. e.g. if you want to match both http and https you can define it like this:
+
 ```java
-// Prefix all web deep links with "http://airbnb.com" and "https://airbnb.com"
-@DeepLinkSpec(prefix = { "http://airbnb.com", "https://airbnb.com" })
+// Match all deeplinks which a scheme staring with "http".
+@DeepLinkSpec(prefix = { "http{url_scheme_suffix}://airbnb.com")
 @Retention(RetentionPolicy.CLASS)
 public @interface WebDeepLink {
   String[] value();
 }
 ```
+
+You will get the value of `url_scheme_suffix` which -- in this case would be "" for http and "s"
+when https is used -- in the extras bundle of your annotated method. If you want to limit which
+values are accepted, you can do that in your annotated method and just return null for the intent
+which will result in a noop.
 
 ```java
 // This activity is gonna handle the following deep links:
@@ -241,6 +249,21 @@ public class CustomPrefixesActivity extends AppCompatActivity {
     //...
 }
 ```
+
+This can be very useful if you want to use it with country prefxes in hostnames e.g.
+
+```java
+// Match all deeplinks that have a scheme starting with http and also match any deeplink that
+// starts with .airbnb.com as well as ones that are only airbnb.com
+@DeepLinkSpec(prefix = { "http{url_scheme_suffix}://{country_prefix}.airbnb.com",
+ "http{url_scheme_suffix}://airbnb.com")
+@Retention(RetentionPolicy.CLASS)
+public @interface WebDeepLink {
+  String[] value();
+}
+```
+
+which saves you from defining a lot prefixes.
 
 ## Usage
 
