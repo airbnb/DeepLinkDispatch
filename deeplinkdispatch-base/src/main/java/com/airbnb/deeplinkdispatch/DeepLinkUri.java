@@ -401,9 +401,9 @@ public final class DeepLinkUri {
     return parse(url, true);
   }
 
-  private static DeepLinkUri parse(String url, boolean allowPlaceholderInSchem) {
+  private static DeepLinkUri parse(String url, boolean allowPlaceholderInScheme) {
     Builder builder = new Builder();
-    Builder.ParseResult result = builder.parse(null, url, allowPlaceholderInSchem);
+    Builder.ParseResult result = builder.parse(null, url, allowPlaceholderInScheme);
     return result == Builder.ParseResult.SUCCESS ? builder.build() : null;
   }
 
