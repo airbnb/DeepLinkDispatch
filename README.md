@@ -100,7 +100,7 @@ public static TaskStackBuilder intentForTaskStackBuilderMethods(Context context)
 ```
 
 If, depending on app state or parameter values you have to either just start an `Intent` or a
-`TaskStackBuilder`, you can return an instance of `DeepLinkMethodResult`. Which can have any.
+`TaskStackBuilder`, you can return an instance of `DeepLinkMethodResult`, which can have any.
 The system will pick whichever value is not null but will prefer the `TaskStackBuilder` if both
 are not null.
 
@@ -281,6 +281,7 @@ This can be very useful if you want to use it with country prefxes in hostnames 
 @DeepLinkSpec(prefix = { "http{url_scheme_suffix}://{country_prefix}.airbnb.com",
  "http{url_scheme_suffix}://airbnb.com")
 @Retention(RetentionPolicy.CLASS)
+public @interface WebDeepLink {
   String[] value();
 }
 ```

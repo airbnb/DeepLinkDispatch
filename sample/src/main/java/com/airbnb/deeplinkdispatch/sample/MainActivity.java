@@ -113,7 +113,6 @@ public class MainActivity extends AppCompatActivity {
     }
     TaskStackBuilder taskStackBuilder = getTaskStackBuilder(context, ACTION_DEEP_LINK_COMPLEX);
     return taskStackBuilder;
-
   }
 
   @NotNull
