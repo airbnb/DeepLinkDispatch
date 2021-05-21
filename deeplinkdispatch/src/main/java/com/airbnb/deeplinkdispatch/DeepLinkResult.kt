@@ -4,17 +4,14 @@ import android.content.Intent
 import androidx.core.app.TaskStackBuilder
 
 data class DeepLinkResult(
-        /**
-         * @return whether or not the dispatch was a success.
-         */
-        val isSuccessful: Boolean,
-        val uriString: String?,
-        val error: String,
-        /**
-         * The intent for the Deep Link's destination. eg. [com.airbnb.deeplinkdispatch.sample.DeepLinkActivity]
-         */
-        val intent: Intent?,
-        val taskStackBuilder: TaskStackBuilder?, val deepLinkEntry: DeepLinkMatchResult?
+    /**
+     * @return whether or not the dispatch was a success.
+     */
+    val isSuccessful: Boolean,
+    val uriString: String?,
+    val error: String,
+    val deepLinkEntry: DeepLinkMatchResult?,
+    val methodResult: DeepLinkMethodResult
 ) {
     /**
      * This exists so that calls from Kotlin code [error()] are maintained across major version 4.
@@ -30,3 +27,12 @@ data class DeepLinkResult(
                 + '}'.toString())
     }
 }
+
+/**
+ * Can be used to return from any deeplink annotated method. Whatever entry is null will be used.
+ * If both are not null we will use the taskStackBuilder.
+ */
+data class DeepLinkMethodResult(
+    val intent: Intent?,
+    val taskStackBuilder: TaskStackBuilder?
+)

@@ -23,10 +23,13 @@ import android.util.Log;
 import android.widget.Toast;
 
 import com.airbnb.deeplinkdispatch.DeepLink;
+import com.airbnb.deeplinkdispatch.DeepLinkMethodResult;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.TaskStackBuilder;
+
+import org.jetbrains.annotations.NotNull;
 
 @DeepLink({
   "dld://classDeepLink",
@@ -40,6 +43,11 @@ import androidx.core.app.TaskStackBuilder;
 public class MainActivity extends AppCompatActivity {
   private static final String ACTION_DEEP_LINK_METHOD = "deep_link_method";
   private static final String ACTION_DEEP_LINK_COMPLEX = "deep_link_complex";
+  public static final String ACTION_DEEP_LINK_INTENT = "deep_link_intent";
+  public static final String ACTION_DEEP_LINK_TASK_STACK_BUILDER = "deep_link_taskstackbuilder";
+  public static final String ACTION_DEEP_LINK_INTENT_AND_TASK_STACK_BUILDER =
+    "deep_link_intent_and_taskstackbuilder";
+
   private static final String TAG = MainActivity.class.getSimpleName();
 
   @Override protected void onCreate(Bundle savedInstanceState) {
@@ -103,15 +111,20 @@ public class MainActivity extends AppCompatActivity {
     if (bundle != null && bundle.containsKey("qp")) {
       Log.d(TAG, "found new parameter :with query parameter :" + bundle.getString("qp"));
     }
+    TaskStackBuilder taskStackBuilder = getTaskStackBuilder(context, ACTION_DEEP_LINK_COMPLEX);
+    return taskStackBuilder;
+  }
+
+  @NotNull
+  private static TaskStackBuilder getTaskStackBuilder(Context context, String action) {
     Intent detailsIntent =
-        new Intent(context, SecondActivity.class).setAction(ACTION_DEEP_LINK_COMPLEX);
+        new Intent(context, SecondActivity.class).setAction(action);
     Intent parentIntent =
-        new Intent(context, MainActivity.class).setAction(ACTION_DEEP_LINK_COMPLEX);
+        new Intent(context, MainActivity.class).setAction(action);
     TaskStackBuilder taskStackBuilder = TaskStackBuilder.create(context);
     taskStackBuilder.addNextIntent(parentIntent);
     taskStackBuilder.addNextIntent(detailsIntent);
     return taskStackBuilder;
-
   }
 
   @DeepLink("dld://host/somePathOne/{arbitraryNumber}/otherPath")
@@ -119,14 +132,42 @@ public class MainActivity extends AppCompatActivity {
     if (bundle != null && bundle.containsKey("qp")) {
       Log.d(TAG, "found new parameter :with query parameter :" + bundle.getString("qp"));
     }
-    return new Intent(context, MainActivity.class).setAction(ACTION_DEEP_LINK_COMPLEX);
+    return new Intent(context, MainActivity.class);
   }
 
+  @DeepLink("dld://host/methodResult/intent")
+  public static DeepLinkMethodResult intentViaDeeplinkMethodResult(Context context) {
+    return new DeepLinkMethodResult(new Intent(context, SecondActivity.class)
+      .setAction(ACTION_DEEP_LINK_INTENT), null);
+  }
+
+  @DeepLink("dld://host/methodResult/intent/{parameter}")
+  public static DeepLinkMethodResult intentViaDeeplinkMethodResult(Context context, Bundle parameter) {
+    return new DeepLinkMethodResult(new Intent(context, SecondActivity.class)
+      .setAction(ACTION_DEEP_LINK_INTENT), null);
+  }
+
+  @DeepLink("dld://host/methodResult/taskStackBuilder")
+  public static
+  DeepLinkMethodResult taskStackBuilderViaDeeplinkMethodResult(Context context) {
+    return new DeepLinkMethodResult(null,
+      getTaskStackBuilder(context, ACTION_DEEP_LINK_TASK_STACK_BUILDER));
+  }
+
+  @DeepLink("dld://host/methodResult/intentAndTaskStackBuilder")
+  public static
+  DeepLinkMethodResult taskStackBuilderAndIntentViaDeeplinkMethodResult(Context context) {
+    return new DeepLinkMethodResult(new Intent(context, SecondActivity.class)
+      .setAction(ACTION_DEEP_LINK_INTENT_AND_TASK_STACK_BUILDER),
+      getTaskStackBuilder(context, ACTION_DEEP_LINK_INTENT_AND_TASK_STACK_BUILDER));
+  }
+
+
   /**
-   * This method is a less concrete match for the URI dld://host/somePathOne/somePathTwo/somePathThree
-   * to a annotated method in `sample-library` that is annotated with
-   * @DeepLink("dld://host/somePathOne/somePathTwo/somePathThree") and thus will always be picked over
-   * this method when matching.
+   * This method is a less concrete match for the URI
+   * dld://host/somePathOne/somePathTwo/somePathThree to a annotated method in `sample-library`
+   * that is annotated with @DeepLink("dld://host/somePathOne/somePathTwo/somePathThree") and thus
+   * will always be picked over this method when matching.
    *
    * @param context
    * @param bundle

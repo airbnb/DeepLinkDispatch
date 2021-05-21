@@ -109,7 +109,11 @@ class BaseDeepLinkDelegateTest {
                 .thenReturn(intent)
         val result = testDelegate.createResult(activity, intent, null)
         assertThat(result).isEqualTo(DeepLinkResult(
-                false, null, "No Uri in given activity's intent.", null, null, null))
+            false, null, "No Uri in given activity's intent.", null, DeepLinkMethodResult(
+                null,
+                null
+            )
+        ))
     }
 
     @Test
@@ -132,7 +136,7 @@ class BaseDeepLinkDelegateTest {
                 .thenReturn(appContext)
         val errorHandler = TestErrorHandler()
         val testDelegate = getTwoRegistriesTestDelegate(listOf(entry), listOf(entry), errorHandler)
-        val (_, _, _, _, _, match) = testDelegate.dispatchFrom(activity, intent)
+        val (_, _, _, match) = testDelegate.dispatchFrom(activity, intent)
         assertThat(errorHandler.duplicatedMatchCalled()).isTrue
         assertThat(errorHandler.duplicatedMatches).isNotNull
         assertThat(errorHandler.duplicatedMatches!!.size).isEqualTo(2)
@@ -163,7 +167,7 @@ class BaseDeepLinkDelegateTest {
                 .thenReturn(appContext)
         val errorHandler = TestErrorHandler()
         val testDelegate = getTwoRegistriesTestDelegate(listOf(entry1), listOf(entry2), errorHandler)
-        val (_, _, _, _, _, deepLinkEntry) = testDelegate.dispatchFrom(activity, intent)
+        val (_, _, _, deepLinkEntry) = testDelegate.dispatchFrom(activity, intent)
         assertThat(errorHandler.duplicatedMatchCalled()).isFalse
         assertThat(deepLinkEntry!!.equals(entry2))
     }
