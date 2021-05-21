@@ -201,9 +201,11 @@ public class DeepLinkProcessor extends AbstractProcessor {
         TypeElement returnType = MoreTypes.asTypeElement(executableElement.getReturnType());
         String qualifiedName = returnType.getQualifiedName().toString();
         if (!qualifiedName.equals("android.content.Intent")
-          && !qualifiedName.equals("androidx.core.app.TaskStackBuilder")) {
-          error(element, "Only `Intent` or `androidx.core.app.TaskStackBuilder` are supported."
-            + " Please double check your imports and try again.");
+          && !qualifiedName.equals("androidx.core.app.TaskStackBuilder")
+          && !qualifiedName.equals("com.airbnb.deeplinkdispatch.DeepLinkMethodResult")) {
+          error(element, "Only `Intent`, `androidx.core.app.TaskStackBuilder` or "
+            + "'com.airbnb.deeplinkdispatch.DeepLinkMethodResult' are supported. Please double "
+            + "check your imports and try again.");
         }
       }
 

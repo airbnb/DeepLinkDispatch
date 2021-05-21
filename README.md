@@ -99,6 +99,29 @@ public static TaskStackBuilder intentForTaskStackBuilderMethods(Context context)
 }
 ```
 
+If, depending on app state or parameter values you have to either just start an `Intent` or a
+`TaskStackBuilder`, you can return an instance of `DeepLinkMethodResult`. Which can have any.
+The system will pick whichever value is not null but will prefer the `TaskStackBuilder` if both
+are not null.
+
+```java
+@DeepLink("dld://host/methodResult/intent")
+public static DeepLinkMethodResult intentOrTaskStackBuilderViaDeeplinkMethodResult(Context context) {
+  TaskStackBuilder taskStackBuilder = null;
+  Intent intent = null;
+  if (someState) {
+    Intent detailsIntent = new Intent(context, SecondActivity.class);
+    Intent parentIntent = new Intent(context, MainActivity.class);
+    taskStackBuilder = TaskStackBuilder.create(context);
+    taskStackBuilder.addNextIntent(parentIntent);
+    taskStackBuilder.addNextIntent(detailsIntent);
+  } else {
+    intent = new Intent(context, MainActivity.class);
+  }
+  return new DeepLinkMethodResult(intent, taskStackBuilder);
+}
+```
+
 ### Query Parameters
 
 Query parameters are parsed and passed along automatically, and are retrievable like any other parameter. For example, we could retrieve the query parameter passed along in the URI `foo://example.com/deepLink?qp=123`:
@@ -258,7 +281,6 @@ This can be very useful if you want to use it with country prefxes in hostnames 
 @DeepLinkSpec(prefix = { "http{url_scheme_suffix}://{country_prefix}.airbnb.com",
  "http{url_scheme_suffix}://airbnb.com")
 @Retention(RetentionPolicy.CLASS)
-public @interface WebDeepLink {
   String[] value();
 }
 ```

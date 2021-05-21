@@ -55,6 +55,74 @@ public class MainActivityTest {
   }
 
   @Test
+  public void testIntentViaMethodResult() {
+    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("dld://host/methodResult/intent"));
+    DeepLinkActivity deepLinkActivity = Robolectric.buildActivity(DeepLinkActivity.class, intent)
+      .create().get();
+    ShadowActivity shadowActivity = shadowOf(deepLinkActivity);
+    Intent launchedIntent = shadowActivity.peekNextStartedActivityForResult().intent;
+    assertThat(launchedIntent.getComponent(),
+      equalTo(new ComponentName(deepLinkActivity, SecondActivity.class)));
+
+    assertThat(launchedIntent.getBooleanExtra(DeepLink.IS_DEEP_LINK, false), equalTo(true));
+    assertThat(launchedIntent.getAction(), equalTo(MainActivity.ACTION_DEEP_LINK_INTENT));
+  }
+
+  @Test
+  public void testIntentViaMethodResultWithParameter() {
+    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("dld://host/methodResult/intent/someValue"));
+    DeepLinkActivity deepLinkActivity = Robolectric.buildActivity(DeepLinkActivity.class, intent)
+      .create().get();
+    ShadowActivity shadowActivity = shadowOf(deepLinkActivity);
+    Intent launchedIntent = shadowActivity.peekNextStartedActivityForResult().intent;
+    assertThat(launchedIntent.getComponent(),
+      equalTo(new ComponentName(deepLinkActivity, SecondActivity.class)));
+
+    assertThat(launchedIntent.getBooleanExtra(DeepLink.IS_DEEP_LINK, false), equalTo(true));
+    assertThat(launchedIntent.getAction(), equalTo(MainActivity.ACTION_DEEP_LINK_INTENT));
+    assertThat(launchedIntent.getStringExtra("parameter"), equalTo("someValue"));
+  }
+
+  @Test
+  public void testTaskStackBuilderViaMethodResult() {
+    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("dld://host/methodResult/taskStackBuilder"));
+    DeepLinkActivity deepLinkActivity = Robolectric.buildActivity(DeepLinkActivity.class, intent)
+      .create().get();
+    ShadowApplication shadowApplication = shadowOf(RuntimeEnvironment.application);
+    Intent launchedIntent = shadowApplication.getNextStartedActivity();
+    assertThat(launchedIntent.getComponent(),
+      equalTo(new ComponentName(deepLinkActivity, SecondActivity.class)));
+    assertThat(launchedIntent.getBooleanExtra(DeepLink.IS_DEEP_LINK, false), equalTo(true));
+    assertThat(launchedIntent.getAction(), equalTo(MainActivity.ACTION_DEEP_LINK_TASK_STACK_BUILDER));
+
+    Intent parentIntent = shadowApplication.getNextStartedActivity();
+    assertNotNull(parentIntent);
+    assertThat(parentIntent.getComponent(),
+      equalTo(new ComponentName(deepLinkActivity, MainActivity.class)));
+    assertThat(parentIntent.getAction(), equalTo(MainActivity.ACTION_DEEP_LINK_TASK_STACK_BUILDER));
+  }
+
+  @Test
+  public void testIntentAndTaskStackBuilderViaMethodResult() {
+    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("dld://host/methodResult/intentAndTaskStackBuilder"));
+    DeepLinkActivity deepLinkActivity = Robolectric.buildActivity(DeepLinkActivity.class, intent)
+      .create().get();
+    ShadowApplication shadowApplication = shadowOf(RuntimeEnvironment.application);
+    Intent launchedIntent = shadowApplication.getNextStartedActivity();
+    assertThat(launchedIntent.getComponent(),
+      equalTo(new ComponentName(deepLinkActivity, SecondActivity.class)));
+
+    assertThat(launchedIntent.getBooleanExtra(DeepLink.IS_DEEP_LINK, false), equalTo(true));
+    assertThat(launchedIntent.getAction(), equalTo(MainActivity.ACTION_DEEP_LINK_INTENT_AND_TASK_STACK_BUILDER));
+
+    Intent parentIntent = shadowApplication.getNextStartedActivity();
+    assertNotNull(parentIntent);
+    assertThat(parentIntent.getComponent(),
+      equalTo(new ComponentName(deepLinkActivity, MainActivity.class)));
+    assertThat(parentIntent.getAction(), equalTo(MainActivity.ACTION_DEEP_LINK_INTENT_AND_TASK_STACK_BUILDER));
+  }
+
+  @Test
   public void testPartialSegmentPlaceholderStart() {
     Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://example.com/test123bar"));
     DeepLinkActivity deepLinkActivity = Robolectric.buildActivity(DeepLinkActivity.class, intent)

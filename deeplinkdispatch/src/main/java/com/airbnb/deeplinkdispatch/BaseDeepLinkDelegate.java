@@ -120,10 +120,10 @@ public class BaseDeepLinkDelegate {
     } else {
       result = createResult(activity, sourceIntent, findEntry(uri.toString()));
     }
-    if (result.getTaskStackBuilder() != null) {
-      result.getTaskStackBuilder().startActivities();
-    } else if (result.getIntent() != null) {
-      activity.startActivity(result.getIntent());
+    if (result.getMethodResult().getTaskStackBuilder() != null) {
+      result.getMethodResult().getTaskStackBuilder().startActivities();
+    } else if (result.getMethodResult().getIntent() != null) {
+      activity.startActivity(result.getMethodResult().getIntent());
     }
     notifyListener(activity, !result.isSuccessful(), uri,
       result.getDeepLinkEntry() != null ? result.getDeepLinkEntry().getDeeplinkEntry().getUriTemplate()
@@ -148,12 +148,12 @@ public class BaseDeepLinkDelegate {
     Uri uri = sourceIntent.getData();
     if (uri == null) {
       return new DeepLinkResult(
-        false, null, "No Uri in given activity's intent.", null, null, deeplinkMatchResult);
+        false, null, "No Uri in given activity's intent.", deeplinkMatchResult, new DeepLinkMethodResult(null, null));
     }
     String uriString = uri.toString();
     if (deeplinkMatchResult == null) {
       return new DeepLinkResult(false, null, "DeepLinkEntry cannot be null",
-        null, null, null);
+        null, new DeepLinkMethodResult(null, null));
     }
     DeepLinkUri deepLinkUri = DeepLinkUri.parse(uriString);
     Map<String, String> parameterMap = new HashMap<>(deeplinkMatchResult.getParameters(deepLinkUri));
@@ -186,7 +186,7 @@ public class BaseDeepLinkDelegate {
         Method method;
         DeepLinkResult errorResult = new DeepLinkResult(false, uriString,
           "Could not deep link to method: " + matchedDeeplinkEntry.getMethod() + " intents length == 0",
-          null, null, deeplinkMatchResult);
+          deeplinkMatchResult, new DeepLinkMethodResult(null, taskStackBuilder));
         try {
           method = c.getMethod(matchedDeeplinkEntry.getMethod(), Context.class);
           if (method.getReturnType().equals(TaskStackBuilder.class)) {
@@ -195,6 +195,17 @@ public class BaseDeepLinkDelegate {
               return errorResult;
             }
             newIntent = taskStackBuilder.editIntentAt(taskStackBuilder.getIntentCount() - 1);
+          } else if (method.getReturnType().equals(DeepLinkMethodResult.class)) {
+            DeepLinkMethodResult methodResult = (DeepLinkMethodResult) method.invoke(c, activity);
+            if (methodResult.getTaskStackBuilder() != null) {
+              taskStackBuilder = methodResult.getTaskStackBuilder();
+              if (taskStackBuilder.getIntentCount() == 0) {
+                return errorResult;
+              }
+              newIntent = taskStackBuilder.editIntentAt(taskStackBuilder.getIntentCount() - 1);
+            } else if (methodResult.getIntent() != null) {
+              newIntent = methodResult.getIntent();
+            }
           } else {
             newIntent = (Intent) method.invoke(c, activity);
           }
@@ -206,14 +217,25 @@ public class BaseDeepLinkDelegate {
               return errorResult;
             }
             newIntent = taskStackBuilder.editIntentAt(taskStackBuilder.getIntentCount() - 1);
+          } else if (method.getReturnType().equals(DeepLinkMethodResult.class)) {
+            DeepLinkMethodResult methodResult = (DeepLinkMethodResult) method.invoke(c, activity, parameters);
+            if (methodResult.getTaskStackBuilder() != null) {
+              taskStackBuilder = methodResult.getTaskStackBuilder();
+              if (taskStackBuilder.getIntentCount() == 0) {
+                return errorResult;
+              }
+              newIntent = taskStackBuilder.editIntentAt(taskStackBuilder.getIntentCount() - 1);
+            } else if (methodResult.getIntent() != null) {
+              newIntent = methodResult.getIntent();
+            }
           } else {
             newIntent = (Intent) method.invoke(c, activity, parameters);
           }
         }
       }
       if (newIntent == null) {
-        return new DeepLinkResult(false, uriString, "Destination Intent is null!", null,
-          taskStackBuilder, deeplinkMatchResult);
+        return new DeepLinkResult(false, uriString, "Destination Intent is null!",
+          deeplinkMatchResult, new DeepLinkMethodResult(newIntent, taskStackBuilder));
       }
       if (newIntent.getAction() == null) {
         newIntent.setAction(sourceIntent.getAction());
@@ -227,16 +249,16 @@ public class BaseDeepLinkDelegate {
       if (activity.getCallingActivity() != null) {
         newIntent.setFlags(Intent.FLAG_ACTIVITY_FORWARD_RESULT);
       }
-      return new DeepLinkResult(true, uriString, "", newIntent, taskStackBuilder, deeplinkMatchResult);
+      return new DeepLinkResult(true, uriString, "", deeplinkMatchResult, new DeepLinkMethodResult(newIntent, taskStackBuilder));
     } catch (NoSuchMethodException exception) {
       return new DeepLinkResult(false, uriString, "Deep link to non-existent method: "
-        + deeplinkMatchResult.getDeeplinkEntry().getMethod(), null, null, deeplinkMatchResult);
+        + deeplinkMatchResult.getDeeplinkEntry().getMethod(), deeplinkMatchResult, new DeepLinkMethodResult(null, null));
     } catch (IllegalAccessException exception) {
       return new DeepLinkResult(false, uriString, "Could not deep link to method: "
-        + deeplinkMatchResult.getDeeplinkEntry().getMethod(), null, null, deeplinkMatchResult);
+        + deeplinkMatchResult.getDeeplinkEntry().getMethod(), deeplinkMatchResult, new DeepLinkMethodResult(null, null));
     } catch (InvocationTargetException exception) {
       return new DeepLinkResult(false, uriString, "Could not deep link to method: "
-        + deeplinkMatchResult.getDeeplinkEntry().getMethod(), null, null, deeplinkMatchResult);
+        + deeplinkMatchResult.getDeeplinkEntry().getMethod(), deeplinkMatchResult, new DeepLinkMethodResult(null, null));
     }
   }
 

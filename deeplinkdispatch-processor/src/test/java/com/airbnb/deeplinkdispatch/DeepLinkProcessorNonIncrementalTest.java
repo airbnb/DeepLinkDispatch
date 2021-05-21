@@ -407,8 +407,9 @@ public class DeepLinkProcessorNonIncrementalTest extends BaseDeepLinkProcessorTe
       .processedWith(new DeepLinkProcessor())
       .failsToCompile()
       .withErrorContaining(
-        "Only `Intent` or `androidx.core.app.TaskStackBuilder` are supported."
-          + " Please double check your imports and try again.");
+        "Only `Intent`, `androidx.core.app.TaskStackBuilder` or "
+          + "'com.airbnb.deeplinkdispatch.DeepLinkMethodResult' are supported. Please double check "
+          + "your imports and try again.");
   }
 
   @Test
