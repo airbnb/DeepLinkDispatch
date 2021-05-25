@@ -15,7 +15,12 @@ class DeepLinkMatchTests {
     @Test
     fun testMatchArraySerializationDeserializationNoMethod() {
         val matchByteArray = matchByteArray(UriMatch(ONE_PARAM_SCHEMA, this.javaClass.name, null))
-        val entryFromArray = MatchIndex.getMatchResultFromArray(matchByteArray.toByteArray(), matchByteArray.size, 0, DeepLinkUri.parse("schema://none"), emptyMap())
+        val entryFromArray = MatchIndex(matchByteArray.toByteArray()).getMatchResultFromIndex(
+            matchByteArray.size,
+            0,
+            DeepLinkUri.parse("schema://none"),
+            emptyMap()
+        )
         assertNotNull(entryFromArray)
         entryFromArray?.let {
             assertEquals(ONE_PARAM_SCHEMA, it.deeplinkEntry.uriTemplate)
@@ -27,7 +32,12 @@ class DeepLinkMatchTests {
     @Test
     fun testMatchArraySerializationDeserialization() {
         val matchByteArray = matchByteArray(UriMatch(ONE_PARAM_SCHEMA, this.javaClass.name, METHOD_NAME))
-        val entryFromArray = MatchIndex.getMatchResultFromArray(matchByteArray.toByteArray(), matchByteArray.size, 0, DeepLinkUri.parse("schema://none"), emptyMap())
+        val entryFromArray = MatchIndex(matchByteArray.toByteArray()).getMatchResultFromIndex(
+            matchByteArray.size,
+            0,
+            DeepLinkUri.parse("schema://none"),
+            emptyMap()
+        )
         assertNotNull(entryFromArray)
         entryFromArray?.let {
             assertEquals(ONE_PARAM_SCHEMA, it.deeplinkEntry.uriTemplate)
@@ -39,11 +49,21 @@ class DeepLinkMatchTests {
     @Test(expected = IllegalStateException::class)
     fun testMatchArraySerializationDeserializationNonExistantClass() {
         val matchByteArray = matchByteArray(UriMatch(ONE_PARAM_SCHEMA, "soneNonexistantClass", null))
-        MatchIndex.getMatchResultFromArray(matchByteArray.toByteArray(), matchByteArray.size, 0, DeepLinkUri.parse("schema://none"), emptyMap())
+        MatchIndex(matchByteArray.toByteArray()).getMatchResultFromIndex(
+            matchByteArray.size,
+            0,
+            DeepLinkUri.parse("schema://none"),
+            emptyMap()
+        )
     }
 
     @Test fun testMatchArraySerializationDeserializationNoMatch(){
-        val entryFromArray = MatchIndex.getMatchResultFromArray(ByteArray(0), 0, 0, DeepLinkUri.parse("schema://none"), emptyMap())
+        val entryFromArray = MatchIndex(ByteArray(0)).getMatchResultFromIndex(
+            0,
+            0,
+            DeepLinkUri.parse("schema://none"),
+            emptyMap()
+        )
         assertNull(entryFromArray)
     }
 }

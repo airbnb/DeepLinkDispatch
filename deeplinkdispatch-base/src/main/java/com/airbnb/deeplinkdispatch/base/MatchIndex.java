@@ -10,6 +10,7 @@ import com.airbnb.deeplinkdispatch.NodeMetadata;
 import com.airbnb.deeplinkdispatch.UrlElement;
 
 import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -99,7 +100,7 @@ public class MatchIndex {
    * @param elementIndex The index of the element currently processed in the elements list above.
    * @param elementStartPosition The index of the start position of the current element int he
    *                             byte array search index.
-   * @param parentBoundryPos The last element that is still part of the parent element. While
+   * @param parentBoundaryPos The last element that is still part of the parent element. While
    *                         looking at children of a current element that is the last element of
    *                         the last child.
    * @param pathSegmentReplacements  A map of configurable path segment replacements and their
@@ -111,7 +112,7 @@ public class MatchIndex {
                                       @Nullable Map<String, String> placeholders,
                                       int elementIndex,
                                       int elementStartPosition,
-                                      int parentBoundryPos,
+                                      int parentBoundaryPos,
                                       Map<byte[], byte[]> pathSegmentReplacements) {
     DeepLinkMatchResult match = null;
     int currentElementStartPosition = elementStartPosition;
@@ -155,7 +156,7 @@ public class MatchIndex {
         } else {
           int matchLength = getMatchLength(currentElementStartPosition);
           if (matchLength > 0) {
-            match = getMatchResultFromArray(byteArray,
+            match = getMatchResultFromIndex(
               matchLength,
               getMatchDataPos(currentElementStartPosition),
               deeplinkUri,
@@ -168,18 +169,51 @@ public class MatchIndex {
         return match;
       }
       currentElementStartPosition = getNextElementStartPosition(currentElementStartPosition,
-        parentBoundryPos);
+        parentBoundaryPos);
     } while (currentElementStartPosition != -1);
     return null;
   }
 
+  @NonNull
+  public List<DeepLinkEntry> getAllEntries(int elementStartPos, int parentBoundaryPos) {
+    List<DeepLinkEntry> resultList = new ArrayList();
+    int currentElementStartPosition = elementStartPos;
+    do {
+      int matchLength = getMatchLength(elementStartPos);
+      if (matchLength > 0) {
+        resultList.add(getDeepLinkEntryFromIndex(byteArray,
+          matchLength,
+          getMatchDataPos(currentElementStartPosition)));
+      }
+      if (getChildrenPos(currentElementStartPosition) != -1) {
+        resultList.addAll(getAllEntries(getChildrenPos(currentElementStartPosition),
+          getElementBoundaryPos(currentElementStartPosition)));
+      }
+      currentElementStartPosition = getNextElementStartPosition(currentElementStartPosition,
+        parentBoundaryPos);
+    } while (currentElementStartPosition != -1);
+    return resultList;
+  }
+
   @Nullable
-  public static DeepLinkMatchResult
-  getMatchResultFromArray(@NonNull byte[] byteArray,
-                          int matchLength,
+  public DeepLinkMatchResult
+  getMatchResultFromIndex(int matchLength,
                           int matchStartPosition,
                           @NonNull DeepLinkUri deeplinkUri,
                           @NonNull Map<String, String> placeholdersOutput) {
+    DeepLinkEntry deeplinkEntry = getDeepLinkEntryFromIndex(byteArray,
+      matchLength,
+      matchStartPosition);
+    if (deeplinkEntry == null) return null;
+    return new DeepLinkMatchResult(
+      deeplinkEntry,
+      Collections.singletonMap(deeplinkUri, placeholdersOutput));
+  }
+
+  @Nullable
+  private static DeepLinkEntry getDeepLinkEntryFromIndex(@NonNull byte[] byteArray,
+                                                         int matchLength,
+                                                         int matchStartPosition) {
     if (matchLength == 0) {
       return null;
     }
@@ -207,9 +241,7 @@ public class MatchIndex {
       position += MATCH_DATA_METHOD_LENGTH;
       methodName = getStringFromByteArray(byteArray, position, methodLength);
     }
-    return new DeepLinkMatchResult(
-      new DeepLinkEntry(urlTemplate, deeplinkClass, methodName),
-      Collections.singletonMap(deeplinkUri, placeholdersOutput));
+    return new DeepLinkEntry(urlTemplate, deeplinkClass, methodName);
   }
 
   /**

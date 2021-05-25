@@ -49,4 +49,11 @@ abstract class BaseRegistry(matchIndexArray: ByteArray,
                 matchIndex.length(),
                 pathSegmentReplacements)
     }
+
+    /**
+     * Get all DeepLinkEntries that can be matched by this registry
+     */
+    fun getAllEntries(): List<DeepLinkEntry> {
+        return matchIndex.getAllEntries(0, matchIndex.length());
+    }
 }

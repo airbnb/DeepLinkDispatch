@@ -325,4 +325,12 @@ public class BaseDeepLinkDelegate {
   public boolean supportsUri(String uriString) {
     return findEntry(uriString) != null;
   }
+
+  public List<DeepLinkEntry> getAllDeepLinkEntries() {
+    List<DeepLinkEntry> resultList = new ArrayList<>();
+    for (BaseRegistry registry : registries) {
+      resultList.addAll(registry.getAllEntries());
+    }
+    return resultList;
+  }
 }
