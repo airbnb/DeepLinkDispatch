@@ -345,15 +345,15 @@ public class DeepLinkProcessor extends AbstractProcessor {
       String type = "DeepLinkEntry.Type." + element.getAnnotationType().toString();
       ClassName activity = ClassName.get(element.getAnnotatedElement());
       Object method = element.getMethod();
-      String uri = element.getUri();
+      String uriTemplate = element.getUri();
 
       try {
-        urisTrie.addToTrie(uri, activity.canonicalName(), element.getMethod());
+        urisTrie.addToTrie(uriTemplate, activity.canonicalName(), element.getMethod());
       } catch (IllegalArgumentException e) {
         error(element.getAnnotatedElement(), e.getMessage());
       }
 
-      DeepLinkUri deeplinkUri = DeepLinkUri.parseTemplate(uri);
+      DeepLinkUri deeplinkUri = DeepLinkUri.parseTemplate(uriTemplate);
       //Keep track of pathVariables added in a module so that we can check at runtime to ensure
       //that all pathVariables have a corresponding entry provided to BaseDeepLinkDelegate.
       for (String pathSegment : deeplinkUri.pathSegments()) {
