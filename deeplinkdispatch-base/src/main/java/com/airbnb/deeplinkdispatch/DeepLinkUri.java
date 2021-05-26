@@ -768,28 +768,28 @@ public final class DeepLinkUri {
         while (true) {
           int componentDelimiterOffset = delimiterOffset(input, pos, limit, "@/\\?#");
           int c = componentDelimiterOffset != limit
-              ? input.charAt(componentDelimiterOffset)
-              : -1;
+            ? input.charAt(componentDelimiterOffset)
+            : -1;
           switch (c) {
             case '@':
               // User info precedes.
               if (!hasPassword) {
                 int passwordColonOffset = delimiterOffset(
-                    input, pos, componentDelimiterOffset, ":");
+                  input, pos, componentDelimiterOffset, ":");
                 String canonicalUsername = canonicalize(
-                    input, pos, passwordColonOffset, USERNAME_ENCODE_SET, true, false);
+                  input, pos, passwordColonOffset, USERNAME_ENCODE_SET, true, false);
                 this.encodedUsername = hasUsername
-                    ? this.encodedUsername + "%40" + canonicalUsername
-                    : canonicalUsername;
+                  ? this.encodedUsername + "%40" + canonicalUsername
+                  : canonicalUsername;
                 if (passwordColonOffset != componentDelimiterOffset) {
                   hasPassword = true;
                   this.encodedPassword = canonicalize(input, passwordColonOffset + 1,
-                      componentDelimiterOffset, PASSWORD_ENCODE_SET, true, false);
+                    componentDelimiterOffset, PASSWORD_ENCODE_SET, true, false);
                 }
                 hasUsername = true;
               } else {
                 this.encodedPassword = this.encodedPassword + "%40" + canonicalize(
-                    input, pos, componentDelimiterOffset, PASSWORD_ENCODE_SET, true, false);
+                  input, pos, componentDelimiterOffset, PASSWORD_ENCODE_SET, true, false);
               }
               pos = componentDelimiterOffset + 1;
               break;
@@ -906,9 +906,9 @@ public final class DeepLinkUri {
 
     private boolean isDotDot(String input) {
       return input.equals("..")
-          || input.equalsIgnoreCase("%2e.")
-          || input.equalsIgnoreCase(".%2e")
-          || input.equalsIgnoreCase("%2e%2e");
+        || input.equalsIgnoreCase("%2e.")
+        || input.equalsIgnoreCase(".%2e")
+        || input.equalsIgnoreCase("%2e%2e");
     }
 
     /**
@@ -983,11 +983,12 @@ public final class DeepLinkUri {
       if (limit - pos < 2) return -1;
 
       char c0 = input.charAt(pos);
-      if ((c0 < 'a' || c0 > 'z') && (c0 < 'A' || c0 > 'Z')) return -1; // Not a scheme start char.
+      if ((c0 < 'a' || c0 > 'z') && (c0 < 'A' || c0 > 'Z')
+        && (allowPlaceholderInScheme && c0 != '{')) return -1; // Not a scheme start char.
 
+      boolean inPlaceholder = c0 == '{' ? true : false;
       for (int i = pos + 1; i < limit; i++) {
         char c = input.charAt(i);
-
         if ((c >= 'a' && c <= 'z')
           || (c >= 'A' && c <= 'Z')
           || (c >= '0' && c <= '9')
@@ -996,7 +997,10 @@ public final class DeepLinkUri {
           || c == '.'
           || (c == '{' && allowPlaceholderInScheme)
           || (c == '}' && allowPlaceholderInScheme)
+          || inPlaceholder
         ) {
+          if (c == '{') inPlaceholder = true;
+          if (c == '}') inPlaceholder = false;
           continue; // Scheme character. Keep going.
         } else if (c == ':') {
           return i; // Scheme prefix!
