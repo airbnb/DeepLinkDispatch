@@ -134,15 +134,47 @@ class BaseDeepLinkDelegateTest {
                 .thenReturn(intent)
         Mockito.`when`(activity.applicationContext)
                 .thenReturn(appContext)
-        val errorHandler = TestErrorHandler()
+        val errorHandler = DuplicatedMatchTestErrorHandler()
         val testDelegate = getTwoRegistriesTestDelegate(listOf(entry), listOf(entry), errorHandler)
         val (_, _, _, match) = testDelegate.dispatchFrom(activity, intent)
-        assertThat(errorHandler.duplicatedMatchCalled()).isTrue
+        assertThat(errorHandler.duplicateMatchCalled).isTrue
         assertThat(errorHandler.duplicatedMatches).isNotNull
         assertThat(errorHandler.duplicatedMatches!!.size).isEqualTo(2)
         assertThat(errorHandler.duplicatedMatches!![0]).isEqualTo(deeplinkMatchResult)
         assertThat(errorHandler.duplicatedMatches!![1]).isEqualTo(deeplinkMatchResult)
         assertThat(errorHandler.uriString).isEqualTo(matchUrl)
+        assertThat(match).isEqualTo(deeplinkMatchResult)
+    }
+
+    @Test
+    fun testErrorHandlerWithNonExistingClass() {
+        val deeplinkUrl = "airbnb://foo/{bar}"
+        val matchUrl = "airbnb://foo/bar"
+        val className = "nonExistingClassName"
+        val entry = deepLinkEntry(
+            uri = deeplinkUrl,
+            className = className
+        )
+        val deeplinkMatchResult = DeepLinkMatchResult(entry, mapOf(DeepLinkUri.parse(matchUrl) to mapOf("bar" to "bar")))
+        val uri = Mockito.mock(Uri::class.java)
+        Mockito.`when`(uri.toString())
+            .thenReturn(matchUrl)
+        val intent = Mockito.mock(Intent::class.java)
+        Mockito.`when`(intent.data)
+            .thenReturn(uri)
+        val appContext = Mockito.mock(Context::class.java)
+        val activity = Mockito.mock(Activity::class.java)
+        Mockito.`when`(activity.intent)
+            .thenReturn(intent)
+        Mockito.`when`(activity.applicationContext)
+            .thenReturn(appContext)
+        val errorHandler = ClassNotFoundTestErrorHandler()
+        val testDelegate = getOneRegistryTestDelegate(listOf(entry), errorHandler)
+        val (_, _, _, match) = testDelegate.dispatchFrom(activity, intent)
+        assertThat(errorHandler.duplicateMatchCalled).isFalse()
+        assertThat(errorHandler.duplicatedMatches).isNull()
+        assertThat(errorHandler.uriString).isEqualTo(matchUrl)
+        assertThat(errorHandler.className).isEqualTo(className)
         assertThat(match).isEqualTo(deeplinkMatchResult)
     }
 
@@ -165,10 +197,10 @@ class BaseDeepLinkDelegateTest {
                 .thenReturn(intent)
         Mockito.`when`(activity.applicationContext)
                 .thenReturn(appContext)
-        val errorHandler = TestErrorHandler()
+        val errorHandler = DuplicatedMatchTestErrorHandler()
         val testDelegate = getTwoRegistriesTestDelegate(listOf(entry1), listOf(entry2), errorHandler)
         val (_, _, _, deepLinkEntry) = testDelegate.dispatchFrom(activity, intent)
-        assertThat(errorHandler.duplicatedMatchCalled()).isFalse
+        assertThat(errorHandler.duplicateMatchCalled).isFalse
         assertThat(deepLinkEntry!!.equals(entry2))
     }
 
@@ -177,22 +209,18 @@ class BaseDeepLinkDelegateTest {
             private fun getSearchIndex(deepLinkEntries: List<DeepLinkEntry>): ByteArray {
                 val trieRoot = Root()
                 for (entry in deepLinkEntries) {
-                    trieRoot.addToTrie(entry.uriTemplate, entry.activityClass.canonicalName!!, entry.method)
+                    trieRoot.addToTrie(entry.uriTemplate, entry.className, entry.method)
                 }
                 return trieRoot.toUByteArray().toByteArray()
             }
         }
     }
 
-    private class TestErrorHandler : ErrorHandler {
+    private class DuplicatedMatchTestErrorHandler : ErrorHandler {
+        var className: String = ""
         var duplicatedMatches: List<DeepLinkMatchResult>? = null
-        var duplicateMatchCalled = false
+        var duplicateMatchCalled: Boolean = false
         var uriString: String? = null
-            private set
-
-        fun duplicatedMatchCalled(): Boolean {
-            return duplicateMatchCalled
-        }
 
         override fun duplicateMatch(uriString: String, duplicatedMatches: List<DeepLinkMatchResult>) {
             this.uriString = uriString
@@ -201,10 +229,31 @@ class BaseDeepLinkDelegateTest {
         }
     }
 
+    private class ClassNotFoundTestErrorHandler : ErrorHandler {
+        var className: String = ""
+        var duplicatedMatches: List<DeepLinkMatchResult>? = null
+        var duplicateMatchCalled = false
+        var activityClassNotFound = false
+        var uriString: String? = null
+
+        override fun duplicateMatch(uriString: String, duplicatedMatches: List<DeepLinkMatchResult>) {
+            this.uriString = uriString
+            this.duplicatedMatches = duplicatedMatches
+            duplicateMatchCalled = true
+        }
+
+        override fun activityClassNotFound(uriString: String, className: String) {
+            this.uriString = uriString
+            this.className = className
+            activityClassNotFound = true
+        }
+
+    }
+
     private class TestDeepLinkDelegate(registries: List<BaseRegistry?>?, errorHandler: ErrorHandler?) : BaseDeepLinkDelegate(registries, errorHandler)
     companion object {
-        private fun deepLinkEntry(uri: String): DeepLinkEntry {
-            return DeepLinkEntry(uri, Any::class.java, null)
+        private fun deepLinkEntry(uri: String, className: String = Any::class.java.name): DeepLinkEntry {
+            return DeepLinkEntry(uri, className, null)
         }
 
         /**

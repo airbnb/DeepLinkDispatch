@@ -77,7 +77,7 @@ public class MatchIndex {
   public static final char[] VARIABLE_DELIMITER = {'{', '}'};
 
   @NonNull
-  private final byte[] byteArray;
+  public final byte[] byteArray;
 
   public MatchIndex(@NonNull byte[] byteArray) {
     this.byteArray = byteArray;
@@ -160,8 +160,7 @@ public class MatchIndex {
               matchLength,
               getMatchDataPos(currentElementStartPosition),
               deeplinkUri,
-              placeholdersOutput
-            );
+              placeholdersOutput);
           }
         }
       }
@@ -179,7 +178,7 @@ public class MatchIndex {
     List<DeepLinkEntry> resultList = new ArrayList();
     int currentElementStartPosition = elementStartPos;
     do {
-      int matchLength = getMatchLength(elementStartPos);
+      int matchLength = getMatchLength(currentElementStartPosition);
       if (matchLength > 0) {
         resultList.add(getDeepLinkEntryFromIndex(byteArray,
           matchLength,
@@ -225,15 +224,6 @@ public class MatchIndex {
     int classLength = readTwoBytesAsInt(byteArray, position);
     position += MATCH_DATA_CLASS_LENGTH;
     String className = getStringFromByteArray(byteArray, position, classLength);
-    Class deeplinkClass = null;
-    try {
-      deeplinkClass = Class.forName(className);
-    } catch (ClassNotFoundException e) {
-      throw new IllegalStateException(
-        "Deeplink class " + className + " not found. If you are using Proguard/R8/Dexguard please "
-          + "consult README.md for correct configuration.", e
-      );
-    }
     position += classLength;
     int methodLength = readOneByteAsInt(byteArray, position);
     String methodName = null;
@@ -241,7 +231,7 @@ public class MatchIndex {
       position += MATCH_DATA_METHOD_LENGTH;
       methodName = getStringFromByteArray(byteArray, position, methodLength);
     }
-    return new DeepLinkEntry(urlTemplate, deeplinkClass, methodName);
+    return new DeepLinkEntry(urlTemplate, className, methodName);
   }
 
   /**

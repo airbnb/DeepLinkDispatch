@@ -5,11 +5,11 @@ import org.junit.Test
 
 class DeepLinkMatchResultTests {
 
-    private val concrete = DeepLinkMatchResult(DeepLinkEntry("scheme://host/one/two/three", this.javaClass, null), emptyMap())
-    private val parmSecondPathElement = DeepLinkMatchResult(DeepLinkEntry("scheme://host/one/{param}/three", this.javaClass, null), emptyMap())
-    private val parmFirstPathElement = DeepLinkMatchResult(DeepLinkEntry("scheme://host/{param}/two/three", this.javaClass, null), emptyMap())
-    private val cpsSecondPathSegment = DeepLinkMatchResult(DeepLinkEntry("scheme://host/one/<config>/three", this.javaClass, null), emptyMap())
-    private val cpsFirstPathSegment = DeepLinkMatchResult(DeepLinkEntry("scheme://host/<config>/two/three", this.javaClass, null), emptyMap())
+    private val concrete = DeepLinkMatchResult(DeepLinkEntry("scheme://host/one/two/three", this.javaClass.name, null), emptyMap())
+    private val parmSecondPathElement = DeepLinkMatchResult(DeepLinkEntry("scheme://host/one/{param}/three", this.javaClass.name, null), emptyMap())
+    private val parmFirstPathElement = DeepLinkMatchResult(DeepLinkEntry("scheme://host/{param}/two/three", this.javaClass.name, null), emptyMap())
+    private val cpsSecondPathSegment = DeepLinkMatchResult(DeepLinkEntry("scheme://host/one/<config>/three", this.javaClass.name, null), emptyMap())
+    private val cpsFirstPathSegment = DeepLinkMatchResult(DeepLinkEntry("scheme://host/<config>/two/three", this.javaClass.name, null), emptyMap())
 
     @Test
     fun testSameness() {
