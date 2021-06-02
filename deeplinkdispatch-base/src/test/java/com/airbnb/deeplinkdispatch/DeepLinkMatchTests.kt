@@ -56,7 +56,7 @@ class DeepLinkMatchTests {
             emptyMap()
         )
         assertNotNull(entryFromArray)
-        entryFromArray?.let {
+        entryFromArray!!.let {
             assertEquals(ONE_PARAM_SCHEMA, it.deeplinkEntry.uriTemplate)
             assertEquals("someNonexistantClass", it.deeplinkEntry.className)
             assertNull(it.deeplinkEntry.method)

@@ -234,6 +234,10 @@ public class BaseDeepLinkDelegate {
             }
           }
         }
+      } else {
+        if (errorHandler != null) {
+          errorHandler.activityClassNotFound(uriString, matchedDeeplinkEntry.getClassName());
+        }
       }
       if (newIntent == null) {
         return new DeepLinkResult(false, uriString, "Destination Intent is null!",
@@ -325,7 +329,6 @@ public class BaseDeepLinkDelegate {
   }
 
   public boolean supportsUri(String uriString) {
-    DeepLinkEntry entryRegExpMatch = null;
     List<DeepLinkMatchResult> entryIdxMatches = new ArrayList<>();
     DeepLinkUri uri = DeepLinkUri.parse(uriString);
     for (BaseRegistry registry : registries) {
