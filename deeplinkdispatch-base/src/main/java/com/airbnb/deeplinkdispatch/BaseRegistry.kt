@@ -41,13 +41,15 @@ abstract class BaseRegistry(matchIndexArray: ByteArray,
         }
         // Generating a match list (list of elements in to be matched URL starting with an
         // (artificial) root.
-        return matchIndex.matchUri(deepLinkUri,
-                SchemeHostAndPath(deepLinkUri).matchList,
-                emptyMap(),
-                0,
-                0,
-                matchIndex.length(),
-                pathSegmentReplacements)
+        return matchIndex.matchUri(
+            deepLinkUri,
+            SchemeHostAndPath(deepLinkUri).matchList,
+            emptyMap(),
+            0,
+            0,
+            matchIndex.length(),
+            pathSegmentReplacements,
+        )
     }
 
     /**
@@ -56,4 +58,9 @@ abstract class BaseRegistry(matchIndexArray: ByteArray,
     fun getAllEntries(): List<DeepLinkEntry> {
         return matchIndex.getAllEntries(0, matchIndex.length());
     }
+
+    fun supports(
+        deepLinkUri: DeepLinkUri?,
+        pathSegmentReplacements: Map<ByteArray, ByteArray> = mapOf()
+    ) = idxMatch(deepLinkUri, pathSegmentReplacements) != null
 }

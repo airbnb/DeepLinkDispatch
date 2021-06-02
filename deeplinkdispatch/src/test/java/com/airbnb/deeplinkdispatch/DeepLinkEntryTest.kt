@@ -322,6 +322,22 @@ class DeepLinkEntryTest {
         assertThat(matchHttpsDeTld).isNull()
     }
 
+    @Test
+    fun testSupportsWithNonExistantClass() {
+        class NotInAppClassPath {}
+        val deeplinkEntryWithNonExistentClass = deepLinkEntry("http://test.com/", className = "notExisting" )
+        val testRegistry = getTestRegistry(listOf(deeplinkEntryWithNonExistentClass))
+        assertThat(testRegistry.supports(DeepLinkUri.parse("http://test.com/"))).isTrue
+        assertThat(testRegistry.supports(DeepLinkUri.parse("http://false.com/"))).isFalse
+    }
+
+    @Test
+    fun testIdxMatchWithNonExistantClass() {
+        val deeplinkEntryWithNonExistentClass = deepLinkEntry("http://test.com/", className = "notExisting" )
+        val testRegistry = getTestRegistry(listOf(deeplinkEntryWithNonExistentClass))
+        assertThat(testRegistry.idxMatch(DeepLinkUri.parse("http://test.com/"))).isNotNull
+    }
+
     private fun testParametrizedUrl(
         testRegistry: TestDeepLinkRegistry, urlString: String, parameterMap: Map<String, String>
     ) {
@@ -333,11 +349,12 @@ class DeepLinkEntryTest {
     }
 
     private class TestDeepLinkRegistry(registry: List<DeepLinkEntry>) : BaseRegistry(getSearchIndex(registry), arrayOf()) {
+
         companion object {
             private fun getSearchIndex(registry: List<DeepLinkEntry>): ByteArray {
                 val trieRoot = Root()
                 for (entry in registry) {
-                    trieRoot.addToTrie(entry.uriTemplate, entry.activityClass.canonicalName!!, entry.method)
+                    trieRoot.addToTrie(entry.uriTemplate, entry.className, entry.method)
                 }
                 return trieRoot.toUByteArray().toByteArray()
             }
@@ -345,8 +362,8 @@ class DeepLinkEntryTest {
     }
 
     companion object {
-        private fun deepLinkEntry(uri: String): DeepLinkEntry {
-            return DeepLinkEntry(uri, String::class.java, null)
+        private fun deepLinkEntry(uriTemplate: String, className: String = "java.lang.String"): DeepLinkEntry {
+            return DeepLinkEntry(uriTemplate, className, null)
         }
 
         /**

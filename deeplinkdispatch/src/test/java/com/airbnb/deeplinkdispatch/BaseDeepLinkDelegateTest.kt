@@ -177,7 +177,7 @@ class BaseDeepLinkDelegateTest {
             private fun getSearchIndex(deepLinkEntries: List<DeepLinkEntry>): ByteArray {
                 val trieRoot = Root()
                 for (entry in deepLinkEntries) {
-                    trieRoot.addToTrie(entry.uriTemplate, entry.activityClass.canonicalName!!, entry.method)
+                    trieRoot.addToTrie(entry.uriTemplate, entry.className, entry.method)
                 }
                 return trieRoot.toUByteArray().toByteArray()
             }
@@ -204,7 +204,7 @@ class BaseDeepLinkDelegateTest {
     private class TestDeepLinkDelegate(registries: List<BaseRegistry?>?, errorHandler: ErrorHandler?) : BaseDeepLinkDelegate(registries, errorHandler)
     companion object {
         private fun deepLinkEntry(uri: String): DeepLinkEntry {
-            return DeepLinkEntry(uri, Any::class.java, null)
+            return DeepLinkEntry(uri, Any::class.java.name, null)
         }
 
         /**
