@@ -262,7 +262,15 @@ public class BaseDeepLinkDelegate {
     }
   }
 
-  private DeepLinkMatchResult findEntry(String uriString) {
+  /**
+   * Returns a raw match result for the given uriString. This is null if no match is found.
+   * There is no general use for that during normal operation but it might be useful when writing
+   * tests.
+   *
+   * @param uriString Uri to be matched
+   * @return An instance of {@link DeepLinkMatchResult} if a match was found or null if not.
+   */
+  public @Nullable DeepLinkMatchResult findEntry(@NonNull String uriString) {
     DeepLinkEntry entryRegExpMatch = null;
     List<DeepLinkMatchResult> entryIdxMatches = new ArrayList<>();
     DeepLinkUri uri = DeepLinkUri.parse(uriString);

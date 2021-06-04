@@ -10,6 +10,21 @@ import org.mockito.Mockito
 
 @kotlin.ExperimentalUnsignedTypes
 class BaseDeepLinkDelegateTest {
+
+    @Test
+    fun testFindEntry() {
+        val entry = deepLinkEntry("airbnb://foo/{bar}")
+        val testDelegate = getOneRegistryTestDelegate(listOf(entry), null)
+        val foundEntry = testDelegate.findEntry("airbnb://foo/1")
+        assertThat(foundEntry).isNotNull
+        assertThat(foundEntry?.deeplinkEntry).isEqualTo(entry)
+        assertThat(foundEntry?.parameterMap).isEqualTo(parameterMap(
+            "airbnb://foo/1",
+            mapOf("bar" to "1")
+        ))
+        assertThat( testDelegate.findEntry("airbnb://bar/1")).isNull()
+    }
+
     @Test
     fun testDispatchNullActivity() {
         val entry = deepLinkEntry("airbnb://foo/{bar}")
@@ -183,6 +198,11 @@ class BaseDeepLinkDelegateTest {
             }
         }
     }
+
+    private fun parameterMap(
+        url: String,
+        parameterMap: Map<String, String>
+    ) = mapOf(DeepLinkUri.parse(url) to parameterMap)
 
     private class DuplicatedMatchTestErrorHandler : ErrorHandler {
         var className: String = ""
