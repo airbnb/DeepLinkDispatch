@@ -3,8 +3,6 @@ package com.airbnb.deeplinkdispatch
 import com.airbnb.deeplinkdispatch.base.MatchIndex
 import junit.framework.TestCase.*
 import org.junit.Test
-import java.lang.IllegalStateException
-
 
 private const val ONE_PARAM_SCHEMA = "scheme://host/one/{param}/three"
 private const val METHOD_NAME = "methodName"
@@ -46,7 +44,7 @@ class DeepLinkMatchTests {
         }
     }
 
-    @Test
+    @Test(expected = IllegalStateException::class)
     fun testMatchArraySerializationDeserializationNonExistantClass() {
         val matchByteArray = matchByteArray(UriMatch(ONE_PARAM_SCHEMA, "someNonexistantClass", null))
         val entryFromArray = MatchIndex(matchByteArray.toByteArray()).getMatchResultFromIndex(
@@ -58,8 +56,8 @@ class DeepLinkMatchTests {
         assertNotNull(entryFromArray)
         entryFromArray!!.let {
             assertEquals(ONE_PARAM_SCHEMA, it.deeplinkEntry.uriTemplate)
-            assertEquals("someNonexistantClass", it.deeplinkEntry.className)
             assertNull(it.deeplinkEntry.method)
+            it.deeplinkEntry.activityClass
         }
     }
 

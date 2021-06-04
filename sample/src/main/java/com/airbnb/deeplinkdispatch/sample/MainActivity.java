@@ -43,12 +43,20 @@ import org.jetbrains.annotations.NotNull;
 public class MainActivity extends AppCompatActivity {
   private static final String ACTION_DEEP_LINK_METHOD = "deep_link_method";
   private static final String ACTION_DEEP_LINK_COMPLEX = "deep_link_complex";
+  public static final String ACTION_DEEP_LINK_INNER = "deep_link_inner";
   public static final String ACTION_DEEP_LINK_INTENT = "deep_link_intent";
   public static final String ACTION_DEEP_LINK_TASK_STACK_BUILDER = "deep_link_taskstackbuilder";
   public static final String ACTION_DEEP_LINK_INTENT_AND_TASK_STACK_BUILDER =
     "deep_link_intent_and_taskstackbuilder";
 
   private static final String TAG = MainActivity.class.getSimpleName();
+
+  public static class InnerClass {
+    @DeepLink("dld://innerClassDeeplink")
+    public static Intent intentForDeepLinkMethod(Context context) {
+      return new Intent(context, SecondActivity.class).setAction(ACTION_DEEP_LINK_INNER);
+    }
+  }
 
   @Override protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -64,6 +72,8 @@ public class MainActivity extends AppCompatActivity {
         toastMessage = "method with param1:" + parameters.getString("param1");
       } else if (ACTION_DEEP_LINK_COMPLEX.equals(intent.getAction())) {
         toastMessage = parameters.getString("arbitraryNumber");
+      } else if (ACTION_DEEP_LINK_INNER.equals(intent.getAction())) {
+        toastMessage = "Deeplink on method in inner class";
       } else if (parameters.containsKey("arg")) {
         toastMessage = "class and found arg:" + parameters.getString("arg");
       } else {

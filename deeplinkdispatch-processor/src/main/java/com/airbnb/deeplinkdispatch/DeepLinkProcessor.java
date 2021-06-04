@@ -348,7 +348,7 @@ public class DeepLinkProcessor extends AbstractProcessor {
       String uriTemplate = element.getUri();
 
       try {
-        urisTrie.addToTrie(uriTemplate, activity.canonicalName(), element.getMethod());
+        urisTrie.addToTrie(uriTemplate, activity.reflectionName(), element.getMethod());
       } catch (IllegalArgumentException e) {
         error(element.getAnnotatedElement(), e.getMessage());
       }

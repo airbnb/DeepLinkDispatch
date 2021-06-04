@@ -1,5 +1,5 @@
 def versions = [
-    kotlinVersion                : '1.5.0',
+    kotlinVersion                : '1.5.10',
     appCompatVersion             : '1.2.0',
     localBroadcastManagerVersion : '1.0.0',
     roboelectricVersion          : '4.5.1',
@@ -8,7 +8,7 @@ def versions = [
 
 ext.versions = versions
 ext.androidConfig = [
-    agpVersion                          : '4.2.0',
+    agpVersion                          : '4.2.1',
     compileSdkVersion                   : 30,
     minSdkVersion                       : 16,
     targetSdkVersion                    : 30
@@ -27,7 +27,8 @@ ext.deps = [
     androidXAnnotations      : 'androidx.annotation:annotation:1.2.0',
     // Build and upload with:
     // ./gradlew clean assemble sourcesJar androidSourcesJar javadocsJar androidJavadocsJar uploadArchives --no-daemon --no-parallel
-    gradleMavenPublishPlugin : 'com.vanniktech:gradle-maven-publish-plugin:0.12.0',
+    gradleMavenPublishPlugin : 'com.vanniktech:gradle-maven-publish-plugin:0.14.2',
+    dokkaPlugin              : 'org.jetbrains.dokka:dokka-gradle-plugin:1.4.30',
 
     // Testing
     androidxTestCore         : 'androidx.test:core:1.3.0',
