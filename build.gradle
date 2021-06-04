@@ -7,6 +7,7 @@ buildscript {
     repositories {
         google()
         mavenCentral()
+        jcenter() // Still needed for some old dependencies
         maven { url "https://oss.sonatype.org/service/local/repositories/snapshots/content/" }
     }
     dependencies {
@@ -14,28 +15,31 @@ buildscript {
         classpath deps.kotlinGradlePlugin
         classpath deps.gradleMavenPublishPlugin
         classpath deps.benchmarkGradlePlugin
+        // Dokka is needed on classpath for vanniktech publish plugin
+        classpath deps.dokkaPlugin
     }
 }
 
 allprojects {
-  apply from: rootProject.file("dependencies.gradle")
+    apply from: rootProject.file("dependencies.gradle")
 
-  repositories {
-    google()
-      mavenCentral()
-  }
+    repositories {
+        google()
+        mavenCentral()
+        jcenter() // Still needed for some old dependencies
+    }
 }
 
 def getReleaseRepositoryUrl() {
-  return hasProperty('RELEASE_REPOSITORY_URL') ? RELEASE_REPOSITORY_URL
-          : "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
+    return hasProperty('RELEASE_REPOSITORY_URL') ? RELEASE_REPOSITORY_URL
+            : "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
 }
 
 def getSnapshotRepositoryUrl() {
-  return hasProperty('SNAPSHOT_REPOSITORY_URL') ? SNAPSHOT_REPOSITORY_URL
-          : "https://oss.sonatype.org/content/repositories/snapshots/"
+    return hasProperty('SNAPSHOT_REPOSITORY_URL') ? SNAPSHOT_REPOSITORY_URL
+            : "https://oss.sonatype.org/content/repositories/snapshots/"
 }
 
 def isCi() {
-  project.hasProperty('CI') && CI == 'true'
+    project.hasProperty('CI') && CI == 'true'
 }

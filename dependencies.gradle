@@ -27,7 +27,8 @@ ext.deps = [
     androidXAnnotations      : 'androidx.annotation:annotation:1.2.0',
     // Build and upload with:
     // ./gradlew clean assemble sourcesJar androidSourcesJar javadocsJar androidJavadocsJar uploadArchives --no-daemon --no-parallel
-    gradleMavenPublishPlugin : 'com.vanniktech:gradle-maven-publish-plugin:0.12.0',
+    gradleMavenPublishPlugin : 'com.vanniktech:gradle-maven-publish-plugin:0.14.2',
+    dokkaPlugin              : 'org.jetbrains.dokka:dokka-gradle-plugin:1.4.30',
 
     // Testing
     androidxTestCore         : 'androidx.test:core:1.3.0',
