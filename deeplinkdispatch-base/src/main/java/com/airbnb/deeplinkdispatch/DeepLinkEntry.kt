@@ -31,7 +31,7 @@ data class DeepLinkMatchResult(val deeplinkEntry: DeepLinkEntry,
 
     override fun toString(): String {
         return "uriTemplate: ${deeplinkEntry.uriTemplate} " +
-                "activity: ${deeplinkEntry.activityClass?.simpleName  ?: "not found (name:: ${deeplinkEntry.className})"} " +
+                "activity: ${deeplinkEntry.activityClass.name} " +
                 "method: ${deeplinkEntry.method} " +
                 "parameters: $parameterMap"
     }
@@ -90,20 +90,19 @@ data class DeepLinkEntry(
         METHOD
     }
 
-    val activityClass: Class<*>? by lazy {
+    val activityClass: Class<*> by lazy {
         try {
             Class.forName(className)
         } catch (e: ClassNotFoundException) {
-            println(
-                "Deeplink class " + className + " not found. If you are using Proguard/R8/" +
-                        "Dexguard please consult README.md for correct configuration."
+            throw IllegalStateException(
+                "Deeplink class $className not found. If you are using Proguard" +
+                        "/R8/Dexguard please consult README.md for correct configuration.",
+                e
             )
-            return@lazy null
         }
     }
 
     override fun toString(): String {
-        return "uriTemplate: $uriTemplate activity: ${activityClass?.simpleName ?: 
-        "not found (name: ${className})"} method: $method"
+        return "uriTemplate: $uriTemplate activity: ${activityClass.name} method: $method"
     }
 }

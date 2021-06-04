@@ -180,63 +180,57 @@ public class BaseDeepLinkDelegate {
       Class<?> c = matchedDeeplinkEntry.getActivityClass();
       Intent newIntent = null;
       TaskStackBuilder taskStackBuilder = null;
-      if(c != null) {
-        if (matchedDeeplinkEntry.getMethod() == null) {
-          newIntent = new Intent(activity, c);
-        } else {
-          Method method;
-          DeepLinkResult errorResult = new DeepLinkResult(false, uriString,
-            "Could not deep link to method: " + matchedDeeplinkEntry.getMethod() + " intents length == 0",
-            deeplinkMatchResult, new DeepLinkMethodResult(null, taskStackBuilder));
-          try {
-            method = c.getMethod(matchedDeeplinkEntry.getMethod(), Context.class);
-            if (method.getReturnType().equals(TaskStackBuilder.class)) {
-              taskStackBuilder = (TaskStackBuilder) method.invoke(c, activity);
-              if (taskStackBuilder.getIntentCount() == 0) {
-                return errorResult;
-              }
-              newIntent = taskStackBuilder.editIntentAt(taskStackBuilder.getIntentCount() - 1);
-            } else if (method.getReturnType().equals(DeepLinkMethodResult.class)) {
-              DeepLinkMethodResult methodResult = (DeepLinkMethodResult) method.invoke(c, activity);
-              if (methodResult.getTaskStackBuilder() != null) {
-                taskStackBuilder = methodResult.getTaskStackBuilder();
-                if (taskStackBuilder.getIntentCount() == 0) {
-                  return errorResult;
-                }
-                newIntent = taskStackBuilder.editIntentAt(taskStackBuilder.getIntentCount() - 1);
-              } else if (methodResult.getIntent() != null) {
-                newIntent = methodResult.getIntent();
-              }
-            } else {
-              newIntent = (Intent) method.invoke(c, activity);
-            }
-          } catch (NoSuchMethodException exception) {
-            method = c.getMethod(matchedDeeplinkEntry.getMethod(), Context.class, Bundle.class);
-            if (method.getReturnType().equals(TaskStackBuilder.class)) {
-              taskStackBuilder = (TaskStackBuilder) method.invoke(c, activity, parameters);
-              if (taskStackBuilder.getIntentCount() == 0) {
-                return errorResult;
-              }
-              newIntent = taskStackBuilder.editIntentAt(taskStackBuilder.getIntentCount() - 1);
-            } else if (method.getReturnType().equals(DeepLinkMethodResult.class)) {
-              DeepLinkMethodResult methodResult = (DeepLinkMethodResult) method.invoke(c, activity, parameters);
-              if (methodResult.getTaskStackBuilder() != null) {
-                taskStackBuilder = methodResult.getTaskStackBuilder();
-                if (taskStackBuilder.getIntentCount() == 0) {
-                  return errorResult;
-                }
-                newIntent = taskStackBuilder.editIntentAt(taskStackBuilder.getIntentCount() - 1);
-              } else if (methodResult.getIntent() != null) {
-                newIntent = methodResult.getIntent();
-              }
-            } else {
-              newIntent = (Intent) method.invoke(c, activity, parameters);
-            }
-          }
-        }
+      if (matchedDeeplinkEntry.getMethod() == null) {
+        newIntent = new Intent(activity, c);
       } else {
-        if (errorHandler != null) {
-          errorHandler.activityClassNotFound(uriString, matchedDeeplinkEntry.getClassName());
+        Method method;
+        DeepLinkResult errorResult = new DeepLinkResult(false, uriString,
+          "Could not deep link to method: " + matchedDeeplinkEntry.getMethod() + " intents length == 0",
+          deeplinkMatchResult, new DeepLinkMethodResult(null, taskStackBuilder));
+        try {
+          method = c.getMethod(matchedDeeplinkEntry.getMethod(), Context.class);
+          if (method.getReturnType().equals(TaskStackBuilder.class)) {
+            taskStackBuilder = (TaskStackBuilder) method.invoke(c, activity);
+            if (taskStackBuilder.getIntentCount() == 0) {
+              return errorResult;
+            }
+            newIntent = taskStackBuilder.editIntentAt(taskStackBuilder.getIntentCount() - 1);
+          } else if (method.getReturnType().equals(DeepLinkMethodResult.class)) {
+            DeepLinkMethodResult methodResult = (DeepLinkMethodResult) method.invoke(c, activity);
+            if (methodResult.getTaskStackBuilder() != null) {
+              taskStackBuilder = methodResult.getTaskStackBuilder();
+              if (taskStackBuilder.getIntentCount() == 0) {
+                return errorResult;
+              }
+              newIntent = taskStackBuilder.editIntentAt(taskStackBuilder.getIntentCount() - 1);
+            } else if (methodResult.getIntent() != null) {
+              newIntent = methodResult.getIntent();
+            }
+          } else {
+            newIntent = (Intent) method.invoke(c, activity);
+          }
+        } catch (NoSuchMethodException exception) {
+          method = c.getMethod(matchedDeeplinkEntry.getMethod(), Context.class, Bundle.class);
+          if (method.getReturnType().equals(TaskStackBuilder.class)) {
+            taskStackBuilder = (TaskStackBuilder) method.invoke(c, activity, parameters);
+            if (taskStackBuilder.getIntentCount() == 0) {
+              return errorResult;
+            }
+            newIntent = taskStackBuilder.editIntentAt(taskStackBuilder.getIntentCount() - 1);
+          } else if (method.getReturnType().equals(DeepLinkMethodResult.class)) {
+            DeepLinkMethodResult methodResult = (DeepLinkMethodResult) method.invoke(c, activity, parameters);
+            if (methodResult.getTaskStackBuilder() != null) {
+              taskStackBuilder = methodResult.getTaskStackBuilder();
+              if (taskStackBuilder.getIntentCount() == 0) {
+                return errorResult;
+              }
+              newIntent = taskStackBuilder.editIntentAt(taskStackBuilder.getIntentCount() - 1);
+            } else if (methodResult.getIntent() != null) {
+              newIntent = methodResult.getIntent();
+            }
+          } else {
+            newIntent = (Intent) method.invoke(c, activity, parameters);
+          }
         }
       }
       if (newIntent == null) {

@@ -1,5 +1,5 @@
 def versions = [
-    kotlinVersion                : '1.5.0',
+    kotlinVersion                : '1.5.10',
     appCompatVersion             : '1.2.0',
     localBroadcastManagerVersion : '1.0.0',
     roboelectricVersion          : '4.5.1',
@@ -8,7 +8,7 @@ def versions = [
 
 ext.versions = versions
 ext.androidConfig = [
-    agpVersion                          : '4.2.0',
+    agpVersion                          : '4.2.1',
     compileSdkVersion                   : 30,
     minSdkVersion                       : 16,
     targetSdkVersion                    : 30

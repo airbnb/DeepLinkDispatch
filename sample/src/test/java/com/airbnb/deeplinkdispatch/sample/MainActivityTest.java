@@ -69,6 +69,20 @@ public class MainActivityTest {
   }
 
   @Test
+  public void testIntentViaInnerClassMethodResult() {
+    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("dld://innerClassDeeplink"));
+    DeepLinkActivity deepLinkActivity = Robolectric.buildActivity(DeepLinkActivity.class, intent)
+      .create().get();
+    ShadowActivity shadowActivity = shadowOf(deepLinkActivity);
+    Intent launchedIntent = shadowActivity.peekNextStartedActivityForResult().intent;
+    assertThat(launchedIntent.getComponent(),
+      equalTo(new ComponentName(deepLinkActivity, SecondActivity.class)));
+
+    assertThat(launchedIntent.getBooleanExtra(DeepLink.IS_DEEP_LINK, false), equalTo(true));
+    assertThat(launchedIntent.getAction(), equalTo(MainActivity.ACTION_DEEP_LINK_INNER));
+  }
+
+  @Test
   public void testIntentViaMethodResultWithParameter() {
     Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("dld://host/methodResult/intent/someValue"));
     DeepLinkActivity deepLinkActivity = Robolectric.buildActivity(DeepLinkActivity.class, intent)
