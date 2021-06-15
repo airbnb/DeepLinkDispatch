@@ -1,40 +1,33 @@
-package com.airbnb.deeplinkdispatch;
+package com.airbnb.deeplinkdispatch
 
-import java.io.PrintWriter;
-import java.util.List;
-
-import javax.annotation.processing.ProcessingEnvironment;
-import javax.lang.model.util.Elements;
+import com.airbnb.deeplinkdispatch.Documentor.DocumetationWriter
+import java.io.PrintWriter
+import javax.annotation.processing.ProcessingEnvironment
 
 /**
  * Old documentation format.
  */
-final class GenericWriter implements Documentor.DocumetationWriter {
-    @Override
-    public void write(final ProcessingEnvironment env,
-                      final PrintWriter writer,
-                      final List<DeepLinkAnnotatedElement> elements) {
-        final Elements utils = env.getElementUtils();
-
-        for (DeepLinkAnnotatedElement element : elements) {
-            writer.print(element.getUri() + Documentor.PROPERTY_DELIMITER);
-
-            String doc = Documentor.formatJavaDoc(utils.getDocComment(element.getElement()));
-            if (doc != null) {
-                writer.print(doc);
+internal class GenericWriter : DocumetationWriter {
+    override fun write(
+        env: ProcessingEnvironment,
+        writer: PrintWriter,
+        elements: List<DeepLinkAnnotatedElement>
+    ) {
+        writer.apply {
+            for (element in elements) {
+                print(element.uri + Documentor.PROPERTY_DELIMITER)
+                Documentor.formatJavaDoc(env.elementUtils.getDocComment(element.element))
+                    ?.let { print(it) }
+                print(Documentor.PROPERTY_DELIMITER)
+                print(element.annotatedElement.simpleName)
+                if (element.annotationType == DeepLinkEntry.Type.METHOD) {
+                    print(Documentor.CLASS_METHOD_NAME_DELIMITER)
+                    print(element.method)
+                }
+                print(Documentor.ELEMENT_DELIMITER)
             }
-
-            writer.print(Documentor.PROPERTY_DELIMITER);
-            writer.print(element.getAnnotatedElement().getSimpleName());
-
-            if (element.getAnnotationType().equals(DeepLinkEntry.Type.METHOD)) {
-                writer.print(Documentor.CLASS_METHOD_NAME_DELIMITER);
-                writer.print(element.getMethod());
-            }
-
-            writer.print(Documentor.ELEMENT_DELIMITER);
+            flush()
         }
 
-        writer.flush();
     }
 }

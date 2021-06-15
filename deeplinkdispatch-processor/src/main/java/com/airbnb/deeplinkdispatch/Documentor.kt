@@ -1,140 +1,139 @@
-package com.airbnb.deeplinkdispatch;
+package com.airbnb.deeplinkdispatch
 
-import com.google.common.annotations.VisibleForTesting;
-
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.util.List;
-
-import javax.annotation.Nullable;
-import javax.annotation.processing.Messager;
-import javax.annotation.processing.ProcessingEnvironment;
-import javax.tools.Diagnostic;
+import androidx.annotation.VisibleForTesting
+import java.io.File
+import java.io.FileWriter
+import java.io.IOException
+import java.io.PrintWriter
+import javax.annotation.processing.Messager
+import javax.annotation.processing.ProcessingEnvironment
+import javax.tools.Diagnostic
 
 /**
  * Documents deep links.
- * <p>
+ *
+ *
  * The output format is:
  * {DeepLink1}\n|#|\n[Description part of java doc]\n|#|\n{ClassName}#[MethodName]\n|##|\n
  * {DeepLink2}\n|#|\n[Description part of java doc]\n|#|\n{ClassName}#[MethodName]\n|##|\n
  * ...
- * <p>
+ *
+ *
  * The output location is specified in the project's gradle file through
- * {@link ProcessingEnvironment}'s compiler argument options by deepLinkDoc.output.
+ * [ProcessingEnvironment]'s compiler argument options by deepLinkDoc.output.
  */
-final class Documentor {
-  protected static final String PROPERTY_DELIMITER = "\\n|#|\\n";
-  protected static final String ELEMENT_DELIMITER = "\\n|##|\\n";
-  protected static final String CLASS_METHOD_NAME_DELIMITER = "#";
-  protected static final String PARAM = "@param";
-  protected static final String RETURN = "@return";
-  static final String DOC_OUTPUT_PROPERTY_NAME = "deepLinkDoc.output";
+internal class Documentor(private val processingEnv: ProcessingEnvironment) {
+    private val messager: Messager = processingEnv.messager
 
-  private final ProcessingEnvironment processingEnv;
-  private final Messager messager;
+    @get:VisibleForTesting
+    var file: File? = initFile()
 
-  @Nullable private File file;
+    fun write(elements: List<DeepLinkAnnotatedElement>) {
+        val file = file ?: run {
+            messager.printMessage(
+                Diagnostic.Kind.NOTE,
+                "Output file is null, DeepLink doc not generated."
+            )
+            return
+        }
+        if (elements.isNullOrEmpty()) {
+            messager.printMessage(
+                Diagnostic.Kind.NOTE,
+                "No deep link, DeepLink doc not generated."
+            )
+            return
+        }
+        try {
+            PrintWriter(FileWriter(file), true).use { writer ->
+                val fileName = file.name
+                val extIndex = fileName.lastIndexOf(".")
 
-  Documentor(final ProcessingEnvironment processingEnv) {
-    this.processingEnv = processingEnv;
-    messager = processingEnv.getMessager();
-    initFile();
-  }
-
-  void write(final List<DeepLinkAnnotatedElement> elements) {
-    if (file == null) {
-      messager.printMessage(Diagnostic.Kind.NOTE,
-          "Output file is null, DeepLink doc not generated.");
-      return;
-    }
-    if (elements == null || elements.isEmpty()) {
-      messager.printMessage(Diagnostic.Kind.NOTE,
-          "No deep link, DeepLink doc not generated.");
-      return;
-    }
-    try (PrintWriter writer = new PrintWriter(new FileWriter(file), true)) {
-
-      final String fileName = file.getName();
-      final int extIndex = fileName.lastIndexOf(".");
-
-      DocumetationWriter docWriter;
-
-      // markdown writer if .md file extension is used
-      if (extIndex >= 0 && extIndex < fileName.length()
-              && fileName.substring(extIndex + 1).equalsIgnoreCase("md")) {
-        docWriter = new MarkdownWriter();
-      } else {
-          // else default writer
-        docWriter = new GenericWriter();
-      }
-
-      docWriter.write(processingEnv, writer, elements);
-
-    } catch (IOException e) {
-      messager.printMessage(Diagnostic.Kind.ERROR,
-          "DeepLink doc not generated: " + e.getMessage());
-    }
-    messager.printMessage(Diagnostic.Kind.NOTE, "DeepLink doc generated at: " + file.getPath());
-  }
-
-  private void initFile() {
-    String path = processingEnv.getOptions().get(DOC_OUTPUT_PROPERTY_NAME);
-    if (path == null || path.trim().isEmpty()) {
-      messager.printMessage(Diagnostic.Kind.NOTE,
-          "Output path not specified, DeepLink doc is not going to be generated.");
-      return;
+                // markdown writer if .md file extension is used
+                val docWriter: DocumetationWriter =
+                    if (extIndex >= 0 && extIndex < fileName.length
+                        && fileName.substring(extIndex + 1).equals("md", ignoreCase = true)
+                    ) {
+                        MarkdownWriter()
+                    } else {
+                        // else default writer
+                        GenericWriter()
+                    }
+                docWriter.write(processingEnv, writer, elements)
+            }
+        } catch (e: IOException) {
+            messager.printMessage(
+                Diagnostic.Kind.ERROR,
+                "DeepLink doc not generated: " + e.message
+            )
+        }
+        messager.printMessage(Diagnostic.Kind.NOTE, "DeepLink doc generated at: " + file.path)
     }
 
-    file = new File(path);
-    if (file.isDirectory()) {
-      messager.printMessage(Diagnostic.Kind.NOTE,
-          String.format("Specify a file path at %s to generate deep link doc.",
-              DOC_OUTPUT_PROPERTY_NAME));
-      return;
+    private fun initFile(): File? {
+        val path = processingEnv.options[DOC_OUTPUT_PROPERTY_NAME]
+        if (path == null || path.trim { it <= ' ' }.isEmpty()) {
+            messager.printMessage(
+                Diagnostic.Kind.NOTE,
+                "Output path not specified, DeepLink doc is not going to be generated."
+            )
+            return null
+        }
+        val file = File(path)
+        if (file.isDirectory) {
+            messager.printMessage(
+                Diagnostic.Kind.NOTE,
+                "Specify a file path at $DOC_OUTPUT_PROPERTY_NAME to generate deep link doc.",
+            )
+            return file
+        }
+        val parentDir = file.parentFile
+        if (!parentDir.exists() && !parentDir.mkdirs()) {
+            messager.printMessage(
+                Diagnostic.Kind.NOTE,
+                "Cannot create file specified at ${file.canonicalPath}."
+            )
+        }
+        return file
     }
 
-    File parentDir = file.getParentFile();
-    if (!parentDir.exists() && !parentDir.mkdirs()) {
-      messager.printMessage(Diagnostic.Kind.NOTE,
-          String.format("Cannot create file specified at %s.", file));
-    }
-  }
-
-  /* Strips off {@link #PARAM} and {@link #RETURN}. */
-  protected static String formatJavaDoc(String str) {
-    if (str != null) {
-      int paramPos = str.indexOf(PARAM);
-      if (paramPos != -1) {
-        str = str.substring(0, paramPos);
-      }
-      int returnPos = str.indexOf(RETURN);
-      if (returnPos != -1) {
-        str = str.substring(0, returnPos);
-      }
-      str = str.trim();
-    }
-    return str;
-  }
-
-  @Nullable
-  @VisibleForTesting
-  File getFile() {
-    return file;
-  }
-
-  /**
-   * Implement this interface if you want to provide own documentation writer.
-   */
-  interface DocumetationWriter {
     /**
-     * Compose documentation with help of provided environment, writer and collection of
-     * found deeplink elements.
+     * Implement this interface if you want to provide own documentation writer.
      */
-    void write(ProcessingEnvironment env,
-               PrintWriter writer,
-               List<DeepLinkAnnotatedElement> elements);
-  }
+    internal interface DocumetationWriter {
+        /**
+         * Compose documentation with help of provided environment, writer and collection of
+         * found deeplink elements.
+         */
+        fun write(
+            env: ProcessingEnvironment,
+            writer: PrintWriter,
+            elements: List<DeepLinkAnnotatedElement>
+        )
+    }
 
+    companion object {
+        internal const val PROPERTY_DELIMITER = "\\n|#|\\n"
+        internal const val ELEMENT_DELIMITER = "\\n|##|\\n"
+        internal const val CLASS_METHOD_NAME_DELIMITER = "#"
+        private const val PARAM = "@param"
+        private const val RETURN = "@return"
+        const val DOC_OUTPUT_PROPERTY_NAME = "deepLinkDoc.output"
+
+        /* Strips off {@link #PARAM} and {@link #RETURN}. */
+        internal fun formatJavaDoc(str: String?): String? {
+            var str = str
+            if (str != null) {
+                val paramPos = str.indexOf(PARAM)
+                if (paramPos != -1) {
+                    str = str.substring(0, paramPos)
+                }
+                val returnPos = str.indexOf(RETURN)
+                if (returnPos != -1) {
+                    str = str.substring(0, returnPos)
+                }
+                str = str.trim { it <= ' ' }
+            }
+            return str
+        }
+    }
 }

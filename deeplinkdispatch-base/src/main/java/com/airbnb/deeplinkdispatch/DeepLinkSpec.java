@@ -15,6 +15,8 @@
  */
 package com.airbnb.deeplinkdispatch;
 
+import androidx.annotation.Nullable;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -44,5 +46,5 @@ import java.lang.annotation.Target;
 // are not so we need to mark them as RetentionPolicy.RUNTIME.
 @Retention(RetentionPolicy.RUNTIME)
 public @interface DeepLinkSpec {
-  String[] prefix();
+   String[] prefix();
 }

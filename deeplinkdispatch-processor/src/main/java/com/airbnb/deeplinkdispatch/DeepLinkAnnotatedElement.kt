@@ -13,56 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.airbnb.deeplinkdispatch;
+package com.airbnb.deeplinkdispatch
 
-import java.net.MalformedURLException;
+import java.net.MalformedURLException
+import javax.lang.model.element.Element
+import javax.lang.model.element.TypeElement
+import kotlin.jvm.Throws
 
-import javax.lang.model.element.Element;
-import javax.lang.model.element.TypeElement;
+internal data class DeepLinkAnnotatedElement @Throws(MalformedURLException::class) constructor(
+    val uri: String,
+    val element: Element,
+    val annotationType: DeepLinkEntry.Type
+) {
+    val annotatedElement: TypeElement
+    val method: String?
 
-final class DeepLinkAnnotatedElement {
-  private final String uri;
-  private final DeepLinkEntry.Type annotationType;
-  private final TypeElement annotatedElement;
-  private final String method;
-  private final Element element;
-
-  DeepLinkAnnotatedElement(String annotation, Element element, DeepLinkEntry.Type type)
-      throws MalformedURLException {
-    DeepLinkUri url = DeepLinkUri.parseTemplate(annotation);
-    if (url == null) {
-      throw new MalformedURLException("Malformed Uri " + annotation);
+    init {
+        DeepLinkUri.parseTemplate(uri)
+            ?: throw MalformedURLException("Malformed Uri Template: $uri")
+        if (annotationType === DeepLinkEntry.Type.METHOD) {
+            annotatedElement = element.enclosingElement as TypeElement
+            method = element.simpleName.toString()
+        } else {
+            annotatedElement = element as TypeElement
+            method = null
+        }
     }
-    uri = annotation;
-    annotationType = type;
-
-    if (type == DeepLinkEntry.Type.METHOD) {
-      annotatedElement = (TypeElement) element.getEnclosingElement();
-      method = element.getSimpleName().toString();
-    } else {
-      annotatedElement = (TypeElement) element;
-      method = null;
-    }
-    this.element = element;
-  }
-
-  String getUri() {
-    return uri;
-  }
-
-  DeepLinkEntry.Type getAnnotationType() {
-    return annotationType;
-  }
-
-  TypeElement getAnnotatedElement() {
-    return annotatedElement;
-  }
-
-  String getMethod() {
-    return method;
-  }
-
-  Element getElement() {
-    return element;
-  }
 }
