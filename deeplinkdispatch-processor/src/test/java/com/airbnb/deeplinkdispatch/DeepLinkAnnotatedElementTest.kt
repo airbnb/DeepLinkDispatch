@@ -12,6 +12,7 @@ import javax.lang.model.element.TypeElement
 class DeepLinkAnnotatedElementTest {
     @Mock
     var element: TypeElement? = null
+
     @Before
     fun setUp() {
         MockitoAnnotations.initMocks(this)
