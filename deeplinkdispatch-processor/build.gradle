@@ -21,8 +21,8 @@ dependencies {
   // Cannot depend on them from Maven as they are .aar and not .jar files (this is a java project)
   testImplementation fileTree(dir: 'libs', include: ['androidx.localbroadcastmanager-1.0.0-beta1.jar','androidx.core-1.0.0-beta1.jar'])
   testImplementation deps.compileTesting
-  testImplementation deps.truth
   testImplementation deps.mockito
+  testImplementation deps.kotlinReflect
   testImplementation files("${System.properties['java.home']}/../lib/tools.jar")
 }
 

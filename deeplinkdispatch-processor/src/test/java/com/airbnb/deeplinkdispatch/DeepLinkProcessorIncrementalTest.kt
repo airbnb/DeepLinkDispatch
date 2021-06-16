@@ -1,188 +1,158 @@
-package com.airbnb.deeplinkdispatch;
+package com.airbnb.deeplinkdispatch
 
-import com.google.testing.compile.JavaFileObjects;
+import com.tschuchort.compiletesting.SourceFile
+import org.junit.Test
 
-import org.junit.Test;
+class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
+    private val customAnnotationAppLink = SourceFile.java(
+        "AppDeepLink.java",
+        """
+                package com.example;
+                import com.airbnb.deeplinkdispatch.DeepLinkSpec;
+                @DeepLinkSpec(prefix = { "example://" })
+                public @interface AppDeepLink {
+                    String[] value();
+                }
+                """
+    )
+    private val customAnnotationPlaceholderInSchemeHostAppLink = SourceFile.java(
+        "PlaceholderDeepLink.java",
+        """
+                package com.example;
+                import com.airbnb.deeplinkdispatch.DeepLinkSpec;
+                @DeepLinkSpec(prefix = { "http{scheme}://{host}example.com/" })
+                public @interface PlaceholderDeepLink {
+                    String[] value();
+                }
+                """
+    )
+    private val sampleActivityWithStandardAndCustomDeepLink = SourceFile.java(
+        "SampleActivity.java",
+        """
+                 package com.example;import com.airbnb.deeplinkdispatch.DeepLink;
+                 @DeepLink("airbnb://example.com/deepLink")
+                 @AppDeepLink({"example.com/deepLink","example.com/another"})
+                 public class SampleActivity {
+                 }
+                 """
+    )
+    private val sampleActivityWithOnlyCustomDeepLink = SourceFile.java(
+        "SampleActivity.java",
+        """
+                 package com.example;import com.airbnb.deeplinkdispatch.DeepLink;
+                 import com.airbnb.deeplinkdispatch.DeepLinkHandler;
+                 
+                 import com.example.SampleModule;
+                 
+                 @AppDeepLink({"example.com/deepLink"})
+                 @DeepLinkHandler({ SampleModule.class })
+                 public class SampleActivity {
+                 }
+                 """
+    )
+    private val sampleActivityWithOnlyCustomPlaceholderDeepLink = SourceFile.java(
+        "SampleActivity.java",
+        """
+                 package com.example;import com.airbnb.deeplinkdispatch.DeepLink;
+                 import com.airbnb.deeplinkdispatch.DeepLinkHandler;
+                 
+                 import com.example.SampleModule;
+                 
+                 @PlaceholderDeepLink({"deepLink"})
+                 @DeepLinkHandler({ SampleModule.class })
+                 public class SampleActivity {
+                 }
+                 """
+    )
+    private val module = SourceFile.java(
+        "SampleModule.java",
+        """
+                 package com.example;import com.airbnb.deeplinkdispatch.DeepLinkModule;
+                 
+                 @DeepLinkModule
+                 public class SampleModule {
+                 }
+                 """
+    )
 
-import java.util.Arrays;
+    @Test
+    fun testIncrementalProcessorWithCustomDeepLinkRegistration() {
+        val result = compileIncremental(
+            listOf(
+                customAnnotationAppLink,
+                module,
+                sampleActivityWithOnlyCustomDeepLink,
+                fakeBaseDeeplinkDelegate
+            ), "com.example.AppDeepLink"
+        )
+        assertGeneratedCode(
+            result = result,
+            registryClassName = "com.example.SampleModuleRegistry",
+            indexEntries = listOf(
+                DeepLinkEntry(
+                    uriTemplate = "example://example.com/deepLink",
+                    className = "com.example.SampleActivity",
+                    method = null
+                )
+            ),
+            generatedFileNames = listOf("DeepLinkDelegate.java", "SampleModuleRegistry.java")
+        )
+    }
 
-import javax.tools.JavaFileObject;
+    @Test
+    fun testIncrementalProcessorWithCustomDeepLinkWithPlaceholdersRegistration() {
+        val result = compileIncremental(
+            listOf(
+                customAnnotationPlaceholderInSchemeHostAppLink,
+                module,
+                sampleActivityWithOnlyCustomPlaceholderDeepLink,
+                fakeBaseDeeplinkDelegate
+            ), "com.example.PlaceholderDeepLink"
+        )
+        assertGeneratedCode(
+            result = result,
+            registryClassName = "com.example.SampleModuleRegistry",
+            indexEntries = listOf(
+                DeepLinkEntry(
+                    uriTemplate = "http{scheme}://{host}example.com/deepLink",
+                    className = "com.example.SampleActivity",
+                    method = null
+                )
+            ),
+            generatedFileNames = listOf("DeepLinkDelegate.java", "SampleModuleRegistry.java")
+        )
+    }
 
-import static com.google.common.truth.Truth.assertAbout;
-import static com.google.testing.compile.JavaSourcesSubjectFactory.javaSources;
+    @Test
+    fun testIncrementalProcessorWithoutCustomDeepLinkRegistration() {
+        val result = compileIncremental(
+            listOf(
+                customAnnotationAppLink,
+                module,
+                sampleActivityWithOnlyCustomDeepLink,
+                fakeBaseDeeplinkDelegate
+            ), null
+        )
+        assertGeneratedCode(
+            result = result,
+            registryClassName = "com.example.SampleModuleRegistry",
+            indexEntries = emptyList(),
+            generatedFileNames = listOf("DeepLinkDelegate.java", "SampleModuleRegistry.java")
+        )
 
-public class DeepLinkProcessorIncrementalTest extends BaseDeepLinkProcessorTest {
-  private final JavaFileObject customAnnotationAppLink = JavaFileObjects
-    .forSourceString("AppDeepLink", "package com.example;\n"
-      + "import com.airbnb.deeplinkdispatch.DeepLinkSpec;\n"
-      + "@DeepLinkSpec(prefix = { \"example://\" })\n"
-      + "public @interface AppDeepLink {\n"
-      + "    String[] value();\n"
-      + "}");
+    }
 
-  private final JavaFileObject customAnnotationPlaceholderInSchemeHostAppLink = JavaFileObjects
-    .forSourceString("PlaceholderDeepLink", "package com.example;\n"
-      + "import com.airbnb.deeplinkdispatch.DeepLinkSpec;\n"
-      + "@DeepLinkSpec(prefix = { \"http{scheme}://{host}example.com/\" })\n"
-      + "public @interface PlaceholderDeepLink {\n"
-      + "    String[] value();\n"
-      + "}");
-
-  private final JavaFileObject sampleActivityWithStandardAndCustomDeepLink = JavaFileObjects
-    .forSourceString("SampleActivity", "package com.example;"
-      + "import com.airbnb.deeplinkdispatch.DeepLink;\n"
-      + "@DeepLink(\"airbnb://example.com/deepLink\")\n"
-      + "@AppDeepLink({\"example.com/deepLink\",\"example.com/another\"})\n"
-      + "public class SampleActivity {\n"
-      + "}");
-
-  private final JavaFileObject sampleActivityWithOnlyCustomDeepLink = JavaFileObjects
-    .forSourceString("SampleActivity", "package com.example;"
-      + "import com.airbnb.deeplinkdispatch.DeepLink;\n"
-      + "import com.airbnb.deeplinkdispatch.DeepLinkHandler;\n\n"
-      + "import com.example.SampleModule;\n\n"
-      + "@AppDeepLink({\"example.com/deepLink\"})\n"
-      + "@DeepLinkHandler({ SampleModule.class })\n"
-      + "public class SampleActivity {\n"
-      + "}");
-
-  private final JavaFileObject sampleActivityWithOnlyCustomPlaceholderDeepLink = JavaFileObjects
-    .forSourceString("SampleActivity", "package com.example;"
-      + "import com.airbnb.deeplinkdispatch.DeepLink;\n"
-      + "import com.airbnb.deeplinkdispatch.DeepLinkHandler;\n\n"
-      + "import com.example.SampleModule;\n\n"
-      + "@PlaceholderDeepLink({\"deepLink\"})\n"
-      + "@DeepLinkHandler({ SampleModule.class })\n"
-      + "public class SampleActivity {\n"
-      + "}");
-
-  private final JavaFileObject module = JavaFileObjects
-    .forSourceString("SampleModule", "package com.example;"
-      + "import com.airbnb.deeplinkdispatch.DeepLinkModule;\n\n"
-      + "@DeepLinkModule\n"
-      + "public class SampleModule {\n"
-      + "}");
-
-  @Test
-  public void testIncrementalProcessorWithCustomDeepLinkRegistration() {
-    assertAbout(javaSources())
-      .that(Arrays.asList(customAnnotationAppLink,
-        module,
-        sampleActivityWithOnlyCustomDeepLink,
-        fakeBaseDeeplinkDelegate))
-      .withCompilerOptions("-AdeepLink.incremental=true")
-      .withCompilerOptions("-AdeepLink.customAnnotations=com.example.AppDeepLink")
-      .processedWith(new DeepLinkProcessor())
-      .compilesWithoutError()
-      .and()
-      .generatesSources(
-        JavaFileObjects.forResource("DeepLinkDelegate.java"),
-        JavaFileObjects.forSourceString("/SOURCE_OUTPUT.com.example"
-            + ".SampleModuleRegistry",
-          "package com.example;\n"
-            + "\n"
-            + "import com.airbnb.deeplinkdispatch.BaseRegistry;\n"
-            + "import com.airbnb.deeplinkdispatch.base.Utils;\n"
-            + "import java.lang.String;\n"
-            + "\n"
-            + "public final class SampleModuleRegistry extends BaseRegistry {\n"
-            + "  public SampleModuleRegistry() {\n"
-            + "    super(Utils.readMatchIndexFromStrings( new String[] {matchIndex0(), }),\n"
-            + "    new String[]{});\n"
-            + "  }\n"
-            + "\n"
-            + "  private static String matchIndex0() {\n"
-            + "    return \"\\u0001\\u0001\\u0000\\u0000\\u0000\\u0000\\u0000or\\u0002\\u0007"
-            + "\\u0000\\u0000\\u0000\\u0000\\u0000`example\\u0004\\u000b\\u0000\\u0000\\u0000"
-            + "\\u0000\\u0000Mexample.com\\b\\b\\u0000=\\u0000\\u0000\\u0000\\u0000deepLink\\u0000"
-            + "\\u001eexample://example.com/deepLink"
-            + "\\u0000\\u001acom.example.SampleActivity\\u0000\";\n"
-            + "  }\n"
-            + "}"
-        ));
-  }
-
-  @Test
-  public void testIncrementalProcessorWithCustomDeepLinkWithPlaceholdersRegistration() {
-    assertAbout(javaSources())
-      .that(Arrays.asList(customAnnotationPlaceholderInSchemeHostAppLink,
-        module,
-        sampleActivityWithOnlyCustomPlaceholderDeepLink,
-        fakeBaseDeeplinkDelegate))
-      .withCompilerOptions("-AdeepLink.incremental=true")
-      .withCompilerOptions("-AdeepLink.customAnnotations=com.example.PlaceholderDeepLink")
-      .processedWith(new DeepLinkProcessor())
-      .compilesWithoutError()
-      .and()
-      .generatesSources(
-        JavaFileObjects.forResource("DeepLinkDelegate.java"),
-        JavaFileObjects.forSourceString("/SOURCE_OUTPUT.com.example"
-            + ".SampleModuleRegistry",
-          "package com.example;\n"
-            + "\n"
-            + "import com.airbnb.deeplinkdispatch.BaseRegistry;\n"
-            + "import com.airbnb.deeplinkdispatch.base.Utils;\n"
-            + "import java.lang.String;\n"
-            + "\n"
-            + "public final class SampleModuleRegistry extends BaseRegistry {\n"
-            + "  public SampleModuleRegistry() {\n"
-            + "    super(Utils.readMatchIndexFromStrings( new String[] {matchIndex0(), }),\n"
-            + "    new String[]{});\n"
-            + "  }\n"
-            + "\n"
-            + "  private static String matchIndex0() {\n"
-            + "    return \"\\u0001\\u0001\\u0000\\u0000\\u0000\\u0000\\u0000\\u0085r\\u0012\\f\\"
-            + "u0000\\u0000\\u0000\\u0000\\u0000qhttp{scheme}\\u0014\\u0011\\u0000\\u0000\\u0000\\"
-            + "u0000\\u0000X{host}example.com\\b\\b\\u0000H\\u0000\\u0000\\u0000\\u0000deepLink\\"
-            + "u0000)http{scheme}://{host}example.com/deepLink\\u0000\\u001acom.example."
-            + "SampleActivity\\u0000\";\n"
-            + "  }\n"
-            + "}"
-        ));
-  }
-
-  @Test
-  public void testIncrementalProcessorWithoutCustomDeepLinkRegistration() {
-    assertAbout(javaSources())
-      .that(Arrays.asList(customAnnotationAppLink,
-        module,
-        sampleActivityWithOnlyCustomDeepLink,
-        fakeBaseDeeplinkDelegate))
-      .withCompilerOptions("-AdeepLink.incremental=true")
-      .processedWith(new DeepLinkProcessor())
-      .compilesWithoutError()
-      .and()
-      .generatesSources(
-        JavaFileObjects.forResource("DeepLinkDelegate.java"),
-        JavaFileObjects.forSourceString("/SOURCE_OUTPUT.com.example"
-            + ".SampleModuleRegistry",
-          "package com.example;\n"
-            + "\n"
-            + "import com.airbnb.deeplinkdispatch.BaseRegistry;\n"
-            + "import com.airbnb.deeplinkdispatch.base.Utils;\n"
-            + "import java.lang.String;\n"
-            + "\n"
-            + "public final class SampleModuleRegistry extends BaseRegistry {\n"
-            + "  public SampleModuleRegistry() {\n"
-            + "    super(Utils.readMatchIndexFromStrings( new String[] {matchIndex0(), }),\n"
-            + "    new String[]{});\n"
-            + "  }\n"
-            + "\n"
-            + "  private static String matchIndex0() {\n"
-            + "    return \"\\u0001\\u0001\\u0000\\u0000\\u0000\\u0000\\u0000\\u0000r\";\n"
-            + "  }\n"
-            + "}"));
-  }
-
-  @Test
-  public void testCustomAnnotationMissingFromCompilerOptionsErrorMessage() {
-    assertAbout(javaSources())
-      .that(Arrays.asList(customAnnotationAppLink, sampleActivityWithStandardAndCustomDeepLink))
-      .withCompilerOptions("-AdeepLink.incremental=true")
-      .processedWith(new DeepLinkProcessor())
-      .failsToCompile()
-      .withErrorContaining(
-        "Unable to find annotation 'com.example.AppDeepLink' you must update "
-          + "'deepLink.customAnnotations' within the build.gradle");
-  }
+    @Test
+    fun testCustomAnnotationMissingFromCompilerOptionsErrorMessage() {
+        val result = compileIncremental(
+            listOf(
+                customAnnotationAppLink,
+                sampleActivityWithStandardAndCustomDeepLink
+            ), null
+        )
+        assertCompileError(
+            result, "Unable to find annotation 'com.example.AppDeepLink' you must update "
+                    + "'deepLink.customAnnotations' within the build.gradle"
+        )
+    }
 }

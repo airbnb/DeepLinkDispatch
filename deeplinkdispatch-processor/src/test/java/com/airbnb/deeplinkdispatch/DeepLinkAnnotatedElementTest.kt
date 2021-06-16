@@ -1,66 +1,73 @@
-package com.airbnb.deeplinkdispatch;
+package com.airbnb.deeplinkdispatch
 
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.assertj.core.api.Assertions
+import org.junit.Assert
+import org.junit.Before
+import org.junit.Test
+import org.mockito.Mock
+import org.mockito.MockitoAnnotations
+import java.net.MalformedURLException
+import javax.lang.model.element.TypeElement
 
-import java.net.MalformedURLException;
-
-import javax.lang.model.element.TypeElement;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.fail;
-
-public class DeepLinkAnnotatedElementTest {
-  @Mock TypeElement element;
-
-  @Before public void setUp() {
-    MockitoAnnotations.initMocks(this);
-  }
-
-  @Test public void testValidUri() throws MalformedURLException {
-    DeepLinkAnnotatedElement annotatedElement = new DeepLinkAnnotatedElement(
-        "airbnb://example.com/{foo}/bar", element, DeepLinkEntry.Type.CLASS);
-
-    assertThat(annotatedElement.getUri()).isEqualTo("airbnb://example.com/{foo}/bar");
-  }
-
-  @Test public void testQueryParam() throws MalformedURLException {
-    DeepLinkAnnotatedElement annotatedElement = new DeepLinkAnnotatedElement(
-        "airbnb://classDeepLink?foo=bar", element, DeepLinkEntry.Type.CLASS);
-
-    assertThat(annotatedElement.getUri()).isEqualTo("airbnb://classDeepLink?foo=bar");
-  }
-
-  @Test public void testInvalidUri() {
-    try {
-      new DeepLinkAnnotatedElement("http", element, DeepLinkEntry.Type.CLASS);
-      fail();
-    } catch (MalformedURLException ignored) {
+class DeepLinkAnnotatedElementTest {
+    @Mock
+    var element: TypeElement? = null
+    @Before
+    fun setUp() {
+        MockitoAnnotations.initMocks(this)
     }
-  }
 
-  @Test public void testMissingScheme() {
-    try {
-      new DeepLinkAnnotatedElement("example.com/something", element, DeepLinkEntry.Type.CLASS);
-      fail();
-    } catch (MalformedURLException ignored) {
+    @Test
+    @Throws(MalformedURLException::class)
+    fun testValidUri() {
+        val (uri) = DeepLinkAnnotatedElement(
+            "airbnb://example.com/{foo}/bar", element!!, DeepLinkEntry.Type.CLASS
+        )
+        Assertions.assertThat(uri).isEqualTo("airbnb://example.com/{foo}/bar")
     }
-  }
 
-  @Test public void testPlaceholderInScheme() throws MalformedURLException {
-    DeepLinkAnnotatedElement annotatedElement = new DeepLinkAnnotatedElement(
-      "http{scheme}://example.com/{foo}/bar", element, DeepLinkEntry.Type.CLASS);
+    @Test
+    @Throws(MalformedURLException::class)
+    fun testQueryParam() {
+        val (uri) = DeepLinkAnnotatedElement(
+            "airbnb://classDeepLink?foo=bar", element!!, DeepLinkEntry.Type.CLASS
+        )
+        Assertions.assertThat(uri).isEqualTo("airbnb://classDeepLink?foo=bar")
+    }
 
-    assertThat(annotatedElement.getUri()).isEqualTo("http{scheme}://example.com/{foo}/bar");
-  }
+    @Test
+    fun testInvalidUri() {
+        try {
+            DeepLinkAnnotatedElement("http", element!!, DeepLinkEntry.Type.CLASS)
+            Assert.fail()
+        } catch (ignored: MalformedURLException) {
+        }
+    }
 
-  @Test public void testPlaceholderInHost() throws MalformedURLException {
-    DeepLinkAnnotatedElement annotatedElement = new DeepLinkAnnotatedElement(
-      "http://{host}example.com/{foo}/bar", element, DeepLinkEntry.Type.CLASS);
+    @Test
+    fun testMissingScheme() {
+        try {
+            DeepLinkAnnotatedElement("example.com/something", element!!, DeepLinkEntry.Type.CLASS)
+            Assert.fail()
+        } catch (ignored: MalformedURLException) {
+        }
+    }
 
-    assertThat(annotatedElement.getUri()).isEqualTo("http://{host}example.com/{foo}/bar");
-  }
+    @Test
+    @Throws(MalformedURLException::class)
+    fun testPlaceholderInScheme() {
+        val (uri) = DeepLinkAnnotatedElement(
+            "http{scheme}://example.com/{foo}/bar", element!!, DeepLinkEntry.Type.CLASS
+        )
+        Assertions.assertThat(uri).isEqualTo("http{scheme}://example.com/{foo}/bar")
+    }
 
+    @Test
+    @Throws(MalformedURLException::class)
+    fun testPlaceholderInHost() {
+        val (uri) = DeepLinkAnnotatedElement(
+            "http://{host}example.com/{foo}/bar", element!!, DeepLinkEntry.Type.CLASS
+        )
+        Assertions.assertThat(uri).isEqualTo("http://{host}example.com/{foo}/bar")
+    }
 }
