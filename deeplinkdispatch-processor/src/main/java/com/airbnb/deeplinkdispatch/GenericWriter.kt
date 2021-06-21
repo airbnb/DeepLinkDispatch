@@ -1,5 +1,6 @@
 package com.airbnb.deeplinkdispatch
 
+import androidx.room.compiler.processing.XProcessingEnv
 import com.airbnb.deeplinkdispatch.Documentor.DocumetationWriter
 import java.io.PrintWriter
 import javax.annotation.processing.ProcessingEnvironment
@@ -9,17 +10,17 @@ import javax.annotation.processing.ProcessingEnvironment
  */
 internal class GenericWriter : DocumetationWriter {
     override fun write(
-        env: ProcessingEnvironment,
+        env: XProcessingEnv,
         writer: PrintWriter,
         elements: List<DeepLinkAnnotatedElement>
     ) {
         writer.apply {
             for (element in elements) {
                 print(element.uri + Documentor.PROPERTY_DELIMITER)
-                Documentor.formatJavaDoc(env.elementUtils.getDocComment(element.element))
+                Documentor.formatJavaDoc(element.element.docComment)
                     ?.let { print(it) }
                 print(Documentor.PROPERTY_DELIMITER)
-                print(element.annotatedElement.simpleName)
+                print(element.annotatedElement?.qualifiedName ?: "")
                 if (element.annotationType == DeepLinkEntry.Type.METHOD) {
                     print(Documentor.CLASS_METHOD_NAME_DELIMITER)
                     print(element.method)

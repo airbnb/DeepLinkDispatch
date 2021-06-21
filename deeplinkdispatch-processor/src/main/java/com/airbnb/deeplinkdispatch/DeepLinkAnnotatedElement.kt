@@ -15,27 +15,26 @@
  */
 package com.airbnb.deeplinkdispatch
 
+import androidx.room.compiler.processing.XTypeElement
 import java.net.MalformedURLException
-import javax.lang.model.element.Element
-import javax.lang.model.element.TypeElement
 import kotlin.jvm.Throws
 
 internal data class DeepLinkAnnotatedElement @Throws(MalformedURLException::class) constructor(
     val uri: String,
-    val element: Element,
+    val element: XTypeElement,
     val annotationType: DeepLinkEntry.Type
 ) {
-    val annotatedElement: TypeElement
+    val annotatedElement: XTypeElement?
     val method: String?
 
     init {
         DeepLinkUri.parseTemplate(uri)
             ?: throw MalformedURLException("Malformed Uri Template: $uri")
         if (annotationType === DeepLinkEntry.Type.METHOD) {
-            annotatedElement = element.enclosingElement as TypeElement
-            method = element.simpleName.toString()
+            annotatedElement = element.enclosingTypeElement
+            method = element.toString()
         } else {
-            annotatedElement = element as TypeElement
+            annotatedElement = element
             method = null
         }
     }

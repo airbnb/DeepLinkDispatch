@@ -13,6 +13,8 @@ dependencies {
   implementation deps.javaPoet
   implementation deps.autoCommon
   implementation deps.androidXAnnotations
+  implementation deps.ksp
+  implementation deps.xProcessor
 
   testImplementation deps.junit
   testImplementation deps.assertJ
@@ -21,6 +23,7 @@ dependencies {
   // Cannot depend on them from Maven as they are .aar and not .jar files (this is a java project)
   testImplementation fileTree(dir: 'libs', include: ['androidx.localbroadcastmanager-1.0.0-beta1.jar','androidx.core-1.0.0-beta1.jar'])
   testImplementation deps.compileTesting
+  testImplementation deps.compileTestingKsp
   testImplementation deps.mockito
   testImplementation deps.kotlinReflect
   testImplementation files("${System.properties['java.home']}/../lib/tools.jar")
@@ -30,4 +33,12 @@ checkstyle {
   configFile rootProject.file('checkstyle.xml')
   showViolations true
   configProperties = ['checkstyle.cache.file': rootProject.file('build/checkstyle.cache')]
+}
+
+tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
+  kotlinOptions {
+    jvmTarget = "1.8"
+    freeCompilerArgs += "-Xopt-in=kotlin.RequiresOptIn"
+    freeCompilerArgs += "-Xopt-in=androidx.room.compiler.processing.ExperimentalProcessingApi"
+  }
 }

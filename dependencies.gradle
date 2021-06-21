@@ -3,7 +3,10 @@ def versions = [
     appCompatVersion             : '1.2.0',
     localBroadcastManagerVersion : '1.0.0',
     roboelectricVersion          : '4.5.1',
-    benchmarkVersion             : '1.0.0'
+    benchmarkVersion             : '1.0.0',
+    compileTestingVersion        : '1.4.2',
+    kspVersion                   : '1.5.10-1.0.0-beta01',
+    xProcessorVersion            : '2.4.0-airbnb4'
 ]
 
 ext.versions = versions
@@ -29,6 +32,8 @@ ext.deps = [
     // ./gradlew clean assemble sourcesJar androidSourcesJar javadocsJar androidJavadocsJar uploadArchives --no-daemon --no-parallel
     gradleMavenPublishPlugin : 'com.vanniktech:gradle-maven-publish-plugin:0.14.2',
     dokkaPlugin              : 'org.jetbrains.dokka:dokka-gradle-plugin:1.4.30',
+    ksp                      : "com.google.devtools.ksp:symbol-processing-api:$versions.kspVersion",
+    xProcessor               : "androidx.room:room-compiler-processing:$versions.xProcessorVersion",
 
     // Testing
     androidxTestCore         : 'androidx.test:core:1.3.0',
@@ -36,7 +41,8 @@ ext.deps = [
     assertJ                  : "org.assertj:assertj-core:3.20.0",
     roboelectric             : "org.robolectric:robolectric:$versions.roboelectricVersion",
     mockito                  : 'org.mockito:mockito-core:1.10.19',
-    compileTesting           : 'com.github.tschuchortdev:kotlin-compile-testing:1.4.2',
+    compileTesting           : "com.github.tschuchortdev:kotlin-compile-testing:$versions.compileTestingVersion",
+    compileTestingKsp        : "com.github.tschuchortdev:kotlin-compile-testing-ksp:$versions.compileTestingVersion",
     android                  : 'com.google.android:android:4.1.1.4',
     benchmark                : "androidx.benchmark:benchmark-junit4:$versions.benchmarkVersion",
     benchmarkGradlePlugin    : "androidx.benchmark:benchmark-gradle-plugin:$versions.benchmarkVersion",

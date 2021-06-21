@@ -1,11 +1,12 @@
 package com.airbnb.deeplinkdispatch
 
 import androidx.annotation.VisibleForTesting
+import androidx.room.compiler.processing.XMessager
+import androidx.room.compiler.processing.XProcessingEnv
 import java.io.File
 import java.io.FileWriter
 import java.io.IOException
 import java.io.PrintWriter
-import javax.annotation.processing.Messager
 import javax.annotation.processing.ProcessingEnvironment
 import javax.tools.Diagnostic
 
@@ -22,8 +23,8 @@ import javax.tools.Diagnostic
  * The output location is specified in the project's gradle file through
  * [ProcessingEnvironment]'s compiler argument options by deepLinkDoc.output.
  */
-internal class Documentor(private val processingEnv: ProcessingEnvironment) {
-    private val messager: Messager = processingEnv.messager
+internal class Documentor(private val processingEnv: XProcessingEnv) {
+    private val messager: XMessager = processingEnv.messager
 
     @get:VisibleForTesting
     var file: File? = initFile()
@@ -105,7 +106,7 @@ internal class Documentor(private val processingEnv: ProcessingEnvironment) {
          * found deeplink elements.
          */
         fun write(
-            env: ProcessingEnvironment,
+            env: XProcessingEnv,
             writer: PrintWriter,
             elements: List<DeepLinkAnnotatedElement>
         )

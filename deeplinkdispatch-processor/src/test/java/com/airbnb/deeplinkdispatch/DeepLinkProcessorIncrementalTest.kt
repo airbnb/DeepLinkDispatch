@@ -83,7 +83,7 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
                 module,
                 sampleActivityWithOnlyCustomDeepLink,
                 fakeBaseDeeplinkDelegate
-            ), "com.example.AppDeepLink"
+            ), listOf("com.example.AppDeepLink")
         )
         assertGeneratedCode(
             result = result,
@@ -107,7 +107,7 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
                 module,
                 sampleActivityWithOnlyCustomPlaceholderDeepLink,
                 fakeBaseDeeplinkDelegate
-            ), "com.example.PlaceholderDeepLink"
+            ), listOf("com.example.PlaceholderDeepLink")
         )
         assertGeneratedCode(
             result = result,

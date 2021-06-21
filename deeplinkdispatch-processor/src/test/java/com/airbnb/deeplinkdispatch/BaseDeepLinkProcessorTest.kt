@@ -4,6 +4,8 @@ import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.OptionName
 import com.tschuchort.compiletesting.OptionValue
 import com.tschuchort.compiletesting.SourceFile
+import com.tschuchort.compiletesting.kspArgs
+import com.tschuchort.compiletesting.symbolProcessorProviders
 import org.assertj.core.api.Assertions
 
 open class BaseDeepLinkProcessorTest {
@@ -65,28 +67,36 @@ open class BaseDeepLinkProcessorTest {
 
         internal fun compile(
             sourceFiles: List<SourceFile>,
-            arguments: MutableMap<OptionName, OptionValue>? = null
+            arguments: MutableMap<OptionName, OptionValue>? = null,
+            useKsp: Boolean = false
         ) =
             KotlinCompilation().apply {
                 sources = sourceFiles
-                annotationProcessors = listOf(DeepLinkProcessor())
+                if (useKsp) {
+                    symbolProcessorProviders = listOf(DeepLinkProcessorProvider())
+                    arguments?.let { kspArgs = arguments }
+                } else {
+                    annotationProcessors = listOf(DeepLinkProcessor())
+                    arguments?.let { kaptArgs = arguments }
+                }
                 inheritClassPath = true
-                arguments?.let { kaptArgs = arguments }
             }.compile()
 
         internal fun compileIncremental(
             sourceFiles: List<SourceFile>,
-            customDeeplink: String?
+            customDeepLinks: List<String>?,
+            useKsp: Boolean = false
         ): KotlinCompilation.Result {
             val arguments: MutableMap<OptionName, OptionValue> = mutableMapOf(
                 "deepLink.incremental" to "true"
             )
-            if (customDeeplink != null) {
-                arguments["deepLink.customAnnotations"] = customDeeplink
+            if (customDeepLinks != null) {
+                arguments["deepLink.customAnnotations"] = customDeepLinks.joinToString(separator = ",")
             }
             return compile(
                 sourceFiles,
-                arguments
+                arguments,
+                useKsp
             )
         }
     }

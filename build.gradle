@@ -27,6 +27,7 @@ allprojects {
         google()
         mavenCentral()
         jcenter() // Still needed for some old dependencies
+        maven { url 'https://artifactory.d.musta.ch/artifactory/maven' }
     }
 }
 

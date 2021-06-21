@@ -1,5 +1,6 @@
 package com.airbnb.deeplinkdispatch
 
+import androidx.room.compiler.processing.XProcessingEnv
 import com.airbnb.deeplinkdispatch.Documentor.DocumetationWriter
 import java.io.PrintWriter
 import java.util.*
@@ -19,7 +20,7 @@ import javax.annotation.processing.ProcessingEnvironment
  */
 internal class MarkdownWriter : DocumetationWriter {
     override fun write(
-        env: ProcessingEnvironment,
+        env: XProcessingEnv,
         writer: PrintWriter,
         elements: List<DeepLinkAnnotatedElement>
     ) {
@@ -31,10 +32,10 @@ internal class MarkdownWriter : DocumetationWriter {
         // publish lines
         for (element in elements) {
             val embeddedComments =
-                Documentor.formatJavaDoc(env.elementUtils.getDocComment(element.element)) ?: ""
+                Documentor.formatJavaDoc(element.element.docComment) ?: ""
             val methodName =
                 if (element.annotationType == DeepLinkEntry.Type.METHOD) element.method else ""
-            val simpleName = element.annotatedElement.simpleName
+            val simpleName = element.annotatedElement?.qualifiedName ?: ""
             writer.println(
                 String.format(
                     Locale.US, format,

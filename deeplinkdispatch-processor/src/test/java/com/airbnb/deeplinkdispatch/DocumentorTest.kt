@@ -1,5 +1,8 @@
 package com.airbnb.deeplinkdispatch
 
+import androidx.room.compiler.processing.XMessager
+import androidx.room.compiler.processing.XProcessingEnv
+import androidx.room.compiler.processing.XTypeElement
 import com.google.common.base.Charsets
 import com.google.common.collect.ImmutableList
 import com.google.common.io.Files
@@ -13,30 +16,22 @@ import org.mockito.MockitoAnnotations
 import java.io.File
 import java.io.IOException
 import java.net.MalformedURLException
-import javax.annotation.processing.Messager
-import javax.annotation.processing.ProcessingEnvironment
-import javax.lang.model.element.Name
-import javax.lang.model.element.TypeElement
-import javax.lang.model.util.Elements
 
 class DocumentorTest {
     @Mock
-    private val processingEnv: ProcessingEnvironment? = null
+    private val processingEnv: XProcessingEnv? = null
 
     @Mock
-    private val messager: Messager? = null
+    private val messager: XMessager? = null
 
     @Mock
     private val options: Map<String, String>? = null
 
-    @Mock
-    private val elements: Elements? = null
     @Before
     fun setUp() {
         MockitoAnnotations.initMocks(this)
         Mockito.`when`(processingEnv!!.messager).thenReturn(messager)
         Mockito.`when`(processingEnv.options).thenReturn(options)
-        Mockito.`when`(processingEnv.elementUtils).thenReturn(elements)
     }
 
     @Test
@@ -67,31 +62,31 @@ class DocumentorTest {
     @Throws(MalformedURLException::class)
     private fun getElements(): List<DeepLinkAnnotatedElement> {
         val element1 = Mockito.mock(
-            TypeElement::class.java
+            XTypeElement::class.java
         )
         val name1 = Mockito.mock(
-            Name::class.java
+            String::class.java
         )
-        Mockito.`when`(elements!!.getDocComment(element1))
+        Mockito.`when`(element1.docComment)
             .thenReturn("Sample doc \n @param empty \n @return nothing")
-        Mockito.`when`(element1.simpleName).thenReturn(name1)
+        Mockito.`when`(element1.qualifiedName).thenReturn(name1)
         Mockito.`when`(name1.toString()).thenReturn("DocClass")
         val element2 = Mockito.mock(
-            TypeElement::class.java
+            XTypeElement::class.java
         )
         val element2Enclosed = Mockito.mock(
-            TypeElement::class.java
+            XTypeElement::class.java
         )
         val name2 = Mockito.mock(
-            Name::class.java
+            String::class.java
         )
         val name2Enclosed = Mockito.mock(
-            Name::class.java
+            String::class.java
         )
-        Mockito.`when`(element2.simpleName).thenReturn(name2)
+        Mockito.`when`(element2.qualifiedName).thenReturn(name2)
         Mockito.`when`(name2.toString()).thenReturn("DocMethod")
-        Mockito.`when`(element2.enclosingElement).thenReturn(element2Enclosed)
-        Mockito.`when`(element2Enclosed.simpleName).thenReturn(name2Enclosed)
+        Mockito.`when`(element2.enclosingTypeElement).thenReturn(element2Enclosed)
+        Mockito.`when`(element2Enclosed.qualifiedName).thenReturn(name2Enclosed)
         Mockito.`when`(name2Enclosed.toString()).thenReturn("DocClass")
         val deepLinkElement1 = DeepLinkAnnotatedElement(
             "airbnb://example.com/{foo}/bar",

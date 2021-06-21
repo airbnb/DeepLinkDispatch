@@ -474,4 +474,111 @@ class DeepLinkProcessorNonIncrementalTest : BaseDeepLinkProcessorTest() {
                      """
         )
     }
+
+    @Test
+    fun testKsp() {
+        val customAnnotationWebLink = SourceFile.java(
+            "WebDeepLink.java", """
+            package com.example;
+            import com.airbnb.deeplinkdispatch.DeepLinkSpec;
+            @DeepLinkSpec(prefix = { "http://", "https://"})
+            public @interface WebDeepLink {
+                String[] value();
+            }
+            """
+        )
+        val customAnnotationAppLink = SourceFile.java(
+            "AppDeepLink.java",
+            """
+                    package com.example;
+                    import com.airbnb.deeplinkdispatch.DeepLinkSpec;
+                    @DeepLinkSpec(prefix = { "example://" })
+                    public @interface AppDeepLink {
+                        String[] value();
+                    }
+                    """
+        )
+        val sampleActivity = SourceFile.java(
+            "SampleActivity.java",
+            """
+                 package com.example;
+                 import com.airbnb.deeplinkdispatch.DeepLink;
+                 import com.airbnb.deeplinkdispatch.DeepLinkHandler;
+                 import com.example.SampleModule;
+                 @DeepLink("airbnb://example.com/deepLink")
+                 @AppDeepLink({"example.com/deepLink","example.com/another"})
+                 @WebDeepLink({"example.com/deepLink","example.com/another"})
+                 @DeepLinkHandler({ SampleModule.class })
+                 public class SampleActivity {
+                 
+                        @DeepLink("airbnb://intentMethod/{var1}/{var2}")
+                        public static Intent intentFromTwoPathWithTwoParams(Context context){
+                            return new Intent();  
+                        }
+                 
+                 
+                        @DeepLink("airbnb://taskStackBuilderMethod/{arbitraryNumber}")
+                        public static TaskStackBuilder deeplinkOneParameter(Context context) {
+                            return TaskStackBuilder.create(context);
+                        }
+                        
+                        @WebDeepLink({"example.com/method1","example.com/method2"})
+                        public static TaskStackBuilder webLinkMethod(Context context) {
+                            return TaskStackBuilder.create(context);
+                        }
+                 }
+                 """
+        )
+        val result = compileIncremental(
+            sourceFiles = listOf(
+                customAnnotationAppLink, customAnnotationWebLink,
+                SIMPLE_DEEPLINK_MODULE, sampleActivity, fakeBaseDeeplinkDelegate
+            ),
+            useKsp = true,
+            customDeepLinks = listOf("com.example.AppDeepLink", "com.example.WebDeepLink")
+        )
+        assertGeneratedCode(
+            result = result,
+            registryClassName = "com.example.SampleModuleRegistry",
+            indexEntries = listOf(
+                DeepLinkEntry(
+                    uriTemplate = "airbnb://example.com/deepLink",
+                    className = "com.example.SampleActivity",
+                    method = null
+                ),
+                DeepLinkEntry(
+                    uriTemplate = "example://example.com/another",
+                    className = "com.example.SampleActivity",
+                    method = null
+                ),
+                DeepLinkEntry(
+                    uriTemplate = "example://example.com/deepLink",
+                    className = "com.example.SampleActivity",
+                    method = null
+                ),
+                DeepLinkEntry(
+                    uriTemplate = "http://example.com/another",
+                    className = "com.example.SampleActivity",
+                    method = null
+                ),
+                DeepLinkEntry(
+                    uriTemplate = "http://example.com/deepLink",
+                    className = "com.example.SampleActivity",
+                    method = null
+                ),
+                DeepLinkEntry(
+                    uriTemplate = "https://example.com/another",
+                    className = "com.example.SampleActivity",
+                    method = null
+                ),
+                DeepLinkEntry(
+                    uriTemplate = "https://example.com/deepLink",
+                    className = "com.example.SampleActivity",
+                    method = null
+                )
+            ),
+            generatedFileNames = listOf("DeepLinkDelegate.java", "SampleModuleRegistry.java")
+        )
+    }
+
 }

@@ -15,6 +15,11 @@
  */
 package com.airbnb.deeplinkdispatch
 
+import androidx.room.compiler.processing.XElement
+import androidx.room.compiler.processing.XProcessingEnv
+import androidx.room.compiler.processing.XRoundEnv
+import androidx.room.compiler.processing.XTypeElement
+import androidx.room.compiler.processing.isMethod
 import com.airbnb.deeplinkdispatch.ProcessorUtils.decapitalize
 import com.airbnb.deeplinkdispatch.ProcessorUtils.hasEmptyOrNullString
 import com.airbnb.deeplinkdispatch.base.Utils
@@ -24,6 +29,7 @@ import com.google.auto.common.MoreElements
 import com.google.auto.common.MoreTypes
 import com.google.common.collect.FluentIterable
 import com.google.common.collect.Sets
+import com.google.devtools.ksp.processing.SymbolProcessorEnvironment
 import com.squareup.javapoet.*
 import java.io.IOException
 import java.io.PrintWriter
@@ -35,36 +41,38 @@ import javax.annotation.processing.*
 import javax.lang.model.SourceVersion
 import javax.lang.model.element.*
 import javax.tools.Diagnostic
+import kotlin.collections.ArrayList
+import kotlin.collections.HashSet
+import kotlin.reflect.KClass
 
-class DeepLinkProcessor : AbstractProcessor() {
-    private var filer: Filer? = null
-    private var documentor: Documentor? = null
-    private var incrementalMetadata: IncrementalMetadata? = null
+class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? = null) : BaseProcessor(symbolProcessorEnvironment) {
 
-    @Synchronized
-    override fun init(processingEnv: ProcessingEnvironment) {
-        super.init(processingEnv)
-        filer = processingEnv.filer
-        documentor = Documentor(processingEnv)
-        incrementalMetadata = getIncrementalMetadata()
+    private val documentor by lazy {Documentor(environment)}
+
+    private val incrementalMetadata: IncrementalMetadata? by lazy {
+        if (environment.options[OPTION_INCREMENTAL].toBoolean()) {
+            environment.options.get(OPTION_CUSTOM_ANNOTATIONS)?.let { customAnnotations ->
+                IncrementalMetadata(
+                    customAnnotations.split(",")
+                        .mapNotNull { environment.findTypeElement(it) }.toSet()
+                )
+            } ?: IncrementalMetadata(emptySet())
+        } else null
     }
 
-    private fun getIncrementalMetadata(): IncrementalMetadata? {
-        if (!"true".equals(processingEnv.options[OPTION_INCREMENTAL], ignoreCase = true)) {
-            return null
-        }
-        val customAnnotationOption = processingEnv.options.get(OPTION_CUSTOM_ANNOTATIONS)
-            ?: return IncrementalMetadata(emptyArray())
-        return IncrementalMetadata(customAnnotationOption.split(",".toRegex()).toTypedArray())
-    }
+    private val supportedBaseAnnotationClasses = setOf(
+        DeepLink::class,
+        DeepLinkHandler::class,
+        DeepLinkModule::class,
+    )
+
+    private val supportedCustomAnnotationClasses by lazy { incrementalMetadata?.customAnnotations ?: emptySet()}
+
+    private val supportedAnnotationClasses by lazy { supportedBaseAnnotationClasses + supportedCustomAnnotationClasses}
 
     override fun getSupportedAnnotationTypes(): Set<String> {
         return incrementalMetadata?.let {
-            setOf(
-                DeepLink::class.java.canonicalName,
-                DeepLinkHandler::class.java.canonicalName,
-                DeepLinkModule::class.java.canonicalName
-            ) + incrementalMetadata!!.customAnnotations
+            supportedAnnotationClasses.map { it::class.qualifiedName!! }.toSet()
         } ?: setOf("*")
     }
 
@@ -84,81 +92,84 @@ class DeepLinkProcessor : AbstractProcessor() {
         return supportedOptions
     }
 
-    override fun process(annotations: Set<TypeElement>, roundEnv: RoundEnvironment): Boolean {
+    override fun process(environment: XProcessingEnv, round: XRoundEnv) {
         try {
-            processInternal(annotations, roundEnv)
+            val prefixes: Map<XTypeElement, Array<String>> =
+                supportedCustomAnnotationClasses.map { customAnnotationTypeElement ->
+                    if (customAnnotationTypeElement.isAnnotationClass()) {
+                        error(
+                            customAnnotationTypeElement,
+                            "Only annotation types can be annotated with @${DEEP_LINK_SPEC_CLASS.simpleName}"
+                        )
+                    }
+                    val prefix: Array<String> =
+                        customAnnotationTypeElement.getAnnotation(DEEP_LINK_SPEC_CLASS)
+                            ?.let { it.value.prefix } ?: emptyArray()
+                    if (hasEmptyOrNullString(prefix)) {
+                        error(
+                            customAnnotationTypeElement,
+                            "Prefix property cannot have null or empty strings"
+                        )
+                    }
+                    if (prefix.isEmpty()) error(
+                        customAnnotationTypeElement,
+                        "Prefix property cannot be empty"
+                    )
+                    customAnnotationTypeElement to prefix
+                }.toMap()
+            val annotatedElements = (supportedCustomAnnotationClasses.map {
+                round.getElementsAnnotatedWith(it.qualifiedName)
+            }.flatten() + round.getElementsAnnotatedWith(DEEP_LINK_CLASS)).toSet()
+
+            createDeeplinkDelegates(roundEnv = round)
+//            createDeeplinkRegistries(
+//                roundEnv = round,
+//                annotatedElements = annotatedElements,
+//                deepLinkElements = collectDeepLinkElements(annotatedElements, prefixes)
+//            )
         } catch (e: DeepLinkProcessorException) {
-            error(e.element, e.message)
-        }
-        return false
-    }
-
-    private fun processInternal(annotations: Set<TypeElement>, roundEnv: RoundEnvironment) {
-        val customAnnotations = annotations.filter { it.getAnnotation(DEEP_LINK_SPEC_CLASS) != null }
-        val prefixes : Map<Element, Array<String>> = customAnnotations.map { customAnnotation ->
-            if (customAnnotation.kind != ElementKind.ANNOTATION_TYPE) {
-                error(
-                    customAnnotation,
-                    "Only annotation types can be annotated with @${DEEP_LINK_SPEC_CLASS.simpleName}"
-                )
-            }
-            val prefix: Array<String> = customAnnotation.getAnnotation(DEEP_LINK_SPEC_CLASS).prefix
-            if (hasEmptyOrNullString(prefix)) {
-                error(customAnnotation, "Prefix property cannot have null or empty strings")
-            }
-            if (prefix.isEmpty()) error(customAnnotation, "Prefix property cannot be empty")
-            customAnnotation to prefix
-        }.toMap()
-        val annotatedElements = (customAnnotations.map {
-            roundEnv.getElementsAnnotatedWith(
-                MoreElements.asType(it)
-            )
-        }.flatten() + roundEnv.getElementsAnnotatedWith(DEEP_LINK_CLASS)).toSet()
-
-        crateDeeplinkDelegates(roundEnv = roundEnv)
-        createDeeplinkRegistries(
-            roundEnv = roundEnv,
-            annotatedElements = annotatedElements,
-            deepLinkElements = collectDeepLinkElements(annotatedElements, prefixes)
-        )
-    }
-
-    private fun createDeeplinkRegistries(
-        roundEnv: RoundEnvironment,
-        annotatedElements: Set<Element>,
-        deepLinkElements: List<DeepLinkAnnotatedElement>
-    ) {
-        val deepLinkModuleElements = roundEnv.getElementsAnnotatedWith(DeepLinkModule::class.java)
-        deepLinkModuleElements.forEach{ deepLinkModuleElement ->
-            val packageName = processingEnv.elementUtils.getPackageOf(deepLinkModuleElement).qualifiedName.toString()
-            try {
-                generateDeepLinkRegistry(
-                    packageName = packageName,
-                    className = deepLinkModuleElement.simpleName.toString(),
-                    deepLinkElements = deepLinkElements,
-                    originatingElements = annotatedElements + deepLinkModuleElement
-                )
-            } catch (e: IOException) {
-                processingEnv.messager.printMessage(Diagnostic.Kind.ERROR, "Error creating file")
-            } catch (e: RuntimeException) {
-                val sw = StringWriter()
-                val pw = PrintWriter(sw)
-                e.printStackTrace(pw)
-                processingEnv.messager.printMessage(
-                    Diagnostic.Kind.ERROR,
-                    "Internal error during annotation processing: $sw"
-                )
-            }
+            error(e.element, e.message ?: "")
         }
     }
 
-    private fun crateDeeplinkDelegates(roundEnv: RoundEnvironment) {
-        val deepLinkHandlerElements = roundEnv.getElementsAnnotatedWith(DeepLinkHandler::class.java)
+//    private fun createDeeplinkRegistries(
+//        roundEnv: XRoundEnv,
+//        annotatedElements: Set<XElement>,
+//        deepLinkElements: List<DeepLinkAnnotatedElement>
+//    ) {
+//        val deepLinkModuleElements = roundEnv.getElementsAnnotatedWith(DeepLinkModule::class.java)
+//        deepLinkModuleElements.forEach{ deepLinkModuleElement ->
+//            val packageName = environment.elementUtils.getPackageOf(deepLinkModuleElement).qualifiedName.toString()
+//            try {
+//                generateDeepLinkRegistry(
+//                    packageName = packageName,
+//                    className = deepLinkModuleElement.simpleName.toString(),
+//                    deepLinkElements = deepLinkElements,
+//                    originatingElements = annotatedElements + deepLinkModuleElement
+//                )
+//            } catch (e: IOException) {
+//                environment.messager.printMessage(Diagnostic.Kind.ERROR, "Error creating file")
+//            } catch (e: RuntimeException) {
+//                val sw = StringWriter()
+//                val pw = PrintWriter(sw)
+//                e.printStackTrace(pw)
+//                environment.messager.printMessage(
+//                    Diagnostic.Kind.ERROR,
+//                    "Internal error during annotation processing: $sw"
+//                )
+//            }
+//        }
+//    }
+
+    private fun createDeeplinkDelegates(roundEnv: XRoundEnv) {
+        val deepLinkHandlerElements = roundEnv.getElementsAnnotatedWith(DeepLinkHandler::class)
         deepLinkHandlerElements.forEach { deepLinkHandlerElement ->
-            val annotationMirror = MoreElements.getAnnotationMirror(
+            val annotationMirror =
+                MoreElements.getAnnotationMirror(
                 deepLinkHandlerElement,
                 DeepLinkHandler::class.java
             )
+            val annotationMirror2 = deepLinkHandlerElements.
             if (annotationMirror.isPresent) {
                 val klasses = MoreAnnotationMirrors.getTypeValue(annotationMirror.get(), "value")
                 val typeElements: List<TypeElement> =
@@ -167,17 +178,17 @@ class DeepLinkProcessor : AbstractProcessor() {
                             klass
                         )
                     }.toList()
-                val packageName = processingEnv.elementUtils
+                val packageName = environment.elementUtils
                     .getPackageOf(deepLinkHandlerElement).qualifiedName.toString()
                 try {
                     generateDeepLinkDelegate(packageName, typeElements, deepLinkHandlerElement)
                 } catch (e: IOException) {
-                    processingEnv.messager.printMessage(Diagnostic.Kind.ERROR, "Error creating file")
+                    environment.messager.printMessage(Diagnostic.Kind.ERROR, "Error creating file")
                 } catch (e: RuntimeException) {
                     val sw = StringWriter()
                     val pw = PrintWriter(sw)
                     e.printStackTrace(pw)
-                    processingEnv.messager.printMessage(
+                    environment.messager.printMessage(
                         Diagnostic.Kind.ERROR,
                         "Internal error during annotation processing: $sw"
                     )
@@ -186,136 +197,136 @@ class DeepLinkProcessor : AbstractProcessor() {
         }
     }
 
-    private fun collectDeepLinkElements(
-        elementsToProcess: Set<Element>,
-        prefixes: Map<Element, Array<String>>
-    ): List<DeepLinkAnnotatedElement> {
-        return elementsToProcess.map { element ->
-            verifyElement(element)
-            if (element.kind == ElementKind.METHOD) {
-                verifyModifier(element)
-                verifyReturnType(element)
-            }
-            val deepLinkAnnotation = element.getAnnotation(DEEP_LINK_CLASS)
-            val deepLinks =
-                enumerateCustomDeepLinks(element, prefixes) + (deepLinkAnnotation?.value?.toList()
-                    ?: emptyList())
-            val type =
-                if (element.kind == ElementKind.CLASS) DeepLinkEntry.Type.CLASS else DeepLinkEntry.Type.METHOD
-            deepLinks.map {
-                try {
-                    DeepLinkAnnotatedElement(it, element, type)
-                } catch (e: MalformedURLException) {
-                    processingEnv.messager.printMessage(
-                        Diagnostic.Kind.ERROR,
-                        "Malformed Deep Link URL $it"
-                    )
-                    null
-                }
-            }
-        }.flatten().filterNotNull()
+//    private fun collectDeepLinkElements(
+//        elementsToProcess: Set<XElement>,
+//        prefixes: Map<XTypeElement, Array<String>>
+//    ): List<DeepLinkAnnotatedElement> {
+//        return elementsToProcess.map { element ->
+//            verifyElement(element)
+//            if (element.isMethod()) {
+//                verifyModifier(element)
+//                verifyReturnType(element)
+//            }
+//            val deepLinkAnnotation = element.getAnnotation(DEEP_LINK_CLASS)
+//            val deepLinks =
+//                enumerateCustomDeepLinks(element, prefixes) + (deepLinkAnnotation?.value?.toList()
+//                    ?: emptyList())
+//            val type =
+//                if (element.kind == ElementKind.CLASS) DeepLinkEntry.Type.CLASS else DeepLinkEntry.Type.METHOD
+//            deepLinks.map {
+//                try {
+//                    DeepLinkAnnotatedElement(it, element, type)
+//                } catch (e: MalformedURLException) {
+//                    environment.messager.printMessage(
+//                        Diagnostic.Kind.ERROR,
+//                        "Malformed Deep Link URL $it"
+//                    )
+//                    null
+//                }
+//            }
+//        }.flatten().filterNotNull()
+//    }
+
+//    private fun verifyElement(element: XElement) {
+//        if (!element.isMethod() && element.kind != ElementKind.CLASS) {
+//            error(
+//                element,
+//                "Only classes and methods can be annotated with @${DEEP_LINK_CLASS.simpleName}",
+//            )
+//        }
+//    }
+
+//    private fun verifyReturnType(element: XElement?) {
+//        val returnType = MoreTypes.asTypeElement(element.MoreElements.asExecutable(element).returnType)
+//        if (returnType.qualifiedName.toString() !in listOf(
+//                "android.content.Intent",
+//                "androidx.core.app.TaskStackBuilder",
+//                "com.airbnb.deeplinkdispatch.DeepLinkMethodResult"
+//            )
+//        ) {
+//            error(
+//                element, ("Only `Intent`, `androidx.core.app.TaskStackBuilder` or "
+//                        + "'com.airbnb.deeplinkdispatch.DeepLinkMethodResult' are supported. Please double "
+//                        + "check your imports and try again.")
+//            )
+//        }
+//    }
+
+//    private fun verifyModifier(element: XElement) {
+//        if (!element.modifiers.contains(Modifier.STATIC)) {
+//            error(
+//                element,
+//                "Only static methods can be annotated with @${DEEP_LINK_CLASS.simpleName}",
+//            )
+//        }
+//    }
+
+    private fun error(e: XElement?, msg: String) {
+        environment.messager.printMessage(Diagnostic.Kind.ERROR, msg, e)
     }
 
-    private fun verifyElement(element: Element) {
-        if (element.kind != ElementKind.METHOD && element.kind != ElementKind.CLASS) {
-            error(
-                element,
-                "Only classes and methods can be annotated with @${DEEP_LINK_CLASS.simpleName}",
-            )
-        }
-    }
-
-    private fun verifyReturnType(element: Element?) {
-        val returnType = MoreTypes.asTypeElement(MoreElements.asExecutable(element).returnType)
-        if (returnType.qualifiedName.toString() !in listOf(
-                "android.content.Intent",
-                "androidx.core.app.TaskStackBuilder",
-                "com.airbnb.deeplinkdispatch.DeepLinkMethodResult"
-            )
-        ) {
-            error(
-                element, ("Only `Intent`, `androidx.core.app.TaskStackBuilder` or "
-                        + "'com.airbnb.deeplinkdispatch.DeepLinkMethodResult' are supported. Please double "
-                        + "check your imports and try again.")
-            )
-        }
-    }
-
-    private fun verifyModifier(element: Element) {
-        if (!element.modifiers.contains(Modifier.STATIC)) {
-            error(
-                element,
-                "Only static methods can be annotated with @${DEEP_LINK_CLASS.simpleName}",
-            )
-        }
-    }
-
-    private fun error(e: Element?, msg: String?) {
-        processingEnv.messager.printMessage(Diagnostic.Kind.ERROR, msg, e)
-    }
-
-    @Throws(IOException::class)
-    private fun generateDeepLinkRegistry(
-        packageName: String, className: String,
-        deepLinkElements: List<DeepLinkAnnotatedElement>,
-        originatingElements: Set<Element>
-    ) {
-        Collections.sort(deepLinkElements) { element1, element2 ->
-            deeplinkAnnotatedElementCompare(element1, element2)
-        }
-        documentor!!.write(deepLinkElements)
-        val urisTrie = Root()
-        val pathVariableKeys: MutableSet<String> = HashSet()
-        for (element: DeepLinkAnnotatedElement in deepLinkElements) {
-            val activity = ClassName.get(element.annotatedElement)
-            val uriTemplate = element.uri
-            try {
-                urisTrie.addToTrie(uriTemplate, activity.reflectionName(), element.method)
-            } catch (e: IllegalArgumentException) {
-                error(element.annotatedElement, e.message)
-            }
-            val deeplinkUri = DeepLinkUri.parseTemplate(uriTemplate)
-            //Keep track of pathVariables added in a module so that we can check at runtime to ensure
-            //that all pathVariables have a corresponding entry provided to BaseDeepLinkDelegate.
-            for (pathSegment: String in deeplinkUri.pathSegments()) {
-                if (isConfigurablePathSegment(pathSegment)) {
-                    pathVariableKeys.add(
-                        pathSegment.substring(
-                            configurablePathSegmentPrefix.length,
-                            pathSegment.length - configurablePathSegmentSuffix.length
-                        )
-                    )
-                }
-            }
-        }
-        val deepLinkRegistryBuilder = TypeSpec.classBuilder(
-            (className + REGISTRY_CLASS_SUFFIX)
-        ).addModifiers(Modifier.PUBLIC, Modifier.FINAL)
-            .superclass(ClassName.get(BaseRegistry::class.java))
-        val stringMethodNames = getStringMethodNames(urisTrie, deepLinkRegistryBuilder)
-        val constructor = MethodSpec.constructorBuilder()
-            .addModifiers(Modifier.PUBLIC)
-            .addCode(
-                CodeBlock.builder()
-                    .add(
-                        "super(\$T.readMatchIndexFromStrings( new String[] {$stringMethodNames})",
-                        CLASS_UTILS
-                    ).build()
-            )
-            .addCode(generatePathVariableKeysBlock(pathVariableKeys))
-            .build()
-
-        // For debugging it is nice to have a file version of the index, just comment this in to get
-        // on in the classpath
-//    FileObject indexResource = filer.createResource(StandardLocation.CLASS_OUTPUT, "",
-//    MatchIndex.getMatchIdxFileName(className));
-//    urisTrie.writeToOutoutStream(indexResource.openOutputStream());
-        deepLinkRegistryBuilder.addMethod(constructor)
-        originatingElements.forEach{ originatingElement ->
-            deepLinkRegistryBuilder.addOriginatingElement(originatingElement)
-        }
-        JavaFile.builder(packageName, deepLinkRegistryBuilder.build()).build().writeTo(filer)
-    }
+//    @Throws(IOException::class)
+//    private fun generateDeepLinkRegistry(
+//        packageName: String, className: String,
+//        deepLinkElements: List<DeepLinkAnnotatedElement>,
+//        originatingElements: Set<Element>
+//    ) {
+//        Collections.sort(deepLinkElements) { element1, element2 ->
+//            deeplinkAnnotatedElementCompare(element1, element2)
+//        }
+//        documentor!!.write(deepLinkElements)
+//        val urisTrie = Root()
+//        val pathVariableKeys: MutableSet<String> = HashSet()
+//        for (element: DeepLinkAnnotatedElement in deepLinkElements) {
+//            val activity = ClassName.get(element.annotatedElement)
+//            val uriTemplate = element.uri
+//            try {
+//                urisTrie.addToTrie(uriTemplate, activity.reflectionName(), element.method)
+//            } catch (e: IllegalArgumentException) {
+//                error(element.annotatedElement, e.message)
+//            }
+//            val deeplinkUri = DeepLinkUri.parseTemplate(uriTemplate)
+//            //Keep track of pathVariables added in a module so that we can check at runtime to ensure
+//            //that all pathVariables have a corresponding entry provided to BaseDeepLinkDelegate.
+//            for (pathSegment: String in deeplinkUri.pathSegments()) {
+//                if (isConfigurablePathSegment(pathSegment)) {
+//                    pathVariableKeys.add(
+//                        pathSegment.substring(
+//                            configurablePathSegmentPrefix.length,
+//                            pathSegment.length - configurablePathSegmentSuffix.length
+//                        )
+//                    )
+//                }
+//            }
+//        }
+//        val deepLinkRegistryBuilder = TypeSpec.classBuilder(
+//            (className + REGISTRY_CLASS_SUFFIX)
+//        ).addModifiers(Modifier.PUBLIC, Modifier.FINAL)
+//            .superclass(ClassName.get(BaseRegistry::class.java))
+//        val stringMethodNames = getStringMethodNames(urisTrie, deepLinkRegistryBuilder)
+//        val constructor = MethodSpec.constructorBuilder()
+//            .addModifiers(Modifier.PUBLIC)
+//            .addCode(
+//                CodeBlock.builder()
+//                    .add(
+//                        "super(\$T.readMatchIndexFromStrings( new String[] {$stringMethodNames})",
+//                        CLASS_UTILS
+//                    ).build()
+//            )
+//            .addCode(generatePathVariableKeysBlock(pathVariableKeys))
+//            .build()
+//
+//        // For debugging it is nice to have a file version of the index, just comment this in to get
+//        // on in the classpath
+////    FileObject indexResource = filer.createResource(StandardLocation.CLASS_OUTPUT, "",
+////    MatchIndex.getMatchIdxFileName(className));
+////    urisTrie.writeToOutoutStream(indexResource.openOutputStream());
+//        deepLinkRegistryBuilder.addMethod(constructor)
+//        originatingElements.forEach{ originatingElement ->
+//            deepLinkRegistryBuilder.addOriginatingElement(originatingElement)
+//        }
+//        JavaFile.builder(packageName, deepLinkRegistryBuilder.build()).build().writeTo(filer)
+//    }
 
     private fun generatePathVariableKeysBlock(pathVariableKeys: Set<String>): CodeBlock {
         val pathVariableKeysBuilder = CodeBlock.builder()
@@ -365,84 +376,85 @@ class DeepLinkProcessor : AbstractProcessor() {
         return stringMethodNames
     }
 
-    @Throws(IOException::class)
-    private fun generateDeepLinkDelegate(
-        packageName: String,
-        registryClasses: List<TypeElement>,
-        originatingElement: Element
-    ) {
-        val moduleRegistriesArgument = CodeBlock.builder()
-        val totalElements = registryClasses.size
-        for (i in 0 until totalElements) {
-            moduleRegistriesArgument.add(
-                "\$L\$L",
-                decapitalize(moduleNameToRegistryName(registryClasses[i])),
-                if (i < totalElements - 1) ",\n" else ""
-            )
-        }
-        val registriesInitializerBuilder = CodeBlock.builder()
-            .add("super(\$T.asList(\n", ClassName.get(Arrays::class.java))
-            .indent()
-            .add(moduleRegistriesArgument.build())
-            .add("\n").unindent().add("));\n")
-            .build()
-        val registriesInitializerBuilderWithPathVariables = CodeBlock.builder()
-            .add("super(\$T.asList(\n", ClassName.get(Arrays::class.java))
-            .indent()
-            .add(moduleRegistriesArgument.build())
-            .add("),\nconfigurablePathSegmentReplacements").unindent().add("\n);\n")
-            .build()
-        val constructor = MethodSpec.constructorBuilder()
-            .addModifiers(Modifier.PUBLIC)
-            .addParameters(
-                FluentIterable.from(registryClasses).transform { typeElement ->
-                    ParameterSpec.builder(
-                        moduleElementToRegistryClassName(typeElement!!),
-                        decapitalize(moduleNameToRegistryName(typeElement))
-                    ).build()
-                }.toList()
-            )
-            .addCode(registriesInitializerBuilder)
-            .build()
-        val configurablePathSegmentReplacementsParam = ParameterSpec.builder(
-            ParameterizedTypeName.get(
-                MutableMap::class.java,
-                String::class.java,
-                String::class.java
-            ),
-            "configurablePathSegmentReplacements"
-        )
-            .build()
-        val constructorWithPathVariables = MethodSpec.constructorBuilder()
-            .addModifiers(Modifier.PUBLIC)
-            .addParameters(
-                registryClasses.stream().map { typeElement: TypeElement ->
-                    ParameterSpec.builder(
-                        moduleElementToRegistryClassName(typeElement),
-                        decapitalize(moduleNameToRegistryName(typeElement))
-                    )
-                        .build()
-                }
-                    .collect(Collectors.toList())
-            )
-            .addParameter(configurablePathSegmentReplacementsParam)
-            .addCode(registriesInitializerBuilderWithPathVariables)
-            .build()
-        val deepLinkDelegateBuilder = TypeSpec.classBuilder("DeepLinkDelegate")
-            .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
-            .superclass(CLASS_BASE_DEEP_LINK_DELEGATE)
-            .addMethod(constructor)
-            .addMethod(constructorWithPathVariables)
-            .addOriginatingElement(originatingElement)
-        for (registryElement: TypeElement in registryClasses) {
-            deepLinkDelegateBuilder.addOriginatingElement(registryElement)
-        }
-        JavaFile.builder(packageName, deepLinkDelegateBuilder.build())
-            .build()
-            .writeTo(filer)
-    }
+//    @Throws(IOException::class)
+//    private fun generateDeepLinkDelegate(
+//        packageName: String,
+//        registryClasses: List<TypeElement>,
+//        originatingElement: Element
+//    ) {
+//        val moduleRegistriesArgument = CodeBlock.builder()
+//        val totalElements = registryClasses.size
+//        for (i in 0 until totalElements) {
+//            moduleRegistriesArgument.add(
+//                "\$L\$L",
+//                decapitalize(moduleNameToRegistryName(registryClasses[i])),
+//                if (i < totalElements - 1) ",\n" else ""
+//            )
+//        }
+//        val registriesInitializerBuilder = CodeBlock.builder()
+//            .add("super(\$T.asList(\n", ClassName.get(Arrays::class.java))
+//            .indent()
+//            .add(moduleRegistriesArgument.build())
+//            .add("\n").unindent().add("));\n")
+//            .build()
+//        val registriesInitializerBuilderWithPathVariables = CodeBlock.builder()
+//            .add("super(\$T.asList(\n", ClassName.get(Arrays::class.java))
+//            .indent()
+//            .add(moduleRegistriesArgument.build())
+//            .add("),\nconfigurablePathSegmentReplacements").unindent().add("\n);\n")
+//            .build()
+//        val constructor = MethodSpec.constructorBuilder()
+//            .addModifiers(Modifier.PUBLIC)
+//            .addParameters(
+//                FluentIterable.from(registryClasses).transform { typeElement ->
+//                    ParameterSpec.builder(
+//                        moduleElementToRegistryClassName(typeElement!!),
+//                        decapitalize(moduleNameToRegistryName(typeElement))
+//                    ).build()
+//                }.toList()
+//            )
+//            .addCode(registriesInitializerBuilder)
+//            .build()
+//        val configurablePathSegmentReplacementsParam = ParameterSpec.builder(
+//            ParameterizedTypeName.get(
+//                MutableMap::class.java,
+//                String::class.java,
+//                String::class.java
+//            ),
+//            "configurablePathSegmentReplacements"
+//        )
+//            .build()
+//        val constructorWithPathVariables = MethodSpec.constructorBuilder()
+//            .addModifiers(Modifier.PUBLIC)
+//            .addParameters(
+//                registryClasses.stream().map { typeElement: TypeElement ->
+//                    ParameterSpec.builder(
+//                        moduleElementToRegistryClassName(typeElement),
+//                        decapitalize(moduleNameToRegistryName(typeElement))
+//                    )
+//                        .build()
+//                }
+//                    .collect(Collectors.toList())
+//            )
+//            .addParameter(configurablePathSegmentReplacementsParam)
+//            .addCode(registriesInitializerBuilderWithPathVariables)
+//            .build()
+//        val deepLinkDelegateBuilder = TypeSpec.classBuilder("DeepLinkDelegate")
+//            .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
+//            .superclass(CLASS_BASE_DEEP_LINK_DELEGATE)
+//            .addMethod(constructor)
+//            .addMethod(constructorWithPathVariables)
+//            .addOriginatingElement(originatingElement)
+//        for (registryElement: TypeElement in registryClasses) {
+//            deepLinkDelegateBuilder.addOriginatingElement(registryElement)
+//        }
+//        JavaFile.builder(packageName, deepLinkDelegateBuilder.build())
+//            .build()
+//            .writeTo(filer)
+//    }
 
-    private class IncrementalMetadata(val customAnnotations: Array<String>)
+    private class IncrementalMetadata(val customAnnotations: Set<XTypeElement>)
+
     companion object {
         private const val PACKAGE_NAME = "com.airbnb.deeplinkdispatch"
         private const val OPTION_CUSTOM_ANNOTATIONS = "deepLink.customAnnotations"
@@ -450,40 +462,41 @@ class DeepLinkProcessor : AbstractProcessor() {
         private val CLASS_BASE_DEEP_LINK_DELEGATE =
             ClassName.get(PACKAGE_NAME, "BaseDeepLinkDelegate")
         private val CLASS_UTILS = ClassName.get(Utils::class.java)
-        private val DEEP_LINK_CLASS = DeepLink::class.java
-        private val DEEP_LINK_SPEC_CLASS = DeepLinkSpec::class.java
+        private val DEEP_LINK_CLASS = DeepLink::class
+        private val DEEP_LINK_SPEC_CLASS = DeepLinkSpec::class
         const val REGISTRY_CLASS_SUFFIX = "Registry"
-        private fun enumerateCustomDeepLinks(
-            element: Element,
-            prefixesMap: Map<Element, Array<String>>
-        ): List<String> {
-            val annotationMirrors: Set<AnnotationMirror> =
-                AnnotationMirrors.getAnnotatedAnnotations(element, DEEP_LINK_SPEC_CLASS)
-            val deepLinks: MutableList<String> = ArrayList()
-            for (customAnnotation: AnnotationMirror in annotationMirrors) {
-                val suffixes: List<AnnotationValue> = MoreAnnotationMirrors.asAnnotationValues(
-                    AnnotationMirrors.getAnnotationValue(
-                        customAnnotation,
-                        "value"
-                    )
-                )
-                val customElement = customAnnotation.annotationType.asElement()
-                val prefixes = prefixesMap.get(customElement)
-                    ?: throw DeepLinkProcessorException(
-                        ("Unable to find annotation '"
-                                + customElement
-                                + "' you must update "
-                                + "'deepLink.customAnnotations' within the build.gradle"),
-                        customElement
-                    )
-                for (prefix: String? in prefixes) {
-                    for (suffix: AnnotationValue in suffixes) {
-                        deepLinks.add(prefix + suffix.value)
-                    }
-                }
-            }
-            return deepLinks
-        }
+
+//        private fun enumerateCustomDeepLinks(
+//            element: Element,
+//            prefixesMap: Map<Element, Array<String>>
+//        ): List<String> {
+//            val annotationMirrors: Set<AnnotationMirror> =
+//                AnnotationMirrors.getAnnotatedAnnotations(element, DEEP_LINK_SPEC_CLASS)
+//            val deepLinks: MutableList<String> = ArrayList()
+//            for (customAnnotation: AnnotationMirror in annotationMirrors) {
+//                val suffixes: List<AnnotationValue> = MoreAnnotationMirrors.asAnnotationValues(
+//                    AnnotationMirrors.getAnnotationValue(
+//                        customAnnotation,
+//                        "value"
+//                    )
+//                )
+//                val customElement = customAnnotation.annotationType.asElement()
+//                val prefixes = prefixesMap.get(customElement)
+//                    ?: throw DeepLinkProcessorException(
+//                        ("Unable to find annotation '"
+//                                + customElement
+//                                + "' you must update "
+//                                + "'deepLink.customAnnotations' within the build.gradle"),
+//                        customElement
+//                    )
+//                for (prefix: String? in prefixes) {
+//                    for (suffix: AnnotationValue in suffixes) {
+//                        deepLinks.add(prefix + suffix.value)
+//                    }
+//                }
+//            }
+//            return deepLinks
+//        }
 
         private fun moduleNameToRegistryName(typeElement: TypeElement): String {
             return typeElement.simpleName.toString() + REGISTRY_CLASS_SUFFIX

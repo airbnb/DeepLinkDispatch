@@ -1,5 +1,6 @@
 package com.airbnb.deeplinkdispatch
 
+import androidx.room.compiler.processing.XTypeElement
 import org.assertj.core.api.Assertions
 import org.junit.Assert
 import org.junit.Before
@@ -7,11 +8,10 @@ import org.junit.Test
 import org.mockito.Mock
 import org.mockito.MockitoAnnotations
 import java.net.MalformedURLException
-import javax.lang.model.element.TypeElement
 
 class DeepLinkAnnotatedElementTest {
     @Mock
-    var element: TypeElement? = null
+    var element: XTypeElement? = null
 
     @Before
     fun setUp() {
@@ -21,7 +21,7 @@ class DeepLinkAnnotatedElementTest {
     @Test
     @Throws(MalformedURLException::class)
     fun testValidUri() {
-        val (uri) = DeepLinkAnnotatedElement(
+        val uri = DeepLinkAnnotatedElement(
             "airbnb://example.com/{foo}/bar", element!!, DeepLinkEntry.Type.CLASS
         )
         Assertions.assertThat(uri).isEqualTo("airbnb://example.com/{foo}/bar")
