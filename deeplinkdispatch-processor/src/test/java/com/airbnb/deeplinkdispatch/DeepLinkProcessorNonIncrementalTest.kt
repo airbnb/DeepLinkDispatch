@@ -534,7 +534,7 @@ class DeepLinkProcessorNonIncrementalTest : BaseDeepLinkProcessorTest() {
                 customAnnotationAppLink, customAnnotationWebLink,
                 SIMPLE_DEEPLINK_MODULE, sampleActivity, fakeBaseDeeplinkDelegate
             ),
-            useKsp = true,
+            useKsp = false,
             customDeepLinks = listOf("com.example.AppDeepLink", "com.example.WebDeepLink")
         )
         assertGeneratedCode(

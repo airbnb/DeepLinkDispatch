@@ -21,6 +21,7 @@ import androidx.room.compiler.processing.XElement
 import androidx.room.compiler.processing.XMethodElement
 import androidx.room.compiler.processing.XProcessingEnv
 import androidx.room.compiler.processing.XRoundEnv
+import androidx.room.compiler.processing.XType
 import androidx.room.compiler.processing.XTypeElement
 import androidx.room.compiler.processing.addOriginatingElement
 import androidx.room.compiler.processing.compat.XConverters.toJavac
@@ -54,9 +55,10 @@ import kotlin.collections.ArrayList
 import kotlin.collections.HashSet
 import kotlin.reflect.KClass
 
-class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? = null) : BaseProcessor(symbolProcessorEnvironment) {
+class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? = null) :
+    BaseProcessor(symbolProcessorEnvironment) {
 
-    private val documentor by lazy {Documentor(environment)}
+    private val documentor by lazy { Documentor(environment) }
 
     private val incrementalMetadata: IncrementalMetadata? by lazy {
         if (environment.options[OPTION_INCREMENTAL].toBoolean()) {
@@ -75,9 +77,11 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
         DeepLinkModule::class,
     )
 
-    private val supportedCustomAnnotationClasses by lazy { incrementalMetadata?.customAnnotations ?: emptySet()}
+    private val supportedCustomAnnotationClasses by lazy {
+        incrementalMetadata?.customAnnotations ?: emptySet()
+    }
 
-    private val supportedAnnotationClasses by lazy { supportedBaseAnnotationClasses + supportedCustomAnnotationClasses}
+    private val supportedAnnotationClasses by lazy { supportedBaseAnnotationClasses + supportedCustomAnnotationClasses }
 
     override fun getSupportedAnnotationTypes(): Set<String> {
         return incrementalMetadata?.let {
@@ -103,7 +107,7 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
 
     override fun process(environment: XProcessingEnv, round: XRoundEnv) {
         try {
-            val prefixes: Map<XAnnotation, Array<String>> =
+            val prefixes: Map<XType, Array<String>> =
                 supportedCustomAnnotationClasses.map { customAnnotationTypeElement ->
                     if (!customAnnotationTypeElement.isAnnotationClass()) {
                         error(
@@ -124,7 +128,7 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
                         customAnnotationTypeElement,
                         "Prefix property cannot be empty"
                     )
-                    customAnnotationTypeElement to prefix
+                    customAnnotationTypeElement.type to prefix
                 }.toMap()
             val annotatedElements = (supportedCustomAnnotationClasses.map {
                 round.getElementsAnnotatedWith(it.qualifiedName)
@@ -149,8 +153,9 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
         annotatedElements: Set<XTypeElement>,
         deepLinkElements: List<DeepLinkAnnotatedElement>
     ) {
-        val deepLinkModuleElements = roundEnv.getElementsAnnotatedWith(DeepLinkModule::class).filterIsInstance<XTypeElement>()
-        deepLinkModuleElements.forEach{ deepLinkModuleElement ->
+        val deepLinkModuleElements = roundEnv.getElementsAnnotatedWith(DeepLinkModule::class)
+            .filterIsInstance<XTypeElement>()
+        deepLinkModuleElements.forEach { deepLinkModuleElement ->
             try {
                 generateDeepLinkRegistry(
                     packageName = deepLinkModuleElement.packageName,
@@ -173,7 +178,9 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
         val deepLinkHandlerElements = roundEnv.getElementsAnnotatedWith(DeepLinkHandler::class)
             .filterIsInstance<XTypeElement>()
         deepLinkHandlerElements.forEach { deepLinkHandlerElement ->
-            val typeElements = deepLinkHandlerElement.getAnnotation(DeepLinkHandler::class)?.getAsTypeList("value")?.map { it.typeElement!! }
+            val typeElements =
+                deepLinkHandlerElement.getAnnotation(DeepLinkHandler::class)?.getAsTypeList("value")
+                    ?.map { it.typeElement!! }
             if (typeElements != null) {
                 val packageName = getPackage(deepLinkHandlerElement)
                 try {
@@ -272,7 +279,7 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
 
     private fun collectDeepLinkElements(
         elementsToProcess: Set<XTypeElement>,
-        prefixes: Map<XTypeElement, Array<String>>
+        prefixes: Map<XType, Array<String>>
     ): List<DeepLinkAnnotatedElement> {
         return elementsToProcess.map { element ->
             verifyElement(element)
@@ -282,9 +289,10 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
             }
             val deepLinkAnnotation = element.getAnnotation(DEEP_LINK_CLASS)
             val deepLinks =
-                enumerateCustomDeepLinks(element, prefixes)
-//            + (deepLinkAnnotation?.value?.toList()
-//                    ?: emptyList())
+                getAllDeeplinkUrIsFromCustomDeeplinksOnElement(
+                    element = element,
+                    prefixesMap = prefixes
+                ) + (deepLinkAnnotation?.value?.value?.toList() ?: emptyList())
             val type =
                 if (element.isClass()) DeepLinkEntry.Type.CLASS else DeepLinkEntry.Type.METHOD
             deepLinks.map {
@@ -353,7 +361,8 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
         val urisTrie = Root()
         val pathVariableKeys: MutableSet<String> = HashSet()
         for (element: DeepLinkAnnotatedElement in deepLinkElements) {
-            val activity = ClassName.get(element.annotatedElement?.packageName,element.annotatedElement?.name )
+            val activity =
+                ClassName.get(element.annotatedElement?.packageName, element.annotatedElement?.name)
             val uriTemplate = element.uri
             try {
                 urisTrie.addToTrie(uriTemplate, activity.reflectionName(), element.method)
@@ -397,10 +406,11 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
 //    MatchIndex.getMatchIdxFileName(className));
 //    urisTrie.writeToOutoutStream(indexResource.openOutputStream());
         deepLinkRegistryBuilder.addMethod(constructor)
-        originatingElements.forEach{ originatingElement ->
+        originatingElements.forEach { originatingElement ->
             deepLinkRegistryBuilder.addOriginatingElement(originatingElement)
         }
-        JavaFile.builder(packageName, deepLinkRegistryBuilder.build()).build().writeTo(environment.filer)
+        JavaFile.builder(packageName, deepLinkRegistryBuilder.build()).build()
+            .writeTo(environment.filer)
     }
 
     private fun generatePathVariableKeysBlock(pathVariableKeys: Set<String>): CodeBlock {
@@ -464,37 +474,31 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
         private val DEEP_LINK_SPEC_CLASS = DeepLinkSpec::class
         const val REGISTRY_CLASS_SUFFIX = "Registry"
 
-        private fun enumerateCustomDeepLinks(
+        /**
+         * For the given element find all custom deeplink elements on it and build all possible
+         * URIs that are supported by theset custom deeplinks.
+         */
+        private fun getAllDeeplinkUrIsFromCustomDeeplinksOnElement(
             element: XTypeElement,
-            prefixesMap: Map<XTypeElement, Array<String>>
+            prefixesMap: Map<XType, Array<String>>
         ): List<String> {
-            val customAnnotations = element.annotatedAnnotation(DEEP_LINK_SPEC_CLASS)
-            val deepLinks: MutableList<String> = ArrayList()
-            for (customAnnotation in customAnnotations) {
+            return element.annotatedAnnotation(DEEP_LINK_SPEC_CLASS).flatMap { customAnnotation ->
                 val suffixes = customAnnotation.get<List<String>>("value")
-//                val prefixes = prefixesMap.get(customAnnotation)
-//                    ?: throw DeepLinkProcessorException(
-//                        ("Unable to find annotation '"
-//                                + customElement
-//                                + "' you must update "
-//                                + "'deepLink.customAnnotations' within the build.gradle"),
-//                        customElement
-//                    )
-//                for (prefix: String? in prefixes) {
-//                    for (suffix: AnnotationValue in suffixes) {
-//                        deepLinks.add(prefix + suffix.value)
-//                    }
-//                }
+                val prefixes = prefixesMap[customAnnotation.type]
+                    ?: throw DeepLinkProcessorException(
+                        "Unable to find annotation '${customAnnotation.qualifiedName}' you must " +
+                                "update 'deepLink.customAnnotations' within the build.gradle"
+                    )
+                prefixes.flatMap { prefix -> suffixes.map { suffix -> prefix + suffix } }
             }
-            return deepLinks
         }
 
-        fun XTypeElement.annotatedAnnotation(klazz : KClass<*>) : List<XAnnotation> =
-           getAllAnnotations().filter { annotation ->
-               annotation.type.typeElement?.getAllAnnotations()?.map {
-                   it.qualifiedName
-               }?.contains(DeepLinkSpec::class.qualifiedName) ?: false
-           }
+        fun XTypeElement.annotatedAnnotation(klazz: KClass<*>): List<XAnnotation> =
+            getAllAnnotations().filter { annotation ->
+                annotation.type.typeElement?.getAllAnnotations()?.map {
+                    it.qualifiedName
+                }?.contains(DeepLinkSpec::class.qualifiedName) ?: false
+            }
 
 
         private fun moduleNameToRegistryName(element: XTypeElement) =

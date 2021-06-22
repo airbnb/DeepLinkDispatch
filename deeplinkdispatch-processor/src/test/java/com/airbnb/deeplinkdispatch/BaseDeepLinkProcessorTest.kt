@@ -80,6 +80,7 @@ open class BaseDeepLinkProcessorTest {
                     arguments?.let { kaptArgs = arguments }
                 }
                 inheritClassPath = true
+                messageOutputStream = System.out
             }.compile()
 
         internal fun compileIncremental(
