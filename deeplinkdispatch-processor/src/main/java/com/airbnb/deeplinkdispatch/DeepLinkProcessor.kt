@@ -16,16 +16,13 @@
 package com.airbnb.deeplinkdispatch
 
 import androidx.room.compiler.processing.XAnnotation
-import androidx.room.compiler.processing.XAnnotationBox
 import androidx.room.compiler.processing.XElement
-import androidx.room.compiler.processing.XMethodElement
+import androidx.room.compiler.processing.XFiler
 import androidx.room.compiler.processing.XProcessingEnv
 import androidx.room.compiler.processing.XRoundEnv
 import androidx.room.compiler.processing.XType
 import androidx.room.compiler.processing.XTypeElement
 import androidx.room.compiler.processing.addOriginatingElement
-import androidx.room.compiler.processing.compat.XConverters.toJavac
-import androidx.room.compiler.processing.compat.XConverters.toXProcessing
 import androidx.room.compiler.processing.get
 import androidx.room.compiler.processing.isMethod
 import androidx.room.compiler.processing.writeTo
@@ -33,25 +30,16 @@ import com.airbnb.deeplinkdispatch.ProcessorUtils.decapitalize
 import com.airbnb.deeplinkdispatch.ProcessorUtils.hasEmptyOrNullString
 import com.airbnb.deeplinkdispatch.base.Utils
 import com.airbnb.deeplinkdispatch.base.Utils.isConfigurablePathSegment
-import com.google.auto.common.AnnotationMirrors
-import com.google.auto.common.MoreElements
-import com.google.auto.common.MoreTypes
-import com.google.common.collect.FluentIterable
 import com.google.common.collect.Sets
 import com.google.devtools.ksp.processing.SymbolProcessorEnvironment
 import com.squareup.javapoet.*
-import com.squareup.kotlinpoet.FileSpec
 import java.io.IOException
-import java.io.PrintWriter
-import java.io.StringWriter
 import java.net.MalformedURLException
 import java.util.*
-import java.util.stream.Collectors
 import javax.annotation.processing.*
 import javax.lang.model.SourceVersion
 import javax.lang.model.element.*
 import javax.tools.Diagnostic
-import kotlin.collections.ArrayList
 import kotlin.collections.HashSet
 import kotlin.reflect.KClass
 
@@ -182,7 +170,6 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
                 deepLinkHandlerElement.getAnnotation(DeepLinkHandler::class)?.getAsTypeList("value")
                     ?.map { it.typeElement!! }
             if (typeElements != null) {
-                val packageName = getPackage(deepLinkHandlerElement)
                 try {
                     generateDeepLinkDelegate(
                         deepLinkHandlerElement.packageName,
@@ -274,7 +261,7 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
         }
         JavaFile.builder(packageName, deepLinkDelegateBuilder.build())
             .build()
-            .writeTo(environment.filer)
+            .writeTo(environment.filer, XFiler.Mode.Isolating)
     }
 
     private fun collectDeepLinkElements(

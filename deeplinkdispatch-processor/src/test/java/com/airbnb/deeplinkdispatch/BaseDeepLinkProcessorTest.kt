@@ -5,8 +5,10 @@ import com.tschuchort.compiletesting.OptionName
 import com.tschuchort.compiletesting.OptionValue
 import com.tschuchort.compiletesting.SourceFile
 import com.tschuchort.compiletesting.kspArgs
+import com.tschuchort.compiletesting.kspSourcesDir
 import com.tschuchort.compiletesting.symbolProcessorProviders
 import org.assertj.core.api.Assertions
+import java.io.File
 
 open class BaseDeepLinkProcessorTest {
     @JvmField
@@ -30,19 +32,19 @@ open class BaseDeepLinkProcessorTest {
 
     companion object {
         internal fun assertGeneratedCode(
-            result: KotlinCompilation.Result,
+            result: CompileResult,
             registryClassName: String,
             indexEntries: List<DeepLinkEntry>,
             generatedFileNames: List<String>
         ) {
-            Assertions.assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.OK)
-            Assertions.assertThat(result.sourcesGeneratedByAnnotationProcessor.map { it.name }
+            Assertions.assertThat(result.result.exitCode).isEqualTo(KotlinCompilation.ExitCode.OK)
+            Assertions.assertThat(result.generatedFiles.map { it.name }
                 .toList())
                 .containsExactlyInAnyOrder(*generatedFileNames.toTypedArray())
             val generatedRegistryClazz =
-                result.classLoader.loadClass(registryClassName)
+                result.result.classLoader.loadClass(registryClassName)
             val baseRegistryClazz =
-                result.classLoader.loadClass("com.airbnb.deeplinkdispatch.BaseRegistry")
+                result.result.classLoader.loadClass("com.airbnb.deeplinkdispatch.BaseRegistry")
             Assertions.assertThat(generatedRegistryClazz).hasDeclaredMethods("matchIndex0")
             val registryInstance = generatedRegistryClazz.newInstance()
             Assertions.assertThat(registryInstance).isNotNull
@@ -55,12 +57,12 @@ open class BaseDeepLinkProcessorTest {
         }
 
         internal fun assertCompileError(
-            result: KotlinCompilation.Result,
+            result: CompileResult,
             errorMessage: String
         ) {
-            Assertions.assertThat(result.exitCode)
+            Assertions.assertThat(result.result.exitCode)
                 .isEqualTo(KotlinCompilation.ExitCode.COMPILATION_ERROR)
-            Assertions.assertThat(result.messages).contains(
+            Assertions.assertThat(result.result.messages).contains(
                 errorMessage
             )
         }
@@ -69,8 +71,8 @@ open class BaseDeepLinkProcessorTest {
             sourceFiles: List<SourceFile>,
             arguments: MutableMap<OptionName, OptionValue>? = null,
             useKsp: Boolean = false
-        ) =
-            KotlinCompilation().apply {
+        ): CompileResult {
+            val compilation = KotlinCompilation().apply {
                 sources = sourceFiles
                 if (useKsp) {
                     symbolProcessorProviders = listOf(DeepLinkProcessorProvider())
@@ -81,13 +83,21 @@ open class BaseDeepLinkProcessorTest {
                 }
                 inheritClassPath = true
                 messageOutputStream = System.out
-            }.compile()
+            }
+            val result = compilation.compile()
+            val generatedSources = if (useKsp) {
+                compilation.kspSourcesDir.walk().filter { it.isFile }.toList()
+            } else {
+                result.sourcesGeneratedByAnnotationProcessor
+            }
+            return CompileResult(result, generatedSources)
+        }
 
         internal fun compileIncremental(
             sourceFiles: List<SourceFile>,
             customDeepLinks: List<String>?,
             useKsp: Boolean = false
-        ): KotlinCompilation.Result {
+        ): CompileResult {
             val arguments: MutableMap<OptionName, OptionValue> = mutableMapOf(
                 "deepLink.incremental" to "true"
             )
@@ -101,5 +111,8 @@ open class BaseDeepLinkProcessorTest {
             )
         }
     }
+
+    class CompileResult(val result: KotlinCompilation.Result, val generatedFiles : List<File>)
+
 
 }

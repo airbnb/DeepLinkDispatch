@@ -1,7 +1,9 @@
 package com.airbnb.deeplinkdispatch
 
+import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.SourceFile
 import org.junit.Test
+import java.io.File
 
 class DeepLinkProcessorNonIncrementalTest : BaseDeepLinkProcessorTest() {
     @Test
@@ -504,6 +506,9 @@ class DeepLinkProcessorNonIncrementalTest : BaseDeepLinkProcessorTest() {
                  package com.example;
                  import com.airbnb.deeplinkdispatch.DeepLink;
                  import com.airbnb.deeplinkdispatch.DeepLinkHandler;
+                 import android.content.Context;
+                 import android.app.TaskStackBuilder;
+                 import android.content.Intent;
                  import com.example.SampleModule;
                  @DeepLink("airbnb://example.com/deepLink")
                  @AppDeepLink({"example.com/deepLink","example.com/another"})
@@ -580,5 +585,6 @@ class DeepLinkProcessorNonIncrementalTest : BaseDeepLinkProcessorTest() {
             generatedFileNames = listOf("DeepLinkDelegate.java", "SampleModuleRegistry.java")
         )
     }
+
 
 }
