@@ -7,7 +7,6 @@ buildscript {
     repositories {
         google()
         mavenCentral()
-        jcenter() // Still needed for some old dependencies
         maven { url "https://oss.sonatype.org/service/local/repositories/snapshots/content/" }
     }
     dependencies {
@@ -26,7 +25,6 @@ allprojects {
     repositories {
         google()
         mavenCentral()
-        jcenter() // Still needed for some old dependencies
         maven { url 'https://artifactory.d.musta.ch/artifactory/maven' }
     }
 }

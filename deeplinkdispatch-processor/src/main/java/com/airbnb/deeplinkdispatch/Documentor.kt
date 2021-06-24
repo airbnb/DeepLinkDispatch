@@ -122,19 +122,19 @@ internal class Documentor(private val processingEnv: XProcessingEnv) {
 
         /* Strips off {@link #PARAM} and {@link #RETURN}. */
         internal fun formatJavaDoc(str: String?): String? {
-            var str = str
-            if (str != null) {
-                val paramPos = str.indexOf(PARAM)
+            var result = str
+            if (result != null) {
+                val paramPos = result.indexOf(PARAM)
                 if (paramPos != -1) {
-                    str = str.substring(0, paramPos)
+                    result = result.substring(0, paramPos)
                 }
-                val returnPos = str.indexOf(RETURN)
+                val returnPos = result.indexOf(RETURN)
                 if (returnPos != -1) {
-                    str = str.substring(0, returnPos)
+                    result = result.substring(0, returnPos)
                 }
-                str = str.trim { it <= ' ' }
+                result = result.trim { it <= ' ' }
             }
-            return str
+            return result
         }
     }
 }
