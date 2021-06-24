@@ -2,7 +2,7 @@ plugins {
   id("com.android.application")
   id("checkstyle")
   id("kotlin-android")
-  id("kotlin-kapt")
+//  id("kotlin-kapt")
   id("com.google.devtools.ksp") version "1.5.10-1.0.0-beta02"
 }
 
@@ -53,7 +53,7 @@ ksp {
     arg("deepLinkDoc.output", "${buildDir}/doc/deeplinks.txt")
     arg("deepLink.incremental", "true")
     arg("deepLink.customAnnotations",
-        "com.airbnb.deeplinkdispatch.sample.AppDeepLink"
+        "com.airbnb.deeplinkdispatch.sample.AppDeepLink|"
             + "com.airbnb.deeplinkdispatch.sample.WebDeepLink|"
             + "com.airbnb.deeplinkdispatch.sample.WebPlaceholderDeepLink|"
             + "com.airbnb.deeplinkdispatch.sample.library.LibraryDeepLink"
