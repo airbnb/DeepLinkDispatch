@@ -1,7 +1,10 @@
-apply plugin: 'com.android.application'
-apply plugin: 'checkstyle'
-apply plugin: 'kotlin-android'
-apply plugin: 'kotlin-kapt'
+plugins {
+  id("com.android.application")
+  id("checkstyle")
+  id("kotlin-android")
+  id("kotlin-kapt")
+  id("com.google.devtools.ksp") version "1.5.10-1.0.0-beta02"
+}
 
 
 checkstyle {
@@ -35,7 +38,7 @@ android {
 dependencies {
   implementation deps.kotlinStdLib
   implementation project(':deeplinkdispatch')
-  kapt project(':deeplinkdispatch-processor')
+  ksp project(':deeplinkdispatch-processor')
   implementation project(':sample-library')
   implementation project(':sample-benchmarkable-library')
   implementation deps.appCompat
@@ -46,8 +49,7 @@ dependencies {
   testImplementation deps.junit
 }
 
-kapt {
-  arguments {
+ksp {
     arg("deepLinkDoc.output", "${buildDir}/doc/deeplinks.txt")
     arg("deepLink.incremental", "true")
     arg("deepLink.customAnnotations",
@@ -56,5 +58,4 @@ kapt {
             + "com.airbnb.deeplinkdispatch.sample.WebPlaceholderDeepLink,"
             + "com.airbnb.deeplinkdispatch.sample.library.LibraryDeepLink"
     )
-  }
 }

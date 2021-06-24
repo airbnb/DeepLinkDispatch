@@ -4,7 +4,6 @@ import androidx.room.compiler.processing.XProcessingEnv
 import com.airbnb.deeplinkdispatch.Documentor.DocumetationWriter
 import java.io.PrintWriter
 import java.util.*
-import javax.annotation.processing.ProcessingEnvironment
 
 /**
  * GitHub markdown format.
@@ -35,7 +34,7 @@ internal class MarkdownWriter : DocumetationWriter {
                 Documentor.formatJavaDoc(element.element.docComment) ?: ""
             val methodName =
                 if (element.annotationType == DeepLinkEntry.Type.METHOD) element.method else ""
-            val simpleName = element.annotatedElement?.qualifiedName ?: ""
+            val simpleName = element.annotatedClass?.qualifiedName ?: ""
             writer.println(
                 String.format(
                     Locale.US, format,

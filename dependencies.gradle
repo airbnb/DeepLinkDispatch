@@ -5,8 +5,9 @@ def versions = [
     roboelectricVersion          : '4.5.1',
     benchmarkVersion             : '1.0.0',
     compileTestingVersion        : '1.4.2',
-    kspVersion                   : '1.5.10-1.0.0-beta01',
-    xProcessorVersion            : '2.4.0-airbnb4'
+    kspVersion                   : '1.5.10-1.0.0-beta02',
+    xProcessorVersion            : '2.4.0-airbnb4',
+    mockkVersion                 : '1.11.0'
 ]
 
 ext.versions = versions
@@ -40,7 +41,7 @@ ext.deps = [
     junit                    : 'junit:junit:4.13.2',
     assertJ                  : "org.assertj:assertj-core:3.20.0",
     roboelectric             : "org.robolectric:robolectric:$versions.roboelectricVersion",
-    mockito                  : 'org.mockito:mockito-core:1.10.19',
+    mockk                    : "io.mockk:mockk:$versions.mockkVersion",
     compileTesting           : "com.github.tschuchortdev:kotlin-compile-testing:$versions.compileTestingVersion",
     compileTestingKsp        : "com.github.tschuchortdev:kotlin-compile-testing-ksp:$versions.compileTestingVersion",
     android                  : 'com.google.android:android:4.1.1.4',

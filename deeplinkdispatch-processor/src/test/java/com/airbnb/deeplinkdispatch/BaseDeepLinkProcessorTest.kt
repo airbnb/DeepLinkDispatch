@@ -32,39 +32,47 @@ open class BaseDeepLinkProcessorTest {
 
     companion object {
         internal fun assertGeneratedCode(
-            result: CompileResult,
+            results: List<CompileResult>,
             registryClassName: String,
             indexEntries: List<DeepLinkEntry>,
-            generatedFileNames: List<String>
+            generatedFiles: Map<String, String>
         ) {
-            Assertions.assertThat(result.result.exitCode).isEqualTo(KotlinCompilation.ExitCode.OK)
-            Assertions.assertThat(result.generatedFiles.map { it.name }
-                .toList())
-                .containsExactlyInAnyOrder(*generatedFileNames.toTypedArray())
-            val generatedRegistryClazz =
-                result.result.classLoader.loadClass(registryClassName)
-            val baseRegistryClazz =
-                result.result.classLoader.loadClass("com.airbnb.deeplinkdispatch.BaseRegistry")
-            Assertions.assertThat(generatedRegistryClazz).hasDeclaredMethods("matchIndex0")
-            val registryInstance = generatedRegistryClazz.newInstance()
-            Assertions.assertThat(registryInstance).isNotNull
-            Assertions.assertThat(
-                baseRegistryClazz.getDeclaredMethod("getAllEntries")
-                    .invoke(registryInstance) as List<DeepLinkEntry>
-            ).isEqualTo(
-                indexEntries
-            )
+            results.forEach { result ->
+                Assertions.assertThat(result.result.exitCode)
+                    .isEqualTo(KotlinCompilation.ExitCode.OK)
+                Assertions.assertThat(result.generatedFiles.keys)
+                    .containsExactlyInAnyOrder(*generatedFiles.keys.toTypedArray())
+                generatedFiles.keys.forEach { filename ->
+                    Assertions.assertThat(result.generatedFiles[filename]?.readText())
+                        .isEqualTo(generatedFiles[filename])
+                }
+                val generatedRegistryClazz =
+                    result.result.classLoader.loadClass(registryClassName)
+                val baseRegistryClazz =
+                    result.result.classLoader.loadClass("com.airbnb.deeplinkdispatch.BaseRegistry")
+                Assertions.assertThat(generatedRegistryClazz).hasDeclaredMethods("matchIndex0")
+                val registryInstance = generatedRegistryClazz.newInstance()
+                Assertions.assertThat(registryInstance).isNotNull
+                Assertions.assertThat(
+                    baseRegistryClazz.getDeclaredMethod("getAllEntries")
+                        .invoke(registryInstance) as List<DeepLinkEntry>
+                ).isEqualTo(
+                    indexEntries
+                )
+            }
         }
 
         internal fun assertCompileError(
-            result: CompileResult,
+            results: List<CompileResult>,
             errorMessage: String
         ) {
-            Assertions.assertThat(result.result.exitCode)
-                .isEqualTo(KotlinCompilation.ExitCode.COMPILATION_ERROR)
-            Assertions.assertThat(result.result.messages).contains(
-                errorMessage
-            )
+            results.forEach { result ->
+                Assertions.assertThat(result.result.exitCode)
+                    .isEqualTo(KotlinCompilation.ExitCode.COMPILATION_ERROR)
+                Assertions.assertThat(result.result.messages).contains(
+                    errorMessage
+                )
+            }
         }
 
         internal fun compile(
@@ -90,7 +98,7 @@ open class BaseDeepLinkProcessorTest {
             } else {
                 result.sourcesGeneratedByAnnotationProcessor
             }
-            return CompileResult(result, generatedSources)
+            return CompileResult(result, generatedSources.map { it.name to it }.toMap())
         }
 
         internal fun compileIncremental(
@@ -112,7 +120,6 @@ open class BaseDeepLinkProcessorTest {
         }
     }
 
-    class CompileResult(val result: KotlinCompilation.Result, val generatedFiles : List<File>)
-
+    class CompileResult(val result: KotlinCompilation.Result, val generatedFiles : Map<String,File>)
 
 }

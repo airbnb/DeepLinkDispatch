@@ -14,7 +14,7 @@ dependencies {
   implementation deps.jsr305
   implementation deps.localBroadcastManager
   implementation deps.appCompat
-  testImplementation deps.mockito
+  testImplementation deps.mockk
   testImplementation deps.junit
   testImplementation deps.assertJ
 }
