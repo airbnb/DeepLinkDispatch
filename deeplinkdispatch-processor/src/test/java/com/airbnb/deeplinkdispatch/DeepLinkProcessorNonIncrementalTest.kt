@@ -30,15 +30,14 @@ class DeepLinkProcessorNonIncrementalTest : BaseDeepLinkProcessorTest() {
                 ),
                 useKsp = false
             ),
-            // TODO Enable KSP test
-//            compile(
-//                sourceFiles = listOf(
-//                    SAMPLE_DEEPLINK_MODULE,
-//                    sampleActivity,
-//                    fakeBaseDeeplinkDelegate
-//                ),
-//                useKsp = true
-//            )
+            compile(
+                sourceFiles = listOf(
+                    SAMPLE_DEEPLINK_MODULE,
+                    sampleActivity,
+                    fakeBaseDeeplinkDelegate
+                ),
+                useKsp = true
+            )
         )
         assertGeneratedCode(
             results = results,
@@ -339,15 +338,14 @@ class DeepLinkProcessorNonIncrementalTest : BaseDeepLinkProcessorTest() {
                 ),
                 useKsp = false
             ),
-            // TODO Enable KSP test
-//            compile(
-//                listOf(
-//                    SIMPLE_DEEPLINK_MODULE_UPPERCASE_PACKAGE,
-//                    activityWithUppercasePackage,
-//                    fakeBaseDeeplinkDelegate
-//                ),
-//                useKsp = true
-//            )
+            compile(
+                listOf(
+                    SIMPLE_DEEPLINK_MODULE_UPPERCASE_PACKAGE,
+                    activityWithUppercasePackage,
+                    fakeBaseDeeplinkDelegate
+                ),
+                useKsp = true
+            )
         )
         assertGeneratedCode(
             results = results,
@@ -561,15 +559,14 @@ class DeepLinkProcessorNonIncrementalTest : BaseDeepLinkProcessorTest() {
                 ),
                 useKsp = false
             ),
-            // TODO Enable KSP test
-//            compile(
-//                sourceFiles = listOf(
-//                    SAMPLE_DEEPLINK_MODULE,
-//                    sampleActivity,
-//                    fakeBaseDeeplinkDelegate
-//                ),
-//                useKsp = true
-//            )
+            compile(
+                sourceFiles = listOf(
+                    SAMPLE_DEEPLINK_MODULE,
+                    sampleActivity,
+                    fakeBaseDeeplinkDelegate
+                ),
+                useKsp = true
+            )
         )
         assertGeneratedCode(
             results = results,

@@ -181,7 +181,7 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
                     packageName = deepLinkModuleElement.packageName,
                     className = deepLinkModuleElement.className.simpleName(),
                     deepLinkElements = deepLinkElements,
-                    originatingElements = annotatedClassElements + deepLinkModuleElement
+                    originatingElements = annotatedClassElements + annotatedMethodElements + deepLinkModuleElement
                 )
             } catch (e: IOException) {
                 environment.messager.printMessage(Diagnostic.Kind.ERROR, "Error creating file")
@@ -288,9 +288,6 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
             .addMethod(constructor)
             .addMethod(constructorWithPathVariables)
             .addOriginatingElement(originatingElement)
-        for (registryElement in registryClasses) {
-            deepLinkDelegateBuilder.addOriginatingElement(registryElement)
-        }
         JavaFile.builder(packageName, deepLinkDelegateBuilder.build())
             .build()
             .writeTo(environment.filer, XFiler.Mode.Isolating)

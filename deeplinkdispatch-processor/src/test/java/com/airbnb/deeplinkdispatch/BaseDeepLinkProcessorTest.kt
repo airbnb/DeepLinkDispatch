@@ -46,19 +46,22 @@ open class BaseDeepLinkProcessorTest {
                     Assertions.assertThat(result.generatedFiles[filename]?.readText())
                         .isEqualTo(generatedFiles[filename])
                 }
-                val generatedRegistryClazz =
-                    result.result.classLoader.loadClass(registryClassName)
-                val baseRegistryClazz =
-                    result.result.classLoader.loadClass("com.airbnb.deeplinkdispatch.BaseRegistry")
-                Assertions.assertThat(generatedRegistryClazz).hasDeclaredMethods("matchIndex0")
-                val registryInstance = generatedRegistryClazz.newInstance()
-                Assertions.assertThat(registryInstance).isNotNull
-                Assertions.assertThat(
-                    baseRegistryClazz.getDeclaredMethod("getAllEntries")
-                        .invoke(registryInstance) as List<DeepLinkEntry>
-                ).isEqualTo(
-                    indexEntries
-                )
+                // Ksp generated files do not compile in tests so so not try to load them.
+                if(!result.useKsp) {
+                    val generatedRegistryClazz =
+                        result.result.classLoader.loadClass(registryClassName)
+                    val baseRegistryClazz =
+                        result.result.classLoader.loadClass("com.airbnb.deeplinkdispatch.BaseRegistry")
+                    Assertions.assertThat(generatedRegistryClazz).hasDeclaredMethods("matchIndex0")
+                    val registryInstance = generatedRegistryClazz.newInstance()
+                    Assertions.assertThat(registryInstance).isNotNull
+                    Assertions.assertThat(
+                        baseRegistryClazz.getDeclaredMethod("getAllEntries")
+                            .invoke(registryInstance) as List<DeepLinkEntry>
+                    ).isEqualTo(
+                        indexEntries
+                    )
+                }
             }
         }
 
@@ -98,7 +101,7 @@ open class BaseDeepLinkProcessorTest {
             } else {
                 result.sourcesGeneratedByAnnotationProcessor
             }
-            return CompileResult(result, generatedSources.map { it.name to it }.toMap())
+            return CompileResult(result, generatedSources.map { it.name to it }.toMap(), useKsp)
         }
 
         internal fun compileIncremental(
@@ -120,6 +123,6 @@ open class BaseDeepLinkProcessorTest {
         }
     }
 
-    class CompileResult(val result: KotlinCompilation.Result, val generatedFiles : Map<String,File>)
+    class CompileResult(val result: KotlinCompilation.Result, val generatedFiles : Map<String,File>, val useKsp: Boolean)
 
 }
