@@ -2,8 +2,7 @@ plugins {
   id("com.android.application")
   id("checkstyle")
   id("kotlin-android")
-//  id("kotlin-kapt")
-  id("com.google.devtools.ksp") version "1.5.10-1.0.0-beta02"
+  id("com.google.devtools.ksp")
 }
 
 
@@ -40,6 +39,7 @@ dependencies {
   implementation project(':deeplinkdispatch')
   ksp project(':deeplinkdispatch-processor')
   implementation project(':sample-library')
+  implementation project(':sample-kapt-library')
   implementation project(':sample-benchmarkable-library')
   implementation deps.appCompat
   implementation deps.localBroadcastManager

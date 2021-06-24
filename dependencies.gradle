@@ -34,6 +34,7 @@ ext.deps = [
     gradleMavenPublishPlugin : 'com.vanniktech:gradle-maven-publish-plugin:0.14.2',
     dokkaPlugin              : 'org.jetbrains.dokka:dokka-gradle-plugin:1.4.30',
     ksp                      : "com.google.devtools.ksp:symbol-processing-api:$versions.kspVersion",
+    kspGradlePlugin          : "com.google.devtools.ksp:com.google.devtools.ksp.gradle.plugin:$versions.kspVersion",
     xProcessor               : "androidx.room:room-compiler-processing:$versions.xProcessorVersion",
 
     // Testing

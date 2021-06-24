@@ -419,7 +419,7 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
             deepLinkRegistryBuilder.addOriginatingElement(originatingElement)
         }
         JavaFile.builder(packageName, deepLinkRegistryBuilder.build()).build()
-            .writeTo(environment.filer)
+            .writeTo(environment.filer, XFiler.Mode.Aggregating)
     }
 
     private fun generatePathVariableKeysBlock(pathVariableKeys: Set<String>): CodeBlock {

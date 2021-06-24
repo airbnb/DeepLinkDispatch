@@ -1,0 +1,37 @@
+apply plugin: 'com.android.library'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-android-extensions'
+apply plugin: 'kotlin-kapt'
+
+// This is just here to show an example how DLD works with eitehr `annotationProcessor` (sample-library)
+// 'kapt' (this lib) or 'ksp' (the main sample app module) and even can mix and match those between
+// modules.
+
+android {
+  compileSdkVersion androidConfig.compileSdkVersion
+
+  defaultConfig {
+    minSdkVersion androidConfig.minSdkVersion
+    targetSdkVersion androidConfig.compileSdkVersion
+
+    javaCompileOptions {
+      annotationProcessorOptions {
+        arguments = [
+          'deepLink.incremental': 'true',
+          'deepLink.customAnnotations': 'com.airbnb.deeplinkdispatch.sample.library.LibraryDeepLink'
+        ]
+      }
+    }
+  }
+
+  kotlinOptions {
+    jvmTarget = "1.8"
+  }
+}
+
+dependencies {
+  implementation project(':deeplinkdispatch')
+  kapt project(':deeplinkdispatch-processor')
+  implementation deps.appCompat
+  testImplementation deps.junit
+}
