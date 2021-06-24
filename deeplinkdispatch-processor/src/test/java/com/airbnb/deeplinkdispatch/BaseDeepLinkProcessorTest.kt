@@ -113,7 +113,7 @@ open class BaseDeepLinkProcessorTest {
                 "deepLink.incremental" to "true"
             )
             if (customDeepLinks != null) {
-                arguments["deepLink.customAnnotations"] = customDeepLinks.joinToString(separator = ",")
+                arguments["deepLink.customAnnotations"] = customDeepLinks.joinToString(separator = "|")
             }
             return compile(
                 sourceFiles,

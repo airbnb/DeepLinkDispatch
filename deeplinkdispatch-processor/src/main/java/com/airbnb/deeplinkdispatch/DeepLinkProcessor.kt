@@ -51,7 +51,7 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
         if (environment.options[OPTION_INCREMENTAL].toBoolean()) {
             environment.options.get(OPTION_CUSTOM_ANNOTATIONS)?.let { customAnnotations ->
                 IncrementalMetadata(
-                    customAnnotations.split(",")
+                    customAnnotations.split("|")
                         .mapNotNull { environment.findTypeElement(it) }.toSet()
                 )
             } ?: IncrementalMetadata(emptySet())
