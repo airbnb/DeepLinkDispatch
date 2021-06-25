@@ -310,12 +310,7 @@ class DeepLinkProcessorNonIncrementalTest : BaseDeepLinkProcessorTest() {
         assertCompileError(
             results = results,
             errorMessage = "Internal error during annotation processing: java.lang.IllegalStateException: " +
-                "Ambiguous URI. Same match for two URIs (UriMatch(uriTemplate=" +
-                "airbnb://host/path1/path2?q={q}, annotatedClassFullyQualifiedName=com." +
-                "example.SampleActivity, annotatedMethod=intentFromTwoPathWithQuery) vs " +
-                "UriMatch(uriTemplate=airbnb://host/path1/path2, " +
-                "annotatedClassFullyQualifiedName=com.example.SampleActivity, " +
-                "annotatedMethod=intentFromTwoPath))"
+                "Ambiguous URI. Same match for two URIs"
         )
     }
 
