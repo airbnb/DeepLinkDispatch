@@ -52,15 +52,13 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
 
     private val documentor by lazy { Documentor(environment) }
 
-    private val incrementalMetadata: IncrementalMetadata? by lazy {
-        if (environment.options[OPTION_INCREMENTAL].toBoolean()) {
-            environment.options.get(OPTION_CUSTOM_ANNOTATIONS)?.let { customAnnotations ->
-                IncrementalMetadata(
-                    customAnnotations.split("|")
-                        .mapNotNull { environment.findTypeElement(it) }.toSet()
-                )
-            } ?: IncrementalMetadata(emptySet())
-        } else null
+    private val incrementalMetadata: IncrementalMetadata by lazy {
+        IncrementalMetadata(incremental = environment.options[OPTION_INCREMENTAL].toBoolean(),
+                customAnnotations = environment.options[OPTION_CUSTOM_ANNOTATIONS]
+                        ?.split("|")
+                        ?.mapNotNull { environment.findTypeElement(it) }
+                        ?.toSet() ?: emptySet()
+        )
     }
 
     private val supportedBaseAnnotations: Set<XTypeElement> by lazy {
@@ -72,10 +70,10 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
     }
 
     override fun getSupportedAnnotationTypes(): Set<String> {
-        return incrementalMetadata?.let { incrementalMetadata ->
-            (supportedBaseAnnotations + incrementalMetadata.customAnnotations).map { it.qualifiedName }
-                .toSet()
-        } ?: setOf("*")
+        return if (incrementalMetadata.incremental) {
+            (supportedBaseAnnotations + incrementalMetadata.customAnnotations)
+                    .map { it.qualifiedName }.toSet()
+        } else setOf("*")
     }
 
     override fun getSupportedSourceVersion(): SourceVersion {
@@ -87,7 +85,7 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
             Documentor.DOC_OUTPUT_PROPERTY_NAME,
             OPTION_CUSTOM_ANNOTATIONS,
             OPTION_INCREMENTAL,
-            if (incrementalMetadata != null) {
+            if (incrementalMetadata.incremental) {
                 "org.gradle.annotation.processing.aggregating"
             } else null
         ).filterNotNull()
@@ -95,15 +93,20 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
     }
 
     override fun process(
-        annotations: Set<XTypeElement>?,
-        environment: XProcessingEnv,
-        round: XRoundEnv
+            annotations: Set<XTypeElement>?,
+            environment: XProcessingEnv,
+            round: XRoundEnv,
+            useKsp: Boolean
     ) {
         try {
-            // If running KSP and non incremental we need to get the supported custom annotations
-            // from the supplied list of annotations
-            val supportedCustomAnnotations = incrementalMetadata?.let { it.customAnnotations }
-                ?: annotations?.filterAnnotatedAnnotations(DeepLinkSpec::class) ?: emptySet()
+            // If we run KSP or this is configured to be incremental we need to reply on the
+            // incrementalMetadata for custom annotations. If not filter them out of the
+            // set of annotations we were given.
+            val supportedCustomAnnotations = if (incrementalMetadata.incremental || useKsp) {
+                incrementalMetadata.customAnnotations
+            } else {
+                annotations?.filterAnnotatedAnnotations(DeepLinkSpec::class) ?: emptySet()
+            }
             val prefixes: Map<XType, Array<String>> =
                 supportedCustomAnnotations.map { customAnnotationTypeElement ->
                     if (!customAnnotationTypeElement.isAnnotationClass()) {
@@ -482,7 +485,7 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
         return stringMethodNames
     }
 
-    private class IncrementalMetadata(val customAnnotations: Set<XTypeElement>)
+    private class IncrementalMetadata(val incremental: Boolean, val customAnnotations: Set<XTypeElement>)
 
     companion object {
         private const val PACKAGE_NAME = "com.airbnb.deeplinkdispatch"

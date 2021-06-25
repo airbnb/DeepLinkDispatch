@@ -30,6 +30,17 @@ open class BaseDeepLinkProcessorTest {
                 """
     )
 
+    internal val module = SourceFile.java(
+            "SampleModule.java",
+            """
+                 package com.example;import com.airbnb.deeplinkdispatch.DeepLinkModule;
+                 
+                 @DeepLinkModule
+                 public class SampleModule {
+                 }
+                 """
+    )
+
     companion object {
         internal fun assertGeneratedCode(
             results: List<CompileResult>,
@@ -105,13 +116,15 @@ open class BaseDeepLinkProcessorTest {
         }
 
         internal fun compileIncremental(
-            sourceFiles: List<SourceFile>,
-            customDeepLinks: List<String>?,
-            useKsp: Boolean = false
+                sourceFiles: List<SourceFile>,
+                customDeepLinks: List<String>?,
+                useKsp: Boolean = false,
+                incrementalFlag: Boolean = true
         ): CompileResult {
-            val arguments: MutableMap<OptionName, OptionValue> = mutableMapOf(
-                "deepLink.incremental" to "true"
-            )
+            val arguments: MutableMap<OptionName, OptionValue> = mutableMapOf()
+            if (incrementalFlag) {
+                arguments["deepLink.incremental"] = "true"
+            }
             if (customDeepLinks != null) {
                 arguments["deepLink.customAnnotations"] = customDeepLinks.joinToString(separator = "|")
             }
