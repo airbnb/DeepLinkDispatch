@@ -6,7 +6,7 @@ def versions = [
     benchmarkVersion             : '1.0.0',
     compileTestingVersion        : '1.4.2',
     kspVersion                   : '1.5.10-1.0.0-beta02',
-    xProcessorVersion            : '2.4.0-airbnb4',
+    xProcessorVersion            : '2.4.0-alpha03',
     mockkVersion                 : '1.11.0'
 ]
 
