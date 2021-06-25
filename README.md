@@ -305,11 +305,8 @@ the setup is slightly different.
 
 When using Kotlin we strongly suggest to use KSP as it can bring major speed improvements.
 
-To run the processor via KSP
-
-You first have to apply the KSP plugin.
-
-Add the dependency to the `build.gradle` file of your main project:
+To run the processor via KSP you first have to apply the KSP plugin. Add the dependency to the
+`build.gradle` file of your main project:
 
 ```groovy
 buildscript {
@@ -368,7 +365,7 @@ As an example the `sample-kapt-library` is set up using Kapt
 
 ### Java annotation processor
 
-Juset add the dependency to DeepLinkDispatch and to the annotation processor:
+Just add the dependency to DeepLinkDispatch and to the annotation processor:
 
 ```groovy
 dependencies {
@@ -379,7 +376,7 @@ dependencies {
 
 As an example the `sample-library` is set up using the Java annotation processor
 
-Create your deep link module(s) (**new on DeepLinkDispatch v3**). For every class you annotate with `@DeepLinkModule`, DeepLinkDispatch will generate a "Registry" class, which contains a registry of all your `@DeepLink` annotations.
+When this is done, create your deep link module(s) (**new on DeepLinkDispatch v3**). For every class you annotate with `@DeepLinkModule`, DeepLinkDispatch will generate a "Registry" class, which contains a registry of all your `@DeepLink` annotations.
 
 ```java
 /** This will generate a AppDeepLinkModuleRegistry class */
