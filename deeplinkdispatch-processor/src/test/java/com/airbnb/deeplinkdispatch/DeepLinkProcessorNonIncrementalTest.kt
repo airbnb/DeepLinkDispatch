@@ -51,7 +51,7 @@ class DeepLinkProcessorNonIncrementalTest : BaseDeepLinkProcessorTest() {
             ),
             generatedFiles = mapOf(
                 "DeepLinkDelegate.java" to
-                        """
+                    """
                 package com.example;
 
                 import com.airbnb.deeplinkdispatch.BaseDeepLinkDelegate;
@@ -75,9 +75,9 @@ class DeepLinkProcessorNonIncrementalTest : BaseDeepLinkProcessorTest() {
                   }
                 }
 
-                """.trimIndent(),
+                    """.trimIndent(),
                 "SampleModuleRegistry.java" to
-                        """
+                    """
                 package com.example;
 
                 import com.airbnb.deeplinkdispatch.BaseRegistry;
@@ -95,7 +95,7 @@ class DeepLinkProcessorNonIncrementalTest : BaseDeepLinkProcessorTest() {
                   }
                 }
 
-                """.trimIndent()
+                    """.trimIndent()
             )
         )
     }
@@ -103,7 +103,8 @@ class DeepLinkProcessorNonIncrementalTest : BaseDeepLinkProcessorTest() {
     @Test
     fun testProcessorWithDefaultAndCustomAnnotations() {
         val customAnnotationWebLink = SourceFile.java(
-            "WebDeepLink.java", """
+            "WebDeepLink.java",
+            """
             package com.example;
             import com.airbnb.deeplinkdispatch.DeepLinkSpec;
             @DeepLinkSpec(prefix = { "http://", "https://"})
@@ -186,8 +187,9 @@ class DeepLinkProcessorNonIncrementalTest : BaseDeepLinkProcessorTest() {
                     method = null
                 )
             ),
-            generatedFiles = mapOf("DeepLinkDelegate.java" to
-                """
+            generatedFiles = mapOf(
+                "DeepLinkDelegate.java" to
+                    """
                 package com.example;
 
                 import com.airbnb.deeplinkdispatch.BaseDeepLinkDelegate;
@@ -211,8 +213,9 @@ class DeepLinkProcessorNonIncrementalTest : BaseDeepLinkProcessorTest() {
                   }
                 }
                 
-            """.trimIndent(), "SampleModuleRegistry.java" to
-                """
+                    """.trimIndent(),
+                "SampleModuleRegistry.java" to
+                    """
                 package com.example;
 
                 import com.airbnb.deeplinkdispatch.BaseRegistry;
@@ -230,7 +233,8 @@ class DeepLinkProcessorNonIncrementalTest : BaseDeepLinkProcessorTest() {
                   }
                 }
                
-               """.trimIndent())
+                    """.trimIndent()
+            )
         )
         // KSP does not support custom annotations it does not know before processing. When using KSP they always
         // have to be defined via the deepLink.customAnnotations gradle config.
@@ -306,12 +310,12 @@ class DeepLinkProcessorNonIncrementalTest : BaseDeepLinkProcessorTest() {
         assertCompileError(
             results = results,
             errorMessage = "Internal error during annotation processing: java.lang.IllegalStateException: " +
-                    "Ambiguous URI. Same match for two URIs (UriMatch(uriTemplate=" +
-                    "airbnb://host/path1/path2?q={q}, annotatedClassFullyQualifiedName=com." +
-                    "example.SampleActivity, annotatedMethod=intentFromTwoPathWithQuery) vs " +
-                    "UriMatch(uriTemplate=airbnb://host/path1/path2, " +
-                    "annotatedClassFullyQualifiedName=com.example.SampleActivity, " +
-                    "annotatedMethod=intentFromTwoPath))"
+                "Ambiguous URI. Same match for two URIs (UriMatch(uriTemplate=" +
+                "airbnb://host/path1/path2?q={q}, annotatedClassFullyQualifiedName=com." +
+                "example.SampleActivity, annotatedMethod=intentFromTwoPathWithQuery) vs " +
+                "UriMatch(uriTemplate=airbnb://host/path1/path2, " +
+                "annotatedClassFullyQualifiedName=com.example.SampleActivity, " +
+                "annotatedMethod=intentFromTwoPath))"
         )
     }
 
@@ -359,7 +363,7 @@ class DeepLinkProcessorNonIncrementalTest : BaseDeepLinkProcessorTest() {
             ),
             generatedFiles = mapOf(
                 "DeepLinkDelegate.java" to
-                        """
+                    """
                 package com.Example;
 
                 import com.airbnb.deeplinkdispatch.BaseDeepLinkDelegate;
@@ -383,9 +387,9 @@ class DeepLinkProcessorNonIncrementalTest : BaseDeepLinkProcessorTest() {
                   }
                 }
                 
-                """.trimIndent(),
+                    """.trimIndent(),
                 "SampleModuleRegistry.java" to
-                        """
+                    """
                 package com.Example;
 
                 import com.airbnb.deeplinkdispatch.BaseRegistry;
@@ -403,7 +407,7 @@ class DeepLinkProcessorNonIncrementalTest : BaseDeepLinkProcessorTest() {
                   }
                 }
                 
-                """.trimIndent()
+                    """.trimIndent()
             )
         )
     }
@@ -598,8 +602,9 @@ class DeepLinkProcessorNonIncrementalTest : BaseDeepLinkProcessorTest() {
                     method = "intentFromOnePathWithOneParam"
                 ),
             ),
-            generatedFiles = mapOf("DeepLinkDelegate.java" to
-                """
+            generatedFiles = mapOf(
+                "DeepLinkDelegate.java" to
+                    """
                 package com.example;
 
                 import com.airbnb.deeplinkdispatch.BaseDeepLinkDelegate;
@@ -623,8 +628,9 @@ class DeepLinkProcessorNonIncrementalTest : BaseDeepLinkProcessorTest() {
                   }
                 }
                 
-                """.trimIndent(), "SampleModuleRegistry.java" to
-                """
+                    """.trimIndent(),
+                "SampleModuleRegistry.java" to
+                    """
                 package com.example;
 
                 import com.airbnb.deeplinkdispatch.BaseRegistry;
@@ -642,7 +648,8 @@ class DeepLinkProcessorNonIncrementalTest : BaseDeepLinkProcessorTest() {
                   }
                 }
             
-                """.trimIndent())
+                    """.trimIndent()
+            )
         )
     }
 
@@ -676,9 +683,9 @@ class DeepLinkProcessorNonIncrementalTest : BaseDeepLinkProcessorTest() {
         )
         assertCompileError(
             results,
-            "Only `Intent`, `androidx.core.app.TaskStackBuilder` or "
-                    + "'com.airbnb.deeplinkdispatch.DeepLinkMethodResult' are supported. Please double check "
-                    + "your imports and try again."
+            "Only `Intent`, `androidx.core.app.TaskStackBuilder` or " +
+                "'com.airbnb.deeplinkdispatch.DeepLinkMethodResult' are supported. Please double check " +
+                "your imports and try again."
         )
     }
 
@@ -766,8 +773,8 @@ class DeepLinkProcessorNonIncrementalTest : BaseDeepLinkProcessorTest() {
         )
         assertCompileError(
             results,
-            "Malformed path segment: deepL<ink! If it contains < or >, it must start"
-                    + " with < and end with >."
+            "Malformed path segment: deepL<ink! If it contains < or >, it must start" +
+                " with < and end with >."
         )
     }
 

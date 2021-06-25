@@ -47,7 +47,7 @@ open class BaseDeepLinkProcessorTest {
                         .isEqualTo(generatedFiles[filename])
                 }
                 // Ksp generated files do not compile in tests so so not try to load them.
-                if(!result.useKsp) {
+                if (!result.useKsp) {
                     val generatedRegistryClazz =
                         result.result.classLoader.loadClass(registryClassName)
                     val baseRegistryClazz =
@@ -123,6 +123,5 @@ open class BaseDeepLinkProcessorTest {
         }
     }
 
-    class CompileResult(val result: KotlinCompilation.Result, val generatedFiles : Map<String,File>, val useKsp: Boolean)
-
+    class CompileResult(val result: KotlinCompilation.Result, val generatedFiles: Map<String, File>, val useKsp: Boolean)
 }

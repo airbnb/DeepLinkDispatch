@@ -13,12 +13,12 @@ import javax.annotation.processing.ProcessingEnvironment
 import javax.annotation.processing.RoundEnvironment
 import javax.lang.model.SourceVersion
 import javax.lang.model.element.TypeElement
-import kotlin.reflect.KClass
 
 /**
  * Creates a unified abstraction for processors of both KSP and java annotation processing.
  */
-abstract class BaseProcessor(val symbolProcessorEnvironment: SymbolProcessorEnvironment?) : AbstractProcessor(),
+abstract class BaseProcessor(val symbolProcessorEnvironment: SymbolProcessorEnvironment?) :
+    AbstractProcessor(),
     SymbolProcessor {
 
     lateinit var environment: XProcessingEnv

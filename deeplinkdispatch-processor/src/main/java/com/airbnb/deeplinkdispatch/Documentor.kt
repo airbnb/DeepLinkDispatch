@@ -51,8 +51,8 @@ internal class Documentor(private val processingEnv: XProcessingEnv) {
 
                 // markdown writer if .md file extension is used
                 val docWriter: DocumetationWriter =
-                    if (extIndex >= 0 && extIndex < fileName.length
-                        && fileName.substring(extIndex + 1).equals("md", ignoreCase = true)
+                    if (extIndex >= 0 && extIndex < fileName.length &&
+                        fileName.substring(extIndex + 1).equals("md", ignoreCase = true)
                     ) {
                         MarkdownWriter()
                     } else {

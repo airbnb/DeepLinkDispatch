@@ -31,13 +31,18 @@ import com.airbnb.deeplinkdispatch.ProcessorUtils.hasEmptyOrNullString
 import com.airbnb.deeplinkdispatch.base.Utils
 import com.airbnb.deeplinkdispatch.base.Utils.isConfigurablePathSegment
 import com.google.devtools.ksp.processing.SymbolProcessorEnvironment
-import com.squareup.javapoet.*
+import com.squareup.javapoet.ClassName
+import com.squareup.javapoet.CodeBlock
+import com.squareup.javapoet.JavaFile
+import com.squareup.javapoet.MethodSpec
+import com.squareup.javapoet.ParameterSpec
+import com.squareup.javapoet.ParameterizedTypeName
+import com.squareup.javapoet.TypeSpec
 import java.io.IOException
 import java.net.MalformedURLException
-import java.util.*
-import javax.annotation.processing.*
+import java.util.Arrays
 import javax.lang.model.SourceVersion
-import javax.lang.model.element.*
+import javax.lang.model.element.Modifier
 import javax.tools.Diagnostic
 import kotlin.collections.HashSet
 import kotlin.reflect.KClass
@@ -58,7 +63,7 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
         } else null
     }
 
-    private val supportedBaseAnnotations : Set<XTypeElement> by lazy {
+    private val supportedBaseAnnotations: Set<XTypeElement> by lazy {
         listOf(
             DeepLink::class,
             DeepLinkHandler::class,
@@ -123,8 +128,10 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
                     customAnnotationTypeElement.type to prefix
                 }.toMap()
             val allAnnotatedElements =
-                (supportedCustomAnnotations.map { round.getElementsAnnotatedWith(it.qualifiedName) }
-                .flatten() + round.getElementsAnnotatedWith(DEEP_LINK_CLASS))
+                (
+                    supportedCustomAnnotations.map { round.getElementsAnnotatedWith(it.qualifiedName) }
+                        .flatten() + round.getElementsAnnotatedWith(DEEP_LINK_CLASS)
+                    )
             val annotatedMethodElements = allAnnotatedElements.filterIsInstance<XMethodElement>().toSet()
             val annotatedClassElements = allAnnotatedElements.filterIsInstance<XTypeElement>().filter { it.isClass() }.toSet()
 
@@ -298,12 +305,14 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
         classElementsToProcess: Set<XTypeElement>,
         methodElementsToProcess: Set<XMethodElement>
     ): List<DeepLinkAnnotatedElement> {
-        return (classElementsToProcess.map { element ->
-            mapUrisToDeepLinkAnnotatedElement(element, prefixes)
-        }.flatten() + methodElementsToProcess.map { element ->
-            verifyMethod(element)
-            mapUrisToDeepLinkAnnotatedElement(element, prefixes)
-        }.flatten()).filterNotNull()
+        return (
+            classElementsToProcess.map { element ->
+                mapUrisToDeepLinkAnnotatedElement(element, prefixes)
+            }.flatten() + methodElementsToProcess.map { element ->
+                verifyMethod(element)
+                mapUrisToDeepLinkAnnotatedElement(element, prefixes)
+            }.flatten()
+            ).filterNotNull()
     }
 
     private fun mapUrisToDeepLinkAnnotatedElement(
@@ -347,9 +356,12 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
             )
         ) {
             error(
-                methodElement, ("Only `Intent`, `androidx.core.app.TaskStackBuilder` or "
-                        + "'com.airbnb.deeplinkdispatch.DeepLinkMethodResult' are supported. Please double "
-                        + "check your imports and try again.")
+                methodElement,
+                (
+                    "Only `Intent`, `androidx.core.app.TaskStackBuilder` or " +
+                        "'com.airbnb.deeplinkdispatch.DeepLinkMethodResult' are supported. Please double " +
+                        "check your imports and try again."
+                    )
             )
         }
     }
@@ -365,7 +377,7 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
         deepLinkElements: List<DeepLinkAnnotatedElement>,
         originatingElements: Set<XElement>
     ) {
-        Collections.sort(deepLinkElements) { element1, element2 ->
+        deepLinkElements.sortedWith { element1, element2 ->
             deeplinkAnnotatedElementCompare(element1, element2)
         }
         documentor.write(deepLinkElements)
@@ -379,8 +391,8 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
                 error(element.annotatedClass, e.message ?: "")
             }
             val deeplinkUri = DeepLinkUri.parseTemplate(uriTemplate)
-            //Keep track of pathVariables added in a module so that we can check at runtime to ensure
-            //that all pathVariables have a corresponding entry provided to BaseDeepLinkDelegate.
+            // Keep track of pathVariables added in a module so that we can check at runtime to ensure
+            // that all pathVariables have a corresponding entry provided to BaseDeepLinkDelegate.
             for (pathSegment: String in deeplinkUri.pathSegments()) {
                 if (isConfigurablePathSegment(pathSegment)) {
                     pathVariableKeys.add(
@@ -496,7 +508,7 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
                 val prefixes = prefixesMap[customAnnotation.type]
                     ?: throw DeepLinkProcessorException(
                         "Unable to find annotation '${customAnnotation.qualifiedName}' you must " +
-                                "update 'deepLink.customAnnotations' within the build.gradle"
+                            "update 'deepLink.customAnnotations' within the build.gradle"
                     )
                 prefixes.flatMap { prefix -> suffixes.map { suffix -> prefix + suffix } }
             }
@@ -551,6 +563,5 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
             }
             return comparisonResult
         }
-
     }
 }

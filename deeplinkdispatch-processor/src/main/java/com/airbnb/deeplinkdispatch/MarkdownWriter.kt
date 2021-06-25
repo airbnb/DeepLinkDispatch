@@ -3,7 +3,7 @@ package com.airbnb.deeplinkdispatch
 import androidx.room.compiler.processing.XProcessingEnv
 import com.airbnb.deeplinkdispatch.Documentor.DocumetationWriter
 import java.io.PrintWriter
-import java.util.*
+import java.util.Locale
 
 /**
  * GitHub markdown format.

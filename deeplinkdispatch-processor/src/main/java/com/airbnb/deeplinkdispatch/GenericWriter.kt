@@ -28,6 +28,5 @@ internal class GenericWriter : DocumetationWriter {
             }
             flush()
         }
-
     }
 }

@@ -18,6 +18,7 @@ buildscript {
         // Dokka is needed on classpath for vanniktech publish plugin
         classpath deps.dokkaPlugin
         classpath deps.kspGradlePlugin
+        classpath deps.ktlintGradlePlugin
     }
 }
 

@@ -6,7 +6,6 @@ import androidx.room.compiler.processing.XProcessingEnv
 import androidx.room.compiler.processing.XTypeElement
 import io.mockk.every
 import io.mockk.mockk
-
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Assert
 import org.junit.Test
@@ -47,8 +46,10 @@ class DocumentorTest {
         val documentor = Documentor(processingEnv)
         documentor.write(getElements())
         val actual = File(FILE_PATH).readText()
-        val expected = ("airbnb://example.com/{foo}/bar\\n|#|\\nSample doc\\n|#|\\nDocClass\\"
-                + "n|##|\\nairbnb://example.com/{foo}/bar\\n|#|\\n\\n|#|\\nDocClass#DocMethod\\n|##|\\n")
+        val expected = (
+            "airbnb://example.com/{foo}/bar\\n|#|\\nSample doc\\n|#|\\nDocClass\\" +
+                "n|##|\\nairbnb://example.com/{foo}/bar\\n|#|\\n\\n|#|\\nDocClass#DocMethod\\n|##|\\n"
+            )
         Assert.assertEquals(expected, actual)
     }
 

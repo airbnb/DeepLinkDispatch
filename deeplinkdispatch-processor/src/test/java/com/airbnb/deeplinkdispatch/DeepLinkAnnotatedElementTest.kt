@@ -11,7 +11,6 @@ class DeepLinkAnnotatedElementTest {
 
     var element = mockk<XTypeElement>()
 
-
     @Test
     @Throws(MalformedURLException::class)
     fun testValidUri() {

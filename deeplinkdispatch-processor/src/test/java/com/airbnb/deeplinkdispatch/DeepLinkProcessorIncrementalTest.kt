@@ -126,8 +126,9 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
                     method = null
                 )
             ),
-            generatedFiles = mapOf("DeepLinkDelegate.java" to
-                """
+            generatedFiles = mapOf(
+                "DeepLinkDelegate.java" to
+                    """
                 package com.example;
 
                 import com.airbnb.deeplinkdispatch.BaseDeepLinkDelegate;
@@ -151,8 +152,9 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
                   }
                 }
             
-                """.trimIndent(), "SampleModuleRegistry.java" to
-                """
+                    """.trimIndent(),
+                "SampleModuleRegistry.java" to
+                    """
                 package com.example;
 
                 import com.airbnb.deeplinkdispatch.BaseRegistry;
@@ -170,7 +172,8 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
                   }
                 }
             
-               """.trimIndent())
+                    """.trimIndent()
+            )
         )
     }
 
@@ -204,8 +207,9 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
                     method = null
                 )
             ),
-            generatedFiles = mapOf("DeepLinkDelegate.java" to
-                """
+            generatedFiles = mapOf(
+                "DeepLinkDelegate.java" to
+                    """
                 package com.example;
 
                 import com.airbnb.deeplinkdispatch.BaseDeepLinkDelegate;
@@ -229,8 +233,9 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
                   }
                 }
                 
-                """.trimIndent(), "SampleModuleRegistry.java" to
-                """
+                    """.trimIndent(),
+                "SampleModuleRegistry.java" to
+                    """
                 package com.example;
 
                 import com.airbnb.deeplinkdispatch.BaseRegistry;
@@ -248,7 +253,8 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
                   }
                 }
             
-                """.trimIndent())
+                    """.trimIndent()
+            )
         )
     }
 
@@ -276,8 +282,9 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
             results = results,
             registryClassName = "com.example.SampleModuleRegistry",
             indexEntries = emptyList(),
-            generatedFiles = mapOf("DeepLinkDelegate.java" to
-                """
+            generatedFiles = mapOf(
+                "DeepLinkDelegate.java" to
+                    """
                 package com.example;
 
                 import com.airbnb.deeplinkdispatch.BaseDeepLinkDelegate;
@@ -301,8 +308,9 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
                   }
                 }
                 
-                """.trimIndent(), "SampleModuleRegistry.java" to
-                """
+                    """.trimIndent(),
+                "SampleModuleRegistry.java" to
+                    """
                 package com.example;
 
                 import com.airbnb.deeplinkdispatch.BaseRegistry;
@@ -320,9 +328,9 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
                   }
                 }
                 
-                """.trimIndent())
+                    """.trimIndent()
+            )
         )
-
     }
 
     @Test
@@ -344,8 +352,9 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
             )
         )
         assertCompileError(
-            results, "Unable to find annotation 'com.example.AppDeepLink' you must update "
-                    + "'deepLink.customAnnotations' within the build.gradle"
+            results,
+            "Unable to find annotation 'com.example.AppDeepLink' you must update " +
+                "'deepLink.customAnnotations' within the build.gradle"
         )
     }
 
@@ -379,7 +388,8 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
                     method = "intentForDeepLinkMethod"
                 )
             ),
-            generatedFiles = mapOf("DeepLinkDelegate.java" to
+            generatedFiles = mapOf(
+                "DeepLinkDelegate.java" to
                     """
                     package com.example;
 
@@ -404,7 +414,8 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
                       }
                     }
                     
-                    """.trimIndent(), "SampleModuleRegistry.java" to
+                    """.trimIndent(),
+                "SampleModuleRegistry.java" to
                     """
                     package com.example;
 
@@ -431,7 +442,8 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
     @Test
     fun testKsp() {
         val customAnnotationWebLink = SourceFile.java(
-            "WebDeepLink.java", """
+            "WebDeepLink.java",
+            """
             package com.example;
             import com.airbnb.deeplinkdispatch.DeepLinkSpec;
             @DeepLinkSpec(prefix = { "http://", "https://"})
@@ -504,22 +516,23 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
             results = results,
             registryClassName = "com.example.SampleModuleRegistry",
             indexEntries = listOf(
-                    DeepLinkEntry(uriTemplate= "airbnb://example.com/deepLink" , className= "com.example.SampleActivity" ,method= null),
-                    DeepLinkEntry(uriTemplate= "airbnb://intentMethod/{var1}/{var2}" , className= "com.example.SampleActivity" ,method= "intentFromTwoPathWithTwoParams"),
-                    DeepLinkEntry(uriTemplate= "airbnb://taskStackBuilderMethod/{arbitraryNumber}" , className= "com.example.SampleActivity" ,method= "deeplinkOneParameter"),
-                    DeepLinkEntry(uriTemplate= "example://example.com/another" , className= "com.example.SampleActivity" ,method= null),
-                    DeepLinkEntry(uriTemplate= "example://example.com/deepLink" , className= "com.example.SampleActivity" ,method= null),
-                    DeepLinkEntry(uriTemplate= "http://example.com/another" , className= "com.example.SampleActivity" ,method= null),
-                    DeepLinkEntry(uriTemplate= "http://example.com/deepLink" , className= "com.example.SampleActivity" ,method= null),
-                    DeepLinkEntry(uriTemplate= "http://example.com/method1" , className= "com.example.SampleActivity" ,method= "webLinkMethod"),
-                    DeepLinkEntry(uriTemplate= "http://example.com/method2" , className= "com.example.SampleActivity" ,method= "webLinkMethod"),
-                    DeepLinkEntry(uriTemplate= "https://example.com/another" , className= "com.example.SampleActivity" ,method= null),
-                    DeepLinkEntry(uriTemplate= "https://example.com/deepLink" , className= "com.example.SampleActivity" ,method= null),
-                    DeepLinkEntry(uriTemplate= "https://example.com/method1" , className= "com.example.SampleActivity" ,method= "webLinkMethod"),
-                    DeepLinkEntry(uriTemplate= "https://example.com/method2" , className= "com.example.SampleActivity" ,method= "webLinkMethod"),
+                DeepLinkEntry(uriTemplate = "airbnb://example.com/deepLink", className = "com.example.SampleActivity", method = null),
+                DeepLinkEntry(uriTemplate = "airbnb://intentMethod/{var1}/{var2}", className = "com.example.SampleActivity", method = "intentFromTwoPathWithTwoParams"),
+                DeepLinkEntry(uriTemplate = "airbnb://taskStackBuilderMethod/{arbitraryNumber}", className = "com.example.SampleActivity", method = "deeplinkOneParameter"),
+                DeepLinkEntry(uriTemplate = "example://example.com/another", className = "com.example.SampleActivity", method = null),
+                DeepLinkEntry(uriTemplate = "example://example.com/deepLink", className = "com.example.SampleActivity", method = null),
+                DeepLinkEntry(uriTemplate = "http://example.com/another", className = "com.example.SampleActivity", method = null),
+                DeepLinkEntry(uriTemplate = "http://example.com/deepLink", className = "com.example.SampleActivity", method = null),
+                DeepLinkEntry(uriTemplate = "http://example.com/method1", className = "com.example.SampleActivity", method = "webLinkMethod"),
+                DeepLinkEntry(uriTemplate = "http://example.com/method2", className = "com.example.SampleActivity", method = "webLinkMethod"),
+                DeepLinkEntry(uriTemplate = "https://example.com/another", className = "com.example.SampleActivity", method = null),
+                DeepLinkEntry(uriTemplate = "https://example.com/deepLink", className = "com.example.SampleActivity", method = null),
+                DeepLinkEntry(uriTemplate = "https://example.com/method1", className = "com.example.SampleActivity", method = "webLinkMethod"),
+                DeepLinkEntry(uriTemplate = "https://example.com/method2", className = "com.example.SampleActivity", method = "webLinkMethod"),
             ),
-            generatedFiles = mapOf("DeepLinkDelegate.java" to
-                """
+            generatedFiles = mapOf(
+                "DeepLinkDelegate.java" to
+                    """
                 package com.example;
 
                 import com.airbnb.deeplinkdispatch.BaseDeepLinkDelegate;
@@ -543,8 +556,9 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
                   }
                 }
                 
-                """.trimIndent(), "SampleModuleRegistry.java" to
-                """
+                    """.trimIndent(),
+                "SampleModuleRegistry.java" to
+                    """
                 package com.example;
 
                 import com.airbnb.deeplinkdispatch.BaseRegistry;
@@ -562,7 +576,8 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
                   }
                 }
                 
-                """.trimIndent())
+                    """.trimIndent()
+            )
         )
     }
 }
