@@ -31,8 +31,8 @@ open class BaseDeepLinkProcessorTest {
     )
 
     internal val module = SourceFile.java(
-            "SampleModule.java",
-            """
+        "SampleModule.java",
+        """
                  package com.example;import com.airbnb.deeplinkdispatch.DeepLinkModule;
                  
                  @DeepLinkModule
@@ -57,7 +57,7 @@ open class BaseDeepLinkProcessorTest {
                     Assertions.assertThat(result.generatedFiles[filename]?.readText())
                         .isEqualTo(generatedFiles[filename])
                 }
-                // Ksp generated files do not compile in tests so so not try to load them.
+                // Ksp generated files do not compile in tests so do not try to load them.
                 if (!result.useKsp) {
                     val generatedRegistryClazz =
                         result.result.classLoader.loadClass(registryClassName)
@@ -116,10 +116,10 @@ open class BaseDeepLinkProcessorTest {
         }
 
         internal fun compileIncremental(
-                sourceFiles: List<SourceFile>,
-                customDeepLinks: List<String>?,
-                useKsp: Boolean = false,
-                incrementalFlag: Boolean = true
+            sourceFiles: List<SourceFile>,
+            customDeepLinks: List<String>?,
+            useKsp: Boolean = false,
+            incrementalFlag: Boolean = true
         ): CompileResult {
             val arguments: MutableMap<OptionName, OptionValue> = mutableMapOf()
             if (incrementalFlag) {

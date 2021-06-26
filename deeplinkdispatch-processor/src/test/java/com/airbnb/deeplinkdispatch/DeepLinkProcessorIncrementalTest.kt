@@ -96,14 +96,14 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
         )
         val results = listOf(
             compileIncremental(
-                    sourceFiles = sourceFiles,
-                    customDeepLinks = listOf("com.example.AppDeepLink"),
-                    useKsp = false,
+                sourceFiles = sourceFiles,
+                customDeepLinks = listOf("com.example.AppDeepLink"),
+                useKsp = false,
             ),
             compileIncremental(
-                    sourceFiles = sourceFiles,
-                    customDeepLinks = listOf("com.example.AppDeepLink"),
-                    useKsp = true,
+                sourceFiles = sourceFiles,
+                customDeepLinks = listOf("com.example.AppDeepLink"),
+                useKsp = true,
             )
         )
         assertGeneratedCode(
@@ -177,14 +177,14 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
         )
         val results = listOf(
             compileIncremental(
-                    sourceFiles = sourceFiles,
-                    customDeepLinks = listOf("com.example.PlaceholderDeepLink"),
-                    useKsp = false,
+                sourceFiles = sourceFiles,
+                customDeepLinks = listOf("com.example.PlaceholderDeepLink"),
+                useKsp = false,
             ),
             compileIncremental(
-                    sourceFiles = sourceFiles,
-                    customDeepLinks = listOf("com.example.PlaceholderDeepLink"),
-                    useKsp = true,
+                sourceFiles = sourceFiles,
+                customDeepLinks = listOf("com.example.PlaceholderDeepLink"),
+                useKsp = true,
             )
         )
         assertGeneratedCode(
@@ -258,14 +258,14 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
         )
         val results = listOf(
             compileIncremental(
-                    sourceFiles = sourceFiles,
-                    customDeepLinks = null,
-                    useKsp = false,
+                sourceFiles = sourceFiles,
+                customDeepLinks = null,
+                useKsp = false,
             ),
             compileIncremental(
-                    sourceFiles = sourceFiles,
-                    customDeepLinks = null,
-                    useKsp = true,
+                sourceFiles = sourceFiles,
+                customDeepLinks = null,
+                useKsp = true,
             )
         )
         assertGeneratedCode(
@@ -331,14 +331,14 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
         )
         val results = listOf(
             compileIncremental(
-                    sourceFiles = sourceFiles,
-                    customDeepLinks = null,
-                    useKsp = false,
+                sourceFiles = sourceFiles,
+                customDeepLinks = null,
+                useKsp = false,
             ),
             compileIncremental(
-                    sourceFiles = sourceFiles,
-                    customDeepLinks = null,
-                    useKsp = true,
+                sourceFiles = sourceFiles,
+                customDeepLinks = null,
+                useKsp = true,
             )
         )
         assertCompileError(
@@ -357,15 +357,15 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
             fakeBaseDeeplinkDelegate
         )
         val results = listOf(
+//            compileIncremental(
+//                    sourceFiles = sourceFiles,
+//                    customDeepLinks = null,
+//                    useKsp = false,
+//            ),
             compileIncremental(
-                    sourceFiles = sourceFiles,
-                    customDeepLinks = null,
-                    useKsp = false,
-            ),
-            compileIncremental(
-                    sourceFiles = sourceFiles,
-                    customDeepLinks = null,
-                    useKsp = true,
+                sourceFiles = sourceFiles,
+                customDeepLinks = null,
+                useKsp = true,
             )
         )
         assertGeneratedCode(

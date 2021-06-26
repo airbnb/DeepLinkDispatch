@@ -7,8 +7,8 @@ class DeepLinkProcessorKsp : BaseDeepLinkProcessorTest() {
     @Test
     fun testKsp() {
         val customAnnotationWebLink = SourceFile.java(
-                "WebDeepLink.java",
-                """
+            "WebDeepLink.java",
+            """
             package com.example;
             import com.airbnb.deeplinkdispatch.DeepLinkSpec;
             @DeepLinkSpec(prefix = { "http://", "https://"})
@@ -18,8 +18,8 @@ class DeepLinkProcessorKsp : BaseDeepLinkProcessorTest() {
             """
         )
         val customAnnotationAppLink = SourceFile.java(
-                "AppDeepLink.java",
-                """
+            "AppDeepLink.java",
+            """
                     package com.example;
                     import com.airbnb.deeplinkdispatch.DeepLinkSpec;
                     @DeepLinkSpec(prefix = { "example://" })
@@ -29,8 +29,8 @@ class DeepLinkProcessorKsp : BaseDeepLinkProcessorTest() {
                     """
         )
         val sampleActivity = SourceFile.java(
-                "SampleActivity.java",
-                """
+            "SampleActivity.java",
+            """
                  package com.example;
                  import com.airbnb.deeplinkdispatch.DeepLink;
                  import com.airbnb.deeplinkdispatch.DeepLinkHandler;
@@ -62,43 +62,43 @@ class DeepLinkProcessorKsp : BaseDeepLinkProcessorTest() {
                  """
         )
         val sourceFiles = listOf(
-                customAnnotationAppLink, customAnnotationWebLink,
-                module, sampleActivity, fakeBaseDeeplinkDelegate
+            customAnnotationAppLink, customAnnotationWebLink,
+            module, sampleActivity, fakeBaseDeeplinkDelegate
         )
         val results = listOf(
-                compileIncremental(
-                        sourceFiles = sourceFiles,
-                        customDeepLinks = listOf("com.example.AppDeepLink", "com.example.WebDeepLink"),
-                        useKsp = false,
-                ),
-                compileIncremental(
-                        sourceFiles = sourceFiles,
-                        customDeepLinks = listOf("com.example.AppDeepLink", "com.example.WebDeepLink"),
-                        useKsp = true,
-                        incrementalFlag = false
-                )
+            compileIncremental(
+                sourceFiles = sourceFiles,
+                customDeepLinks = listOf("com.example.AppDeepLink", "com.example.WebDeepLink"),
+                useKsp = false,
+            ),
+            compileIncremental(
+                sourceFiles = sourceFiles,
+                customDeepLinks = listOf("com.example.AppDeepLink", "com.example.WebDeepLink"),
+                useKsp = true,
+                incrementalFlag = false
+            )
         )
         assertGeneratedCode(
-                results = results,
-                registryClassName = "com.example.SampleModuleRegistry",
-                indexEntries = listOf(
-                        DeepLinkEntry(uriTemplate = "airbnb://example.com/deepLink", className = "com.example.SampleActivity", method = null),
-                        DeepLinkEntry(uriTemplate = "airbnb://intentMethod/{var1}/{var2}", className = "com.example.SampleActivity", method = "intentFromTwoPathWithTwoParams"),
-                        DeepLinkEntry(uriTemplate = "airbnb://taskStackBuilderMethod/{arbitraryNumber}", className = "com.example.SampleActivity", method = "deeplinkOneParameter"),
-                        DeepLinkEntry(uriTemplate = "example://example.com/another", className = "com.example.SampleActivity", method = null),
-                        DeepLinkEntry(uriTemplate = "example://example.com/deepLink", className = "com.example.SampleActivity", method = null),
-                        DeepLinkEntry(uriTemplate = "http://example.com/another", className = "com.example.SampleActivity", method = null),
-                        DeepLinkEntry(uriTemplate = "http://example.com/deepLink", className = "com.example.SampleActivity", method = null),
-                        DeepLinkEntry(uriTemplate = "http://example.com/method1", className = "com.example.SampleActivity", method = "webLinkMethod"),
-                        DeepLinkEntry(uriTemplate = "http://example.com/method2", className = "com.example.SampleActivity", method = "webLinkMethod"),
-                        DeepLinkEntry(uriTemplate = "https://example.com/another", className = "com.example.SampleActivity", method = null),
-                        DeepLinkEntry(uriTemplate = "https://example.com/deepLink", className = "com.example.SampleActivity", method = null),
-                        DeepLinkEntry(uriTemplate = "https://example.com/method1", className = "com.example.SampleActivity", method = "webLinkMethod"),
-                        DeepLinkEntry(uriTemplate = "https://example.com/method2", className = "com.example.SampleActivity", method = "webLinkMethod"),
-                ),
-                generatedFiles = mapOf(
-                        "DeepLinkDelegate.java" to
-                                """
+            results = results,
+            registryClassName = "com.example.SampleModuleRegistry",
+            indexEntries = listOf(
+                DeepLinkEntry(uriTemplate = "airbnb://example.com/deepLink", className = "com.example.SampleActivity", method = null),
+                DeepLinkEntry(uriTemplate = "airbnb://intentMethod/{var1}/{var2}", className = "com.example.SampleActivity", method = "intentFromTwoPathWithTwoParams"),
+                DeepLinkEntry(uriTemplate = "airbnb://taskStackBuilderMethod/{arbitraryNumber}", className = "com.example.SampleActivity", method = "deeplinkOneParameter"),
+                DeepLinkEntry(uriTemplate = "example://example.com/another", className = "com.example.SampleActivity", method = null),
+                DeepLinkEntry(uriTemplate = "example://example.com/deepLink", className = "com.example.SampleActivity", method = null),
+                DeepLinkEntry(uriTemplate = "http://example.com/another", className = "com.example.SampleActivity", method = null),
+                DeepLinkEntry(uriTemplate = "http://example.com/deepLink", className = "com.example.SampleActivity", method = null),
+                DeepLinkEntry(uriTemplate = "http://example.com/method1", className = "com.example.SampleActivity", method = "webLinkMethod"),
+                DeepLinkEntry(uriTemplate = "http://example.com/method2", className = "com.example.SampleActivity", method = "webLinkMethod"),
+                DeepLinkEntry(uriTemplate = "https://example.com/another", className = "com.example.SampleActivity", method = null),
+                DeepLinkEntry(uriTemplate = "https://example.com/deepLink", className = "com.example.SampleActivity", method = null),
+                DeepLinkEntry(uriTemplate = "https://example.com/method1", className = "com.example.SampleActivity", method = "webLinkMethod"),
+                DeepLinkEntry(uriTemplate = "https://example.com/method2", className = "com.example.SampleActivity", method = "webLinkMethod"),
+            ),
+            generatedFiles = mapOf(
+                "DeepLinkDelegate.java" to
+                    """
                 package com.example;
 
                 import com.airbnb.deeplinkdispatch.BaseDeepLinkDelegate;
@@ -123,8 +123,8 @@ class DeepLinkProcessorKsp : BaseDeepLinkProcessorTest() {
                 }
                 
                     """.trimIndent(),
-                        "SampleModuleRegistry.java" to
-                                """
+                "SampleModuleRegistry.java" to
+                    """
                 package com.example;
 
                 import com.airbnb.deeplinkdispatch.BaseRegistry;
@@ -143,7 +143,7 @@ class DeepLinkProcessorKsp : BaseDeepLinkProcessorTest() {
                 }
                 
                     """.trimIndent()
-                )
+            )
         )
     }
 }

@@ -36,7 +36,7 @@ abstract class BaseProcessor(val symbolProcessorEnvironment: SymbolProcessorEnvi
             onError()
         }
 
-        process(annotations.map { it.toXProcessing(environment) }.toSet(), environment, XRoundEnv.create(environment, roundEnv), false)
+        process(annotations.map { it.toXProcessing(environment) }.toSet(), environment, XRoundEnv.create(environment, roundEnv))
 
         if (roundEnv.processingOver()) {
             finish()
@@ -53,14 +53,13 @@ abstract class BaseProcessor(val symbolProcessorEnvironment: SymbolProcessorEnvi
             symbolProcessorEnvironment.codeGenerator,
             symbolProcessorEnvironment.logger
         )
-        process(null, environment, XRoundEnv.create(environment), true)
+        process(null, environment, XRoundEnv.create(environment))
         return emptyList()
     }
 
     abstract fun process(
-            annotations: Set<XTypeElement>?,
-            environment: XProcessingEnv,
-            round: XRoundEnv,
-            useKsp: Boolean
+        annotations: Set<XTypeElement>?,
+        environment: XProcessingEnv,
+        round: XRoundEnv
     )
 }

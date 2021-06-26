@@ -100,7 +100,7 @@ internal class Documentor(private val processingEnv: XProcessingEnv) {
     /**
      * Implement this interface if you want to provide own documentation writer.
      */
-    internal interface DocumetationWriter {
+    interface DocumetationWriter {
         /**
          * Compose documentation with help of provided environment, writer and collection of
          * found deeplink elements.

@@ -19,7 +19,7 @@ internal class GenericWriter : DocumetationWriter {
                 Documentor.formatJavaDoc(element.element.docComment)
                     ?.let { print(it) }
                 print(Documentor.PROPERTY_DELIMITER)
-                print(element.annotatedClass?.qualifiedName ?: "")
+                print(element.annotatedClass.qualifiedName)
                 if (element.annotationType == DeepLinkEntry.Type.METHOD) {
                     print(Documentor.CLASS_METHOD_NAME_DELIMITER)
                     print(element.method)

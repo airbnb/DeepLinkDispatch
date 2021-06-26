@@ -2,14 +2,14 @@ package com.airbnb.deeplinkdispatch
 
 object ProcessorUtils {
     @JvmStatic
-    fun decapitalize(str: String?): String? {
-        return if (str == null || (str.length > 1 && str[1].isUpperCase() && str[0].isUpperCase())) {
-            str
+    fun String.decapitalizeIfNotTwoFirstCharsUpperCase(): String {
+        return if (this.length > 1 && this[0].isUpperCase() && this[1].isUpperCase()) {
+            this
         } else {
-            str.replaceFirstChar { it.lowercase() }
+            this.replaceFirstChar { it.lowercase() }
         }
     }
 
     @JvmStatic
-    fun hasEmptyOrNullString(strings: Array<String>) = strings.any { it.isNullOrEmpty() }
+    fun Array<String>.hasEmptyOrNullString() = this.any { it.isNullOrEmpty() }
 }

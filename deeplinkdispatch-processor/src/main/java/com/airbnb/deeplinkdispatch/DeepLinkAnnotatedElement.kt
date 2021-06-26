@@ -25,7 +25,7 @@ internal data class DeepLinkAnnotatedElement @Throws(MalformedURLException::clas
     val uri: String,
     val element: XElement
 ) {
-    val annotatedClass: XTypeElement?
+    val annotatedClass: XTypeElement
     val method: String?
     val annotationType: DeepLinkEntry.Type
 
