@@ -4,6 +4,7 @@ import com.airbnb.deeplinkdispatch.test.Source
 import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.OptionName
 import com.tschuchort.compiletesting.OptionValue
+import com.tschuchort.compiletesting.kspArgs
 import com.tschuchort.compiletesting.kspSourcesDir
 import com.tschuchort.compiletesting.symbolProcessorProviders
 import org.assertj.core.api.Assertions
