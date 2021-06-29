@@ -67,11 +67,11 @@ class DocumentorTest {
 
         every { methodElement.name } returns "DocMethod"
         every { methodElement.enclosingElement } returns element2Enclosed
-        val deepLinkElement1 = DeepLinkAnnotatedElement(
+        val deepLinkElement1 = DeepLinkAnnotatedElement.ClassAnnotatedElement(
             "airbnb://example.com/{foo}/bar",
             classElement
         )
-        val deepLinkElement2 = DeepLinkAnnotatedElement(
+        val deepLinkElement2 = DeepLinkAnnotatedElement.MethodAnnotatedElement(
             "airbnb://example.com/{foo}/bar",
             methodElement
         )

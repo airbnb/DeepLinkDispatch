@@ -20,9 +20,13 @@ internal class GenericWriter : DocumetationWriter {
                     ?.let { print(it) }
                 print(Documentor.PROPERTY_DELIMITER)
                 print(element.annotatedClass.qualifiedName)
-                if (element.annotationType == DeepLinkEntry.Type.METHOD) {
-                    print(Documentor.CLASS_METHOD_NAME_DELIMITER)
-                    print(element.method)
+                when (element) {
+                    is DeepLinkAnnotatedElement.MethodAnnotatedElement -> {
+                        print(Documentor.CLASS_METHOD_NAME_DELIMITER)
+                        print(element.method)
+                    }
+                    else -> { /* Nothing */
+                    }
                 }
                 print(Documentor.ELEMENT_DELIMITER)
             }

@@ -1,7 +1,6 @@
-package com.airbnb.deeplinkdispatch.sample;
+package com.airbnb.deeplinkdispatch.sample
 
-import com.airbnb.deeplinkdispatch.DeepLinkModule;
+import com.airbnb.deeplinkdispatch.DeepLinkModule
 
 @DeepLinkModule
-public class SampleModule {
-}
+class SampleModule()

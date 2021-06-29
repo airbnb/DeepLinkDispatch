@@ -85,7 +85,7 @@ internal class Documentor(private val processingEnv: XProcessingEnv) {
                 Diagnostic.Kind.NOTE,
                 "Specify a file path at $DOC_OUTPUT_PROPERTY_NAME to generate deep link doc.",
             )
-            return file
+            return null
         }
         val parentDir = file.parentFile
         if (!parentDir.exists() && !parentDir.mkdirs()) {

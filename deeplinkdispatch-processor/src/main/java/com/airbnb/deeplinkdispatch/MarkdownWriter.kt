@@ -32,8 +32,10 @@ internal class MarkdownWriter : DocumetationWriter {
         for (element in elements) {
             val embeddedComments =
                 Documentor.formatJavaDoc(element.element.docComment) ?: ""
-            val methodName =
-                if (element.annotationType == DeepLinkEntry.Type.METHOD) element.method else ""
+            val methodName = when (element) {
+                is DeepLinkAnnotatedElement.MethodAnnotatedElement -> element.method
+                else -> ""
+            }
             val simpleName = element.annotatedClass.qualifiedName
             writer.println(
                 String.format(

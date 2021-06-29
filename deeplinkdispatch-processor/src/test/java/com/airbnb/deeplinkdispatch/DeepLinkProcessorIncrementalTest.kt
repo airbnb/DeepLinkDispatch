@@ -37,7 +37,7 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
                  }
                  """
     )
-    private val sampleActivityWithInnerClassDeeplink = SourceFile.java(
+    private val sampleActivityWithInnerClassDeeplinkJava = SourceFile.java(
         "SampleActivity.java",
         """
                  package com.example;
@@ -53,6 +53,27 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
                               public static Intent intentForDeepLinkMethod(Context context) {
                                 return new Intent();
                               }
+                        }
+                 }
+                 """
+    )
+    private val sampleActivityWithInnerClassDeeplinkKotlin = SourceFile.kotlin(
+        "SampleActivity.kt",
+        """
+                 package com.example
+                 import com.airbnb.deeplinkdispatch.DeepLink
+                 import com.airbnb.deeplinkdispatch.DeepLinkHandler
+                 import android.content.Intent
+                 import android.content.Context
+
+                 @DeepLinkHandler(SampleModule::class)
+                 class SampleActivity {
+                       class InnerClass { 
+                                object DeepLinks {
+                                    @DeepLink("airbnb://example.com/innerClassDeeplink")
+                                    @JvmStatic
+                                    fun intentForDeepLinkMethod(context: Context) = Intent()
+                                }
                         }
                  }
                  """
@@ -349,12 +370,18 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
     }
 
     @Test
-    fun testInnerClassDeeplink() {
+    fun testInnerClassJavaDeeplink() {
+//        val fakeKotlinFile = SourceFile.kotlin("FakeClass.kt",
+//                """
+//                package com.example
+//                class FakeClass()
+//        """.trimIndent())
         val sourceFiles = listOf(
             customAnnotationAppLink,
-            sampleActivityWithInnerClassDeeplink,
+            sampleActivityWithInnerClassDeeplinkJava,
             module,
-            fakeBaseDeeplinkDelegate
+            fakeBaseDeeplinkDelegate,
+//                fakeKotlinFile
         )
         val results = listOf(
 //            compileIncremental(
@@ -421,6 +448,87 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
                     
                       private static String matchIndex0() {
                         return "\u0001\u0001\u0000\u0000\u0000\u0000\u0000£r\u0002\u0006\u0000\u0000\u0000\u0000\u0000\u0095airbnb\u0004\u000b\u0000\u0000\u0000\u0000\u0000\u0082example.com\b\u0012\u0000h\u0000\u0000\u0000\u0000innerClassDeeplink\u0000'airbnb://example.com/innerClassDeeplink\u0000%com.example.SampleActivity${"\$"}InnerClass\u0017intentForDeepLinkMethod";
+                      }
+                    }
+
+                    """.trimIndent()
+            )
+        )
+    }
+
+    @Test
+    fun testInnerClassKotlinDeeplink() {
+        val sourceFiles = listOf(
+            customAnnotationAppLink,
+            sampleActivityWithInnerClassDeeplinkKotlin,
+            module,
+            fakeBaseDeeplinkDelegate,
+        )
+        val results = listOf(
+            compileIncremental(
+                sourceFiles = sourceFiles,
+                customDeepLinks = null,
+                useKsp = false,
+            ),
+            compileIncremental(
+                sourceFiles = sourceFiles,
+                customDeepLinks = null,
+                useKsp = true,
+            )
+        )
+        assertGeneratedCode(
+            results = results,
+            registryClassName = "com.example.SampleModuleRegistry",
+            indexEntries = listOf(
+                DeepLinkEntry(
+                    uriTemplate = "airbnb://example.com/innerClassDeeplink",
+                    className = "com.example.SampleActivity\$InnerClass\$DeepLinks",
+                    method = "intentForDeepLinkMethod"
+                )
+            ),
+            generatedFiles = mapOf(
+                "DeepLinkDelegate.java" to
+                    """
+                    package com.example;
+
+                    import com.airbnb.deeplinkdispatch.BaseDeepLinkDelegate;
+                    import java.lang.String;
+                    import java.util.Arrays;
+                    import java.util.Map;
+
+                    public final class DeepLinkDelegate extends BaseDeepLinkDelegate {
+                      public DeepLinkDelegate(SampleModuleRegistry sampleModuleRegistry) {
+                        super(Arrays.asList(
+                          sampleModuleRegistry
+                        ));
+                      }
+
+                      public DeepLinkDelegate(SampleModuleRegistry sampleModuleRegistry,
+                          Map<String, String> configurablePathSegmentReplacements) {
+                        super(Arrays.asList(
+                          sampleModuleRegistry),
+                          configurablePathSegmentReplacements
+                        );
+                      }
+                    }
+                    
+                    """.trimIndent(),
+                "SampleModuleRegistry.java" to
+                    """
+                    package com.example;
+
+                    import com.airbnb.deeplinkdispatch.BaseRegistry;
+                    import com.airbnb.deeplinkdispatch.base.Utils;
+                    import java.lang.String;
+                    
+                    public final class SampleModuleRegistry extends BaseRegistry {
+                      public SampleModuleRegistry() {
+                        super(Utils.readMatchIndexFromStrings( new String[] {matchIndex0(), }),
+                        new String[]{});
+                      }
+                    
+                      private static String matchIndex0() {
+                        return "\u0001\u0001\u0000\u0000\u0000\u0000\u0000­r\u0002\u0006\u0000\u0000\u0000\u0000\u0000\u009fairbnb\u0004\u000b\u0000\u0000\u0000\u0000\u0000\u008cexample.com\b\u0012\u0000r\u0000\u0000\u0000\u0000innerClassDeeplink\u0000'airbnb://example.com/innerClassDeeplink\u0000/com.example.SampleActivity${"$"}InnerClass${"$"}DeepLinks\u0017intentForDeepLinkMethod";
                       }
                     }
 

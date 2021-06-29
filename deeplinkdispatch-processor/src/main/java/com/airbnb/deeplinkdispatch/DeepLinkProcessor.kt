@@ -173,7 +173,11 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
         prefixes: Map<XType, Array<String>>
     ): List<DeepLinkAnnotatedElement?> = getAllUrisForAnnotatedElement(element, prefixes).mapNotNull { uri ->
         try {
-            DeepLinkAnnotatedElement(uri, element)
+            when (element) {
+                is XMethodElement ->
+                    DeepLinkAnnotatedElement.MethodAnnotatedElement(uri, element)
+                else -> DeepLinkAnnotatedElement.ClassAnnotatedElement(uri, element as XTypeElement)
+            }
         } catch (e: MalformedURLException) {
             environment.messager.printMessage(
                 kind = Diagnostic.Kind.ERROR,
@@ -402,7 +406,12 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
         for (element: DeepLinkAnnotatedElement in deepLinkElements) {
             val uriTemplate = element.uri
             try {
-                urisTrie.addToTrie(uriTemplate, element.annotatedClass.className.reflectionName() ?: "", element.method)
+                when (element) {
+                    is DeepLinkAnnotatedElement.ClassAnnotatedElement ->
+                        urisTrie.addToTrie(uriTemplate, element.annotatedClass.className.reflectionName() ?: "", null)
+                    is DeepLinkAnnotatedElement.MethodAnnotatedElement ->
+                        urisTrie.addToTrie(uriTemplate, element.annotatedClass.className.reflectionName() ?: "", element.method)
+                }
             } catch (e: IllegalArgumentException) {
                 logError(
                     element = element.annotatedClass,
@@ -520,7 +529,7 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
             element: XElement,
             prefixesMap: Map<XType, Array<String>>
         ): List<String> {
-            return element.annotatedAnnotation(DEEP_LINK_SPEC_CLASS).flatMap { customAnnotation ->
+            return element.findAnnotatedAnnotation<DeepLinkSpec>().flatMap { customAnnotation ->
                 val suffixes = customAnnotation.get<List<String>>("value")
                 val prefixes = prefixesMap[customAnnotation.type]
                     ?: throw DeepLinkProcessorException(
@@ -531,12 +540,9 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
             }
         }
 
-        private fun XElement.annotatedAnnotation(klass: KClass<*>): List<XAnnotation> =
-            getAllAnnotations().filter { annotation ->
-                annotation.type.typeElement?.getAllAnnotations()?.any {
-                    it.qualifiedName == klass.qualifiedName
-                } ?: false
-            }
+        internal inline fun <reified T : Annotation> XElement.findAnnotatedAnnotation(): List<XAnnotation> {
+            return getAllAnnotations().filter { annotation -> annotation.type.typeElement?.hasAnnotation(T::class) == true }
+        }
 
         private fun Set<XTypeElement>.filterAnnotatedAnnotations(klass: KClass<*>): Set<XTypeElement> =
             filter {
@@ -572,10 +578,14 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
                     .toTypedArray().size
             }
             if (comparisonResult == 0) {
-                val element1Representation =
-                    element1.uri + element1.method + element1.annotationType
-                val element2Representation =
-                    element2.uri + element2.method + element2.annotationType
+                val element1Representation = when (element1) {
+                    is DeepLinkAnnotatedElement.ClassAnnotatedElement -> element1.uri + DeepLinkAnnotatedElement.ClassAnnotatedElement::class.simpleName
+                    is DeepLinkAnnotatedElement.MethodAnnotatedElement -> element1.uri + element1.method + DeepLinkAnnotatedElement.MethodAnnotatedElement::class.simpleName
+                }
+                val element2Representation = when (element2) {
+                    is DeepLinkAnnotatedElement.ClassAnnotatedElement -> element2.uri + DeepLinkAnnotatedElement.ClassAnnotatedElement::class.simpleName
+                    is DeepLinkAnnotatedElement.MethodAnnotatedElement -> element2.uri + element2.method + DeepLinkAnnotatedElement.MethodAnnotatedElement::class.simpleName
+                }
                 comparisonResult = element1Representation.compareTo(element2Representation)
             }
             return comparisonResult

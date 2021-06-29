@@ -19,27 +19,20 @@ import androidx.room.compiler.processing.XElement
 import androidx.room.compiler.processing.XMethodElement
 import androidx.room.compiler.processing.XTypeElement
 import java.net.MalformedURLException
-import kotlin.jvm.Throws
 
-internal data class DeepLinkAnnotatedElement @Throws(MalformedURLException::class) constructor(
+sealed class DeepLinkAnnotatedElement @Throws(MalformedURLException::class) constructor(
     val uri: String,
-    val element: XElement
-) {
+    val element: XElement,
     val annotatedClass: XTypeElement
-    val method: String?
-    val annotationType: DeepLinkEntry.Type
+) {
+    class MethodAnnotatedElement(uri: String, element: XMethodElement) : DeepLinkAnnotatedElement(uri, element, element.enclosingElement as XTypeElement) {
+        val method = element.name
+    }
+
+    class ClassAnnotatedElement(uri: String, element: XTypeElement) : DeepLinkAnnotatedElement(uri, element, element)
 
     init {
         DeepLinkUri.parseTemplate(uri)
             ?: throw MalformedURLException("Malformed Uri Template: $uri")
-        if (element is XMethodElement) {
-            annotatedClass = element.enclosingElement as XTypeElement
-            method = element.name
-            annotationType = DeepLinkEntry.Type.METHOD
-        } else {
-            annotatedClass = element as XTypeElement
-            method = null
-            annotationType = DeepLinkEntry.Type.CLASS
-        }
     }
 }
