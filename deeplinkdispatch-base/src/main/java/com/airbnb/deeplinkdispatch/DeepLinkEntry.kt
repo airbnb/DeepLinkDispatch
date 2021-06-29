@@ -103,6 +103,6 @@ data class DeepLinkEntry(
     }
 
     override fun toString(): String {
-        return "uriTemplate: $uriTemplate activity: ${activityClass.name} method: $method"
+        return "uriTemplate: $uriTemplate className: $className method: $method"
     }
 }

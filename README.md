@@ -295,13 +295,90 @@ Add to your project `build.gradle` file (Latest version is [![DeeplinkDispatch v
 ```groovy
 dependencies {
   implementation 'com.airbnb:deeplinkdispatch:x.x.x'
+}
+```
+
+DeeplinkDispatch supports three ways to run the annotation processor dependin on which one you choose
+the setup is slightly different.
+
+### KSP
+
+When using Kotlin we strongly suggest to use KSP as it can bring major speed improvements.
+
+To run the processor via KSP you first have to apply the KSP plugin. Add the dependency to the
+`build.gradle` file of your main project:
+
+```groovy
+buildscript {
+
+    apply from: rootProject.file("dependencies.gradle")
+
+    repositories {
+        google()
+        gradlePluginPortal()
+    }
+    dependencies {
+        classpath "com.google.devtools.ksp:com.google.devtools.ksp.gradle.plugin:<ksp-version>"
+    }
+}
+```
+
+Apply the plugin in the `build.gradle` file of the project you want to use it:
+
+```groovy
+plugins {
+  id("com.google.devtools.ksp")
+}
+```
+
+and don't forget the dependency to the annotation procesor and DeepLinkDispatch itself:
+
+```groovy
+dependencies {
+  implementation 'com.airbnb:deeplinkdispatch:x.x.x'
+  ksp 'com.airbnb:deeplinkdispatch-processor:x.x.x'
+}
+```
+
+**Note:** When using KSP (you have `ksp 'com.airbnb:deeplinkdispatch-processor:x.x.x'` in your dependencies) at least one Kotlin source file *must* be present in the project or no output will be generated!
+
+As an example the main `sample` app is set up using KSP.
+
+### Kapt
+
+If your project is already setup for Kotlin the only thing you have to add is the plugin:
+
+```groovy
+plugins {
+  id("kotlin-kapt")
+}
+```
+
+and don't forget the dependency to the annotation procesor and DeepLinkDispatch itself:
+
+```groovy
+dependencies {
+  implementation 'com.airbnb:deeplinkdispatch:x.x.x'
+  kapt 'com.airbnb:deeplinkdispatch-processor:x.x.x'
+}
+```
+
+As an example the `sample-kapt-library` is set up using Kapt
+
+### Java annotation processor
+
+Just add the dependency to DeepLinkDispatch and to the annotation processor:
+
+```groovy
+dependencies {
+  implementation 'com.airbnb:deeplinkdispatch:x.x.x'
   annotationProcessor 'com.airbnb:deeplinkdispatch-processor:x.x.x'
 }
 ```
 
-_For **Kotlin** you should use_ `kapt` _instead of_ `annotationProcessor`
+As an example the `sample-library` is set up using the Java annotation processor
 
-Create your deep link module(s) (**new on DeepLinkDispatch v3**). For every class you annotate with `@DeepLinkModule`, DeepLinkDispatch will generate a "Registry" class, which contains a registry of all your `@DeepLink` annotations.
+When this is done, create your deep link module(s) (**new on DeepLinkDispatch v3**). For every class you annotate with `@DeepLinkModule`, DeepLinkDispatch will generate a "Registry" class, which contains a registry of all your `@DeepLink` annotations.
 
 ```java
 /** This will generate a AppDeepLinkModuleRegistry class */
@@ -387,7 +464,7 @@ When upgrading to 5.x+ you may experience some breaking API changes. Read about 
 
 ### Incremental annotation processing
 
-You must update your build.gradle to opt into incremental annotation processing. When enabled, all custom deep link annotations must be registered in the build.gradle (comma separated), otherwise they will be silently ignored.
+You must update your build.gradle to opt into incremental annotation processing. When enabled, all custom deep link annotations must be registered in the build.gradle (pipe (`|`) separated), otherwise they will be silently ignored.
 
 Examples of this configuration are as follows: 
 
@@ -397,7 +474,7 @@ javaCompileOptions {
   annotationProcessorOptions {
     arguments = [
       'deepLink.incremental': 'true',
-      'deepLink.customAnnotations': 'com.airbnb.AppDeepLink,com.airbnb.WebDeepLink'
+      'deepLink.customAnnotations': 'com.airbnb.AppDeepLink|com.airbnb.WebDeepLink'
     ]
   }
 }
@@ -408,8 +485,20 @@ javaCompileOptions {
 kapt {
   arguments {
     arg("deepLink.incremental", "true")
-    arg("deepLink.customAnnotations", "com.airbnb.AppDeepLink,com.airbnb.WebDeepLink")
+    arg("deepLink.customAnnotations", "com.airbnb.AppDeepLink|com.airbnb.WebDeepLink")
   }
+}
+```
+
+**KSP**
+
+KSP is always incremental and you always have to provide the list of `deepLink.customAnnotation` if
+you have any or they will not be processed.
+
+```groovy
+ksp {
+  arg("deepLink.incremental", "true")
+  arg("deepLink.customAnnotations", "com.airbnb.AppDeepLink|com.airbnb.WebDeepLink")
 }
 ```
 
@@ -457,12 +546,19 @@ tasks.withType(JavaCompile) {
 }
 ```
 
-If you are using Kotlin this is how you can enable it for kapt
+When using Kotlin Kapt
 ```groovy
 kapt {
   arguments {
     arg("deepLinkDoc.output", "${buildDir}/doc/deeplinks.txt")
   }
+}
+```
+
+and if you are using KSP
+```groovy
+kapt {
+  arg("deepLinkDoc.output", "${buildDir}/doc/deeplinks.txt")
 }
 ```
 

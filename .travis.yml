@@ -23,7 +23,7 @@ branches:
 notifications:
   email: false
 
-script: ./gradlew assemble check
+script: ./gradlew assemble check lintKotlin
 
 sudo: false
 

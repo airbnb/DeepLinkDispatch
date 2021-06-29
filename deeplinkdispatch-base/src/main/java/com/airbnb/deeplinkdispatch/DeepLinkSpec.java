@@ -44,5 +44,5 @@ import java.lang.annotation.Target;
 // are not so we need to mark them as RetentionPolicy.RUNTIME.
 @Retention(RetentionPolicy.RUNTIME)
 public @interface DeepLinkSpec {
-  String[] prefix();
+   String[] prefix();
 }

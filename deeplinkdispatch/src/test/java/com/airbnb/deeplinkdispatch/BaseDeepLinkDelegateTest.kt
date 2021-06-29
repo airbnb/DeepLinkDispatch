@@ -4,9 +4,10 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import io.mockk.every
+import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
-import org.mockito.Mockito
 
 @kotlin.ExperimentalUnsignedTypes
 class BaseDeepLinkDelegateTest {
@@ -55,9 +56,8 @@ class BaseDeepLinkDelegateTest {
     fun testDispatchNullIntent() {
         val entry = deepLinkEntry("airbnb://foo/{bar}")
         val testDelegate = getOneRegistryTestDelegate(listOf(entry), null)
-        val activity = Mockito.mock(Activity::class.java)
-        Mockito.`when`(activity.intent)
-                .thenReturn(null)
+        val activity = mockk<Activity>()
+        every { activity.intent } returns null
         var message: String? = null
         try {
             testDelegate.dispatchFrom(activity)
@@ -71,9 +71,8 @@ class BaseDeepLinkDelegateTest {
     fun testDispatchNonNullActivityNullIntent() {
         val entry = deepLinkEntry("airbnb://foo/{bar}")
         val testDelegate = getOneRegistryTestDelegate(listOf(entry), null)
-        val activity = Mockito.mock(Activity::class.java)
-        Mockito.`when`(activity.intent)
-                .thenReturn(null)
+        val activity = mockk<Activity>()
+        every { activity.intent } returns null
         var message: String? = null
         try {
             testDelegate.dispatchFrom(activity, null)
@@ -100,9 +99,8 @@ class BaseDeepLinkDelegateTest {
     fun testCreateResultNullIntent() {
         val entry = deepLinkEntry("airbnb://foo/{bar}")
         val testDelegate = getOneRegistryTestDelegate(listOf(entry), null)
-        val activity = Mockito.mock(Activity::class.java)
-        Mockito.`when`(activity.intent)
-                .thenReturn(null)
+        val activity = mockk<Activity>()
+        every { activity.intent } returns null
         var message: String? = null
         try {
             testDelegate.createResult(activity, null, null)
@@ -116,12 +114,10 @@ class BaseDeepLinkDelegateTest {
     fun testCreateResultAllNullData() {
         val entry = deepLinkEntry("airbnb://foo/{bar}")
         val testDelegate = getOneRegistryTestDelegate(listOf(entry), null)
-        val intent = Mockito.mock(Intent::class.java)
-        Mockito.`when`(intent.data)
-                .thenReturn(null)
-        val activity = Mockito.mock(Activity::class.java)
-        Mockito.`when`(activity.intent)
-                .thenReturn(intent)
+        val intent = mockk<Intent>()
+        every { intent.data } returns null
+        val activity = mockk<Activity>()
+        every { activity.intent } returns intent
         val result = testDelegate.createResult(activity, intent, null)
         assertThat(result).isEqualTo(DeepLinkResult(
             false, null, "No Uri in given activity's intent.", null, DeepLinkMethodResult(
@@ -137,18 +133,14 @@ class BaseDeepLinkDelegateTest {
         val matchUrl = "airbnb://foo/bar"
         val entry = deepLinkEntry(deeplinkUrl)
         val deeplinkMatchResult = DeepLinkMatchResult(entry, mapOf(DeepLinkUri.parse(matchUrl) to mapOf("bar" to "bar")))
-        val uri = Mockito.mock(Uri::class.java)
-        Mockito.`when`(uri.toString())
-                .thenReturn(matchUrl)
-        val intent = Mockito.mock(Intent::class.java)
-        Mockito.`when`(intent.data)
-                .thenReturn(uri)
-        val appContext = Mockito.mock(Context::class.java)
-        val activity = Mockito.mock(Activity::class.java)
-        Mockito.`when`(activity.intent)
-                .thenReturn(intent)
-        Mockito.`when`(activity.applicationContext)
-                .thenReturn(appContext)
+        val uri = mockk<Uri>()
+        every { uri.toString() } returns matchUrl
+        val intent = mockk<Intent>(relaxed = true)
+        every { intent.data } returns uri
+        val appContext = mockk<Context>(relaxed = true)
+        val activity = mockk<Activity>(relaxed = true)
+        every { activity.intent } returns intent
+        every { activity.applicationContext } returns appContext
         val errorHandler = DuplicatedMatchTestErrorHandler()
         val testDelegate = getTwoRegistriesTestDelegate(listOf(entry), listOf(entry), errorHandler)
         val (_, _, _, match) = testDelegate.dispatchFrom(activity, intent)
@@ -168,18 +160,14 @@ class BaseDeepLinkDelegateTest {
         val matchUrl = "airbnb://bar/foo"
         val entry1 = deepLinkEntry(deeplinkUrl1)
         val entry2 = deepLinkEntry(deeplinkUrl2)
-        val uri = Mockito.mock(Uri::class.java)
-        Mockito.`when`(uri.toString())
-                .thenReturn(matchUrl)
-        val intent = Mockito.mock(Intent::class.java)
-        Mockito.`when`(intent.data)
-                .thenReturn(uri)
-        val appContext = Mockito.mock(Context::class.java)
-        val activity = Mockito.mock(Activity::class.java)
-        Mockito.`when`(activity.intent)
-                .thenReturn(intent)
-        Mockito.`when`(activity.applicationContext)
-                .thenReturn(appContext)
+        val uri = mockk<Uri>()
+        every { uri.toString() } returns matchUrl
+        val intent = mockk<Intent>(relaxed = true)
+        every { intent.data } returns uri
+        val appContext = mockk<Context>(relaxed = true)
+        val activity = mockk<Activity>(relaxed = true)
+        every { activity.intent } returns intent
+        every { activity.applicationContext } returns appContext
         val errorHandler = DuplicatedMatchTestErrorHandler()
         val testDelegate = getTwoRegistriesTestDelegate(listOf(entry1), listOf(entry2), errorHandler)
         val (_, _, _, deepLinkEntry) = testDelegate.dispatchFrom(activity, intent)

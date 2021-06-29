@@ -7,7 +7,7 @@ buildscript {
     repositories {
         google()
         mavenCentral()
-        jcenter() // Still needed for some old dependencies
+        gradlePluginPortal()
         maven { url "https://oss.sonatype.org/service/local/repositories/snapshots/content/" }
     }
     dependencies {
@@ -17,6 +17,8 @@ buildscript {
         classpath deps.benchmarkGradlePlugin
         // Dokka is needed on classpath for vanniktech publish plugin
         classpath deps.dokkaPlugin
+        classpath deps.kspGradlePlugin
+        classpath deps.ktlintGradlePlugin
     }
 }
 
@@ -26,7 +28,6 @@ allprojects {
     repositories {
         google()
         mavenCentral()
-        jcenter() // Still needed for some old dependencies
     }
 }
 
