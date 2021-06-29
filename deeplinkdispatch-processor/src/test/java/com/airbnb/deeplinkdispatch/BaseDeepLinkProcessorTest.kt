@@ -1,10 +1,9 @@
 package com.airbnb.deeplinkdispatch
 
+import com.airbnb.deeplinkdispatch.test.Source
 import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.OptionName
 import com.tschuchort.compiletesting.OptionValue
-import com.tschuchort.compiletesting.SourceFile
-import com.tschuchort.compiletesting.kspArgs
 import com.tschuchort.compiletesting.kspSourcesDir
 import com.tschuchort.compiletesting.symbolProcessorProviders
 import org.assertj.core.api.Assertions
@@ -12,8 +11,8 @@ import java.io.File
 
 open class BaseDeepLinkProcessorTest {
     @JvmField
-    protected val fakeBaseDeeplinkDelegate = SourceFile.java(
-        "BaseDeepLinkDelegate.java",
+    protected val fakeBaseDeeplinkDelegate = Source.JavaSource(
+        "com.airbnb.deeplinkdispatch.BaseDeepLinkDelegate",
         """
                 package com.airbnb.deeplinkdispatch;
                 
@@ -30,10 +29,11 @@ open class BaseDeepLinkProcessorTest {
                 """
     )
 
-    internal val module = SourceFile.java(
-        "SampleModule.java",
+    internal val module = Source.JavaSource(
+        "com.example.SampleModule",
         """
-                 package com.example;import com.airbnb.deeplinkdispatch.DeepLinkModule;
+                 package com.example;
+                 import com.airbnb.deeplinkdispatch.DeepLinkModule;
                  
                  @DeepLinkModule
                  public class SampleModule {
@@ -90,12 +90,15 @@ open class BaseDeepLinkProcessorTest {
         }
 
         internal fun compile(
-            sourceFiles: List<SourceFile>,
+            sourceFiles: List<Source>,
             arguments: MutableMap<OptionName, OptionValue>? = null,
             useKsp: Boolean = false
         ): CompileResult {
             val compilation = KotlinCompilation().apply {
-                sources = sourceFiles
+                val sourcesDir = workingDir.resolve("sources")
+                sources = sourceFiles.map {
+                    it.toKotlinSourceFile(sourcesDir)
+                }
                 if (useKsp) {
                     symbolProcessorProviders = listOf(DeepLinkProcessorProvider())
                     arguments?.let { kspArgs = arguments }
@@ -116,7 +119,7 @@ open class BaseDeepLinkProcessorTest {
         }
 
         internal fun compileIncremental(
-            sourceFiles: List<SourceFile>,
+            sourceFiles: List<Source>,
             customDeepLinks: List<String>?,
             useKsp: Boolean = false,
             incrementalFlag: Boolean = true

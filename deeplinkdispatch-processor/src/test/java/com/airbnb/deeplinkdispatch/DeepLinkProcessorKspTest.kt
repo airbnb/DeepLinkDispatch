@@ -1,15 +1,13 @@
 package com.airbnb.deeplinkdispatch
 
-import com.tschuchort.compiletesting.SourceFile
+import com.airbnb.deeplinkdispatch.test.Source
 import org.junit.Test
 
 class DeepLinkProcessorKspTest : BaseDeepLinkProcessorTest() {
 
-    private val customWebDeepLinkJava: SourceFile
-        get() {
-            val customAnnotationWebLink = SourceFile.java(
-                "WebDeepLink.java",
-                """
+    private val customWebDeepLinkJava = Source.JavaSource(
+        "com.example.WebDeepLink",
+        """
                 package com.example;
                 import com.airbnb.deeplinkdispatch.DeepLinkSpec;
                 @DeepLinkSpec(prefix = { "http://", "https://"})
@@ -17,15 +15,11 @@ class DeepLinkProcessorKspTest : BaseDeepLinkProcessorTest() {
                     String[] value();
                 }
                 """
-            )
-            return customAnnotationWebLink
-        }
+    )
 
-    private val customAppDeepLinkJava: SourceFile
-        get() {
-            val customAnnotationAppLink = SourceFile.java(
-                "AppDeepLink.java",
-                """
+    private val customAppDeepLinkJava = Source.JavaSource(
+        "com.example.AppDeepLink",
+        """
                         package com.example;
                         import com.airbnb.deeplinkdispatch.DeepLinkSpec;
                         @DeepLinkSpec(prefix = { "example://" })
@@ -33,13 +27,11 @@ class DeepLinkProcessorKspTest : BaseDeepLinkProcessorTest() {
                             String[] value();
                         }
                         """
-            )
-            return customAnnotationAppLink
-        }
+    )
 
     @Test
     fun testWithKotlinSource() {
-        val sampleActivityKotlin = SourceFile.kotlin(
+        val sampleActivityKotlin = Source.KotlinSource(
             "SampleActivity.kt",
             """
                  package com.example
@@ -159,8 +151,8 @@ class DeepLinkProcessorKspTest : BaseDeepLinkProcessorTest() {
 
     @Test
     fun testKsp() {
-        val sampleActivityJava = SourceFile.java(
-            "SampleActivity.java",
+        val sampleActivityJava = Source.JavaSource(
+            "com.example.SampleActivity",
             """
                  package com.example;
                  import com.airbnb.deeplinkdispatch.DeepLink;

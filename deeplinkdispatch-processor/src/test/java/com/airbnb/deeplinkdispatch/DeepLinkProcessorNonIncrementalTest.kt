@@ -1,15 +1,15 @@
 package com.airbnb.deeplinkdispatch
 
+import com.airbnb.deeplinkdispatch.test.Source
 import com.tschuchort.compiletesting.KotlinCompilation
-import com.tschuchort.compiletesting.SourceFile
 import org.assertj.core.api.Assertions
 import org.junit.Test
 
 class DeepLinkProcessorNonIncrementalTest : BaseDeepLinkProcessorTest() {
     @Test
     fun testProcessor() {
-        val sampleActivity = SourceFile.java(
-            "SampleActivity.java",
+        val sampleActivity = Source.JavaSource(
+            "com.example.SampleActivity",
             """
                      package com.example;
                      import com.airbnb.deeplinkdispatch.DeepLink;
@@ -102,8 +102,8 @@ class DeepLinkProcessorNonIncrementalTest : BaseDeepLinkProcessorTest() {
 
     @Test
     fun testProcessorWithDefaultAndCustomAnnotations() {
-        val customAnnotationWebLink = SourceFile.java(
-            "WebDeepLink.java",
+        val customAnnotationWebLink = Source.JavaSource(
+            "com.example.WebDeepLink",
             """
             package com.example;
             import com.airbnb.deeplinkdispatch.DeepLinkSpec;
@@ -113,8 +113,8 @@ class DeepLinkProcessorNonIncrementalTest : BaseDeepLinkProcessorTest() {
             }
             """
         )
-        val customAnnotationAppLink = SourceFile.java(
-            "AppDeepLink.java",
+        val customAnnotationAppLink = Source.JavaSource(
+            "com.example.AppDeepLink",
             """
                     package com.example;
                     import com.airbnb.deeplinkdispatch.DeepLinkSpec;
@@ -124,10 +124,11 @@ class DeepLinkProcessorNonIncrementalTest : BaseDeepLinkProcessorTest() {
                     }
                     """
         )
-        val sampleActivity = SourceFile.java(
-            "SampleActivity.java",
+        val sampleActivity = Source.JavaSource(
+            "com.example.SampleActivity",
             """
-                 package com.example;import com.airbnb.deeplinkdispatch.DeepLink;
+                 package com.example;
+                 import com.airbnb.deeplinkdispatch.DeepLink;
                  import com.airbnb.deeplinkdispatch.DeepLinkHandler;
                  import com.example.SampleModule;
                  @DeepLink("airbnb://example.com/deepLink")
@@ -252,10 +253,11 @@ class DeepLinkProcessorNonIncrementalTest : BaseDeepLinkProcessorTest() {
 
     @Test
     fun testDuplicatedUriMatch() {
-        val sampleActivity = SourceFile.java(
-            "SampleActivity.java",
+        val sampleActivity = Source.JavaSource(
+            "com.example.SampleActivity",
             """
-                    package com.example;import android.content.Context;
+                    package com.example;
+                    import android.content.Context;
                     import android.content.Intent;
                     import com.airbnb.deeplinkdispatch.DeepLink;
                     import com.airbnb.deeplinkdispatch.DeepLinkHandler;
@@ -285,10 +287,11 @@ class DeepLinkProcessorNonIncrementalTest : BaseDeepLinkProcessorTest() {
                     }
                     """
         )
-        val module = SourceFile.java(
-            "SampleModule.java",
+        val module = Source.JavaSource(
+            "com.example.SampleModule",
             """
-                     package com.example;import com.airbnb.deeplinkdispatch.DeepLinkModule;
+                     package com.example;
+                     import com.airbnb.deeplinkdispatch.DeepLinkModule;
                      @DeepLinkModule
                      public class SampleModule { }
                      """
@@ -316,8 +319,8 @@ class DeepLinkProcessorNonIncrementalTest : BaseDeepLinkProcessorTest() {
 
     @Test
     fun uppercasePackage() {
-        val activityWithUppercasePackage = SourceFile.java(
-            "SampleActivity.java",
+        val activityWithUppercasePackage = Source.JavaSource(
+            "com.example.SampleActivity",
             """
                      package com.Example;
                      import com.airbnb.deeplinkdispatch.DeepLink;
@@ -409,8 +412,8 @@ class DeepLinkProcessorNonIncrementalTest : BaseDeepLinkProcessorTest() {
 
     @Test
     fun testNonStaticMethodCompileFail() {
-        val sampleActivity = SourceFile.java(
-            "SampleActivity.java",
+        val sampleActivity = Source.JavaSource(
+            "com.example.SampleActivity",
             """
                     package com.example;
                     import com.airbnb.deeplinkdispatch.DeepLink;
@@ -440,8 +443,8 @@ class DeepLinkProcessorNonIncrementalTest : BaseDeepLinkProcessorTest() {
 
     @Test
     fun testProcessorWithEmptyCustomPrefixFail() {
-        val emptyPrefixLink = SourceFile.java(
-            "MyDeepLink.java",
+        val emptyPrefixLink = Source.JavaSource(
+            "com.example.MyDeepLink",
             """
                     package com.example;
                     import com.airbnb.deeplinkdispatch.DeepLinkSpec;
@@ -478,8 +481,8 @@ class DeepLinkProcessorNonIncrementalTest : BaseDeepLinkProcessorTest() {
 
     @Test
     fun testProcessorWithEmptyDeepLinkSpecPrefixesFail() {
-        val emptyPrefixArrayLink = SourceFile.java(
-            "MyDeepLink.java",
+        val emptyPrefixArrayLink = Source.JavaSource(
+            "com.example.MyDeepLink",
             """
                     package com.example;
                     import com.airbnb.deeplinkdispatch.DeepLinkSpec;
@@ -515,8 +518,8 @@ class DeepLinkProcessorNonIncrementalTest : BaseDeepLinkProcessorTest() {
 
     @Test
     fun testProcessorWithDeepLinkSortRule() {
-        val sampleActivity = SourceFile.java(
-            "SampleActivity.java",
+        val sampleActivity = Source.JavaSource(
+            "com.example.SampleActivity",
             """
                     package com.example;
                     import android.content.Context;
@@ -650,8 +653,8 @@ class DeepLinkProcessorNonIncrementalTest : BaseDeepLinkProcessorTest() {
 
     @Test
     fun testNonAppCompatTaskStackBuilderClassErrorMessage() {
-        val sampleActivity = SourceFile.java(
-            "SampleActivity.java",
+        val sampleActivity = Source.JavaSource(
+            "com.example.SampleActivity",
             """
                     package com.example;
                     import com.airbnb.deeplinkdispatch.DeepLink;
@@ -686,10 +689,11 @@ class DeepLinkProcessorNonIncrementalTest : BaseDeepLinkProcessorTest() {
 
     @Test
     fun testInvalidComponentParamInSchemeErrorMessage() {
-        val sampleActivity = SourceFile.java(
-            "SampleActivity.java",
+        val sampleActivity = Source.JavaSource(
+            "com.example.SampleActivity",
             """
-                    package com.example;import com.airbnb.deeplinkdispatch.DeepLink;
+                    package com.example;
+                    import com.airbnb.deeplinkdispatch.DeepLink;
                     import com.airbnb.deeplinkdispatch.DeepLinkHandler;
                     
                     import com.example.SampleModule;
@@ -714,10 +718,11 @@ class DeepLinkProcessorNonIncrementalTest : BaseDeepLinkProcessorTest() {
 
     @Test
     fun testInvalidComponentParamPathSegmentErrorMessage() {
-        val sampleActivity = SourceFile.java(
-            "SampleActivity.java",
+        val sampleActivity = Source.JavaSource(
+            "com.example.SampleActivity",
             """
-             package com.example;import com.airbnb.deeplinkdispatch.DeepLink;
+             package com.example;
+             import com.airbnb.deeplinkdispatch.DeepLink;
              import com.airbnb.deeplinkdispatch.DeepLinkHandler;
         
              import com.example.SampleModule;
@@ -743,10 +748,11 @@ class DeepLinkProcessorNonIncrementalTest : BaseDeepLinkProcessorTest() {
 
     @Test
     fun malformedConfigurablePathSegmentFailsWithErrorMessage() {
-        val simpleActivity = SourceFile.java(
-            "SampleActivity.java",
+        val simpleActivity = Source.JavaSource(
+            "com.example.SampleActivity",
             """
-                    package com.example;import com.airbnb.deeplinkdispatch.DeepLink;
+                    package com.example;
+                    import com.airbnb.deeplinkdispatch.DeepLink;
                     import com.airbnb.deeplinkdispatch.DeepLinkHandler;
                     
                     import com.Example.SampleModule;
@@ -774,10 +780,11 @@ class DeepLinkProcessorNonIncrementalTest : BaseDeepLinkProcessorTest() {
     }
 
     companion object {
-        private val SIMPLE_DEEPLINK_ACTIVITY = SourceFile.java(
-            "SampleActivity.java",
+        private val SIMPLE_DEEPLINK_ACTIVITY = Source.JavaSource(
+            "com.example.SampleActivity",
             """
-                     package com.example;import com.airbnb.deeplinkdispatch.DeepLink;
+                     package com.example;
+                     import com.airbnb.deeplinkdispatch.DeepLink;
                      import com.airbnb.deeplinkdispatch.DeepLinkHandler;
                 
                      import com.example.SampleModule;
@@ -788,20 +795,22 @@ class DeepLinkProcessorNonIncrementalTest : BaseDeepLinkProcessorTest() {
                      """
         )
 
-        private val SAMPLE_DEEPLINK_MODULE = SourceFile.java(
-            "SampleModule.java",
+        private val SAMPLE_DEEPLINK_MODULE = Source.JavaSource(
+            "com.example.SampleModule",
             """
-                     package com.example;import com.airbnb.deeplinkdispatch.DeepLinkModule;
+                     package com.example;
+                     import com.airbnb.deeplinkdispatch.DeepLinkModule;
                 
                      @DeepLinkModule
                      public class SampleModule {
                      }
                      """
         )
-        private val SIMPLE_DEEPLINK_MODULE_UPPERCASE_PACKAGE = SourceFile.java(
-            "SampleModule.java",
+        private val SIMPLE_DEEPLINK_MODULE_UPPERCASE_PACKAGE = Source.JavaSource(
+            "com.Example.SampleModule",
             """
-                     package com.Example;import com.airbnb.deeplinkdispatch.DeepLinkModule;
+                     package com.Example;
+                     import com.airbnb.deeplinkdispatch.DeepLinkModule;
                 
                      @DeepLinkModule
                      public class SampleModule {

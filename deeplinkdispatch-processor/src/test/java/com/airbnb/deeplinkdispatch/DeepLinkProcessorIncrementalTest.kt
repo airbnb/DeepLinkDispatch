@@ -1,11 +1,11 @@
 package com.airbnb.deeplinkdispatch
 
-import com.tschuchort.compiletesting.SourceFile
+import com.airbnb.deeplinkdispatch.test.Source
 import org.junit.Test
 
 class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
-    private val customAnnotationAppLink = SourceFile.java(
-        "AppDeepLink.java",
+    private val customAnnotationAppLink = Source.JavaSource(
+        "com.example.AppDeepLink",
         """
                 package com.example;
                 import com.airbnb.deeplinkdispatch.DeepLinkSpec;
@@ -15,8 +15,8 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
                 }
                 """
     )
-    private val customAnnotationPlaceholderInSchemeHostAppLink = SourceFile.java(
-        "PlaceholderDeepLink.java",
+    private val customAnnotationPlaceholderInSchemeHostAppLink = Source.JavaSource(
+        "com.example.PlaceholderDeepLink",
         """
                 package com.example;
                 import com.airbnb.deeplinkdispatch.DeepLinkSpec;
@@ -26,8 +26,8 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
                 }
                 """
     )
-    private val sampleActivityWithStandardAndCustomDeepLink = SourceFile.java(
-        "SampleActivity.java",
+    private val sampleActivityWithStandardAndCustomDeepLink = Source.JavaSource(
+        "com.example.SampleActivity",
         """
                  package com.example;
                  import com.airbnb.deeplinkdispatch.DeepLink;
@@ -37,8 +37,8 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
                  }
                  """
     )
-    private val sampleActivityWithInnerClassDeeplinkJava = SourceFile.java(
-        "SampleActivity.java",
+    private val sampleActivityWithInnerClassDeeplinkJava = Source.JavaSource(
+        "com.example.SampleActivity",
         """
                  package com.example;
                  import com.airbnb.deeplinkdispatch.DeepLink;
@@ -57,7 +57,7 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
                  }
                  """
     )
-    private val sampleActivityWithInnerClassDeeplinkKotlin = SourceFile.kotlin(
+    private val sampleActivityWithInnerClassDeeplinkKotlin = Source.KotlinSource(
         "SampleActivity.kt",
         """
                  package com.example
@@ -78,8 +78,8 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
                  }
                  """
     )
-    private val sampleActivityWithOnlyCustomDeepLink = SourceFile.java(
-        "SampleActivity.java",
+    private val sampleActivityWithOnlyCustomDeepLink = Source.JavaSource(
+        "com.example.SampleActivity",
         """
                  package com.example;import com.airbnb.deeplinkdispatch.DeepLink;
                  import com.airbnb.deeplinkdispatch.DeepLinkHandler;
@@ -92,8 +92,8 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
                  }
                  """
     )
-    private val sampleActivityWithOnlyCustomPlaceholderDeepLink = SourceFile.java(
-        "SampleActivity.java",
+    private val sampleActivityWithOnlyCustomPlaceholderDeepLink = Source.JavaSource(
+        "com.example.SampleActivity",
         """
                  package com.example;import com.airbnb.deeplinkdispatch.DeepLink;
                  import com.airbnb.deeplinkdispatch.DeepLinkHandler;
@@ -379,15 +379,17 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
         )
         val results = listOf(
             compileIncremental(
-                    sourceFiles = sourceFiles,
-                    customDeepLinks = null,
-                    useKsp = false,
-            ),
-            compileIncremental(
                 sourceFiles = sourceFiles,
                 customDeepLinks = null,
-                useKsp = true,
-            )
+                useKsp = false,
+            ),
+            // Need to disable for now because of bug in compile testing lib
+            // https://github.com/tschuchortdev/kotlin-compile-testing/issues/105
+//            compileIncremental(
+//                sourceFiles = sourceFiles,
+//                customDeepLinks = null,
+//                useKsp = true,
+//            )
         )
         assertGeneratedCode(
             results = results,
