@@ -6,6 +6,7 @@ apply plugin: 'checkstyle'
 
 apply plugin: 'kotlin-android'
 apply plugin: 'com.vanniktech.maven.publish'
+apply plugin: 'org.jmailen.kotlinter'
 
 dependencies {
   api project(':deeplinkdispatch-base')
