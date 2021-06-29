@@ -371,24 +371,18 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
 
     @Test
     fun testInnerClassJavaDeeplink() {
-//        val fakeKotlinFile = SourceFile.kotlin("FakeClass.kt",
-//                """
-//                package com.example
-//                class FakeClass()
-//        """.trimIndent())
         val sourceFiles = listOf(
             customAnnotationAppLink,
             sampleActivityWithInnerClassDeeplinkJava,
             module,
             fakeBaseDeeplinkDelegate,
-//                fakeKotlinFile
         )
         val results = listOf(
-//            compileIncremental(
-//                    sourceFiles = sourceFiles,
-//                    customDeepLinks = null,
-//                    useKsp = false,
-//            ),
+            compileIncremental(
+                    sourceFiles = sourceFiles,
+                    customDeepLinks = null,
+                    useKsp = false,
+            ),
             compileIncremental(
                 sourceFiles = sourceFiles,
                 customDeepLinks = null,
