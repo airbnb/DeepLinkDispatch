@@ -304,9 +304,6 @@ the setup is slightly different.
 ### KSP
 
 When using Kotlin we strongly suggest to use KSP as it can bring major speed improvements.
-We ran into issues when enabling KSP on a project while the Kapt plugin was still applied.
-If you want to both use Kapt and KSP processors on the same project be careful and expect
-things to not work smoothly.
 
 To run the processor via KSP you first have to apply the KSP plugin. Add the dependency to the
 `build.gradle` file of your main project:
