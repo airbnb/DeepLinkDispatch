@@ -343,6 +343,8 @@ dependencies {
 }
 ```
 
+**Note:** When using KSP (you have `ksp 'com.airbnb:deeplinkdispatch-processor:x.x.x'` in your dependencies) at least one Kotlin source file *must* be present in the project or no output will be generated!
+
 As an example the main `sample` app is set up using KSP.
 
 ### Kapt
