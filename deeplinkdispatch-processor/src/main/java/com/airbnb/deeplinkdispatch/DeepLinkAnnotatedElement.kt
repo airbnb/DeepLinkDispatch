@@ -16,6 +16,7 @@
 package com.airbnb.deeplinkdispatch
 
 import androidx.room.compiler.processing.XElement
+import androidx.room.compiler.processing.XMemberContainer
 import androidx.room.compiler.processing.XMethodElement
 import androidx.room.compiler.processing.XTypeElement
 import java.net.MalformedURLException
@@ -23,9 +24,9 @@ import java.net.MalformedURLException
 sealed class DeepLinkAnnotatedElement @Throws(MalformedURLException::class) constructor(
     val uri: String,
     val element: XElement,
-    val annotatedClass: XTypeElement
+    val annotatedClass: XMemberContainer
 ) {
-    class MethodAnnotatedElement(uri: String, element: XMethodElement) : DeepLinkAnnotatedElement(uri, element, element.enclosingElement as XTypeElement) {
+    class MethodAnnotatedElement(uri: String, element: XMethodElement) : DeepLinkAnnotatedElement(uri, element, element.enclosingElement) {
         val method = element.name
     }
 

@@ -5,7 +5,7 @@ def versions = [
     roboelectricVersion          : '4.5.1',
     benchmarkVersion             : '1.0.0',
     compileTestingVersion        : '1.4.2',
-    kspVersion                   : '1.5.10-1.0.0-beta02',
+    kspVersion                   : '1.5.10-1.0.0-beta01',
     xProcessorVersion            : '2.4.0-alpha03',
     mockkVersion                 : '1.11.0',
     ktlintGradlePluginVersion    : '3.4.5'

@@ -36,7 +36,7 @@ internal class MarkdownWriter : DocumetationWriter {
                 is DeepLinkAnnotatedElement.MethodAnnotatedElement -> element.method
                 else -> ""
             }
-            val simpleName = element.annotatedClass.qualifiedName
+            val simpleName = element.annotatedClass.className.reflectionName()
             writer.println(
                 String.format(
                     Locale.US, format,
