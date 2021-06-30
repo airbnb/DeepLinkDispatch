@@ -30,6 +30,95 @@ class DeepLinkProcessorKspTest : BaseDeepLinkProcessorTest() {
     )
 
     @Test
+    fun testWithNoClass() {
+        val sampleDeeplinkMethod = Source.KotlinSource(
+            "SampleNoClassFile.kt",
+            """
+        package com.example
+        import android.content.Context
+        import android.content.Intent
+        import com.airbnb.deeplinkdispatch.DeepLink
+        import com.airbnb.deeplinkdispatch.DeepLinkHandler
+        
+        @DeepLinkHandler( SampleModule::class )
+        class Activity {}
+
+        @DeepLink("airbnb://example.com/noClassTest")
+        fun intentForInquiryDetailFragment(context: Context) = Intent()
+            """.trimIndent()
+        )
+        val sourceFiles = listOf(
+            module, sampleDeeplinkMethod, fakeBaseDeeplinkDelegate
+        )
+        val results = listOf(
+            compileIncremental(
+                sourceFiles = sourceFiles,
+                useKsp = false,
+            ),
+            compileIncremental(
+                sourceFiles = sourceFiles,
+                useKsp = true,
+                incrementalFlag = false
+            )
+        )
+        assertGeneratedCode(
+            results = results,
+            registryClassName = "com.example.SampleModuleRegistry",
+            indexEntries = listOf(
+                DeepLinkEntry(uriTemplate = "airbnb://example.com/noClassTest", className = "com.example.SampleNoClassFileKt", method = "intentForInquiryDetailFragment")
+            ),
+            generatedFiles = mapOf(
+                "DeepLinkDelegate.java" to
+                    """
+                        package com.example;
+
+                        import com.airbnb.deeplinkdispatch.BaseDeepLinkDelegate;
+                        import java.lang.String;
+                        import java.util.Arrays;
+                        import java.util.Map;
+
+                        public final class DeepLinkDelegate extends BaseDeepLinkDelegate {
+                          public DeepLinkDelegate(SampleModuleRegistry sampleModuleRegistry) {
+                            super(Arrays.asList(
+                              sampleModuleRegistry
+                            ));
+                          }
+
+                          public DeepLinkDelegate(SampleModuleRegistry sampleModuleRegistry,
+                              Map<String, String> configurablePathSegmentReplacements) {
+                            super(Arrays.asList(
+                              sampleModuleRegistry),
+                              configurablePathSegmentReplacements
+                            );
+                          }
+                        }
+                        
+                    """.trimIndent(),
+                "SampleModuleRegistry.java" to
+                    """
+                        package com.example;
+
+                        import com.airbnb.deeplinkdispatch.BaseRegistry;
+                        import com.airbnb.deeplinkdispatch.base.Utils;
+                        import java.lang.String;
+
+                        public final class SampleModuleRegistry extends BaseRegistry {
+                          public SampleModuleRegistry() {
+                            super(Utils.readMatchIndexFromStrings( new String[] {matchIndex0(), }),
+                            new String[]{});
+                          }
+
+                          private static String matchIndex0() {
+                            return "\u0001\u0001\u0000\u0000\u0000\u0000\u0000\u0096r\u0002\u0006\u0000\u0000\u0000\u0000\u0000\u0088airbnb\u0004\u000b\u0000\u0000\u0000\u0000\u0000uexample.com\b\u000b\u0000b\u0000\u0000\u0000\u0000noClassTest\u0000 airbnb://example.com/noClassTest\u0000\u001fcom.example.SampleNoClassFileKt\u001eintentForInquiryDetailFragment";
+                          }
+                        }
+                        
+                    """.trimIndent()
+            )
+        )
+    }
+
+    @Test
     fun testWithKotlinSource() {
         val sampleActivityKotlin = Source.KotlinSource(
             "SampleActivity.kt",

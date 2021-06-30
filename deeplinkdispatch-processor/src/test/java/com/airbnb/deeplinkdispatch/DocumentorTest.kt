@@ -1,9 +1,11 @@
 package com.airbnb.deeplinkdispatch
 
+import androidx.room.compiler.processing.XMemberContainer
 import androidx.room.compiler.processing.XMessager
 import androidx.room.compiler.processing.XMethodElement
 import androidx.room.compiler.processing.XProcessingEnv
 import androidx.room.compiler.processing.XTypeElement
+import com.squareup.javapoet.ClassName
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
@@ -58,12 +60,12 @@ class DocumentorTest {
         val classElement = mockk<XTypeElement>()
 
         every { classElement.docComment } returns "Sample doc \n @param empty \n @return nothing"
-        every { classElement.qualifiedName } returns "DocClass"
+        every { classElement.className } returns ClassName.get("", "DocClass")
 
         val methodElement = mockk<XMethodElement>(relaxed = true)
 
-        val element2Enclosed = mockk<XTypeElement>(relaxed = true)
-        every { element2Enclosed.qualifiedName } returns "DocClass"
+        val element2Enclosed = mockk<XMemberContainer>(relaxed = true)
+        every { element2Enclosed.className } returns ClassName.get("", "DocClass")
 
         every { methodElement.name } returns "DocMethod"
         every { methodElement.enclosingElement } returns element2Enclosed

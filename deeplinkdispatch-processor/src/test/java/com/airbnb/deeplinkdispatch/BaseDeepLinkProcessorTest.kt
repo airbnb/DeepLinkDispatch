@@ -121,7 +121,7 @@ open class BaseDeepLinkProcessorTest {
 
         internal fun compileIncremental(
             sourceFiles: List<Source>,
-            customDeepLinks: List<String>?,
+            customDeepLinks: List<String> = emptyList(),
             useKsp: Boolean = false,
             incrementalFlag: Boolean = true
         ): CompileResult {
@@ -129,7 +129,7 @@ open class BaseDeepLinkProcessorTest {
             if (incrementalFlag) {
                 arguments["deepLink.incremental"] = "true"
             }
-            if (customDeepLinks != null) {
+            if (customDeepLinks.isNotEmpty()) {
                 arguments["deepLink.customAnnotations"] = customDeepLinks.joinToString(separator = "|")
             }
             return compile(

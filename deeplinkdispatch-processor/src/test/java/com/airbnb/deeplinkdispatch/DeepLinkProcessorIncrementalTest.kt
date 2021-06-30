@@ -280,12 +280,10 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
         val results = listOf(
             compileIncremental(
                 sourceFiles = sourceFiles,
-                customDeepLinks = null,
                 useKsp = false,
             ),
             compileIncremental(
                 sourceFiles = sourceFiles,
-                customDeepLinks = null,
                 useKsp = true,
             )
         )
@@ -353,12 +351,10 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
         val results = listOf(
             compileIncremental(
                 sourceFiles = sourceFiles,
-                customDeepLinks = null,
                 useKsp = false,
             ),
             compileIncremental(
                 sourceFiles = sourceFiles,
-                customDeepLinks = null,
                 useKsp = true,
             )
         )
@@ -380,7 +376,6 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
         val results = listOf(
             compileIncremental(
                 sourceFiles = sourceFiles,
-                customDeepLinks = null,
                 useKsp = false,
             ),
             // Need to disable for now because of bug in compile testing lib
@@ -463,12 +458,10 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
         val results = listOf(
             compileIncremental(
                 sourceFiles = sourceFiles,
-                customDeepLinks = null,
                 useKsp = false,
             ),
             compileIncremental(
                 sourceFiles = sourceFiles,
-                customDeepLinks = null,
                 useKsp = true,
             )
         )
