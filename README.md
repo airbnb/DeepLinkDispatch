@@ -263,14 +263,14 @@ section per placeholder and it has to be at the end of the placeholder.
 
 ```java
 // Match all deeplinks which a scheme staring with "http".
-@DeepLinkSpec(prefix = { "http{url_scheme_suffix}://{prefix(|www.)}airbnb.{domain(com|de)}")
+@DeepLinkSpec(prefix = { "http{url_scheme_suffix(|s)}://{prefix(|www.)}airbnb.{domain(com|de)}")
 @Retention(RetentionPolicy.CLASS)
 public @interface WebDeepLink {
   String[] value();
 }
 ```
 
-The above code would match URLs that start with `http` or `https`, are fore `airbnb.com` or
+The above code would match URLs that start with `http` or `https`, are for `airbnb.com` or
 `airbnb.de` or `www.airbnb.com` and `www.airbnb.de`. They would e.g. not match `airbnb.ro`.
 
 ```java
