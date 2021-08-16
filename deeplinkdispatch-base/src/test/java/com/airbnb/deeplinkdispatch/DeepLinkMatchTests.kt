@@ -45,7 +45,7 @@ class DeepLinkMatchTests {
     }
 
     @Test(expected = IllegalStateException::class)
-    fun testMatchArraySerializationDeserializationNonExistantClass() {
+    fun testMatchArraySerializationDeserializationNonExistentClass() {
         val matchByteArray = matchByteArray(UriMatch(ONE_PARAM_SCHEMA, "someNonexistantClass", null))
         val entryFromArray = MatchIndex(matchByteArray.toByteArray()).getMatchResultFromIndex(
             matchByteArray.size,

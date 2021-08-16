@@ -11,6 +11,7 @@ import com.airbnb.deeplinkdispatch.UrlElement;
 
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -75,6 +76,15 @@ public class MatchIndex {
   public static final String MATCH_PARAM_DIVIDER_CHAR = String.valueOf((char) 0x1e);
   @NonNull
   public static final char[] VARIABLE_DELIMITER = {'{', '}'};
+
+  @NonNull
+  public static final char[] ALLOWED_VALUES_DELIMITER = {'(', ')'};
+
+  @NonNull
+  public static final char ALLOWED_VALUES_SEPARATOR = '|';
+
+  private static final String ALLOWED_VALUES_SEPARATOR_REGEX_STRING =
+          "\\" + ALLOWED_VALUES_SEPARATOR;
 
   @NonNull
   public final byte[] byteArray;
@@ -354,18 +364,24 @@ public class MatchIndex {
             // Size is without braces
             byte[] placeholderName = new byte[(valueStartPos + j) - (valueStartPos + i) - 1];
             System.arraycopy(valueToMatch,
-              i,
-              placeholderValue,
-              0,
-              placeholderValue.length);
+                    i, placeholderValue, 0, placeholderValue.length);
             System.arraycopy(byteArray,
-              valueStartPos + i + 1,
-              placeholderName,
-              0,
-              placeholderName.length);
-            return new CompareResult(
-              new String(placeholderName) + MATCH_PARAM_DIVIDER_CHAR
-                + new String(placeholderValue), false);
+                    valueStartPos + i + 1, placeholderName, 0, placeholderName.length);
+            // If the placeholder name has an allowed values field check if the value found is in
+            // there, otherwise this is not a match.
+            int beginAllowedValues = verifyAllowedValues(placeholderName, placeholderValue);
+            if (beginAllowedValues > -1) {
+              byte[] placeholderValueWithoutAllowedValues;
+              if (beginAllowedValues == Integer.MAX_VALUE) {
+                placeholderValueWithoutAllowedValues = placeholderName;
+              } else {
+                placeholderValueWithoutAllowedValues =
+                        Arrays.copyOfRange(placeholderName, 0, beginAllowedValues);
+              }
+              return new CompareResult(
+                      new String(placeholderValueWithoutAllowedValues) + MATCH_PARAM_DIVIDER_CHAR
+                              + new String(placeholderValue), false);
+            } else return null;
           }
           if (byteArray[valueStartPos + j] != valueToMatch[k]) {
             return null;
@@ -377,6 +393,42 @@ public class MatchIndex {
       }
     }
     return new CompareResult("", false); // Matches but is no placeholder
+  }
+
+  /**
+   * Check if this placholder has an allowed values field and if so check if the matched value
+   * is allowed.
+   *
+   * @param placeholderName         The placeholder name (as it appears between the
+   *                                VARIABLE_DELIMITER)
+   * @param matchedPlaceholderValue The matched placeholder value.
+   * @return MAX_INT if there is no valid allowed values field in the placeholderName or position
+   * of allowed placeholder value if the matched value is allowed, -1 otherwise.
+   */
+  private int verifyAllowedValues(byte[] placeholderName, byte[] matchedPlaceholderValue) {
+    int beginAllowedValues = charPos(placeholderName, ALLOWED_VALUES_DELIMITER[0]);
+    // No allowed values so this check is true
+    if (beginAllowedValues == -1) return Integer.MAX_VALUE;
+    int endAllowedValues = charPos(placeholderName, ALLOWED_VALUES_DELIMITER[1]);
+    if (beginAllowedValues > endAllowedValues) return Integer.MAX_VALUE;
+    String[] allowedValues = new String(
+            Arrays.copyOfRange(placeholderName,
+                    beginAllowedValues + 1,
+                    endAllowedValues)).split(ALLOWED_VALUES_SEPARATOR_REGEX_STRING);
+    if (Arrays.binarySearch(allowedValues, new String(matchedPlaceholderValue)) > -1) {
+      return beginAllowedValues;
+    }
+    return -1;
+  }
+
+  private int charPos(byte[] byteArray, char value) {
+    if (byteArray == null) return -1;
+    for (int i = 0; i < byteArray.length; i++) {
+      if (byteArray[i] == value) {
+        return i;
+      }
+    }
+    return -1;
   }
 
   /**
