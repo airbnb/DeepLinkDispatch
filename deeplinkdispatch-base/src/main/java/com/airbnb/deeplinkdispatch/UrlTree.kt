@@ -10,7 +10,19 @@ import java.io.OutputStream
 import java.nio.charset.Charset
 import kotlin.text.Charsets.UTF_8
 
-data class UriMatch(val uriTemplate: String, val annotatedClassFullyQualifiedName: String, val annotatedMethod: String?)
+data class UriMatch(val type: MatchType, val uriTemplate: String, val annotatedClassFullyQualifiedName: String, val annotatedMethod: String?)
+
+enum class MatchType(val flagValue: UByte) {
+    Activity(0u), Method(1u), Handler(2u);
+
+    companion object {
+        @JvmStatic
+        fun fromInt(readOneByteAsInt: Int): MatchType {
+            return values().firstOrNull { it.flagValue.toInt() == readOneByteAsInt }
+                ?: error("Invalid flag value: $readOneByteAsInt")
+        }
+    }
+}
 
 @kotlin.ExperimentalUnsignedTypes
 open class TreeNode(open val id: String, internal val metadata: NodeMetadata) {
@@ -113,14 +125,14 @@ data class Root(override val id: String = "r") : TreeNode(ROOT_VALUE, NodeMetada
     /**
      * Add the given DeepLinkUri to the the trie
      */
-    fun addToTrie(deepLinkUriTemplate: String, annotatedClassFullyQualifiedName: String, annotatedMethod: String?) {
+    fun addToTrie(matchType: MatchType, deepLinkUriTemplate: String, annotatedClassFullyQualifiedName: String, annotatedMethod: String?) {
         val deepLinkUri = DeepLinkUri.parseTemplate(deepLinkUriTemplate)
         var node = this.addNode(Scheme(deepLinkUri.scheme().also { validateIfComponentParam(it) }))
         if (!deepLinkUri.host().isNullOrEmpty()) {
             validateIfComponentParam(deepLinkUri.host())
             node = node.addNode(Host(deepLinkUri.host()))
             if (deepLinkUri.pathSegments().isNullOrEmpty()) {
-                node.match = UriMatch(deepLinkUriTemplate, annotatedClassFullyQualifiedName, annotatedMethod)
+                node.match = UriMatch(matchType,deepLinkUriTemplate, annotatedClassFullyQualifiedName, annotatedMethod)
             }
         }
         if (!deepLinkUri.pathSegments().isNullOrEmpty()) {
@@ -129,7 +141,7 @@ data class Root(override val id: String = "r") : TreeNode(ROOT_VALUE, NodeMetada
                 validateIfConfigurablePathSegment(pathSegment)
                 node = node.addNode(PathSegment(pathSegment))
             }
-            node.match = UriMatch(deepLinkUriTemplate, annotatedClassFullyQualifiedName, annotatedMethod)
+            node.match = UriMatch(matchType, deepLinkUriTemplate, annotatedClassFullyQualifiedName, annotatedMethod)
         }
     }
 }
@@ -142,31 +154,36 @@ data class PathSegment(override val id: String) : TreeNode(id = id, metadata = N
 
 /**
  * Match data byte array format is:
- * 0..1 url                                                        url template length
- * 2..(2+url template length)                                      url template
- * (2+url template length)..
- * (2+url template length)+2                                       classname length
- * (2+url template length)+2..
- * (2+url template length)+2+classname length                      class name
- * (2+url template length)+2+classname length..
- * (2+url template length)+2+classname length+1                    method name length (can be 0)
- * (2+url template length)+2+classname length+1..
- * (2+url template length)+2+classname length+1+method name length method name
+ * 0                                                               match type
+ * 1..1 url                                                        url template length
+ * 3..(2+url template length)                                      url template
+ * (3+url template length)..
+ * (3+url template length)+2                                       classname length
+ * (3+url template length)+2..
+ * (3+url template length)+2+classname length                      class name
+ * (3+url template length)+2+classname length..
+ * (3+url template length)+2+classname length+1                    method name length (can be 0)
+ * (3+url template length)+2+classname length+1..
+ * (3+url template length)+2+classname length+1+method name length method name
  */
 fun matchByteArray(match: UriMatch?): UByteArray {
     if (match == null) return UByteArray(0)
 
     val uriTemplateByteArray = match.uriTemplate.toByteArray(UTF_8).toUByteArray()
     val classNameByteArray = match.annotatedClassFullyQualifiedName.toByteArray(UTF_8).toUByteArray()
-    val methodNameByteArray = match.annotatedMethod?.let { it.toByteArray(UTF_8).toUByteArray() }
+    val methodNameByteArray = match.annotatedMethod?.toByteArray(UTF_8)?.toUByteArray()
             ?: UByteArray(0)
-    return UByteArray(MATCH_DATA_URL_TEMPLATE_LENGTH + uriTemplateByteArray.size
+    return UByteArray(
+        MATCH_DATA_TYPE_LENGTH + MATCH_DATA_URL_TEMPLATE_LENGTH + uriTemplateByteArray.size
             + MATCH_DATA_CLASS_LENGTH + classNameByteArray.size
             + MATCH_DATA_METHOD_LENGTH + methodNameByteArray.size)
             .apply {
                 var position = 0
+                // Type
+                this[position] = match.type.flagValue
+                position += MATCH_DATA_TYPE_LENGTH
                 // Uri template
-                writeUShortAt(startIndex = 0, value = uriTemplateByteArray.size.toUShort())
+                writeUShortAt(startIndex = position, value = uriTemplateByteArray.size.toUShort())
                 position += MATCH_DATA_URL_TEMPLATE_LENGTH
                 uriTemplateByteArray.copyInto(destination = this, destinationOffset = position)
                 position += uriTemplateByteArray.size
@@ -180,12 +197,12 @@ fun matchByteArray(match: UriMatch?): UByteArray {
                 // method
                 this.set(position, methodNameByteArray.size.toUByte())
                 position += MATCH_DATA_METHOD_LENGTH
-                if (methodNameByteArray.size > 0) methodNameByteArray.copyInto(destination = this, destinationOffset = position)
+                if (methodNameByteArray.isNotEmpty()) methodNameByteArray.copyInto(destination = this, destinationOffset = position)
             }
 }
 
 fun UByteArray.writeUIntAt(startIndex: Int, value: UInt) {
-    val ubyte3: UByte = value.and(0x000000FFu).toUByte().toUByte()
+    val ubyte3: UByte = value.and(0x000000FFu).toUByte()
     val ubyte2: UByte = value.shr(8).and(0x0000FFu).toUByte()
     val ubyte1: UByte = value.shr(16).and(0x00FFu).toUByte()
     val ubyte0: UByte = value.shr(24).and(0xFFu).toUByte()

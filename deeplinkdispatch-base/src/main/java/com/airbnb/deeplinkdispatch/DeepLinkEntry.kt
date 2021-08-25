@@ -31,7 +31,7 @@ data class DeepLinkMatchResult(val deeplinkEntry: DeepLinkEntry,
 
     override fun toString(): String {
         return "uriTemplate: ${deeplinkEntry.uriTemplate} " +
-                "activity: ${deeplinkEntry.activityClass.name} " +
+                "activity: ${deeplinkEntry.clazz.name} " +
                 "method: ${deeplinkEntry.method} " +
                 "parameters: $parameterMap"
     }
@@ -77,6 +77,7 @@ data class DeepLinkMatchResult(val deeplinkEntry: DeepLinkEntry,
 }
 
 data class DeepLinkEntry(
+    val type: MatchType,
     val uriTemplate: String,
     /**
      * The class name where the annotation corresponding to where an instance of DeepLinkEntry is declared.
@@ -85,12 +86,7 @@ data class DeepLinkEntry(
     val method: String?
 ) {
 
-    enum class Type {
-        CLASS,
-        METHOD
-    }
-
-    val activityClass: Class<*> by lazy {
+    val clazz: Class<*> by lazy {
         try {
             Class.forName(className)
         } catch (e: ClassNotFoundException) {

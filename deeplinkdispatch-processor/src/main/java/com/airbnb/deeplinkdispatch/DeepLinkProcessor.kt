@@ -121,9 +121,11 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
                 customAnnotations.flatMap { round.getElementsAnnotatedWith(it.qualifiedName) } +
                     round.getElementsAnnotatedWith(DEEP_LINK_CLASS)
 
-            val annotatedMethodElements = allDeepLinkAnnotatedElements.filterIsInstance<XMethodElement>().toSet()
-            val annotatedClassElements = allDeepLinkAnnotatedElements.filterIsInstance<XTypeElement>()
-                .filter { it.isClass() }.toSet()
+            val annotatedMethodElements =
+                allDeepLinkAnnotatedElements.filterIsInstance<XMethodElement>().toSet()
+            val annotatedClassElements =
+                allDeepLinkAnnotatedElements.filterIsInstance<XTypeElement>()
+                    .filter { it.isClass() }.toSet()
 
             verifyAnnotatedType(
                 allDeepLinkAnnotatedElements,
@@ -160,10 +162,13 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
     ): List<DeepLinkAnnotatedElement> {
         return (
             classElementsToProcess.flatMap { element ->
-                mapUrisToDeepLinkAnnotatedElement(element, prefixes)
+                if (verifyCass(element)) {
+                    mapUrisToDeepLinkAnnotatedElement(element, prefixes)
+                } else emptyList()
             } + methodElementsToProcess.flatMap { element ->
-                verifyMethod(element)
-                mapUrisToDeepLinkAnnotatedElement(element, prefixes)
+                if (verifyMethod(element)) {
+                    mapUrisToDeepLinkAnnotatedElement(element, prefixes)
+                } else emptyList()
             }
             ).filterNotNull()
     }
@@ -171,21 +176,41 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
     private fun mapUrisToDeepLinkAnnotatedElement(
         element: XElement,
         prefixes: Map<XType, Array<String>>
-    ): List<DeepLinkAnnotatedElement?> = getAllUrisForAnnotatedElement(element, prefixes).mapNotNull { uri ->
-        try {
-            when (element) {
-                is XMethodElement ->
-                    DeepLinkAnnotatedElement.MethodAnnotatedElement(uri, element)
-                else -> DeepLinkAnnotatedElement.ClassAnnotatedElement(uri, element as XTypeElement)
+    ): List<DeepLinkAnnotatedElement?> =
+        getAllUrisForAnnotatedElement(element, prefixes).mapNotNull { uri ->
+            try {
+                when {
+                    element is XMethodElement -> DeepLinkAnnotatedElement.MethodAnnotatedElement(
+                        uri = uri,
+                        element = element
+                    )
+                    element is XTypeElement && element.isActivityElement() ->
+                        DeepLinkAnnotatedElement.ActivityAnnotatedElement(
+                            uri = uri,
+                            element = element
+                        )
+                    element is XTypeElement && element.isHandlerElement() ->
+                        DeepLinkAnnotatedElement.HandlerAnnotatedElement(
+                            uri = uri,
+                            element = element
+                        )
+                    else -> error(
+                        "Internal error: Elements can only be 'MethodAnnotatedElement', " +
+                            "'ActivityAnnotatedElement' or 'HandlerAnnotatedElement'"
+                    )
+                }
+            } catch (e: MalformedURLException) {
+                environment.messager.printMessage(
+                    kind = Diagnostic.Kind.ERROR,
+                    msg = "Malformed Deep Link URL $uri"
+                )
+                null
             }
-        } catch (e: MalformedURLException) {
-            environment.messager.printMessage(
-                kind = Diagnostic.Kind.ERROR,
-                msg = "Malformed Deep Link URL $uri"
-            )
-            null
         }
-    }
+
+    private fun XTypeElement.isActivityElement() = inheritanceHierarchyContains(listOf("android.app.Activity"))
+
+    private fun XTypeElement.isHandlerElement() = inheritanceHierarchyContains(listOf(com.airbnb.deeplinkdispatch.handler.DeepLinkHandler::class.qualifiedName!!))
 
     private fun getAllUrisForAnnotatedElement(
         element: XElement,
@@ -197,30 +222,53 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
         ) + (element.getAnnotation(DEEP_LINK_CLASS)?.value?.value?.toList() ?: emptyList())
     }
 
-    private fun verifyMethod(methodElement: XMethodElement) {
-        if (!methodElement.isStatic()) {
+    private fun verifyCass(classElement: XTypeElement): Boolean {
+        return if (validClassElement(classElement)) {
+            logError(
+                element = classElement,
+                message =
+                "Only classes inheriting from either 'android.app.Activity' or '" +
+                    "${com.airbnb.deeplinkdispatch.handler.DeepLinkHandler::class.qualifiedName}" +
+                    "' can be annotated with @DeepLink or another custom deep link annotation."
+            )
+            false
+        } else true
+    }
+
+    private fun validClassElement(classElement: XTypeElement) =
+        classElement.inheritanceHierarchyDoesNotContain(
+            listOf(
+                "android.app.Activity",
+                com.airbnb.deeplinkdispatch.handler.DeepLinkHandler::class.qualifiedName!!
+            )
+        )
+
+    private fun verifyMethod(methodElement: XMethodElement): Boolean {
+        return if (!methodElement.isStatic()) {
             logError(
                 element = methodElement,
                 message = "Only static methods can be annotated with @${DEEP_LINK_CLASS.simpleName}",
             )
-        }
+            false
+        } else
         // FIXME This is crashing with an NPE on internal classes when accessing the returnType.
         // You can jut comment this check out for now if you need this to pass.
-        if (methodElement.returnType.typeElement?.qualifiedName !in listOf(
-                "android.content.Intent",
-                "androidx.core.app.TaskStackBuilder",
-                "com.airbnb.deeplinkdispatch.DeepLinkMethodResult"
-            )
-        ) {
-            logError(
-                element = methodElement,
-                message = (
-                    "Only `Intent`, `androidx.core.app.TaskStackBuilder` or " +
-                        "'com.airbnb.deeplinkdispatch.DeepLinkMethodResult' are supported. Please double " +
-                        "check your imports and try again."
-                    )
-            )
-        }
+            if (methodElement.returnType.typeElement?.qualifiedName !in listOf(
+                    "android.content.Intent",
+                    "androidx.core.app.TaskStackBuilder",
+                    "com.airbnb.deeplinkdispatch.DeepLinkMethodResult"
+                )
+            ) {
+                logError(
+                    element = methodElement,
+                    message = (
+                        "Only `Intent`, `androidx.core.app.TaskStackBuilder` or " +
+                            "'com.airbnb.deeplinkdispatch.DeepLinkMethodResult' are supported. Please double " +
+                            "check your imports and try again."
+                        )
+                )
+                false
+            } else true
     }
 
     private fun customAnnotationPrefixes(customAnnotations: Set<XTypeElement>): Map<XType, Array<String>> {
@@ -254,7 +302,9 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
         annotatedMethodElements: Set<XMethodElement>
     ) {
         allAnnotatedElements.filter { annotatedElement ->
-            !annotatedClassElements.contains(annotatedElement) && !annotatedMethodElements.contains(annotatedElement)
+            !annotatedClassElements.contains(annotatedElement) && !annotatedMethodElements.contains(
+                annotatedElement
+            )
         }.forEach { annotatedElementThatIsNeitherClassNorMethod ->
             logError(
                 element = annotatedElementThatIsNeitherClassNorMethod,
@@ -264,8 +314,9 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
     }
 
     private fun createDeeplinkDelegates(roundEnv: XRoundEnv) {
-        val deeplinkHandlerAnnotatedElements = roundEnv.getElementsAnnotatedWith(DeepLinkHandler::class)
-            .filterIsInstance<XTypeElement>()
+        val deeplinkHandlerAnnotatedElements =
+            roundEnv.getElementsAnnotatedWith(DeepLinkHandler::class)
+                .filterIsInstance<XTypeElement>()
         deeplinkHandlerAnnotatedElements.forEach { deepLinkHandlerElement ->
             val deepLinkModuleElements =
                 deepLinkHandlerElement.getAnnotation(DeepLinkHandler::class)?.getAsTypeList("value")
@@ -288,8 +339,9 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
         annotatedMethodElements: Set<XMethodElement>,
         deepLinkElements: List<DeepLinkAnnotatedElement>
     ) {
-        val deepLinkModuleAnnotatedElements = roundEnv.getElementsAnnotatedWith(DeepLinkModule::class)
-            .filterIsInstance<XTypeElement>()
+        val deepLinkModuleAnnotatedElements =
+            roundEnv.getElementsAnnotatedWith(DeepLinkModule::class)
+                .filterIsInstance<XTypeElement>()
         deepLinkModuleAnnotatedElements.forEach { deepLinkModuleElement ->
             tryCatchFileWriting {
                 generateDeepLinkRegistry(
@@ -306,7 +358,10 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
         try {
             action.invoke()
         } catch (e: IOException) {
-            environment.messager.printMessage(Diagnostic.Kind.ERROR, "Error creating file: ${e.stackTraceToString()}")
+            environment.messager.printMessage(
+                Diagnostic.Kind.ERROR,
+                "Error creating file: ${e.stackTraceToString()}"
+            )
         } catch (e: RuntimeException) {
             environment.messager.printMessage(
                 Diagnostic.Kind.ERROR,
@@ -407,10 +462,27 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
             val uriTemplate = element.uri
             try {
                 when (element) {
-                    is DeepLinkAnnotatedElement.ClassAnnotatedElement ->
-                        urisTrie.addToTrie(uriTemplate, element.annotatedClass.className.reflectionName() ?: "", null)
+                    is DeepLinkAnnotatedElement.ActivityAnnotatedElement ->
+                        urisTrie.addToTrie(
+                            MatchType.Activity,
+                            uriTemplate,
+                            element.annotatedClass.className.reflectionName() ?: "",
+                            null
+                        )
                     is DeepLinkAnnotatedElement.MethodAnnotatedElement ->
-                        urisTrie.addToTrie(uriTemplate, element.annotatedClass.className.reflectionName() ?: "", element.method)
+                        urisTrie.addToTrie(
+                            MatchType.Method,
+                            uriTemplate,
+                            element.annotatedClass.className.reflectionName() ?: "",
+                            element.method
+                        )
+                    is DeepLinkAnnotatedElement.HandlerAnnotatedElement ->
+                        urisTrie.addToTrie(
+                            MatchType.Handler,
+                            uriTemplate,
+                            element.annotatedClass.className.reflectionName() ?: "",
+                            null
+                        )
                 }
             } catch (e: IllegalArgumentException) {
                 logError(
@@ -508,7 +580,10 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
         return stringMethodNames
     }
 
-    private class IncrementalMetadata(val incremental: Boolean, val customAnnotations: Set<XTypeElement>)
+    private class IncrementalMetadata(
+        val incremental: Boolean,
+        val customAnnotations: Set<XTypeElement>
+    )
 
     companion object {
         private const val PACKAGE_NAME = "com.airbnb.deeplinkdispatch"
@@ -541,7 +616,11 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
         }
 
         internal inline fun <reified T : Annotation> XElement.findAnnotatedAnnotation(): List<XAnnotation> {
-            return getAllAnnotations().filter { annotation -> annotation.type.typeElement?.hasAnnotation(T::class) == true }
+            return getAllAnnotations().filter { annotation ->
+                annotation.type.typeElement?.hasAnnotation(
+                    T::class
+                ) == true
+            }
         }
 
         private fun Set<XTypeElement>.filterAnnotatedAnnotations(klass: KClass<*>): Set<XTypeElement> =
@@ -579,11 +658,13 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
             }
             if (comparisonResult == 0) {
                 val element1Representation = when (element1) {
-                    is DeepLinkAnnotatedElement.ClassAnnotatedElement -> element1.uri + DeepLinkAnnotatedElement.ClassAnnotatedElement::class.simpleName
+                    is DeepLinkAnnotatedElement.ActivityAnnotatedElement -> element1.uri + DeepLinkAnnotatedElement.ActivityAnnotatedElement::class.simpleName
+                    is DeepLinkAnnotatedElement.HandlerAnnotatedElement -> "handler_" + element1.uri + DeepLinkAnnotatedElement.ActivityAnnotatedElement::class.simpleName
                     is DeepLinkAnnotatedElement.MethodAnnotatedElement -> element1.uri + element1.method + DeepLinkAnnotatedElement.MethodAnnotatedElement::class.simpleName
                 }
                 val element2Representation = when (element2) {
-                    is DeepLinkAnnotatedElement.ClassAnnotatedElement -> element2.uri + DeepLinkAnnotatedElement.ClassAnnotatedElement::class.simpleName
+                    is DeepLinkAnnotatedElement.ActivityAnnotatedElement -> element2.uri + DeepLinkAnnotatedElement.ActivityAnnotatedElement::class.simpleName
+                    is DeepLinkAnnotatedElement.HandlerAnnotatedElement -> "handler_" + element2.uri + DeepLinkAnnotatedElement.ActivityAnnotatedElement::class.simpleName
                     is DeepLinkAnnotatedElement.MethodAnnotatedElement -> element2.uri + element2.method + DeepLinkAnnotatedElement.MethodAnnotatedElement::class.simpleName
                 }
                 comparisonResult = element1Representation.compareTo(element2Representation)

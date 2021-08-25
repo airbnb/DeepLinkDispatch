@@ -354,7 +354,7 @@ class DeepLinkEntryTest {
             private fun getSearchIndex(registry: List<DeepLinkEntry>): ByteArray {
                 val trieRoot = Root()
                 for (entry in registry) {
-                    trieRoot.addToTrie(entry.uriTemplate, entry.className, entry.method)
+                    trieRoot.addToTrie(entry.type, entry.uriTemplate, entry.className, entry.method)
                 }
                 return trieRoot.toUByteArray().toByteArray()
             }
@@ -362,8 +362,8 @@ class DeepLinkEntryTest {
     }
 
     companion object {
-        private fun deepLinkEntry(uriTemplate: String, className: String = "java.lang.String"): DeepLinkEntry {
-            return DeepLinkEntry(uriTemplate, className, null)
+        private fun deepLinkEntry(uriTemplate: String, type: MatchType = MatchType.Activity, className: String = "java.lang.String"): DeepLinkEntry {
+            return DeepLinkEntry(type, uriTemplate, className, null)
         }
 
         /**

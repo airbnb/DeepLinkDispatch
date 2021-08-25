@@ -1,5 +1,7 @@
 package com.airbnb.deeplinkdispatch
 
+import androidx.room.compiler.processing.XTypeElement
+
 object ProcessorUtils {
     @JvmStatic
     fun String.decapitalizeIfNotTwoFirstCharsUpperCase(): String {
@@ -13,3 +15,18 @@ object ProcessorUtils {
     @JvmStatic
     fun Array<String>.hasEmptyOrNullString() = this.any { it.isNullOrEmpty() }
 }
+
+fun XTypeElement.inheritanceHierarchy(): List<XTypeElement> {
+    return this.superType?.typeElement?.let { it.inheritanceHierarchy() + listOf(it) }
+        ?: emptyList()
+}
+
+fun XTypeElement.inheritanceHierarchyContains(fqnList: List<String>) =
+    inheritanceHierarchy().any { typeElement ->
+        typeElement.qualifiedName in fqnList
+    }
+
+fun XTypeElement.inheritanceHierarchyDoesNotContain(fqnList: List<String>) =
+    inheritanceHierarchy().none { typeElement ->
+        typeElement.qualifiedName in fqnList
+    }
