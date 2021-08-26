@@ -1,351 +1,367 @@
-package com.airbnb.deeplinkdispatch;
+package com.airbnb.deeplinkdispatch
 
-import android.app.Activity;
-import android.content.Context;
-import android.content.Intent;
-import android.net.Uri;
-import android.os.Bundle;
-import android.util.Log;
+import android.app.Activity
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.os.Bundle
+import android.util.Log
+import androidx.core.app.TaskStackBuilder
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import com.airbnb.deeplinkdispatch.base.Utils.toByteArrayMap
+import java.lang.reflect.InvocationTargetException
+import java.lang.reflect.Method
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.core.app.TaskStackBuilder;
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+open class BaseDeepLinkDelegate @JvmOverloads constructor(
+    private val registries: List<BaseRegistry>,
+    configurablePathSegmentReplacements: Map<String, String> = emptyMap(),
+    private val errorHandler: ErrorHandler? = null
+) {
 
-import com.airbnb.deeplinkdispatch.base.Utils;
+    /**
+     *
+     * Mapping of values for DLD to substitute for annotation-declared configurablePathSegments.
+     *
+     *
+     * Example
+     * Given:
+     *
+     *  * <xmp>@DeepLink("https://www.example.com/<configurable-path-segment>/users/{param1}")
+    </configurable-path-segment></xmp> *
+     *  * mapOf("pathVariableReplacementValue" to "obamaOs")
+     *
+     * Then:
+     *  * <xmp>https://www.example.com/obamaOs/users/{param1}</xmp> will match.
+     */
+    private val configurablePathSegmentReplacements: Map<ByteArray, ByteArray> =
+        toByteArrayMap(configurablePathSegmentReplacements)
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-@SuppressWarnings({"WeakerAccess", "unused"})
-public class BaseDeepLinkDelegate {
-
-  protected static final String TAG = "DeepLinkDelegate";
-
-  protected final List<? extends BaseRegistry> registries;
-
-  @Nullable
-  protected final ErrorHandler errorHandler;
-  /**
-   * <p>Mapping of values for DLD to substitute for annotation-declared configurablePathSegments.
-   * </p>
-   * <p>Example</p>
-   * Given:
-   * <ul>
-   * <li><xmp>@DeepLink("https://www.example.com/<configurable-path-segment>/users/{param1}")
-   * </xmp></li>
-   * <li>mapOf("pathVariableReplacementValue" to "obamaOs")</li>
-   * </ul>
-   * Then:
-   * <ul><li><xmp>https://www.example.com/obamaOs/users/{param1}</xmp> will match.</li></ul>
-   */
-  protected final Map<byte[], byte[]> configurablePathSegmentReplacements;
-
-  public List<? extends BaseRegistry> getRegistries() {
-    return registries;
-  }
-
-  public BaseDeepLinkDelegate(List<? extends BaseRegistry> registries) {
-    this.registries = registries;
-    this.errorHandler = null;
-    configurablePathSegmentReplacements = new HashMap<>();
-    ValidationUtilsKt.validateConfigurablePathSegmentReplacements(registries,
-      this.configurablePathSegmentReplacements);
-  }
-
-  public BaseDeepLinkDelegate(List<? extends BaseRegistry> registries, ErrorHandler errorHandler) {
-    this.registries = registries;
-    this.errorHandler = errorHandler;
-    configurablePathSegmentReplacements = new HashMap<>();
-    ValidationUtilsKt.validateConfigurablePathSegmentReplacements(registries,
-      this.configurablePathSegmentReplacements);
-  }
-
-  public BaseDeepLinkDelegate(
-    List<? extends BaseRegistry> registries,
-    Map<String, String> configurablePathSegmentReplacements
-  ) {
-    this.registries = registries;
-    this.errorHandler = null;
-    this.configurablePathSegmentReplacements =
-      Utils.toByteArrayMap(configurablePathSegmentReplacements);
-    ValidationUtilsKt.validateConfigurablePathSegmentReplacements(registries,
-      this.configurablePathSegmentReplacements);
-  }
-
-  public BaseDeepLinkDelegate(
-    List<? extends BaseRegistry> registries,
-    Map<String, String> configurablePathSegmentReplacements,
-    ErrorHandler errorHandler
-  ) {
-    this.registries = registries;
-    this.errorHandler = errorHandler;
-    this.configurablePathSegmentReplacements =
-      Utils.toByteArrayMap(configurablePathSegmentReplacements);
-    ValidationUtilsKt.validateConfigurablePathSegmentReplacements(registries,
-      this.configurablePathSegmentReplacements);
-  }
-
-  /**
-   * Calls into {@link #dispatchFrom(Activity activity, Intent sourceIntent)}.
-   *
-   * @param activity activity with inbound Intent stored on it.
-   * @return DeepLinkResult, whether success or error.
-   */
-  public DeepLinkResult dispatchFrom(Activity activity) {
-    validateInput(activity);
-    return dispatchFrom(activity, activity.getIntent());
-  }
-
-  /**
-   * Calls {@link #createResult(Activity, Intent, DeepLinkMatchResult)}. If the DeepLinkResult has
-   * a non-null TaskStackBuilder or Intent, it starts it. It always calls
-   * {@link #notifyListener(Context, boolean, Uri, String, String)}.
-   *
-   * @param activity     used to startActivity() or notifyListener().
-   * @param sourceIntent inbound Intent.
-   * @return DeepLinkResult
-   */
-  public DeepLinkResult dispatchFrom(Activity activity, Intent sourceIntent) {
-    validateInput(activity, sourceIntent);
-    Uri uri = sourceIntent.getData();
-    DeepLinkResult result;
-    if (uri == null) {
-      result = createResult(activity, sourceIntent, null);
-    } else {
-      result = createResult(activity, sourceIntent, findEntry(uri.toString()));
+    init {
+        validateConfigurablePathSegmentReplacements(
+            registries,
+            this.configurablePathSegmentReplacements
+        )
     }
-    if (result.getMethodResult().getTaskStackBuilder() != null) {
-      result.getMethodResult().getTaskStackBuilder().startActivities();
-    } else if (result.getMethodResult().getIntent() != null) {
-      activity.startActivity(result.getMethodResult().getIntent());
-    }
-    notifyListener(activity, !result.isSuccessful(), uri,
-      result.getDeepLinkEntry() != null ? result.getDeepLinkEntry().getDeeplinkEntry().getUriTemplate()
-        : null, result.getError());
-    return result;
-  }
 
-  /**
-   * Create a {@link DeepLinkResult}, whether we are able to match the uri on
-   * {@param sourceIntent} or not.
-   *
-   * @param activity      used to startActivity() or notifyListener().
-   * @param sourceIntent  inbound Intent.
-   * @param deeplinkMatchResult deeplinkMatchResult that matches the sourceIntent's URI. Derived from
-   *                      {@link #findEntry(String)}. Can be injected for testing.
-   * @return DeepLinkResult
-   */
-  public @NonNull DeepLinkResult createResult(
-    Activity activity, Intent sourceIntent, DeepLinkMatchResult deeplinkMatchResult
-  ) {
-    validateInput(activity, sourceIntent);
-    Uri uri = sourceIntent.getData();
-    if (uri == null) {
-      return new DeepLinkResult(
-        false, null, "No Uri in given activity's intent.", deeplinkMatchResult, new DeepLinkMethodResult(null, null));
+    /**
+     * Calls [.createResult]. If the DeepLinkResult has
+     * a non-null TaskStackBuilder or Intent, it starts it. It always calls
+     * [.notifyListener].
+     *
+     * @param activity     used to startActivity() or notifyListener().
+     * @param sourceIntent inbound Intent.
+     * @return DeepLinkResult
+     */
+    @JvmOverloads
+    fun dispatchFrom(
+        activity: Activity,
+        sourceIntent: Intent = activity.intent
+    ): DeepLinkResult {
+        val uri = sourceIntent.data
+        val result = uri?.let {
+            createResult(activity, sourceIntent, findEntry(uri.toString()))
+        } ?: createResult(activity, sourceIntent, null)
+        dispatchResult(
+            result = result,
+            activity = activity
+        )
+        notifyListener(
+            context = activity,
+            isError = !result.isSuccessful,
+            uri = uri,
+            uriTemplate = if (result.deepLinkMatchResult != null) result.deepLinkMatchResult.deeplinkEntry.uriTemplate else null,
+            errorMessage = result.error
+        )
+        return result
     }
-    String uriString = uri.toString();
-    if (deeplinkMatchResult == null) {
-      return new DeepLinkResult(false, null, "DeepLinkEntry cannot be null",
-        null, new DeepLinkMethodResult(null, null));
-    }
-    DeepLinkUri deepLinkUri = DeepLinkUri.parse(uriString);
-    Map<String, String> parameterMap = new HashMap<>(deeplinkMatchResult.getParameters(deepLinkUri));
-    for (String queryParameter : deepLinkUri.queryParameterNames()) {
-      for (String queryParameterValue : deepLinkUri.queryParameterValues(queryParameter)) {
-        if (parameterMap.containsKey(queryParameter)) {
-          Log.w(TAG, "Duplicate parameter name in path and query param: " + queryParameter);
+
+    private fun notifyListener(
+        context: Context,
+        isError: Boolean,
+        uri: Uri?,
+        uriTemplate: String?,
+        errorMessage: String
+    ) {
+        val intent = Intent().apply {
+            action = DeepLinkHandler.ACTION
+            putExtra(DeepLinkHandler.EXTRA_URI, uri?.toString() ?: "")
+            putExtra(DeepLinkHandler.EXTRA_URI_TEMPLATE, uriTemplate ?: "")
+            putExtra(DeepLinkHandler.EXTRA_SUCCESSFUL, !isError)
+            if (isError) {
+                putExtra(DeepLinkHandler.EXTRA_ERROR_MESSAGE, errorMessage)
+            }
         }
-        parameterMap.put(queryParameter, queryParameterValue);
-      }
+        LocalBroadcastManager.getInstance(context).sendBroadcast(intent)
     }
-    parameterMap.put(DeepLink.URI, uri.toString());
-    Bundle parameters;
-    if (sourceIntent.getExtras() != null) {
-      parameters = new Bundle(sourceIntent.getExtras());
-    } else {
-      parameters = new Bundle();
-    }
-    for (Map.Entry<String, String> parameterEntry : parameterMap.entrySet()) {
-      parameters.putString(parameterEntry.getKey(), parameterEntry.getValue());
-    }
-    try {
-      DeepLinkEntry matchedDeeplinkEntry = deeplinkMatchResult.getDeeplinkEntry();
-      Class<?> c = matchedDeeplinkEntry.getActivityClass();
-      Intent newIntent = null;
-      TaskStackBuilder taskStackBuilder = null;
-      if (matchedDeeplinkEntry.getMethod() == null) {
-        newIntent = new Intent(activity, c);
-      } else {
-        Method method;
-        DeepLinkResult errorResult = new DeepLinkResult(false, uriString,
-          "Could not deep link to method: " + matchedDeeplinkEntry.getMethod() + " intents length == 0",
-          deeplinkMatchResult, new DeepLinkMethodResult(null, taskStackBuilder));
-        try {
-          method = c.getMethod(matchedDeeplinkEntry.getMethod(), Context.class);
-          if (method.getReturnType().equals(TaskStackBuilder.class)) {
-            taskStackBuilder = (TaskStackBuilder) method.invoke(c, activity);
-            if (taskStackBuilder.getIntentCount() == 0) {
-              return errorResult;
+
+    private fun dispatchResult(
+        result: DeepLinkResult,
+        activity: Activity
+    ) {
+        result.deepLinkMatchResult?.let { matchedDeepLinkResult ->
+            when (matchedDeepLinkResult.deeplinkEntry.type) {
+                MatchType.Method -> result.methodResult.taskStackBuilder?.startActivities()
+                    ?: activity.startActivity(result.methodResult.intent)
+                MatchType.Activity -> activity.startActivity(result.methodResult.intent)
+                MatchType.Handler -> TODO()
+                /** Not implemented yet **/
+
             }
-            newIntent = taskStackBuilder.editIntentAt(taskStackBuilder.getIntentCount() - 1);
-          } else if (method.getReturnType().equals(DeepLinkMethodResult.class)) {
-            DeepLinkMethodResult methodResult = (DeepLinkMethodResult) method.invoke(c, activity);
-            if (methodResult.getTaskStackBuilder() != null) {
-              taskStackBuilder = methodResult.getTaskStackBuilder();
-              if (taskStackBuilder.getIntentCount() == 0) {
-                return errorResult;
-              }
-              newIntent = taskStackBuilder.editIntentAt(taskStackBuilder.getIntentCount() - 1);
-            } else if (methodResult.getIntent() != null) {
-              newIntent = methodResult.getIntent();
-            }
-          } else {
-            newIntent = (Intent) method.invoke(c, activity);
-          }
-        } catch (NoSuchMethodException exception) {
-          method = c.getMethod(matchedDeeplinkEntry.getMethod(), Context.class, Bundle.class);
-          if (method.getReturnType().equals(TaskStackBuilder.class)) {
-            taskStackBuilder = (TaskStackBuilder) method.invoke(c, activity, parameters);
-            if (taskStackBuilder.getIntentCount() == 0) {
-              return errorResult;
-            }
-            newIntent = taskStackBuilder.editIntentAt(taskStackBuilder.getIntentCount() - 1);
-          } else if (method.getReturnType().equals(DeepLinkMethodResult.class)) {
-            DeepLinkMethodResult methodResult = (DeepLinkMethodResult) method.invoke(c, activity, parameters);
-            if (methodResult.getTaskStackBuilder() != null) {
-              taskStackBuilder = methodResult.getTaskStackBuilder();
-              if (taskStackBuilder.getIntentCount() == 0) {
-                return errorResult;
-              }
-              newIntent = taskStackBuilder.editIntentAt(taskStackBuilder.getIntentCount() - 1);
-            } else if (methodResult.getIntent() != null) {
-              newIntent = methodResult.getIntent();
-            }
-          } else {
-            newIntent = (Intent) method.invoke(c, activity, parameters);
-          }
         }
-      }
-      if (newIntent == null) {
-        return new DeepLinkResult(false, uriString, "Destination Intent is null!",
-          deeplinkMatchResult, new DeepLinkMethodResult(newIntent, taskStackBuilder));
-      }
-      if (newIntent.getAction() == null) {
-        newIntent.setAction(sourceIntent.getAction());
-      }
-      if (newIntent.getData() == null) {
-        newIntent.setData(sourceIntent.getData());
-      }
-      newIntent.putExtras(parameters);
-      newIntent.putExtra(DeepLink.IS_DEEP_LINK, true);
-      newIntent.putExtra(DeepLink.REFERRER_URI, uri);
-      if (activity.getCallingActivity() != null) {
-        newIntent.setFlags(Intent.FLAG_ACTIVITY_FORWARD_RESULT);
-      }
-      return new DeepLinkResult(true, uriString, "", deeplinkMatchResult, new DeepLinkMethodResult(newIntent, taskStackBuilder));
-    } catch (NoSuchMethodException exception) {
-      return new DeepLinkResult(false, uriString, "Deep link to non-existent method: "
-        + deeplinkMatchResult.getDeeplinkEntry().getMethod(), deeplinkMatchResult, new DeepLinkMethodResult(null, null));
-    } catch (IllegalAccessException exception) {
-      return new DeepLinkResult(false, uriString, "Could not deep link to method: "
-        + deeplinkMatchResult.getDeeplinkEntry().getMethod(), deeplinkMatchResult, new DeepLinkMethodResult(null, null));
-    } catch (InvocationTargetException exception) {
-      return new DeepLinkResult(false, uriString, "Could not deep link to method: "
-        + deeplinkMatchResult.getDeeplinkEntry().getMethod(), deeplinkMatchResult, new DeepLinkMethodResult(null, null));
     }
-  }
 
-  /**
-   * Returns a raw match result for the given uriString. This is null if no match is found.
-   * There is no general use for that during normal operation but it might be useful when writing
-   * tests.
-   *
-   * @param uriString Uri to be matched
-   * @return An instance of {@link DeepLinkMatchResult} if a match was found or null if not.
-   */
-  public @Nullable DeepLinkMatchResult findEntry(@NonNull String uriString) {
-    DeepLinkEntry entryRegExpMatch = null;
-    List<DeepLinkMatchResult> entryIdxMatches = new ArrayList<>();
-    DeepLinkUri uri = DeepLinkUri.parse(uriString);
-    for (BaseRegistry registry : registries) {
-      DeepLinkMatchResult entryIdxMatch = registry.idxMatch(uri, configurablePathSegmentReplacements);
-      if (entryIdxMatch != null) {
-        entryIdxMatches.add(entryIdxMatch);
-      }
+    /**
+     * Create a [DeepLinkResult], whether we are able to match the uri on
+     * {@param sourceIntent} or not.
+     *
+     * @param activity      used to startActivity() or notifyListener().
+     * @param sourceIntent  inbound Intent.
+     * @param deeplinkMatchResult deeplinkMatchResult that matches the sourceIntent's URI. Derived from
+     * [.findEntry]. Can be injected for testing.
+     * @return DeepLinkResult
+     */
+    fun createResult(
+        activity: Activity,
+        sourceIntent: Intent,
+        deeplinkMatchResult: DeepLinkMatchResult?
+    ): DeepLinkResult {
+        val originalIntentUri = sourceIntent.data
+            ?: return DeepLinkResult(
+                isSuccessful = false,
+                uriString = null,
+                error = "No Uri in given activity's intent.",
+                deepLinkMatchResult = deeplinkMatchResult,
+                methodResult = DeepLinkMethodResult(null, null)
+            )
+        val deepLinkUri = DeepLinkUri.parse(originalIntentUri.toString())
+        if (deeplinkMatchResult == null) {
+            return DeepLinkResult(
+                isSuccessful = false,
+                uriString = null,
+                error = "DeepLinkEntry cannot be null",
+                deepLinkMatchResult = null,
+                methodResult = DeepLinkMethodResult(null, null)
+            )
+        }
+        val parameters = parameterBundle(
+                deeplinkMatchResult = deeplinkMatchResult,
+                deepLinkUri = deepLinkUri,
+                originalIntentUri = originalIntentUri,
+                sourceIntent = sourceIntent
+            )
+        return try {
+            val intentAndTaskStackBuilderPair = intentAndTaskStackBuilderFromClass(
+                matchedDeeplinkEntry = deeplinkMatchResult.deeplinkEntry,
+                activity = activity,
+                parameters = parameters
+            )
+            intentAndTaskStackBuilderPair.intent?.let { intent ->
+                if (intent.action == null) {
+                    intent.action = sourceIntent.action
+                }
+                if (intent.data == null) {
+                    intent.data = sourceIntent.data
+                }
+                intent.putExtras(parameters)
+                intent.putExtra(DeepLink.IS_DEEP_LINK, true)
+                intent.putExtra(DeepLink.REFERRER_URI, originalIntentUri)
+                if (activity.callingActivity != null) {
+                    intent.flags = Intent.FLAG_ACTIVITY_FORWARD_RESULT
+                }
+                DeepLinkResult(
+                    isSuccessful = true,
+                    uriString = originalIntentUri.toString(),
+                    error = "",
+                    deepLinkMatchResult = deeplinkMatchResult,
+                    methodResult = DeepLinkMethodResult(
+                        intent,
+                        intentAndTaskStackBuilderPair.taskStackBuilder
+                    )
+                )
+            } ?: return DeepLinkResult(
+                isSuccessful = false,
+                uriString = originalIntentUri.toString(),
+                error = "Destination Intent is null!",
+                deepLinkMatchResult = deeplinkMatchResult,
+                methodResult = DeepLinkMethodResult(
+                    intentAndTaskStackBuilderPair.intent,
+                    intentAndTaskStackBuilderPair.taskStackBuilder
+                )
+            )
+        } catch (taskStackError: TaskStackError) {
+            return DeepLinkResult(
+                isSuccessful = false,
+                uriString = originalIntentUri.toString(),
+                error = "Could not deep link to method: ${deeplinkMatchResult.deeplinkEntry.method} intents length == 0",
+                deepLinkMatchResult = deeplinkMatchResult,
+                methodResult = DeepLinkMethodResult(null, null)
+            )
+        } catch (exception: NoSuchMethodException) {
+            DeepLinkResult(
+                isSuccessful = false,
+                uriString = originalIntentUri.toString(),
+                error = "Deep link to non-existent method: ${deeplinkMatchResult.deeplinkEntry.method}",
+                deepLinkMatchResult = deeplinkMatchResult,
+                methodResult = DeepLinkMethodResult(null, null)
+            )
+        } catch (exception: IllegalAccessException) {
+            DeepLinkResult(
+                isSuccessful = false,
+                uriString = originalIntentUri.toString(),
+                error = "Could not deep link to method: ${deeplinkMatchResult.deeplinkEntry.method}",
+                deepLinkMatchResult = deeplinkMatchResult,
+                methodResult = DeepLinkMethodResult(null, null)
+            )
+        } catch (exception: InvocationTargetException) {
+            DeepLinkResult(
+                isSuccessful = false,
+                uriString = originalIntentUri.toString(),
+                error = "Could not deep link to method: ${deeplinkMatchResult.deeplinkEntry.method}",
+                deepLinkMatchResult = deeplinkMatchResult,
+                methodResult = DeepLinkMethodResult(null, null)
+            )
+        }
     }
-    // Found no match
-    if (entryIdxMatches.isEmpty()) {
-      return null;
-    } else if (entryIdxMatches.size() == 1) {
-      // Found just one match
-      return entryIdxMatches.get(0);
-    }
-    // Found multiple matches. Sort matches by concreteness:
-    // No variable element > containing placeholders >  are a configurable path segment
-    Collections.sort(entryIdxMatches);
-    if (entryIdxMatches.get(0).compareTo(entryIdxMatches.get(1)) == 0) {
-      if (errorHandler != null) {
-        errorHandler.duplicateMatch(uriString, entryIdxMatches.subList(0, 2));
-      }
-      Log.w(TAG, "More than one match with the same concreteness!! ("
-        + entryIdxMatches.get(0).toString() + ") vs. (" + entryIdxMatches.get(1).toString() + ")");
-    }
-    return entryIdxMatches.get(0);
-  }
 
-  private void validateInput(Activity activity, Intent sourceIntent) {
-    validateInput(activity);
-    validateInput(sourceIntent);
-  }
-
-  private void validateInput(Activity activity) {
-    if (activity == null) {
-      throw new NullPointerException("activity == null");
+    private fun intentAndTaskStackBuilderFromClass(
+        matchedDeeplinkEntry: DeepLinkEntry,
+        activity: Activity,
+        parameters: Bundle
+    ): IntentTaskStackBuilderPair {
+        val clazz = matchedDeeplinkEntry.clazz
+        return when (matchedDeeplinkEntry.type) {
+            MatchType.Activity -> IntentTaskStackBuilderPair(Intent(activity, clazz), null)
+            MatchType.Method -> {
+                matchedDeeplinkEntry.method?.let { methodString ->
+                    try {
+                        val method = clazz.getMethod(methodString, Context::class.java)
+                        intentFromDeeplinkMethod(method, method.invoke(clazz, activity))
+                    } catch (exception: NoSuchMethodException) {
+                        val method =
+                            clazz.getMethod(methodString, Context::class.java, Bundle::class.java)
+                        intentFromDeeplinkMethod(method, method.invoke(clazz, activity, parameters))
+                    }
+                } ?: IntentTaskStackBuilderPair(null, null)
+            }
+            MatchType.Handler -> IntentTaskStackBuilderPair(null, null) /** TODO: Implement **/
+            else -> throw IllegalStateException("Unexpected value: " + matchedDeeplinkEntry.type)
+        }
     }
-  }
 
-  private void validateInput(Intent sourceIntent) {
-    if (sourceIntent == null) {
-      throw new NullPointerException("sourceIntent == null");
-    }
-  }
+    data class IntentTaskStackBuilderPair(
+        val intent: Intent?,
+        val taskStackBuilder: TaskStackBuilder?
+    )
 
-  private static void notifyListener(Context context, boolean isError, Uri uri,
-                                     String uriTemplate, String errorMessage) {
-    Intent intent = new Intent();
-    intent.setAction(DeepLinkHandler.ACTION);
-    intent.putExtra(DeepLinkHandler.EXTRA_URI, uri != null ? uri.toString() : "");
-    intent.putExtra(DeepLinkHandler.EXTRA_URI_TEMPLATE, uriTemplate != null ? uriTemplate : "");
-    intent.putExtra(DeepLinkHandler.EXTRA_SUCCESSFUL, !isError);
-    if (isError) {
-      intent.putExtra(DeepLinkHandler.EXTRA_ERROR_MESSAGE, errorMessage);
+    private fun intentFromDeeplinkMethod(
+        method: Method,
+        methodInvocation: Any?
+    ) = when (method.returnType) {
+        TaskStackBuilder::class.java ->
+            intentFromTaskStackBuilder(
+                methodInvocation as TaskStackBuilder
+            )
+        DeepLinkMethodResult::class.java ->
+            intentFromDeepLinkMethodResult(
+                methodInvocation as DeepLinkMethodResult
+            )
+        else -> IntentTaskStackBuilderPair(methodInvocation as Intent, null)
     }
-    LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
-  }
 
-  public boolean supportsUri(String uriString) {
-    List<DeepLinkMatchResult> entryIdxMatches = new ArrayList<>();
-    DeepLinkUri uri = DeepLinkUri.parse(uriString);
-    for (BaseRegistry registry : registries) {
-      if (registry.supports(uri, configurablePathSegmentReplacements)) {
-        return true;
-      }
+    private fun intentFromDeepLinkMethodResult(deepLinkMethodResult: DeepLinkMethodResult): IntentTaskStackBuilderPair {
+        return if (deepLinkMethodResult.taskStackBuilder != null) {
+            intentFromTaskStackBuilder(deepLinkMethodResult.taskStackBuilder)
+        } else IntentTaskStackBuilderPair(deepLinkMethodResult.intent, null)
     }
-    return false;
-  }
 
-  public List<DeepLinkEntry> getAllDeepLinkEntries() {
-    List<DeepLinkEntry> resultList = new ArrayList<>();
-    for (BaseRegistry registry : registries) {
-      resultList.addAll(registry.getAllEntries());
+    private fun intentFromTaskStackBuilder(taskStackBuilder: TaskStackBuilder): IntentTaskStackBuilderPair {
+        return if (taskStackBuilder.intentCount == 0) {
+            throw TaskStackError()
+        } else {
+            IntentTaskStackBuilderPair(
+                taskStackBuilder.editIntentAt(taskStackBuilder.intentCount - 1),
+                taskStackBuilder
+            )
+        }
     }
-    return resultList;
-  }
+
+    class TaskStackError : IllegalStateException()
+
+    /**
+     * Retruns a bundle that contains all the parameter, either from placeholder (path/{parameterName})
+     * elements or the query elements (?queryElement=value).
+     */
+    private fun parameterBundle(
+        deeplinkMatchResult: DeepLinkMatchResult,
+        deepLinkUri: DeepLinkUri,
+        originalIntentUri: Uri,
+        sourceIntent: Intent
+    ): Bundle {
+        val resultParameterMap = mutableMapOf<String, String>()
+        resultParameterMap.putAll(deeplinkMatchResult.getParameters(deepLinkUri))
+        for (queryParameter in deepLinkUri.queryParameterNames()) {
+            for (queryParameterValue in deepLinkUri.queryParameterValues(queryParameter)) {
+                if (resultParameterMap.containsKey(queryParameter)) {
+                    Log.w(TAG, "Duplicate parameter name in path and query param: $queryParameter")
+                }
+                resultParameterMap[queryParameter] = queryParameterValue
+            }
+        }
+        resultParameterMap[DeepLink.URI] = originalIntentUri.toString()
+        val parameters: Bundle = if (sourceIntent.extras != null) {
+            Bundle(sourceIntent.extras)
+        } else {
+            Bundle()
+        }
+        resultParameterMap.forEach { (key, value) ->
+            parameters.putString(key, value)
+        }
+        return parameters
+    }
+
+    /**
+     * Returns a raw match result for the given uriString. This is null if no match is found.
+     * There is no general use for that during normal operation but it might be useful when writing
+     * tests.
+     *
+     * @param uriString Uri to be matched
+     * @return An instance of [DeepLinkMatchResult] if a match was found or null if not.
+     */
+    fun findEntry(uriString: String): DeepLinkMatchResult? {
+        val uri = DeepLinkUri.parse(uriString)
+        val entryIdxMatches =
+            registries.mapNotNull { it.idxMatch(uri, configurablePathSegmentReplacements) }
+        return when (entryIdxMatches.size) {
+            // Found no match
+            0 -> null
+            // Found one match
+            1 -> entryIdxMatches.first()
+            // Found multiple matches. Sort matches by concreteness:
+            // No variable element > containing placeholders >  are a configurable path segment
+            else -> {
+                val firstTwoSortedMatches = entryIdxMatches.sorted().take(2)
+                if (firstTwoSortedMatches.first().compareTo(firstTwoSortedMatches.last()) == 0) {
+                    errorHandler?.duplicateMatch(uriString, firstTwoSortedMatches)
+                    Log.w(
+                        TAG, "More than one match with the same concreteness!! ("
+                                + firstTwoSortedMatches.first().toString() + ") vs. (" + firstTwoSortedMatches.last().toString() + ")"
+                    )
+                }
+                firstTwoSortedMatches.first()
+            }
+        }
+    }
+
+    fun supportsUri(uriString: String?): Boolean {
+        val uri = DeepLinkUri.parse(uriString)
+        return registries.any { it.supports(uri, configurablePathSegmentReplacements) }
+    }
+
+    val allDeepLinkEntries by lazy {
+        registries.map{it.getAllEntries()}.flatten()
+    }
+
+    companion object {
+        protected const val TAG = "DeepLinkDelegate"
+    }
 }

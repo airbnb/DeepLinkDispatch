@@ -10,7 +10,7 @@ data class DeepLinkResult(
     val isSuccessful: Boolean,
     val uriString: String?,
     val error: String,
-    val deepLinkEntry: DeepLinkMatchResult?,
+    val deepLinkMatchResult: DeepLinkMatchResult?,
     val methodResult: DeepLinkMethodResult
 ) {
     /**
@@ -33,6 +33,6 @@ data class DeepLinkResult(
  * If both are not null we will use the taskStackBuilder.
  */
 data class DeepLinkMethodResult(
-    val intent: Intent?,
-    val taskStackBuilder: TaskStackBuilder?
+    val intent: Intent? = null,
+    val taskStackBuilder: TaskStackBuilder? = null
 )

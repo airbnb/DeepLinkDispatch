@@ -26,88 +26,52 @@ class BaseDeepLinkDelegateTest {
         assertThat( testDelegate.findEntry("airbnb://bar/1")).isNull()
     }
 
-    @Test
+    @Test(expected = NullPointerException::class)
     fun testDispatchNullActivity() {
         val entry = deepLinkEntry("airbnb://foo/{bar}")
         val testDelegate = getOneRegistryTestDelegate(listOf(entry), null)
-        var message: String? = null
-        try {
-            testDelegate.dispatchFrom(null)
-        } catch (e: NullPointerException) {
-            message = e.message
-        }
-        assertThat(message).isEqualTo("activity == null")
+        testDelegate.dispatchFrom(null!!)
     }
 
-    @Test
+    @Test(expected = NullPointerException::class)
     fun testDispatchNullActivityNullIntent() {
         val entry = deepLinkEntry("airbnb://foo/{bar}")
         val testDelegate = getOneRegistryTestDelegate(listOf(entry), null)
-        var message: String? = null
-        try {
-            testDelegate.dispatchFrom(null, null)
-        } catch (e: NullPointerException) {
-            message = e.message
-        }
-        assertThat(message).isEqualTo("activity == null")
+        testDelegate.dispatchFrom(null!!, null!!)
     }
 
-    @Test
+    @Test(expected = NullPointerException::class)
     fun testDispatchNullIntent() {
         val entry = deepLinkEntry("airbnb://foo/{bar}")
         val testDelegate = getOneRegistryTestDelegate(listOf(entry), null)
         val activity = mockk<Activity>()
         every { activity.intent } returns null
-        var message: String? = null
-        try {
-            testDelegate.dispatchFrom(activity)
-        } catch (e: NullPointerException) {
-            message = e.message
-        }
-        assertThat(message).isEqualTo("sourceIntent == null")
+        testDelegate.dispatchFrom(activity)
     }
 
-    @Test
+    @Test(expected = NullPointerException::class)
     fun testDispatchNonNullActivityNullIntent() {
         val entry = deepLinkEntry("airbnb://foo/{bar}")
         val testDelegate = getOneRegistryTestDelegate(listOf(entry), null)
         val activity = mockk<Activity>()
         every { activity.intent } returns null
-        var message: String? = null
-        try {
-            testDelegate.dispatchFrom(activity, null)
-        } catch (e: NullPointerException) {
-            message = e.message
-        }
-        assertThat(message).isEqualTo("sourceIntent == null")
+        testDelegate.dispatchFrom(activity, null!!)
     }
 
-    @Test
+    @Test(expected = NullPointerException::class)
     fun testCreateResultAllNull() {
         val entry = deepLinkEntry("airbnb://foo/{bar}")
         val testDelegate = getOneRegistryTestDelegate(listOf(entry), null)
-        var message: String? = null
-        try {
-            testDelegate.createResult(null, null, null)
-        } catch (e: NullPointerException) {
-            message = e.message
-        }
-        assertThat(message).isEqualTo("activity == null")
+        testDelegate.createResult(null!!, null!!, null)
     }
 
-    @Test
+    @Test(expected = NullPointerException::class)
     fun testCreateResultNullIntent() {
         val entry = deepLinkEntry("airbnb://foo/{bar}")
         val testDelegate = getOneRegistryTestDelegate(listOf(entry), null)
         val activity = mockk<Activity>()
         every { activity.intent } returns null
-        var message: String? = null
-        try {
-            testDelegate.createResult(activity, null, null)
-        } catch (e: NullPointerException) {
-            message = e.message
-        }
-        assertThat(message).isEqualTo("sourceIntent == null")
+        testDelegate.createResult(activity, null!!, null)
     }
 
     @Test
@@ -205,7 +169,7 @@ class BaseDeepLinkDelegateTest {
         }
     }
 
-    private class TestDeepLinkDelegate(registries: List<BaseRegistry?>?, errorHandler: ErrorHandler?) : BaseDeepLinkDelegate(registries, errorHandler)
+    private class TestDeepLinkDelegate(registries: List<BaseRegistry>, errorHandler: ErrorHandler?) : BaseDeepLinkDelegate(registries = registries, errorHandler = errorHandler)
     companion object {
         private fun deepLinkEntry(uri: String, type: MatchType = MatchType.Activity, className: String = Any::class.java.name): DeepLinkEntry {
             return DeepLinkEntry(type, uri, className, null)
