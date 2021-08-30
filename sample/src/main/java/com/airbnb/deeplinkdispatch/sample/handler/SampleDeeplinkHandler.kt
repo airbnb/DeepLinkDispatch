@@ -9,6 +9,9 @@ import com.airbnb.deeplinkdispatch.sample.WebDeepLink
 object TestDeepLinkHandler : InBetweenDeeplinkHandler<TestDeepLinkHandlerDeepLinkArgs>() {
     override fun handleDeepLink(parameters: TestDeepLinkHandlerDeepLinkArgs) {
         println("Received handler call with $parameters")
+        /**
+         * From here any internal/3rd party navigation framework can be called the provided args.
+         */
     }
 }
 
@@ -18,7 +21,7 @@ open class InBetweenDeeplinkHandler<T> : DeepLinkHandler<T>() {
     }
 }
 
-class TestDeepLinkHandlerDeepLinkArgs(
+data class TestDeepLinkHandlerDeepLinkArgs(
     // path params can be non null
     @DeeplinkParam("path_segment_variable_1", DeepLinkParamType.Path) val uuid: Long,
     @DeeplinkParam("path_segment_variable_2", DeepLinkParamType.Path) val name: String,
