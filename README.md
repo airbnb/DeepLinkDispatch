@@ -48,6 +48,43 @@ public class MainActivity extends Activity {
 }
 ```
 
+### DeepLinkHandler Annotations
+
+You can annotate a Kotlin `object` that is extending `com.airbnb.deeplinkdispatch.handler.DeepLinkHandler`
+with an `@DeepLink` annotation. e.g.DeepLinkHandler.
+
+```kotlin
+@DeepLink("foo://example.com/handlerDeepLink/{param1}?query1={queryParameter}")
+object ProjectDeepLinkHandler : DeepLinkHandler<ProjectDeepLinkHandlerArgs>() {
+    override fun handleDeepLink(parameters: ProjectDeepLinkHandlerArgs) {
+        /**
+         * From here any internal/3rd party navigation framework can be called the provided args.
+         */
+    }
+}
+
+data class ProjectDeepLinkHandlerArgs(
+    @DeeplinkParam("param1", DeepLinkParamType.Path) val number: Int,
+    @DeeplinkParam("query1", DeepLinkParamType.Query) val flag: Boolean?,
+)
+```
+
+DeepLinkDispatch will then call `handleDeepLink` function in your handler with the path placeholders
+and queryParameters converted into an instance of the specified type class.
+
+This will give compile time safety as all placeholders and query parameters specified in the template
+inside the `@DeepLink` annotation must be present in the arguments class for the processor to pass.
+This is also true the other way around as all fields in the arguments class must be annotated and must
+be present in the template inside the annotation.
+
+From this function side the handler you can now call into any internal or 3rd party navigation system
+without any Intent being fired at all and with type safety for your arguments.DeepLink
+
+*Note:* That even though they must be listed in the template and annotation argument values annotated
+with `DeepLinkParamType.Query` can be null as they are allowed to not be present in the matched url.
+Type values that cannot be converted (e.g. a value that cannot be converted to a number) 0 is assumed
+for non nullable `DeepLinkParamType.Path` values and null is returned for `DeepLinkParamType.Query` values.
+
 ### Method Annotations
 
 You can also annotate any `public static` method with `@DeepLink`. DeepLinkDispatch will call that
