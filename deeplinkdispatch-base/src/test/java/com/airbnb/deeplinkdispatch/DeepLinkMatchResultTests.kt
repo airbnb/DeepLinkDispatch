@@ -6,47 +6,37 @@ import org.junit.Test
 class DeepLinkMatchResultTests {
 
     private val concrete = DeepLinkMatchResult(
-        deeplinkEntry = DeepLinkEntry(
-            type = MatchType.Activity,
+        deeplinkEntry = DeepLinkEntry.ActivityDeeplinkEntry(
             uriTemplate = "scheme://host/one/two/three",
             className = this.javaClass.name,
-            method = null
         ),
         parameterMap = emptyMap()
     )
     private val parmSecondPathElement = DeepLinkMatchResult(
-        deeplinkEntry = DeepLinkEntry(
-            type = MatchType.Activity,
+        deeplinkEntry = DeepLinkEntry.ActivityDeeplinkEntry(
             uriTemplate = "scheme://host/one/{param}/three",
             className = this.javaClass.name,
-            method = null
         ),
         parameterMap = emptyMap()
     )
     private val parmFirstPathElement = DeepLinkMatchResult(
-        deeplinkEntry = DeepLinkEntry(
-            type = MatchType.Activity,
+        deeplinkEntry = DeepLinkEntry.ActivityDeeplinkEntry(
             uriTemplate = "scheme://host/{param}/two/three",
             className = this.javaClass.name,
-            method = null
         ),
         parameterMap = emptyMap()
     )
     private val cpsSecondPathSegment = DeepLinkMatchResult(
-        deeplinkEntry = DeepLinkEntry(
-            type = MatchType.Activity,
+        deeplinkEntry = DeepLinkEntry.ActivityDeeplinkEntry(
             uriTemplate = "scheme://host/one/<config>/three",
             className = this.javaClass.name,
-            method = null
         ),
         parameterMap = emptyMap()
     )
     private val cpsFirstPathSegment = DeepLinkMatchResult(
-        deeplinkEntry = DeepLinkEntry(
-            type = MatchType.Activity,
+        deeplinkEntry = DeepLinkEntry.ActivityDeeplinkEntry(
             uriTemplate = "scheme://host/<config>/two/three",
             className = this.javaClass.name,
-            method = null
         ),
         parameterMap = emptyMap()
     )

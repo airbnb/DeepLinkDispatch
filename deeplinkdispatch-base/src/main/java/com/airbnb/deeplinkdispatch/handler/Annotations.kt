@@ -3,9 +3,6 @@ package com.airbnb.deeplinkdispatch.handler
 @Target(AnnotationTarget.VALUE_PARAMETER, )
 @Retention(AnnotationRetention.RUNTIME)
 @MustBeDocumented
-annotation class PathParam(val name: String)
+annotation class DeeplinkParam(val name: String, val type: DeepLinkParamType)
 
-@Target(AnnotationTarget.VALUE_PARAMETER, )
-@Retention(AnnotationRetention.RUNTIME)
-@MustBeDocumented
-annotation class QueryParam(val name: String)
+enum class DeepLinkParamType { Path, Query }

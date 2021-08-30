@@ -11,7 +11,8 @@ data class DeepLinkResult(
     val uriString: String?,
     val error: String,
     val deepLinkMatchResult: DeepLinkMatchResult?,
-    val methodResult: DeepLinkMethodResult
+    val methodResult: DeepLinkMethodResult,
+    val parameters: Map<String, String> = emptyMap()
 ) {
     /**
      * This exists so that calls from Kotlin code [error()] are maintained across major version 4.

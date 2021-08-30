@@ -125,14 +125,14 @@ data class Root(override val id: String = "r") : TreeNode(ROOT_VALUE, NodeMetada
     /**
      * Add the given DeepLinkUri to the the trie
      */
-    fun addToTrie(matchType: MatchType, deepLinkUriTemplate: String, annotatedClassFullyQualifiedName: String, annotatedMethod: String?) {
-        val deepLinkUri = DeepLinkUri.parseTemplate(deepLinkUriTemplate)
+    fun addToTrie(deepLinkEntry: DeepLinkEntry) {
+        val deepLinkUri = DeepLinkUri.parseTemplate(deepLinkEntry.uriTemplate)
         var node = this.addNode(Scheme(deepLinkUri.scheme().also { validateIfComponentParam(it) }))
         if (!deepLinkUri.host().isNullOrEmpty()) {
             validateIfComponentParam(deepLinkUri.host())
             node = node.addNode(Host(deepLinkUri.host()))
             if (deepLinkUri.pathSegments().isNullOrEmpty()) {
-                node.match = UriMatch(matchType,deepLinkUriTemplate, annotatedClassFullyQualifiedName, annotatedMethod)
+                node.match = uriMatch(deepLinkEntry)
             }
         }
         if (!deepLinkUri.pathSegments().isNullOrEmpty()) {
@@ -141,9 +141,31 @@ data class Root(override val id: String = "r") : TreeNode(ROOT_VALUE, NodeMetada
                 validateIfConfigurablePathSegment(pathSegment)
                 node = node.addNode(PathSegment(pathSegment))
             }
-            node.match = UriMatch(matchType, deepLinkUriTemplate, annotatedClassFullyQualifiedName, annotatedMethod)
+            node.match = uriMatch(deepLinkEntry)
         }
     }
+
+    private fun uriMatch(deepLinkEntry: DeepLinkEntry) =
+        when (deepLinkEntry) {
+            is DeepLinkEntry.ActivityDeeplinkEntry -> UriMatch(
+                MatchType.Activity,
+                deepLinkEntry.uriTemplate,
+                deepLinkEntry.className,
+                null
+            )
+            is DeepLinkEntry.MethodDeeplinkEntry -> UriMatch(
+                MatchType.Method,
+                deepLinkEntry.uriTemplate,
+                deepLinkEntry.className,
+                deepLinkEntry.method
+            )
+            is DeepLinkEntry.HandlerDeepLinkEntry -> UriMatch(
+                MatchType.Handler,
+                deepLinkEntry.uriTemplate,
+                deepLinkEntry.className,
+                null
+            )
+        }
 }
 
 data class Scheme(override val id: String) : TreeNode(id = id, metadata = NodeMetadata(MetadataMasks.ComponentTypeSchemeMask, id))

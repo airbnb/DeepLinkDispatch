@@ -14,7 +14,7 @@ class BaseDeepLinkDelegateTest {
 
     @Test
     fun testFindEntry() {
-        val entry = deepLinkEntry("airbnb://foo/{bar}")
+        val entry = activityDeepLinkEntry("airbnb://foo/{bar}")
         val testDelegate = getOneRegistryTestDelegate(listOf(entry), null)
         val foundEntry = testDelegate.findEntry("airbnb://foo/1")
         assertThat(foundEntry).isNotNull
@@ -28,21 +28,21 @@ class BaseDeepLinkDelegateTest {
 
     @Test(expected = NullPointerException::class)
     fun testDispatchNullActivity() {
-        val entry = deepLinkEntry("airbnb://foo/{bar}")
+        val entry = activityDeepLinkEntry("airbnb://foo/{bar}")
         val testDelegate = getOneRegistryTestDelegate(listOf(entry), null)
         testDelegate.dispatchFrom(null!!)
     }
 
     @Test(expected = NullPointerException::class)
     fun testDispatchNullActivityNullIntent() {
-        val entry = deepLinkEntry("airbnb://foo/{bar}")
+        val entry = activityDeepLinkEntry("airbnb://foo/{bar}")
         val testDelegate = getOneRegistryTestDelegate(listOf(entry), null)
         testDelegate.dispatchFrom(null!!, null!!)
     }
 
     @Test(expected = NullPointerException::class)
     fun testDispatchNullIntent() {
-        val entry = deepLinkEntry("airbnb://foo/{bar}")
+        val entry = activityDeepLinkEntry("airbnb://foo/{bar}")
         val testDelegate = getOneRegistryTestDelegate(listOf(entry), null)
         val activity = mockk<Activity>()
         every { activity.intent } returns null
@@ -51,7 +51,7 @@ class BaseDeepLinkDelegateTest {
 
     @Test(expected = NullPointerException::class)
     fun testDispatchNonNullActivityNullIntent() {
-        val entry = deepLinkEntry("airbnb://foo/{bar}")
+        val entry = activityDeepLinkEntry("airbnb://foo/{bar}")
         val testDelegate = getOneRegistryTestDelegate(listOf(entry), null)
         val activity = mockk<Activity>()
         every { activity.intent } returns null
@@ -60,14 +60,14 @@ class BaseDeepLinkDelegateTest {
 
     @Test(expected = NullPointerException::class)
     fun testCreateResultAllNull() {
-        val entry = deepLinkEntry("airbnb://foo/{bar}")
+        val entry = activityDeepLinkEntry("airbnb://foo/{bar}")
         val testDelegate = getOneRegistryTestDelegate(listOf(entry), null)
         testDelegate.createResult(null!!, null!!, null)
     }
 
     @Test(expected = NullPointerException::class)
     fun testCreateResultNullIntent() {
-        val entry = deepLinkEntry("airbnb://foo/{bar}")
+        val entry = activityDeepLinkEntry("airbnb://foo/{bar}")
         val testDelegate = getOneRegistryTestDelegate(listOf(entry), null)
         val activity = mockk<Activity>()
         every { activity.intent } returns null
@@ -76,7 +76,7 @@ class BaseDeepLinkDelegateTest {
 
     @Test
     fun testCreateResultAllNullData() {
-        val entry = deepLinkEntry("airbnb://foo/{bar}")
+        val entry = activityDeepLinkEntry("airbnb://foo/{bar}")
         val testDelegate = getOneRegistryTestDelegate(listOf(entry), null)
         val intent = mockk<Intent>()
         every { intent.data } returns null
@@ -95,7 +95,7 @@ class BaseDeepLinkDelegateTest {
     fun testErrorHandlerWithDuplicateMatch() {
         val deeplinkUrl = "airbnb://foo/{bar}"
         val matchUrl = "airbnb://foo/bar"
-        val entry = deepLinkEntry(deeplinkUrl)
+        val entry = activityDeepLinkEntry(deeplinkUrl)
         val deeplinkMatchResult = DeepLinkMatchResult(entry, mapOf(DeepLinkUri.parse(matchUrl) to mapOf("bar" to "bar")))
         val uri = mockk<Uri>()
         every { uri.toString() } returns matchUrl
@@ -122,8 +122,8 @@ class BaseDeepLinkDelegateTest {
         val deeplinkUrl1 = "airbnb://foo/{bar}"
         val deeplinkUrl2 = "airbnb://bar/{foo}"
         val matchUrl = "airbnb://bar/foo"
-        val entry1 = deepLinkEntry(deeplinkUrl1)
-        val entry2 = deepLinkEntry(deeplinkUrl2)
+        val entry1 = activityDeepLinkEntry(deeplinkUrl1)
+        val entry2 = activityDeepLinkEntry(deeplinkUrl2)
         val uri = mockk<Uri>()
         every { uri.toString() } returns matchUrl
         val intent = mockk<Intent>(relaxed = true)
@@ -144,7 +144,7 @@ class BaseDeepLinkDelegateTest {
             private fun getSearchIndex(deepLinkEntries: List<DeepLinkEntry>): ByteArray {
                 val trieRoot = Root()
                 for (entry in deepLinkEntries) {
-                    trieRoot.addToTrie(entry.type, entry.uriTemplate, entry.className, entry.method)
+                    trieRoot.addToTrie(entry)
                 }
                 return trieRoot.toUByteArray().toByteArray()
             }
@@ -171,8 +171,8 @@ class BaseDeepLinkDelegateTest {
 
     private class TestDeepLinkDelegate(registries: List<BaseRegistry>, errorHandler: ErrorHandler?) : BaseDeepLinkDelegate(registries = registries, errorHandler = errorHandler)
     companion object {
-        private fun deepLinkEntry(uri: String, type: MatchType = MatchType.Activity, className: String = Any::class.java.name): DeepLinkEntry {
-            return DeepLinkEntry(type, uri, className, null)
+        private fun activityDeepLinkEntry(uri: String, className: String = Any::class.java.name): DeepLinkEntry {
+            return DeepLinkEntry.ActivityDeeplinkEntry(uri, className)
         }
 
         /**

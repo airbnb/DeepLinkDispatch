@@ -43,11 +43,9 @@ class DeepLinkProcessorNonIncrementalTest : BaseDeepLinkProcessorTest() {
             results = results,
             registryClassName = "com.example.SampleModuleRegistry",
             indexEntries = listOf(
-                DeepLinkEntry(
-                    type = MatchType.Activity,
+                DeepLinkEntry.ActivityDeeplinkEntry(
                     "airbnb://example.com/deepLink",
-                    "com.example.SampleActivity",
-                    null
+                    "com.example.SampleActivity"
                 )
             ),
             generatedFiles = mapOf(
@@ -153,47 +151,33 @@ class DeepLinkProcessorNonIncrementalTest : BaseDeepLinkProcessorTest() {
             results = resultsKapt,
             registryClassName = "com.example.SampleModuleRegistry",
             indexEntries = listOf(
-                DeepLinkEntry(
-                    type = MatchType.Activity,
+                DeepLinkEntry.ActivityDeeplinkEntry(
                     uriTemplate = "airbnb://example.com/deepLink",
-                    className = "com.example.SampleActivity",
-                    method = null
+                    className = "com.example.SampleActivity"
                 ),
-                DeepLinkEntry(
-                    type = MatchType.Activity,
+                DeepLinkEntry.ActivityDeeplinkEntry(
                     uriTemplate = "example://example.com/another",
-                    className = "com.example.SampleActivity",
-                    method = null
+                    className = "com.example.SampleActivity"
                 ),
-                DeepLinkEntry(
-                    type = MatchType.Activity,
+                DeepLinkEntry.ActivityDeeplinkEntry(
                     uriTemplate = "example://example.com/deepLink",
-                    className = "com.example.SampleActivity",
-                    method = null
+                    className = "com.example.SampleActivity"
                 ),
-                DeepLinkEntry(
-                    type = MatchType.Activity,
+                DeepLinkEntry.ActivityDeeplinkEntry(
                     uriTemplate = "http://example.com/another",
-                    className = "com.example.SampleActivity",
-                    method = null
+                    className = "com.example.SampleActivity"
                 ),
-                DeepLinkEntry(
-                    type = MatchType.Activity,
+                DeepLinkEntry.ActivityDeeplinkEntry(
                     uriTemplate = "http://example.com/deepLink",
-                    className = "com.example.SampleActivity",
-                    method = null
+                    className = "com.example.SampleActivity"
                 ),
-                DeepLinkEntry(
-                    type = MatchType.Activity,
+                DeepLinkEntry.ActivityDeeplinkEntry(
                     uriTemplate = "https://example.com/another",
-                    className = "com.example.SampleActivity",
-                    method = null
+                    className = "com.example.SampleActivity"
                 ),
-                DeepLinkEntry(
-                    type = MatchType.Activity,
+                DeepLinkEntry.ActivityDeeplinkEntry(
                     uriTemplate = "https://example.com/deepLink",
-                    className = "com.example.SampleActivity",
-                    method = null
+                    className = "com.example.SampleActivity"
                 )
             ),
             generatedFiles = mapOf(
@@ -361,11 +345,9 @@ class DeepLinkProcessorNonIncrementalTest : BaseDeepLinkProcessorTest() {
             results = results,
             registryClassName = "com.Example.SampleModuleRegistry",
             indexEntries = listOf(
-                DeepLinkEntry(
-                    type = MatchType.Activity,
+                DeepLinkEntry.ActivityDeeplinkEntry(
                     uriTemplate = "airbnb://example.com/deepLink",
-                    className = "com.Example.SampleActivity",
-                    method = null
+                    className = "com.Example.SampleActivity"
                 )
             ),
             generatedFiles = mapOf(
@@ -583,32 +565,27 @@ class DeepLinkProcessorNonIncrementalTest : BaseDeepLinkProcessorTest() {
             results = results,
             registryClassName = "com.example.SampleModuleRegistry",
             indexEntries = listOf(
-                DeepLinkEntry(
-                    type = MatchType.Method,
+                DeepLinkEntry.MethodDeeplinkEntry(
                     uriTemplate = "airbnb://host/path",
                     className = "com.example.SampleActivity",
                     method = "intentFromOnePath"
                 ),
-                DeepLinkEntry(
-                    type = MatchType.Method,
+                DeepLinkEntry.MethodDeeplinkEntry(
                     uriTemplate = "airbnb://host/path1/path2",
                     className = "com.example.SampleActivity",
                     method = "intentFromTwoPath"
                 ),
-                DeepLinkEntry(
-                    type = MatchType.Method,
+                DeepLinkEntry.MethodDeeplinkEntry(
                     uriTemplate = "airbnb://host/path1/path3?q={q}",
                     className = "com.example.SampleActivity",
                     method = "intentFromTwoPathWithQuery"
                 ),
-                DeepLinkEntry(
-                    type = MatchType.Method,
+                DeepLinkEntry.MethodDeeplinkEntry(
                     uriTemplate = "airbnb://host/{var1}/{var2}",
                     className = "com.example.SampleActivity",
                     method = "intentFromTwoPathWithTwoParams"
                 ),
-                DeepLinkEntry(
-                    type = MatchType.Method,
+                DeepLinkEntry.MethodDeeplinkEntry(
                     uriTemplate = "airbnb://host/{var}",
                     className = "com.example.SampleActivity",
                     method = "intentFromOnePathWithOneParam"

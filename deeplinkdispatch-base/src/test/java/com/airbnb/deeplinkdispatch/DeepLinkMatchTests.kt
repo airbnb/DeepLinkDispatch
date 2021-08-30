@@ -21,10 +21,9 @@ class DeepLinkMatchTests {
         )
         assertNotNull(entryFromArray)
         entryFromArray?.let {
-            assertEquals(MatchType.Activity, it.deeplinkEntry.type)
+            assertTrue(it.deeplinkEntry is DeepLinkEntry.ActivityDeeplinkEntry)
             assertEquals(ONE_PARAM_SCHEMA, it.deeplinkEntry.uriTemplate)
             assertEquals(this.javaClass, it.deeplinkEntry.clazz)
-            assertNull(it.deeplinkEntry.method)
         }
     }
 
@@ -39,10 +38,11 @@ class DeepLinkMatchTests {
         )
         assertNotNull(entryFromArray)
         entryFromArray?.let {
-            assertEquals(MatchType.Method, it.deeplinkEntry.type)
-            assertEquals(ONE_PARAM_SCHEMA, it.deeplinkEntry.uriTemplate)
-            assertEquals(this.javaClass, it.deeplinkEntry.clazz)
-            assertEquals(METHOD_NAME, it.deeplinkEntry.method)
+            assertTrue(it.deeplinkEntry is DeepLinkEntry.MethodDeeplinkEntry)
+            val methodEntry = it.deeplinkEntry as DeepLinkEntry.MethodDeeplinkEntry
+            assertEquals(ONE_PARAM_SCHEMA, methodEntry.uriTemplate)
+            assertEquals(this.javaClass, methodEntry.clazz)
+            assertEquals(METHOD_NAME, methodEntry.method)
         }
     }
 
@@ -57,9 +57,8 @@ class DeepLinkMatchTests {
         )
         assertNotNull(entryFromArray)
         entryFromArray!!.let {
-            assertEquals(MatchType.Handler, it.deeplinkEntry.type)
+            assertTrue(it.deeplinkEntry is DeepLinkEntry.HandlerDeepLinkEntry)
             assertEquals(ONE_PARAM_SCHEMA, it.deeplinkEntry.uriTemplate)
-            assertNull(it.deeplinkEntry.method)
             it.deeplinkEntry.clazz
         }
     }

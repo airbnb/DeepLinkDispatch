@@ -47,6 +47,7 @@ dependencies {
   testImplementation deps.androidxTestCore
   testImplementation deps.roboelectric
   testImplementation deps.junit
+  testImplementation deps.mockk
 }
 
 ksp {

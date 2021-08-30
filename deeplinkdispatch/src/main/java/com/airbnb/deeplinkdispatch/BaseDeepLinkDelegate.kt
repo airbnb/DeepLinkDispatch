@@ -9,6 +9,9 @@ import android.util.Log
 import androidx.core.app.TaskStackBuilder
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.airbnb.deeplinkdispatch.base.Utils.toByteArrayMap
+import com.airbnb.deeplinkdispatch.handler.DEEP_LINK_HANDLER_METHOD_NAME
+import com.airbnb.deeplinkdispatch.handler.DeepLinkParamType
+import com.airbnb.deeplinkdispatch.handler.DeeplinkParam
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
 
@@ -99,14 +102,91 @@ open class BaseDeepLinkDelegate @JvmOverloads constructor(
         activity: Activity
     ) {
         result.deepLinkMatchResult?.let { matchedDeepLinkResult ->
-            when (matchedDeepLinkResult.deeplinkEntry.type) {
-                MatchType.Method -> result.methodResult.taskStackBuilder?.startActivities()
+            when (matchedDeepLinkResult.deeplinkEntry) {
+                is DeepLinkEntry.MethodDeeplinkEntry -> result.methodResult.taskStackBuilder?.startActivities()
                     ?: activity.startActivity(result.methodResult.intent)
-                MatchType.Activity -> activity.startActivity(result.methodResult.intent)
-                MatchType.Handler -> TODO()
-                /** Not implemented yet **/
-
+                is DeepLinkEntry.ActivityDeeplinkEntry -> activity.startActivity(result.methodResult.intent)
+               is DeepLinkEntry.HandlerDeepLinkEntry -> if (result.isSuccessful) callDeeplinkHandler(result)
             }
+        }
+    }
+
+    private fun callDeeplinkHandler(result: DeepLinkResult) {
+        val handlerClazz = result.deepLinkMatchResult?.deeplinkEntry?.clazz!!
+        val handlerMethod = handlerClazz.methods.singleOrNull { method ->
+            method.name == DEEP_LINK_HANDLER_METHOD_NAME && method.genericParameterTypes.let { parameterTypes ->
+                parameterTypes.singleOrNull()?.let { it != Object::class.java } ?: false
+            }
+        } ?: error("DeepLinkHandler class ${handlerClazz.name} has more than one methods " +
+                "\"$DEEP_LINK_HANDLER_METHOD_NAME\" methods with a single parameter.")
+        // Ok to call single here as we would have failed above if we would have more than one type.
+        val handlerParameterClazz = handlerMethod?.genericParameterTypes?.single() as Class<*>
+        val handlerParameterClazzConstructor = handlerParameterClazz.constructors.singleOrNull()
+            ?: error("Handler parameter class can only have one constructor.")
+        val annotationList: List<DeeplinkParam> =
+            handlerParameterClazzConstructor.parameterAnnotations.flatten()
+                .filterNotNull().filter { it.annotationClass == DeeplinkParam::class }
+                .map { it as DeeplinkParam }
+        val typeNameMap = handlerParameterClazzConstructor.parameterTypes.let {
+            // Check if we have as many parameters as annotations, the DeeplinkParam annotation is not
+            // repeatable we cannot have multiple for just one element.
+            if (annotationList.size == it.size) {
+                annotationList.zip(it)
+            } else error("There are ${annotationList.size} annotations but ${it.size} parameters!")
+        }
+        val handlerArgsConstructorParams = createParamArray(typeNameMap, result.parameters)
+        val handlerParameters =
+            handlerParameterClazzConstructor.newInstance(*handlerArgsConstructorParams)
+        val handlerInstanceField = handlerClazz.getField("INSTANCE").get(null);
+        handlerMethod.invoke(handlerInstanceField, handlerParameters)
+    }
+
+    private fun createParamArray(
+        typeNameMap: List<Pair<DeeplinkParam, Class<*>>>,
+        parameters: Map<String, String>
+    ): Array<Any?> {
+        return typeNameMap.map { (annotation, type) ->
+            when(annotation.type) {
+                DeepLinkParamType.Path ->
+                    mapNotNullableType(parameters.getOrElse(annotation.name) {error("Non existent non nullable element for name: ${annotation.name}")} , type)
+                DeepLinkParamType.Query ->
+                    mapNullableType(parameters[annotation.name], type)
+            }
+        }.toTypedArray()
+    }
+
+    private fun mapNullableType(value: String?, type: Class<*>): Any? {
+        if (value == null) return null
+        return try {
+            when (type) {
+                Boolean::class.javaObjectType -> value.toBoolean()
+                Int::class.javaObjectType -> value.toInt()
+                Long::class.javaObjectType -> value.toLong()
+                Short::class.javaObjectType -> value.toShort()
+                Byte::class.javaObjectType -> value.toByte()
+                Double::class.javaObjectType -> value.toDouble()
+                Float::class.javaObjectType -> value.toFloat()
+                else -> value
+            }
+        } catch (e: NumberFormatException) {
+            null
+        }
+    }
+
+    private fun mapNotNullableType(value: String, type: Class<*>): Any {
+        return try {
+            when (type) {
+                Boolean::class.javaPrimitiveType -> value.toBoolean()
+                Int::class.javaPrimitiveType -> value.toInt()
+                Long::class.javaPrimitiveType -> value.toLong()
+                Short::class.javaPrimitiveType -> value.toShort()
+                Byte::class.javaPrimitiveType -> value.toByte()
+                Double::class.javaPrimitiveType -> value.toDouble()
+                Float::class.javaPrimitiveType -> value.toFloat()
+                else -> value
+            }
+        } catch (e: NumberFormatException) {
+            0
         }
     }
 
@@ -143,17 +223,17 @@ open class BaseDeepLinkDelegate @JvmOverloads constructor(
                 methodResult = DeepLinkMethodResult(null, null)
             )
         }
-        val parameters = parameterBundle(
-                deeplinkMatchResult = deeplinkMatchResult,
-                deepLinkUri = deepLinkUri,
-                originalIntentUri = originalIntentUri,
-                sourceIntent = sourceIntent
-            )
+        val queryAndPathParameters = queryAndPathParameters(
+            deeplinkMatchResult = deeplinkMatchResult,
+            deepLinkUri = deepLinkUri,
+        )
+
+        val intentBundle = createIntentBundle(sourceIntent, originalIntentUri, queryAndPathParameters)
         return try {
             val intentAndTaskStackBuilderPair = intentAndTaskStackBuilderFromClass(
                 matchedDeeplinkEntry = deeplinkMatchResult.deeplinkEntry,
                 activity = activity,
-                parameters = parameters
+                intentBundle = intentBundle
             )
             intentAndTaskStackBuilderPair.intent?.let { intent ->
                 if (intent.action == null) {
@@ -162,7 +242,7 @@ open class BaseDeepLinkDelegate @JvmOverloads constructor(
                 if (intent.data == null) {
                     intent.data = sourceIntent.data
                 }
-                intent.putExtras(parameters)
+                intent.putExtras(intentBundle)
                 intent.putExtra(DeepLink.IS_DEEP_LINK, true)
                 intent.putExtra(DeepLink.REFERRER_URI, originalIntentUri)
                 if (activity.callingActivity != null) {
@@ -176,7 +256,8 @@ open class BaseDeepLinkDelegate @JvmOverloads constructor(
                     methodResult = DeepLinkMethodResult(
                         intent,
                         intentAndTaskStackBuilderPair.taskStackBuilder
-                    )
+                    ),
+                    parameters = queryAndPathParameters
                 )
             } ?: return DeepLinkResult(
                 isSuccessful = false,
@@ -188,63 +269,66 @@ open class BaseDeepLinkDelegate @JvmOverloads constructor(
                     intentAndTaskStackBuilderPair.taskStackBuilder
                 )
             )
-        } catch (taskStackError: TaskStackError) {
+        } catch (deepLinkMethodError: DeeplLinkMethodError) {
             return DeepLinkResult(
                 isSuccessful = false,
                 uriString = originalIntentUri.toString(),
-                error = "Could not deep link to method: ${deeplinkMatchResult.deeplinkEntry.method} intents length == 0",
-                deepLinkMatchResult = deeplinkMatchResult,
-                methodResult = DeepLinkMethodResult(null, null)
-            )
-        } catch (exception: NoSuchMethodException) {
-            DeepLinkResult(
-                isSuccessful = false,
-                uriString = originalIntentUri.toString(),
-                error = "Deep link to non-existent method: ${deeplinkMatchResult.deeplinkEntry.method}",
-                deepLinkMatchResult = deeplinkMatchResult,
-                methodResult = DeepLinkMethodResult(null, null)
-            )
-        } catch (exception: IllegalAccessException) {
-            DeepLinkResult(
-                isSuccessful = false,
-                uriString = originalIntentUri.toString(),
-                error = "Could not deep link to method: ${deeplinkMatchResult.deeplinkEntry.method}",
-                deepLinkMatchResult = deeplinkMatchResult,
-                methodResult = DeepLinkMethodResult(null, null)
-            )
-        } catch (exception: InvocationTargetException) {
-            DeepLinkResult(
-                isSuccessful = false,
-                uriString = originalIntentUri.toString(),
-                error = "Could not deep link to method: ${deeplinkMatchResult.deeplinkEntry.method}",
+                error = deepLinkMethodError.message ?: "",
                 deepLinkMatchResult = deeplinkMatchResult,
                 methodResult = DeepLinkMethodResult(null, null)
             )
         }
     }
 
+    private fun createIntentBundle(
+        sourceIntent: Intent,
+        originalIntentUri: Uri,
+        queryAndPathParameters: Map<String, String>
+    ): Bundle {
+        val intentBundle: Bundle = if (sourceIntent.extras != null) {
+            Bundle(sourceIntent.extras)
+        } else {
+            Bundle()
+        }
+        queryAndPathParameters.forEach { (key, value) -> intentBundle.putString(key, value) }
+        intentBundle.putString(DeepLink.URI, originalIntentUri.toString())
+        return intentBundle
+    }
+
     private fun intentAndTaskStackBuilderFromClass(
         matchedDeeplinkEntry: DeepLinkEntry,
         activity: Activity,
-        parameters: Bundle
+        intentBundle: Bundle
     ): IntentTaskStackBuilderPair {
         val clazz = matchedDeeplinkEntry.clazz
-        return when (matchedDeeplinkEntry.type) {
-            MatchType.Activity -> IntentTaskStackBuilderPair(Intent(activity, clazz), null)
-            MatchType.Method -> {
-                matchedDeeplinkEntry.method?.let { methodString ->
+        return when (matchedDeeplinkEntry) {
+            is DeepLinkEntry.ActivityDeeplinkEntry ->
+                IntentTaskStackBuilderPair(Intent(activity, clazz), null)
+            is DeepLinkEntry.MethodDeeplinkEntry -> {
+                try {
                     try {
-                        val method = clazz.getMethod(methodString, Context::class.java)
+                        val method = clazz.getMethod(matchedDeeplinkEntry.method, Context::class.java)
                         intentFromDeeplinkMethod(method, method.invoke(clazz, activity))
                     } catch (exception: NoSuchMethodException) {
-                        val method =
-                            clazz.getMethod(methodString, Context::class.java, Bundle::class.java)
-                        intentFromDeeplinkMethod(method, method.invoke(clazz, activity, parameters))
+                        val method = clazz.getMethod(
+                            matchedDeeplinkEntry.method,
+                            Context::class.java,
+                            Bundle::class.java
+                        )
+                        intentFromDeeplinkMethod(method, method.invoke(clazz, activity, intentBundle))
                     }
-                } ?: IntentTaskStackBuilderPair(null, null)
+                } catch (exception: NoSuchMethodException) {
+                    throw DeeplLinkMethodError("Deep link to non-existent method: ${matchedDeeplinkEntry.method}")
+                } catch (exception: IllegalAccessException) {
+                    throw DeeplLinkMethodError("Could not deep link to method: ${matchedDeeplinkEntry.method}")
+                } catch (exception: InvocationTargetException) {
+                    throw DeeplLinkMethodError("Could not deep link to method: ${matchedDeeplinkEntry.method}")
+                }
             }
-            MatchType.Handler -> IntentTaskStackBuilderPair(null, null) /** TODO: Implement **/
-            else -> throw IllegalStateException("Unexpected value: " + matchedDeeplinkEntry.type)
+            is DeepLinkEntry.HandlerDeepLinkEntry ->
+                // The handler does not need any Intent, we will call it directly, but we just make
+                // one here to to not fail later.
+                IntentTaskStackBuilderPair(Intent(activity, clazz), null)
         }
     }
 
@@ -259,24 +343,26 @@ open class BaseDeepLinkDelegate @JvmOverloads constructor(
     ) = when (method.returnType) {
         TaskStackBuilder::class.java ->
             intentFromTaskStackBuilder(
-                methodInvocation as TaskStackBuilder
+                methodInvocation as TaskStackBuilder,
+                method.name
             )
         DeepLinkMethodResult::class.java ->
             intentFromDeepLinkMethodResult(
-                methodInvocation as DeepLinkMethodResult
+                methodInvocation as DeepLinkMethodResult,
+                method.name
             )
         else -> IntentTaskStackBuilderPair(methodInvocation as Intent, null)
     }
 
-    private fun intentFromDeepLinkMethodResult(deepLinkMethodResult: DeepLinkMethodResult): IntentTaskStackBuilderPair {
+    private fun intentFromDeepLinkMethodResult(deepLinkMethodResult: DeepLinkMethodResult, methodName: String): IntentTaskStackBuilderPair {
         return if (deepLinkMethodResult.taskStackBuilder != null) {
-            intentFromTaskStackBuilder(deepLinkMethodResult.taskStackBuilder)
+            intentFromTaskStackBuilder(deepLinkMethodResult.taskStackBuilder,methodName)
         } else IntentTaskStackBuilderPair(deepLinkMethodResult.intent, null)
     }
 
-    private fun intentFromTaskStackBuilder(taskStackBuilder: TaskStackBuilder): IntentTaskStackBuilderPair {
+    private fun intentFromTaskStackBuilder(taskStackBuilder: TaskStackBuilder, methodName: String): IntentTaskStackBuilderPair {
         return if (taskStackBuilder.intentCount == 0) {
-            throw TaskStackError()
+            throw DeeplLinkMethodError("Could not deep link to method: $methodName intents length == 0")
         } else {
             IntentTaskStackBuilderPair(
                 taskStackBuilder.editIntentAt(taskStackBuilder.intentCount - 1),
@@ -285,18 +371,16 @@ open class BaseDeepLinkDelegate @JvmOverloads constructor(
         }
     }
 
-    class TaskStackError : IllegalStateException()
+    class DeeplLinkMethodError(message: String) : IllegalStateException(message)
 
     /**
      * Retruns a bundle that contains all the parameter, either from placeholder (path/{parameterName})
      * elements or the query elements (?queryElement=value).
      */
-    private fun parameterBundle(
+    private fun queryAndPathParameters(
         deeplinkMatchResult: DeepLinkMatchResult,
-        deepLinkUri: DeepLinkUri,
-        originalIntentUri: Uri,
-        sourceIntent: Intent
-    ): Bundle {
+        deepLinkUri: DeepLinkUri
+    ): Map<String, String> {
         val resultParameterMap = mutableMapOf<String, String>()
         resultParameterMap.putAll(deeplinkMatchResult.getParameters(deepLinkUri))
         for (queryParameter in deepLinkUri.queryParameterNames()) {
@@ -307,16 +391,7 @@ open class BaseDeepLinkDelegate @JvmOverloads constructor(
                 resultParameterMap[queryParameter] = queryParameterValue
             }
         }
-        resultParameterMap[DeepLink.URI] = originalIntentUri.toString()
-        val parameters: Bundle = if (sourceIntent.extras != null) {
-            Bundle(sourceIntent.extras)
-        } else {
-            Bundle()
-        }
-        resultParameterMap.forEach { (key, value) ->
-            parameters.putString(key, value)
-        }
-        return parameters
+        return resultParameterMap
     }
 
     /**

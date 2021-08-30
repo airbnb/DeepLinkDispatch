@@ -32,7 +32,7 @@ data class DeepLinkMatchResult(val deeplinkEntry: DeepLinkEntry,
     override fun toString(): String {
         return "uriTemplate: ${deeplinkEntry.uriTemplate} " +
                 "activity: ${deeplinkEntry.clazz.name} " +
-                "method: ${deeplinkEntry.method} " +
+                "${if (deeplinkEntry is DeepLinkEntry.MethodDeeplinkEntry) "method: ${deeplinkEntry.method} " else ""}" +
                 "parameters: $parameterMap"
     }
 
@@ -76,15 +76,23 @@ data class DeepLinkMatchResult(val deeplinkEntry: DeepLinkEntry,
     }
 }
 
-data class DeepLinkEntry(
-    val type: MatchType,
-    val uriTemplate: String,
-    /**
-     * The class name where the annotation corresponding to where an instance of DeepLinkEntry is declared.
-     */
-    val className: String,
-    val method: String?
-) {
+sealed class DeepLinkEntry(open val uriTemplate: String, open val className: String) {
+
+    data class ActivityDeeplinkEntry(
+        override val uriTemplate: String,
+        override val className: String
+    ) : DeepLinkEntry(uriTemplate, className)
+
+    data class MethodDeeplinkEntry(
+        override val uriTemplate: String,
+        override val className: String,
+        val method: String
+    ) : DeepLinkEntry(uriTemplate, className)
+
+    data class HandlerDeepLinkEntry(
+        override val uriTemplate: String,
+        override val className: String
+    ) : DeepLinkEntry(uriTemplate, className)
 
     val clazz: Class<*> by lazy {
         try {
@@ -96,9 +104,5 @@ data class DeepLinkEntry(
                 e
             )
         }
-    }
-
-    override fun toString(): String {
-        return "uriTemplate: $uriTemplate className: $className method: $method"
     }
 }

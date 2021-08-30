@@ -3,11 +3,11 @@ package com.airbnb.deeplinkdispatch.base;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.airbnb.deeplinkdispatch.DeepLinkEntry;
 import com.airbnb.deeplinkdispatch.DeepLinkUri;
 import com.airbnb.deeplinkdispatch.DeepLinkMatchResult;
 import com.airbnb.deeplinkdispatch.MatchType;
 import com.airbnb.deeplinkdispatch.NodeMetadata;
+import com.airbnb.deeplinkdispatch.DeepLinkEntry;
 import com.airbnb.deeplinkdispatch.UrlElement;
 
 import java.io.UnsupportedEncodingException;
@@ -249,7 +249,16 @@ public class MatchIndex {
       position += MATCH_DATA_METHOD_LENGTH;
       methodName = getStringFromByteArray(byteArray, position, methodLength);
     }
-    return new DeepLinkEntry(matchType, urlTemplate, className, methodName);
+    switch (matchType) {
+      case Activity:
+        return new DeepLinkEntry.ActivityDeeplinkEntry(urlTemplate, className);
+      case Method:
+        return new DeepLinkEntry.MethodDeeplinkEntry(urlTemplate, className, methodName);
+      case Handler:
+        return new DeepLinkEntry.HandlerDeepLinkEntry(urlTemplate, className);
+      default:
+        throw new IllegalStateException("Unhandled match type: " + matchType);
+    }
   }
 
   /**

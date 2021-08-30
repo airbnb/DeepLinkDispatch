@@ -16,7 +16,10 @@
 
 package com.airbnb.deeplinkdispatch;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+
+import org.jetbrains.annotations.NotNull;
 
 import java.io.EOFException;
 import java.net.IDN;
@@ -29,10 +32,13 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import okio.Buffer;
 
@@ -55,6 +61,7 @@ public final class DeepLinkUri {
   static final String CONVERT_TO_URI_ENCODE_SET = "^`{}|\\";
   static final String FORM_ENCODE_SET = " \"':;<=>@[]^`{}|/\\?#&!$(),~";
   static final String FRAGMENT_ENCODE_SET = "";
+  static final Pattern PLACEHOLDER_REGEX = Pattern.compile("\\{(.*?)\\}");
 
   /** Either "http" or "https". */
   private final String scheme;
@@ -91,7 +98,9 @@ public final class DeepLinkUri {
   /** Canonical URL. */
   private final String url;
 
-  private DeepLinkUri(Builder builder) {
+  private String urlTemplate;
+
+  private DeepLinkUri(Builder builder, String urlTemplate) {
     this.scheme = builder.scheme;
     this.username = percentDecode(builder.encodedUsername);
     this.password = percentDecode(builder.encodedPassword);
@@ -105,6 +114,7 @@ public final class DeepLinkUri {
         ? percentDecode(builder.encodedFragment)
         : null;
     this.url = builder.toString();
+    this.urlTemplate = urlTemplate;
   }
 
   /** Returns this URL as a {@link URL java.net.URL}. */
@@ -301,6 +311,27 @@ public final class DeepLinkUri {
     return result.toString();
   }
 
+  public @NonNull
+  Set<String> getSchemeHostPathPlaceholders() {
+    if (toTemplateString() == null) return Collections.emptySet();
+    if (this.query() == null || this.query().isEmpty()) return getPlaceHolders(toTemplateString());
+    return getPlaceHolders(
+      toTemplateString().substring(0, toTemplateString().indexOf(this.query()))
+    );
+  }
+
+  @NotNull
+  private Set<String> getPlaceHolders(String input) {
+    final Matcher matcher = PLACEHOLDER_REGEX.matcher(input);
+    Set<String> placeholders = new HashSet<>(matcher.groupCount());
+    while (matcher.find()) {
+      for (int i = 1; i <= matcher.groupCount(); i++) {
+        placeholders.add(matcher.group(i));
+      }
+    }
+    return placeholders;
+  }
+
   @Nullable
   List<String> getQueryNamesAndValues() {
     return queryNamesAndValues;
@@ -454,6 +485,10 @@ public final class DeepLinkUri {
     return url;
   }
 
+  public String toTemplateString() {
+    return urlTemplate;
+  }
+
   static final class Builder {
     String scheme;
     String encodedUsername = "";
@@ -463,6 +498,7 @@ public final class DeepLinkUri {
     final List<String> encodedPathSegments = new ArrayList<>();
     List<String> encodedQueryNamesAndValues;
     String encodedFragment;
+    String templateUrl;
 
     Builder() {
       encodedPathSegments.add(""); // The default path is '/' which needs a trailing space.
@@ -668,7 +704,7 @@ public final class DeepLinkUri {
     DeepLinkUri build() {
       if (scheme == null) throw new IllegalStateException("scheme == null");
       if (host == null) throw new IllegalStateException("host == null");
-      return new DeepLinkUri(this);
+      return new DeepLinkUri(this, templateUrl);
     }
 
     @Override public String toString() {
@@ -726,6 +762,9 @@ public final class DeepLinkUri {
     ParseResult parse(DeepLinkUri base, String input, boolean allowPlaceholderInScheme) {
       int pos = skipLeadingAsciiWhitespace(input, 0, input.length());
       int limit = skipTrailingAsciiWhitespace(input, pos, input.length());
+      if (allowPlaceholderInScheme) {
+        templateUrl = input;
+      }
 
       // Scheme.
       int schemeDelimiterOffset = schemeDelimiterOffset(input,

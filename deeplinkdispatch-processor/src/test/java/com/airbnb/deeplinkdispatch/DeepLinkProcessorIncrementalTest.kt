@@ -84,10 +84,10 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
         """
             package com.example
             import com.airbnb.deeplinkdispatch.handler.DeepLinkHandler
-            import com.airbnb.deeplinkdispatch.handler.PathParam
-            import com.airbnb.deeplinkdispatch.handler.QueryParam
+            import com.airbnb.deeplinkdispatch.handler.DeepLinkParamType
+            import com.airbnb.deeplinkdispatch.handler.DeeplinkParam
             import java.time.LocalDate
-            @PlaceholderDeepLink("pathSegment/{path_segment_variable_1}/{path_segment_variable_2}/{path_segment_variable_3}?queryParam={query_param_1}")
+            @PlaceholderDeepLink("pathSegment/{path_segment_variable_1}/{path_segment_variable_2}/{path_segment_variable_3}/{path_segment_variable_4}/{path_segment_variable_5}/{path_segment_variable_6}/{path_segment_variable_7}/{path_segment_variable_8}?queryParam1={query_param_1}&queryParam2={query_param_2}&queryParam3={query_param_3}&queryParam4={query_param_4}&queryParam5={query_param_5}&queryParam6={query_param_6}&queryParam7={query_param_7}&queryParam8={query_param_8}")
             class TestDeepLinkHandler : DeepLinkHandler<TestDeepLinkHandlerDeepLinkArgs>() {
                 override fun handleDeepLink(parameters: TestDeepLinkHandlerDeepLinkArgs) {
                     TODO("Not yet implemented")
@@ -95,10 +95,24 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
             }
             data class TestDeepLinkHandlerDeepLinkArgs(
                 // path params can be non null
-                @PathParam("path_segment_variable_1") val uuid: Long,
-                @PathParam("path_segment_variable_2") val name: String,
-                @PathParam("path_segment_variable_3") val date: LocalDate,
-                @QueryParam("show_taxes") val boolean: Boolean?
+                @DeeplinkParam(name = "host", type = DeepLinkParamType.Path ) val host: String,
+                @DeeplinkParam(name = "scheme", type = DeepLinkParamType.Path) val scheme: String,
+                @DeeplinkParam(name = "path_segment_variable_1", type = DeepLinkParamType.Path ) val byte: Byte,
+                @DeeplinkParam(name = "path_segment_variable_2", type = DeepLinkParamType.Path) val short: Short,
+                @DeeplinkParam(name = "path_segment_variable_3", type = DeepLinkParamType.Path) val int: Int,
+                @DeeplinkParam(name = "path_segment_variable_4", type = DeepLinkParamType.Path ) val long: Long,
+                @DeeplinkParam(name = "path_segment_variable_5", type = DeepLinkParamType.Path) val float: Float,
+                @DeeplinkParam(name = "path_segment_variable_6", type = DeepLinkParamType.Path) val double: Double,
+                @DeeplinkParam(name = "path_segment_variable_7", type = DeepLinkParamType.Path) val boolean: Boolean,
+                @DeeplinkParam(name = "path_segment_variable_8", type = DeepLinkParamType.Path) val String: String,
+                @DeeplinkParam(name = "queryParam1", type = DeepLinkParamType.Query ) val byteQuery: Byte?,
+                @DeeplinkParam(name = "queryParam2", type = DeepLinkParamType.Query) val shortQuery: Short?,
+                @DeeplinkParam(name = "queryParam3", type = DeepLinkParamType.Query) val intQuery: Int?,
+                @DeeplinkParam(name = "queryParam4", type = DeepLinkParamType.Query ) val longQuery: Long?,
+                @DeeplinkParam(name = "queryParam5", type = DeepLinkParamType.Query) val floatQuery: Float?,
+                @DeeplinkParam(name = "queryParam6", type = DeepLinkParamType.Query) val doubleQuery: Double?,
+                @DeeplinkParam(name = "queryParam7", type = DeepLinkParamType.Query) val booleanQuery: Boolean?,
+                @DeeplinkParam(name = "queryParam8", type = DeepLinkParamType.Query) val StringQuery: String?
             )
             """
     )
@@ -170,11 +184,9 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
             results = results,
             registryClassName = "com.example.SampleModuleRegistry",
             indexEntries = listOf(
-                DeepLinkEntry(
-                    type = MatchType.Activity,
+                DeepLinkEntry.ActivityDeeplinkEntry(
                     uriTemplate = "example://example.com/deepLink",
-                    className = "com.example.SampleActivity",
-                    method = null
+                    className = "com.example.SampleActivity"
                 )
             ),
             generatedFiles = mapOf(
@@ -252,11 +264,9 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
             results = results,
             registryClassName = "com.example.SampleModuleRegistry",
             indexEntries = listOf(
-                DeepLinkEntry(
-                    type = MatchType.Activity,
+                DeepLinkEntry.ActivityDeeplinkEntry(
                     uriTemplate = "http{scheme}://{host}example.com/deepLink",
                     className = "com.example.SampleActivity",
-                    method = null
                 )
             ),
             generatedFiles = mapOf(
@@ -431,8 +441,7 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
             results = results,
             registryClassName = "com.example.SampleModuleRegistry",
             indexEntries = listOf(
-                DeepLinkEntry(
-                    type = MatchType.Method,
+                DeepLinkEntry.MethodDeeplinkEntry(
                     uriTemplate = "airbnb://example.com/innerClassDeeplink",
                     className = "com.example.SampleActivity\$InnerClass",
                     method = "intentForDeepLinkMethod"
@@ -511,8 +520,7 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
             results = results,
             registryClassName = "com.example.SampleModuleRegistry",
             indexEntries = listOf(
-                DeepLinkEntry(
-                    type = MatchType.Method,
+                DeepLinkEntry.MethodDeeplinkEntry(
                     uriTemplate = "airbnb://example.com/innerClassDeeplink",
                     className = "com.example.SampleActivity\$InnerClass\$DeepLinks",
                     method = "intentForDeepLinkMethod"
@@ -621,11 +629,9 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
             results = results,
             registryClassName = "com.example.SampleModuleRegistry",
             indexEntries = listOf(
-                DeepLinkEntry(
-                    MatchType.Handler,
-                    uriTemplate = "http{scheme}://{host}example.com/pathSegment/{path_segment_variable_1}/{path_segment_variable_2}/{path_segment_variable_3}?queryParam={query_param_1}",
-                    className = "com.example.TestDeepLinkHandler",
-                    method = null
+                DeepLinkEntry.HandlerDeepLinkEntry(
+                    uriTemplate = "http{scheme}://{host}example.com/pathSegment/{path_segment_variable_1}/{path_segment_variable_2}/{path_segment_variable_3}/{path_segment_variable_4}/{path_segment_variable_5}/{path_segment_variable_6}/{path_segment_variable_7}/{path_segment_variable_8}?queryParam1={query_param_1}&queryParam2={query_param_2}&queryParam3={query_param_3}&queryParam4={query_param_4}&queryParam5={query_param_5}&queryParam6={query_param_6}&queryParam7={query_param_7}&queryParam8={query_param_8}",
+                    className = "com.example.TestDeepLinkHandler"
                 )
             ),
             generatedFiles = mapOf(
@@ -644,7 +650,7 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
                       }
                     
                       private static String matchIndex0() {
-                        return "\u0001\u0001\u0000\u0000\u0000\u0000\u0001]r\u0012\f\u0000\u0000\u0000\u0000\u0001Ihttp{scheme}\u0014\u0011\u0000\u0000\u0000\u0000\u00010{host}example.com\b\u000b\u0000\u0000\u0000\u0000\u0001\u001dpathSegment\u0018\u0019\u0000\u0000\u0000\u0000\u0000ü{path_segment_variable_1}\u0018\u0019\u0000\u0000\u0000\u0000\u0000Û{path_segment_variable_2}\u0018\u0019\u0000º\u0000\u0000\u0000\u0000{path_segment_variable_3}\u0002\u0000\u0095http{scheme}://{host}example.com/pathSegment/{path_segment_variable_1}/{path_segment_variable_2}/{path_segment_variable_3}?queryParam={query_param_1}\u0000\u001fcom.example.TestDeepLinkHandler\u0000";
+                        return "\u0001\u0001\u0000\u0000\u0000\u0000\u0003Ir\u0012\f\u0000\u0000\u0000\u0000\u00035http{scheme}\u0014\u0011\u0000\u0000\u0000\u0000\u0003\u001c{host}example.com\b\u000b\u0000\u0000\u0000\u0000\u0003\tpathSegment\u0018\u0019\u0000\u0000\u0000\u0000\u0002è{path_segment_variable_1}\u0018\u0019\u0000\u0000\u0000\u0000\u0002Ç{path_segment_variable_2}\u0018\u0019\u0000\u0000\u0000\u0000\u0002¦{path_segment_variable_3}\u0018\u0019\u0000\u0000\u0000\u0000\u0002\u0085{path_segment_variable_4}\u0018\u0019\u0000\u0000\u0000\u0000\u0002d{path_segment_variable_5}\u0018\u0019\u0000\u0000\u0000\u0000\u0002C{path_segment_variable_6}\u0018\u0019\u0000\u0000\u0000\u0000\u0002\"{path_segment_variable_7}\u0018\u0019\u0002\u0001\u0000\u0000\u0000\u0000{path_segment_variable_8}\u0002\u0001Ühttp{scheme}://{host}example.com/pathSegment/{path_segment_variable_1}/{path_segment_variable_2}/{path_segment_variable_3}/{path_segment_variable_4}/{path_segment_variable_5}/{path_segment_variable_6}/{path_segment_variable_7}/{path_segment_variable_8}?queryParam1={query_param_1}&queryParam2={query_param_2}&queryParam3={query_param_3}&queryParam4={query_param_4}&queryParam5={query_param_5}&queryParam6={query_param_6}&queryParam7={query_param_7}&queryParam8={query_param_8}\u0000\u001fcom.example.TestDeepLinkHandler\u0000";
                       }
                     }
 
