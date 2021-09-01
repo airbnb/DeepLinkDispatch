@@ -103,10 +103,13 @@ open class BaseDeepLinkDelegate @JvmOverloads constructor(
     ) {
         result.deepLinkMatchResult?.let { matchedDeepLinkResult ->
             when (matchedDeepLinkResult.deeplinkEntry) {
-                is DeepLinkEntry.MethodDeeplinkEntry -> result.methodResult.taskStackBuilder?.startActivities()
-                    ?: activity.startActivity(result.methodResult.intent)
-                is DeepLinkEntry.ActivityDeeplinkEntry -> activity.startActivity(result.methodResult.intent)
-               is DeepLinkEntry.HandlerDeepLinkEntry -> if (result.isSuccessful) callDeeplinkHandler(result)
+                is DeepLinkEntry.MethodDeeplinkEntry ->
+                    result.methodResult.taskStackBuilder?.startActivities()
+                        ?: activity.startActivity(result.methodResult.intent)
+                is DeepLinkEntry.ActivityDeeplinkEntry ->
+                    activity.startActivity(result.methodResult.intent)
+                is DeepLinkEntry.HandlerDeepLinkEntry ->
+                    if (result.isSuccessful) callDeeplinkHandler(result)
             }
         }
     }
@@ -120,7 +123,7 @@ open class BaseDeepLinkDelegate @JvmOverloads constructor(
         } ?: error("DeepLinkHandler class ${handlerClazz.name} has more than one methods " +
                 "\"$DEEP_LINK_HANDLER_METHOD_NAME\" methods with a single parameter.")
         // Ok to call single here as we would have failed above if we would have more than one type.
-        val handlerParameterClazz = handlerMethod?.genericParameterTypes?.single() as Class<*>
+        val handlerParameterClazz = handlerMethod.genericParameterTypes.single() as Class<*>
         val handlerParameterClazzConstructor = handlerParameterClazz.constructors.singleOrNull()
             ?: error("Handler parameter class can only have one constructor.")
         val annotationList: List<DeeplinkParam> =
@@ -134,28 +137,48 @@ open class BaseDeepLinkDelegate @JvmOverloads constructor(
                 annotationList.zip(it)
             } else error("There are ${annotationList.size} annotations but ${it.size} parameters!")
         }
-        val handlerArgsConstructorParams = createParamArray(typeNameMap, result.parameters)
+
+        val handlerInstance = try {
+            handlerClazz.getField("INSTANCE").get(null)
+        } catch (e: NoSuchFieldException) {
+            handlerClazz.constructors.singleOrNull()?.let {
+                if (it.typeParameters.isNotEmpty()) null else it.newInstance()
+            } ?: error("Handler class must have single zero argument constructor.")
+        } as com.airbnb.deeplinkdispatch.handler.DeepLinkHandler<*>
+        val handlerArgsConstructorParams = createParamArray(
+            typeNameMap = typeNameMap,
+            parameters = result.parameters,
+            throwOnTypeConversion = handlerInstance.throwOnTypeConversion
+        )
         val handlerParameters =
             handlerParameterClazzConstructor.newInstance(*handlerArgsConstructorParams)
-        val handlerInstanceField = handlerClazz.getField("INSTANCE").get(null);
-        handlerMethod.invoke(handlerInstanceField, handlerParameters)
+        handlerMethod.invoke(handlerInstance, handlerParameters)
     }
 
     private fun createParamArray(
         typeNameMap: List<Pair<DeeplinkParam, Class<*>>>,
-        parameters: Map<String, String>
+        parameters: Map<String, String>,
+        throwOnTypeConversion: Boolean
     ): Array<Any?> {
         return typeNameMap.map { (annotation, type) ->
             when(annotation.type) {
                 DeepLinkParamType.Path ->
-                    mapNotNullableType(parameters.getOrElse(annotation.name) {error("Non existent non nullable element for name: ${annotation.name}")} , type)
+                    mapNotNullableType(
+                        value = parameters.getOrElse(annotation.name) { error("Non existent non nullable element for name: ${annotation.name}") },
+                        type = type,
+                        throwOnTypeConversion = throwOnTypeConversion
+                    )
                 DeepLinkParamType.Query ->
-                    mapNullableType(parameters[annotation.name], type)
+                    mapNullableType(
+                        value = parameters[annotation.name],
+                        type = type,
+                        throwOnTypeConversion = throwOnTypeConversion
+                    )
             }
         }.toTypedArray()
     }
 
-    private fun mapNullableType(value: String?, type: Class<*>): Any? {
+    private fun mapNullableType(value: String?, type: Class<*>, throwOnTypeConversion: Boolean): Any? {
         if (value == null) return null
         return try {
             when (type) {
@@ -169,11 +192,11 @@ open class BaseDeepLinkDelegate @JvmOverloads constructor(
                 else -> value
             }
         } catch (e: NumberFormatException) {
-            null
+            if (throwOnTypeConversion) throw e else null
         }
     }
 
-    private fun mapNotNullableType(value: String, type: Class<*>): Any {
+    private fun mapNotNullableType(value: String, type: Class<*>, throwOnTypeConversion: Boolean): Any {
         return try {
             when (type) {
                 Boolean::class.javaPrimitiveType -> value.toBoolean()
@@ -186,7 +209,7 @@ open class BaseDeepLinkDelegate @JvmOverloads constructor(
                 else -> value
             }
         } catch (e: NumberFormatException) {
-            0
+            if (throwOnTypeConversion) throw e else 0
         }
     }
 

@@ -4,7 +4,7 @@ import com.airbnb.deeplinkdispatch.handler.DEEP_LINK_HANDLER_METHOD_NAME
 import com.airbnb.deeplinkdispatch.test.Source
 import org.junit.Test
 
-class DeepLinkProcessorDeeLinkHandlerIncrementalTest : BaseDeepLinkProcessorTest() {
+class DeepLinkProcessorDeepLinkHandlerIncrementalTest : BaseDeepLinkProcessorTest() {
     private val customAnnotationPlaceholderInSchemeHostAppLink = Source.JavaSource(
         "com.example.PlaceholderDeepLink",
         """
@@ -328,6 +328,187 @@ class DeepLinkProcessorDeeLinkHandlerIncrementalTest : BaseDeepLinkProcessorTest
                 """
     )
 
+    private val sampleJavaTestDeepLinkArgs = Source.JavaSource(
+        "com.example.TestJavaDeepLinkHandlerDeepLinkArgs",
+        """
+        package com.example;
+        import com.airbnb.deeplinkdispatch.handler.DeepLinkParamType;
+        import com.airbnb.deeplinkdispatch.handler.DeeplinkParam;
+        public class TestJavaDeepLinkHandlerDeepLinkArgs {
+          private final long uuid;
+          public TestJavaDeepLinkHandlerDeepLinkArgs(
+            // path params can be non null
+            @DeeplinkParam(name = "scheme", type = DeepLinkParamType.Path) String scheme,
+            @DeeplinkParam(name = "host", type = DeepLinkParamType.Path) String host,
+            @DeeplinkParam(name = "path_segment", type = DeepLinkParamType.Path) long uuid
+          ) {
+            this.uuid = uuid;
+          }
+        }
+        """.trimIndent()
+    )
+
+    private val sampleJavaDeepLinkHandler = Source.JavaSource(
+        "com.example.SampleJavaDeeplinkHandler",
+        """
+        package com.example;
+        import com.airbnb.deeplinkdispatch.handler.DeepLinkHandler;
+        @PlaceholderDeepLink({"java/{path_segment}"})
+        public class SampleJavaDeeplinkHandler extends DeepLinkHandler<TestJavaDeepLinkHandlerDeepLinkArgs> {
+          @Override
+          public void handleDeepLink(TestJavaDeepLinkHandlerDeepLinkArgs parameters) {
+            /** Do nothing **/
+          }
+        }    
+        """.trimIndent()
+    )
+
+    private val sampleNonPublicJavaDeepLinkHandler = Source.JavaSource(
+        "com.example.SampleJavaDeeplinkHandler",
+        """
+        package com.example;
+        import com.airbnb.deeplinkdispatch.handler.DeepLinkHandler;
+        @PlaceholderDeepLink({"java/{path_segment}"})
+        class SampleJavaDeeplinkHandler extends DeepLinkHandler<TestJavaDeepLinkHandlerDeepLinkArgs> {
+          @Override
+          public void handleDeepLink(TestJavaDeepLinkHandlerDeepLinkArgs parameters) {
+            /** Do nothing **/
+          }
+        }    
+        """.trimIndent()
+    )
+
+    private val sampleNonPublicJavaTestDeepLinkArgs = Source.JavaSource(
+        "com.example.TestJavaDeepLinkHandlerDeepLinkArgs",
+        """
+        package com.example;
+        import com.airbnb.deeplinkdispatch.handler.DeepLinkParamType;
+        import com.airbnb.deeplinkdispatch.handler.DeeplinkParam;
+        class TestJavaDeepLinkHandlerDeepLinkArgs {
+          private final long uuid;
+          public TestJavaDeepLinkHandlerDeepLinkArgs(
+            // path params can be non null
+            @DeeplinkParam(name = "scheme", type = DeepLinkParamType.Path) String scheme,
+            @DeeplinkParam(name = "host", type = DeepLinkParamType.Path) String host,
+            @DeeplinkParam(name = "path_segment", type = DeepLinkParamType.Path) long uuid
+          ) {
+            this.uuid = uuid;
+          }
+        }
+        """.trimIndent()
+    )
+
+    @Test
+    fun testJavaDeeplinkHandler() {
+        val sourceFiles = listOf(
+            customAnnotationPlaceholderInSchemeHostAppLink,
+            sampleJavaDeepLinkHandler,
+            sampleJavaTestDeepLinkArgs,
+            module,
+            fakeBaseDeeplinkDelegate,
+        )
+        val results = listOf(
+            compileIncremental(
+                sourceFiles = sourceFiles,
+                customDeepLinks = listOf("com.example.PlaceholderDeepLink"),
+                useKsp = false,
+            ),
+            compileIncremental(
+                sourceFiles = sourceFiles,
+                customDeepLinks = listOf("com.example.PlaceholderDeepLink"),
+                useKsp = true,
+            )
+        )
+        assertGeneratedCode(
+            results = results,
+            registryClassName = "com.example.SampleModuleRegistry",
+            indexEntries = listOf(
+                DeepLinkEntry.HandlerDeepLinkEntry(
+                    uriTemplate = "http{scheme}://{host}example.com/java/{path_segment}",
+                    className = "com.example.SampleJavaDeeplinkHandler"
+                )
+            ),
+            generatedFiles = mapOf(
+                "SampleModuleRegistry.java" to
+                    """
+                    package com.example;
+
+                    import com.airbnb.deeplinkdispatch.BaseRegistry;
+                    import com.airbnb.deeplinkdispatch.base.Utils;
+                    import java.lang.String;
+                    
+                    public final class SampleModuleRegistry extends BaseRegistry {
+                      public SampleModuleRegistry() {
+                        super(Utils.readMatchIndexFromStrings( new String[] {matchIndex0(), }),
+                        new String[]{});
+                      }
+                    
+                      private static String matchIndex0() {
+                        return "\u0001\u0001\u0000\u0000\u0000\u0000\u0000®r\u0012\f\u0000\u0000\u0000\u0000\u0000\u009ahttp{scheme}\u0014\u0011\u0000\u0000\u0000\u0000\u0000\u0081{host}example.com\b\u0004\u0000\u0000\u0000\u0000\u0000ujava\u0018\u000e\u0000_\u0000\u0000\u0000\u0000{path_segment}\u0002\u00004http{scheme}://{host}example.com/java/{path_segment}\u0000%com.example.SampleJavaDeeplinkHandler\u0000";
+                      }
+                    }
+
+                    """.trimIndent()
+            )
+        )
+    }
+
+    @Test
+    fun testJavaDeeplinkHandlerWithNonPublicArgs() {
+        val sourceFiles = listOf(
+            customAnnotationPlaceholderInSchemeHostAppLink,
+            sampleJavaDeepLinkHandler,
+            sampleNonPublicJavaTestDeepLinkArgs,
+            module,
+            fakeBaseDeeplinkDelegate,
+        )
+        val results = listOf(
+            compileIncremental(
+                sourceFiles = sourceFiles,
+                customDeepLinks = listOf("com.example.PlaceholderDeepLink"),
+                useKsp = false,
+            ),
+            compileIncremental(
+                sourceFiles = sourceFiles,
+                customDeepLinks = listOf("com.example.PlaceholderDeepLink"),
+                useKsp = true,
+            )
+        )
+        assertCompileError(
+            results,
+            "Argument class must be public."
+        )
+    }
+
+    @Test
+    fun testJavaDeeplinkHandlerWithNonPublicHandler() {
+        val sourceFiles = listOf(
+            customAnnotationPlaceholderInSchemeHostAppLink,
+            sampleNonPublicJavaDeepLinkHandler,
+            sampleJavaTestDeepLinkArgs,
+            module,
+            fakeBaseDeeplinkDelegate,
+        )
+        val results = listOf(
+            compileIncremental(
+                sourceFiles = sourceFiles,
+                customDeepLinks = listOf("com.example.PlaceholderDeepLink"),
+                useKsp = false,
+            ),
+            compileIncremental(
+                sourceFiles = sourceFiles,
+                customDeepLinks = listOf("com.example.PlaceholderDeepLink"),
+                useKsp = true,
+            )
+        )
+        assertCompileError(
+            results,
+            "Only classes inheriting from either 'android.app.Activity' or public " +
+                "classes inheriting from 'com.airbnb.deeplinkdispatch.handler.DeepLinkHandler'" +
+                " can be annotated with @DeepLink or another custom deep link annotation."
+        )
+    }
+
     @Test
     fun testDeeplinkHandler() {
         val sourceFiles = listOf(
@@ -638,7 +819,7 @@ class DeepLinkProcessorDeeLinkHandlerIncrementalTest : BaseDeepLinkProcessorTest
         )
         assertCompileError(
             results,
-            "Only objects extending com.airbnb.deeplinkdispatch.handler.DeepLinkHandler can be annotated with @DeepLink"
+            "Only public objects extending com.airbnb.deeplinkdispatch.handler.DeepLinkHandler can be annotated with @DeepLink"
         )
     }
 }

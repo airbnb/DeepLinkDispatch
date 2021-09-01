@@ -5,9 +5,9 @@ import com.airbnb.deeplinkdispatch.handler.DeepLinkParamType
 import com.airbnb.deeplinkdispatch.handler.DeeplinkParam
 import com.airbnb.deeplinkdispatch.sample.WebDeepLink
 
-@WebDeepLink("/pathSegment/{path_segment_variable_1}/{path_segment_variable_2}/{path_segment_variable_3}/{path_segment_variable_4}?show_taxes={query_param_1}&queryParam={query_param_2}")
-object TestDeepLinkHandler : InBetweenDeeplinkHandler<TestDeepLinkHandlerDeepLinkArgs>() {
-    override fun handleDeepLink(parameters: TestDeepLinkHandlerDeepLinkArgs) {
+@WebDeepLink("/kotlin/{path_segment_variable_1}/{path_segment_variable_2}/{path_segment_variable_3}/{path_segment_variable_4}?show_taxes={query_param_1}&queryParam={query_param_2}")
+object SampleKotlinDeepLinkHandler : KotlinInBetweenDeeplinkHandler<TestKotlinDeepLinkHandlerDeepLinkArgs>() {
+    override fun handleDeepLink(parameters: TestKotlinDeepLinkHandlerDeepLinkArgs) {
         println("Received handler call with $parameters")
         /**
          * From here any internal/3rd party navigation framework can be called the provided args.
@@ -15,13 +15,13 @@ object TestDeepLinkHandler : InBetweenDeeplinkHandler<TestDeepLinkHandlerDeepLin
     }
 }
 
-open class InBetweenDeeplinkHandler<T> : DeepLinkHandler<T>() {
+open class KotlinInBetweenDeeplinkHandler<T> : DeepLinkHandler<T>() {
     override fun handleDeepLink(parameters: T) {
         /** Do nothing here **/
     }
 }
 
-data class TestDeepLinkHandlerDeepLinkArgs(
+data class TestKotlinDeepLinkHandlerDeepLinkArgs(
     // path params can be non null
     @DeeplinkParam("path_segment_variable_1", DeepLinkParamType.Path) val uuid: Long,
     @DeeplinkParam("path_segment_variable_2", DeepLinkParamType.Path) val name: String,
