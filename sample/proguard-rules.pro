@@ -15,3 +15,19 @@
 #-keepclassmembers class fqcn.of.javascript.interface.for.webview {
 #   public *;
 #}
+
+# Keep our custom deep links
+-keep @interface com.airbnb.deeplinkdispatch.sample.AppDeepLink
+-keepclasseswithmembers class * {
+    @com.airbnb.deeplinkdispatch.sample.AppDeepLink <methods>;
+}
+
+-keep @interface com.airbnb.deeplinkdispatch.sample.WebDeepLink
+-keepclasseswithmembers class * {
+    @com.airbnb.deeplinkdispatch.sample.WebDeepLink <methods>;
+}
+
+-keep @interface com.airbnb.deeplinkdispatch.sample.WebPlaceholderDeepLink
+-keepclasseswithmembers class * {
+    @com.airbnb.deeplinkdispatch.sample.WebPlaceholderDeepLink <methods>;
+}

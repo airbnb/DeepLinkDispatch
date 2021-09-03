@@ -627,15 +627,12 @@ At runtime we traverse the graph for each module to find the correct action to u
 * Configurable path segments can have empty values e.g. `<brand>` can be set to `""` in the previous example. Which would then match `dld://airbnb/cereal`. If a deeplink like that is defined already somewhere else the same match rules as mentioned before apply to which match actually gets found.
 * Because of limitations of the algo the last path element (the item behind the last slash) cannot  be a configurable path segment with it's value set to `""`. Currently the system will allow you to do this but will not correctly match in that case.
 
-## Proguard Rules
+## Proguard/R8 Rules
 
-```
--keep @interface com.airbnb.deeplinkdispatch.DeepLink
--keepclasseswithmembers class * {
-    @com.airbnb.deeplinkdispatch.DeepLink <methods>;
-}
-```
-**Note:** remember to include Proguard rules to keep Custom annotations you have used, for example by package:
+The Proguard/R8 rules mandatory for teh lib are defined in the [proguard-rules.pro](deeplinkdispatch/proguard-rules.pro) in `deeplinkdispatch`. However
+they are already included via `consumerProguardFiles` so there is nothing you have to do to include them.
+
+Please note however that you must add your own Proguard/R8 rules to keep Custom annotations you have used. For example:
 
 ```
 -keep @interface your.package.path.deeplink.<annotation class name>
