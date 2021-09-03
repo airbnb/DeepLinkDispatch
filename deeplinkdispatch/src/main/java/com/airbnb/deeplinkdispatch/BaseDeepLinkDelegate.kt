@@ -144,15 +144,14 @@ open class BaseDeepLinkDelegate @JvmOverloads constructor(
             handlerClazz.constructors.singleOrNull()?.let {
                 if (it.typeParameters.isNotEmpty()) null else it.newInstance()
             } ?: error("Handler class must have single zero argument constructor.")
-        } as com.airbnb.deeplinkdispatch.handler.DeepLinkHandler<*>
+        } as com.airbnb.deeplinkdispatch.handler.DeepLinkHandler<Any>
         val handlerArgsConstructorParams = createParamArray(
             typeNameMap = typeNameMap,
             parameters = result.parameters,
             throwOnTypeConversion = handlerInstance.throwOnTypeConversion
         )
-        val handlerParameters =
-            handlerParameterClazzConstructor.newInstance(*handlerArgsConstructorParams)
-        handlerMethod.invoke(handlerInstance, handlerParameters)
+        val handlerParameters = handlerParameterClazzConstructor.newInstance(*handlerArgsConstructorParams)
+        handlerInstance.handleDeepLink(handlerParameters)
     }
 
     private fun createParamArray(
