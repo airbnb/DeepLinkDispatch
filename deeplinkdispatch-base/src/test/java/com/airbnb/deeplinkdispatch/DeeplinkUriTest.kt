@@ -1,6 +1,8 @@
 package com.airbnb.deeplinkdispatch
 
-import org.junit.Assert.*
+import junit.framework.Assert.assertEquals
+import junit.framework.TestCase.assertNotNull
+import junit.framework.TestCase.assertNull
 import org.junit.Test
 
 class DeeplinkUriTest {
@@ -46,5 +48,4 @@ class DeeplinkUriTest {
         assertEquals("{host}", deeplinkUriTemplate.host())
         assertEquals(listOf("path1", "path2"), deeplinkUriTemplate.pathSegments())
     }
-
 }

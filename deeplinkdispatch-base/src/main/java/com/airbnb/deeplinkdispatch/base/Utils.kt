@@ -2,8 +2,8 @@ package com.airbnb.deeplinkdispatch.base
 
 import com.airbnb.deeplinkdispatch.componentParamPrefix
 import com.airbnb.deeplinkdispatch.componentParamSuffix
-import com.airbnb.deeplinkdispatch.configurablePathSegmentSuffix
 import com.airbnb.deeplinkdispatch.configurablePathSegmentPrefix
+import com.airbnb.deeplinkdispatch.configurablePathSegmentSuffix
 import java.io.InputStream
 
 /**
@@ -21,7 +21,7 @@ fun CharSequence.chunkOnModifiedUtf8ByteSize(chunkSize: Int): List<CharSequence>
         // U+0000 is encoded as two bytes C080 in modified UTF-8, which is used by Java to
         // store strings in the string table in class files.
         val charModifiedUtf8ByteArraySize = this.substring(nextChunkStart, i + 1)
-                .let { chunk -> chunk.toByteArray().size + chunk.count { char -> char == '\u0000' } }
+            .let { chunk -> chunk.toByteArray().size + chunk.count { char -> char == '\u0000' } }
 
         // See if this char would still fit into the chunk. If not, create chunk and start next one.
         if (charModifiedUtf8ByteArraySize > chunkSize) {
@@ -76,7 +76,7 @@ object Utils {
             require(start < end) { "Invalid URI component: $uriComponent. $componentParamPrefix must come before $componentParamSuffix." }
             require(start != -1 && end != -1) {
                 "Invalid URI component: $uriComponent. If either" +
-                        "$componentParamPrefix or $componentParamSuffix is present, then they must both be present and $componentParamPrefix must occur before $componentParamSuffix."
+                    "$componentParamPrefix or $componentParamSuffix is present, then they must both be present and $componentParamPrefix must occur before $componentParamSuffix."
             }
             return true
         }
@@ -100,6 +100,6 @@ object Utils {
 
     @JvmStatic
     fun isConfigurablePathSegment(pathSegment: String) =
-            pathSegment.startsWith(configurablePathSegmentPrefix)
-                    && pathSegment.endsWith(configurablePathSegmentSuffix)
+        pathSegment.startsWith(configurablePathSegmentPrefix) &&
+            pathSegment.endsWith(configurablePathSegmentSuffix)
 }

@@ -14,7 +14,7 @@ import kotlin.experimental.or
  */
 class NodeMetadata(var metadata: Byte) {
     constructor(uriComponentType: Byte, uriComponentValue: String) :
-            this(metadata = uriComponentType or uriComponentValue.transformationType())
+        this(metadata = uriComponentType or uriComponentValue.transformationType())
 
     fun isComponentTypeMismatch(comparisonType: Byte): Boolean = metadata and comparisonType == zero
 
@@ -53,19 +53,19 @@ class NodeMetadata(var metadata: Byte) {
 
         @JvmStatic
         fun isComponentTypeRoot(metadata: Byte): Boolean =
-                metadata and MetadataMasks.ComponentTypeRootMask != zero
+            metadata and MetadataMasks.ComponentTypeRootMask != zero
 
         @JvmStatic
         fun isComponentTypeScheme(metadata: Byte): Boolean =
-                metadata and MetadataMasks.ComponentTypeSchemeMask != zero
+            metadata and MetadataMasks.ComponentTypeSchemeMask != zero
 
         @JvmStatic
         fun isComponentTypeHost(metadata: Byte): Boolean =
-                metadata and MetadataMasks.ComponentTypeHostMask != zero
+            metadata and MetadataMasks.ComponentTypeHostMask != zero
 
         @JvmStatic
         fun isComponentTypePathSegment(metadata: Byte): Boolean =
-                metadata and MetadataMasks.ComponentTypePathSegmentMask != zero
+            metadata and MetadataMasks.ComponentTypePathSegmentMask != zero
 
         /**
          * In DLD, any component of a URI can contain a placeholder that will be substituted.
@@ -79,7 +79,7 @@ class NodeMetadata(var metadata: Byte) {
          * */
         @JvmStatic
         fun isComponentParam(nodeMetadata: Byte): Boolean =
-                nodeMetadata and MetadataMasks.ComponentParamMask != zero
+            nodeMetadata and MetadataMasks.ComponentParamMask != zero
 
         /**
          * A Configurable Path Segment represents a path segment which will lookup a dynamic (runtime)
@@ -87,9 +87,7 @@ class NodeMetadata(var metadata: Byte) {
          */
         @JvmStatic
         fun isConfigurablePathSegment(nodeMetadata: Byte): Boolean =
-                nodeMetadata and MetadataMasks.ConfigurablePathSegmentMask != zero
-
-
+            nodeMetadata and MetadataMasks.ConfigurablePathSegmentMask != zero
     }
 }
 

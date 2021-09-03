@@ -2,6 +2,7 @@ apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'
 apply plugin: 'kotlin-kapt'
+apply plugin: 'org.jmailen.kotlinter'
 
 // This is just here to show an example how DLD works with eitehr `annotationProcessor` (sample-library)
 // 'kapt' (this lib) or 'ksp' (the main sample app module) and even can mix and match those between

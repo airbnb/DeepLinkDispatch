@@ -19,11 +19,13 @@ class BaseDeepLinkDelegateTest {
         val foundEntry = testDelegate.findEntry("airbnb://foo/1")
         assertThat(foundEntry).isNotNull
         assertThat(foundEntry?.deeplinkEntry).isEqualTo(entry)
-        assertThat(foundEntry?.parameterMap).isEqualTo(parameterMap(
-            "airbnb://foo/1",
-            mapOf("bar" to "1")
-        ))
-        assertThat( testDelegate.findEntry("airbnb://bar/1")).isNull()
+        assertThat(foundEntry?.parameterMap).isEqualTo(
+            parameterMap(
+                "airbnb://foo/1",
+                mapOf("bar" to "1")
+            )
+        )
+        assertThat(testDelegate.findEntry("airbnb://bar/1")).isNull()
     }
 
     @Test
@@ -119,12 +121,15 @@ class BaseDeepLinkDelegateTest {
         val activity = mockk<Activity>()
         every { activity.intent } returns intent
         val result = testDelegate.createResult(activity, intent, null)
-        assertThat(result).isEqualTo(DeepLinkResult(
-            false, null, "No Uri in given activity's intent.", null, DeepLinkMethodResult(
-                null,
-                null
+        assertThat(result).isEqualTo(
+            DeepLinkResult(
+                false, null, "No Uri in given activity's intent.", null,
+                DeepLinkMethodResult(
+                    null,
+                    null
+                )
             )
-        ))
+        )
     }
 
     @Test

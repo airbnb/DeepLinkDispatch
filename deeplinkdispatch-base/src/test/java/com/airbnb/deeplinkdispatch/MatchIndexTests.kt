@@ -1,6 +1,5 @@
 package com.airbnb.deeplinkdispatch
 
-import com.airbnb.deeplinkdispatch.base.MatchIndex
 import org.assertj.core.api.Assertions
 import org.junit.Test
 
@@ -21,7 +20,7 @@ class MatchIndexTests {
             DeepLinkEntry("http://example.com/", MatchIndexTests::class.java.name, "someMethod8"),
         ).sortedBy { it.uriTemplate }
         val root = Root()
-        deepLinkEntries.forEach{
+        deepLinkEntries.forEach {
             root.addToTrie(it.uriTemplate, it.className, it.method)
         }
         val testRegistry = TestRegistry(root.toUByteArray().toByteArray())
@@ -30,5 +29,4 @@ class MatchIndexTests {
     }
 
     class TestRegistry(val matchArray: ByteArray) : BaseRegistry(matchArray, emptyArray())
-
 }
