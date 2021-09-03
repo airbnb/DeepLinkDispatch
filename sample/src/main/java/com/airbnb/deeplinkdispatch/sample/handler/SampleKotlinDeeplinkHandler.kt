@@ -6,8 +6,8 @@ import com.airbnb.deeplinkdispatch.handler.DeeplinkParam
 import com.airbnb.deeplinkdispatch.sample.WebDeepLink
 
 @WebDeepLink("/kotlin/{path_segment_variable_1}/{path_segment_variable_2}/{path_segment_variable_3}/{path_segment_variable_4}?show_taxes={query_param_1}&queryParam={query_param_2}")
-object SampleKotlinDeepLinkHandler : KotlinInBetweenDeeplinkHandler<TestKotlinNoDataClassDeepLinkHandlerDeepLinkArgs>() {
-    override fun handleDeepLink(parameters: TestKotlinNoDataClassDeepLinkHandlerDeepLinkArgs) {
+object SampleKotlinDeepLinkHandler : KotlinInBetweenDeeplinkHandler<TestKotlinDeepLinkHandlerDeepLinkArgs>() {
+    override fun handleDeepLink(parameters: TestKotlinDeepLinkHandlerDeepLinkArgs) {
         println("Received handler call with $parameters")
         /**
          * From here any internal/3rd party navigation framework can be called the provided args.
