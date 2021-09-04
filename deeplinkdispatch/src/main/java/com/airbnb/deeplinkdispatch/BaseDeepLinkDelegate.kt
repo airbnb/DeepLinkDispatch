@@ -146,7 +146,8 @@ open class BaseDeepLinkDelegate @JvmOverloads constructor(
         val handlerArgsConstructorParams = createParamArray(
             typeNameMap = typeNameMap,
             parameters = result.parameters,
-            throwOnTypeConversion = handlerInstance.throwOnTypeConversion
+            typeConversionErrorNullable = handlerInstance.typeConversionErrorNullable,
+            typeConversionErrorNonNullable = handlerInstance.typeConversionErrorNonNullable
         )
         val handlerParameters = handlerParameterClazzConstructor.newInstance(*handlerArgsConstructorParams)
         handlerInstance.handleDeepLink(handlerParameters)
@@ -155,7 +156,8 @@ open class BaseDeepLinkDelegate @JvmOverloads constructor(
     private fun createParamArray(
         typeNameMap: List<Pair<DeeplinkParam, Class<*>>>,
         parameters: Map<String, String>,
-        throwOnTypeConversion: Boolean
+        typeConversionErrorNullable: (String) -> Int?,
+        typeConversionErrorNonNullable: (String) -> Int
     ): Array<Any?> {
         return typeNameMap.map { (annotation, type) ->
             when(annotation.type) {
@@ -163,19 +165,19 @@ open class BaseDeepLinkDelegate @JvmOverloads constructor(
                     mapNotNullableType(
                         value = parameters.getOrElse(annotation.name) { error("Non existent non nullable element for name: ${annotation.name}") },
                         type = type,
-                        throwOnTypeConversion = throwOnTypeConversion
+                        typeConversionError = typeConversionErrorNonNullable
                     )
                 DeepLinkParamType.Query ->
                     mapNullableType(
                         value = parameters[annotation.name],
                         type = type,
-                        throwOnTypeConversion = throwOnTypeConversion
+                        typeConversionError = typeConversionErrorNullable
                     )
             }
         }.toTypedArray()
     }
 
-    private fun mapNullableType(value: String?, type: Class<*>, throwOnTypeConversion: Boolean): Any? {
+    private fun mapNullableType(value: String?, type: Class<*>, typeConversionError: (String) -> Int?): Any? {
         if (value == null) return null
         return try {
             when (type) {
@@ -189,11 +191,11 @@ open class BaseDeepLinkDelegate @JvmOverloads constructor(
                 else -> value
             }
         } catch (e: NumberFormatException) {
-            if (throwOnTypeConversion) throw e else null
+            typeConversionError(value)
         }
     }
 
-    private fun mapNotNullableType(value: String, type: Class<*>, throwOnTypeConversion: Boolean): Any {
+    private fun mapNotNullableType(value: String, type: Class<*>, typeConversionError: (String) -> Int): Any {
         return try {
             when (type) {
                 Boolean::class.javaPrimitiveType -> value.toBoolean()
@@ -206,7 +208,7 @@ open class BaseDeepLinkDelegate @JvmOverloads constructor(
                 else -> value
             }
         } catch (e: NumberFormatException) {
-            if (throwOnTypeConversion) throw e else 0
+            typeConversionError(value)
         }
     }
 

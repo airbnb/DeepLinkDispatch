@@ -12,9 +12,9 @@ abstract class DeepLinkHandler<T> {
      abstract fun handleDeepLink(parameters: T)
 
      /**
-      * This can be set to true in your extension of the DeepLinkHandler. If it is set to true
-      * any type conversion error for any args value will throw a kotlin.NumberFormatException
-      * instead of falling back to a 0 value, which is the default behavior.
+      * These lambdas are called if a value cannot be converted to the desired type. The default
+      * behavior is to make these values 0/null respectively but the default behavior can be overridden.
       */
-     open val throwOnTypeConversion = false
+     open val typeConversionErrorNullable: (String) -> Int? = { value: String -> null }
+     open val typeConversionErrorNonNullable: (String) -> Int = { value: String -> 0 }
 }

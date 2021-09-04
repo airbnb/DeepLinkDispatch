@@ -14,7 +14,9 @@ object SampleThrowingKotlinDeepLinkHandler : DeepLinkHandler<TestArgsForFailedTy
          */
     }
 
-    override val throwOnTypeConversion = true
+    override val typeConversionErrorNonNullable = { _ : String -> throw NumberFormatException()}
+
+    override val typeConversionErrorNullable = { _ : String -> throw NumberFormatException()}
 }
 
 data class TestArgsForFailedTypeConversion(
