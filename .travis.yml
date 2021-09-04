@@ -6,9 +6,6 @@ android:
     - platform-tools
     - android-28
 
-after_success:
-  - .buildscript/deploy_snapshot.sh
-
 before_install:
     - mkdir "$ANDROID_HOME/licenses" || true
     - echo "24333f8a63b6825ea9c5514f83c2829b004d1fee" > "$ANDROID_HOME/licenses/android-sdk-license"
@@ -30,8 +27,3 @@ sudo: false
 cache:
   directories:
     - $HOME/.m2
-
-env:
-  global:
-    - secure: "LQD/rEkQx1QRV2g5IQEBOxzwK8F+Dd5H20LmITKhOg5JoOaFQlP4IGaT12H5ff8C7pel66qsxeX9QtA0W7skLnj7oUaaLLfSuwJv1Jb08LTnDyBwfmUOtag/R10Dxu9M0HAACWeOcWccxJNc1VeY3rZyasZ0/9skKW9TdPp3RvEYMlMbKhXvF+3ONpiHfIvRlMaqqcuGb+lTiZQOjOVGMvEjUfgwwNWY1ZAWWYvjeAyzJeU2jiIaXjbcr6+rcfE7LzoqBDbhw+z5OXnoImFY8rZ3M4ZzDrMCcZ33oNyhy3o5V479IHi3hnQuW1P5xAvQyg+KajZP5bUS9SOg/0rr9OC6WQjurzqGeNV/9e0+fUk165Vk//Y//e1TF32MuegNevzZsaTI6P6G3d6WzRWLDlYTG8iEfh4UcQ4cJDknNcbHKw7rBkDGbStgiJQprkp2lXqpRzlW3cZQSsYxcjE3RArJfJAT7Ee5Y0QPDYkGlBvBNSsTImpkTnNRHfAI0psIt9Cgd2TNoX76JCR/zh4nHV2zBtSLzFxQ/0o0v7N3tuLkA9HJ+J0emiOVKoG0AwqxOO+CulSP/LuhgI/HGYMHCfnBsfGC7xiu1Mh1YLb3LgnoC49soY/GZtXnfuog2ybVIl50DvCctIaNITZqVAyInkOheEGt0inqFhsCpkVgKaU="
-    - secure: "nYLJzuz4oCWuNqI6wFZ3Y3Qce2J7egJfE48qBeHP/mbrP3cYu356KNEJ/HvI023ZYplgDBAbewKXMGm12ZtYNXsOtbv+b7KT1Qbk90ZbUK4ujt4GJtCQK/dQRvjcjrbKCRNB1uVE/V0Hq8zzfrBMaOmalq+y2PYCOZzfhp0buARNgauNAououVeRyM5fthrNqZe2pSvMAnr5zHR8NovmRhsSi/emZCA4Um7HIYQxSPmzZUoOYmI8YZb8UeYTLwmEzYKo8dWtol3eljQBeDmJnpVb+KTZc1L6aiv1c3Z+DZggsHKIFOKpseIpJhNQYHNcsiXqnFMj9n3EnFIWCJJtq9D1w4EySb7x16ZVXyTKSF2r0iOuXQ2dKHx9/bluoQbTspEtX88PS3LUhZ7nL5CJR2MSvK7MiCTCF1dyI8GLOLla7nUGmr5MOI+6j7XPZq6NmMRhyow1MA2PC/A4/j6Zhbr1Ent0f3y5fWKBsn81QakDZXQw+f+kG6qADrIzcWjDjdb+QMOp4pooOBwrgv6t2vxnPofv4G39ACecUe6qtigN/PGUJCGXhBGMWjDvZsgroi5dLBETqyigW3paEYMNTYuyF5B0L1um8TVz1Wpj5Wagoz/2/2KCNW5jJx51EdON/Y61Nr9/3PqRsTii22bNmu32wFmmjc1O2B95mvjNFMo="

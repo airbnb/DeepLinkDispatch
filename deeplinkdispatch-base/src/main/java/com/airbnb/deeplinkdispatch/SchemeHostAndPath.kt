@@ -19,9 +19,9 @@ import com.airbnb.deeplinkdispatch.base.MatchIndex
 class SchemeHostAndPath(val uri: DeepLinkUri) {
 
     val matchList: List<UrlElement> = listOf(
-            UrlElement(ComponentTypeRootMask, MatchIndex.ROOT_VALUE.toByteArray()),
-            UrlElement(ComponentTypeSchemeMask, uri.scheme().toByteArray()),
-            UrlElement(ComponentTypeHostMask, uri.encodedHost().toByteArray())
+        UrlElement(ComponentTypeRootMask, MatchIndex.ROOT_VALUE.toByteArray()),
+        UrlElement(ComponentTypeSchemeMask, uri.scheme().toByteArray()),
+        UrlElement(ComponentTypeHostMask, uri.encodedHost().toByteArray())
     ) + uri.encodedPathSegments().map { pathSegment ->
         UrlElement(ComponentTypePathSegmentMask, pathSegment.toByteArray())
     }

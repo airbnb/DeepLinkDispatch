@@ -17,8 +17,10 @@ package com.airbnb.deeplinkdispatch
 
 import kotlin.math.min
 
-data class DeepLinkMatchResult(val deeplinkEntry: DeepLinkEntry,
-                               val parameterMap: Map<DeepLinkUri, Map<String, String>>) : Comparable<DeepLinkMatchResult> {
+data class DeepLinkMatchResult(
+    val deeplinkEntry: DeepLinkEntry,
+    val parameterMap: Map<DeepLinkUri, Map<String, String>>
+) : Comparable<DeepLinkMatchResult> {
     /**
      * Generates a map of parameters and the values from the given deep link.
      *
@@ -31,9 +33,9 @@ data class DeepLinkMatchResult(val deeplinkEntry: DeepLinkEntry,
 
     override fun toString(): String {
         return "uriTemplate: ${deeplinkEntry.uriTemplate} " +
-                "activity: ${deeplinkEntry.activityClass.name} " +
-                "method: ${deeplinkEntry.method} " +
-                "parameters: $parameterMap"
+            "activity: ${deeplinkEntry.activityClass.name} " +
+            "method: ${deeplinkEntry.method} " +
+            "parameters: $parameterMap"
     }
 
     private val firstConfigurablePathSegmentIndex: Int by lazy { deeplinkEntry.uriTemplate.indexOf(configurablePathSegmentPrefixChar) }
@@ -96,7 +98,7 @@ data class DeepLinkEntry(
         } catch (e: ClassNotFoundException) {
             throw IllegalStateException(
                 "Deeplink class $className not found. If you are using Proguard" +
-                        "/R8/Dexguard please consult README.md for correct configuration.",
+                    "/R8/Dexguard please consult README.md for correct configuration.",
                 e
             )
         }

@@ -20,11 +20,13 @@ data class DeepLinkResult(
     fun error(): String? = error
 
     override fun toString(): String {
-        return ("DeepLinkResult{"
-                + "successful=" + isSuccessful
-                + ", uriString=" + uriString
-                + ", error='" + error + '\''.toString()
-                + '}'.toString())
+        return (
+            "DeepLinkResult{" +
+                "successful=" + isSuccessful +
+                ", uriString=" + uriString +
+                ", error='" + error + '\''.toString() +
+                '}'.toString()
+            )
     }
 }
 
