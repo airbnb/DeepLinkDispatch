@@ -9,11 +9,11 @@ import android.util.Log
 import androidx.core.app.TaskStackBuilder
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.airbnb.deeplinkdispatch.base.Utils.toByteArrayMap
-import com.airbnb.deeplinkdispatch.handler.DEEP_LINK_HANDLER_METHOD_NAME
 import com.airbnb.deeplinkdispatch.handler.DeepLinkParamType
 import com.airbnb.deeplinkdispatch.handler.DeeplinkParam
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
+import java.lang.reflect.ParameterizedType
 
 open class BaseDeepLinkDelegate @JvmOverloads constructor(
     private val registries: List<BaseRegistry>,
@@ -116,14 +116,12 @@ open class BaseDeepLinkDelegate @JvmOverloads constructor(
 
     private fun callDeeplinkHandler(result: DeepLinkResult) {
         val handlerClazz = result.deepLinkMatchResult?.deeplinkEntry?.clazz!!
-        val handlerMethod = handlerClazz.methods.singleOrNull { method ->
-            method.name == DEEP_LINK_HANDLER_METHOD_NAME && method.genericParameterTypes.let { parameterTypes ->
-                parameterTypes.singleOrNull()?.let { it != Object::class.java } ?: false
-            }
-        } ?: error("DeepLinkHandler class ${handlerClazz.name} has more than one methods " +
-                "\"$DEEP_LINK_HANDLER_METHOD_NAME\" methods with a single parameter.")
         // Ok to call single here as we would have failed above if we would have more than one type.
-        val handlerParameterClazz = handlerMethod.genericParameterTypes.single() as Class<*>
+        // It is ok to get the generic type here as the way we use it it has not been erased by the
+        // compiler.
+        val handlerParameterClazz =
+            (handlerClazz.genericSuperclass as ParameterizedType).actualTypeArguments.firstOrNull()?.let { it as Class<*>}
+                ?: error("DeepLinkHandler class ${handlerClazz.name} has zero or more than one type parameter.")
         val handlerParameterClazzConstructor = handlerParameterClazz.constructors.singleOrNull()
             ?: error("Handler parameter class can only have one constructor.")
         val annotationList: List<DeeplinkParam> =

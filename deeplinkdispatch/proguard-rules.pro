@@ -1,6 +1,7 @@
-# Keep the deep link handler interface method, as it is called via reflection during runtime.
--keepclasseswithmembers class * extends com.airbnb.deeplinkdispatch.handler.DeepLinkHandler {
-    public void handleDeepLink(**);
+# Keep the deep link handler classes (and INSTANCE field if they have it) as they are accessed
+# via reflection from within the app.
+-keep class * extends com.airbnb.deeplinkdispatch.handler.DeepLinkHandler {
+    public static final ** INSTANCE;
 }
 
 # We need to keep the constructors of the argument objects used in the handleDeepLink methods.
@@ -9,7 +10,7 @@
 -if class * extends com.airbnb.deeplinkdispatch.handler.DeepLinkHandler {
     public void handleDeepLink(**);
 }
--keepclasseswithmembers,allowobfuscation class <2> {
+-keep,allowobfuscation class <2> {
     <init>(...);
 }
 
