@@ -28,6 +28,7 @@ import androidx.room.compiler.processing.get
 import androidx.room.compiler.processing.writeTo
 import com.airbnb.deeplinkdispatch.ProcessorUtils.decapitalizeIfNotTwoFirstCharsUpperCase
 import com.airbnb.deeplinkdispatch.ProcessorUtils.hasEmptyOrNullString
+import com.airbnb.deeplinkdispatch.base.MatchIndex.ALLOWED_VALUES_DELIMITER
 import com.airbnb.deeplinkdispatch.base.Utils
 import com.airbnb.deeplinkdispatch.base.Utils.isConfigurablePathSegment
 import com.google.devtools.ksp.processing.SymbolProcessorEnvironment
@@ -288,8 +289,9 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
         annotatedMethodElements: Set<XMethodElement>,
         deepLinkElements: List<DeepLinkAnnotatedElement>
     ) {
-        val deepLinkModuleAnnotatedElements = roundEnv.getElementsAnnotatedWith(DeepLinkModule::class)
-            .filterIsInstance<XTypeElement>()
+        val deepLinkModuleAnnotatedElements =
+            roundEnv.getElementsAnnotatedWith(DeepLinkModule::class).filterIsInstance<XTypeElement>()
+        validateAllowedPlaceholderValues(deepLinkElements)
         deepLinkModuleAnnotatedElements.forEach { deepLinkModuleElement ->
             tryCatchFileWriting {
                 generateDeepLinkRegistry(
@@ -298,6 +300,34 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
                     deepLinkElements = deepLinkElements,
                     originatingElements = annotatedClassElements + annotatedMethodElements + deepLinkModuleElement
                 )
+            }
+        }
+    }
+
+    private val placeholderRegex = "(?<=\\{)(.*?)(?=\\})".toRegex()
+
+    private val allowedValuesRegex = "(?<=\\()(.*?)(?=\\))".toRegex()
+
+    private fun validateAllowedPlaceholderValues(annotatedElements: List<DeepLinkAnnotatedElement>) {
+        val bla = annotatedElements.forEach { annotatedElement ->
+            val placeholderStrings = placeholderRegex.findAll(annotatedElement.uri).map { it.value }
+            placeholderStrings.forEach { placeholderString ->
+                val placeholderMatches = allowedValuesRegex.findAll(placeholderString)
+                if (placeholderMatches.count() > 1) {
+                    logError(
+                        element = annotatedElement.element,
+                        message = "Only one allowed placeholder values section allowed per placeholder."
+                    )
+                }
+                if (placeholderMatches.count() == 1 && placeholderString.substringAfter(
+                        placeholderMatches.first().value
+                    ) != ALLOWED_VALUES_DELIMITER[1].toString()
+                ) {
+                    logError(
+                        element = annotatedElement.element,
+                        message = "Allowed placeholder values must be last in placeholder."
+                    )
+                }
             }
         }
     }
@@ -408,9 +438,19 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
             try {
                 when (element) {
                     is DeepLinkAnnotatedElement.ClassAnnotatedElement ->
-                        urisTrie.addToTrie(uriTemplate, element.annotatedClass.className.reflectionName() ?: "", null)
+                        urisTrie.addToTrie(
+                            deepLinkUriTemplate = uriTemplate,
+                            annotatedClassFullyQualifiedName = element.annotatedClass.className.reflectionName()
+                                ?: "",
+                            annotatedMethod = null
+                        )
                     is DeepLinkAnnotatedElement.MethodAnnotatedElement ->
-                        urisTrie.addToTrie(uriTemplate, element.annotatedClass.className.reflectionName() ?: "", element.method)
+                        urisTrie.addToTrie(
+                            deepLinkUriTemplate = uriTemplate,
+                            annotatedClassFullyQualifiedName = element.annotatedClass.className.reflectionName()
+                                ?: "",
+                            annotatedMethod = element.method
+                        )
                 }
             } catch (e: IllegalArgumentException) {
                 logError(
