@@ -18,6 +18,7 @@ import org.robolectric.shadows.ShadowActivity;
 
 import java.util.List;
 
+import static junit.framework.TestCase.assertNull;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.robolectric.Shadows.shadowOf;
@@ -49,9 +50,19 @@ public class CustomPrefixesActivityTest {
   }
 
   @Test
+  public void testWebPlaceholderDeepLinkIntentNotAllowedPlaceholder() {
+    List<String> cases = ImmutableList.of("httpx://airbnb.com/guests", "https://web.airbnb.com/guests",
+            "http://uk.airbnb.com/guests", "https://ru.airbnb.com/guests");
+    for (String uri : cases) {
+      Intent launchedIntent = getLaunchedIntent(uri);
+      assertNull(launchedIntent);
+    }
+  }
+
+  @Test
   public void testWebPlaceholderDeepLinkIntent() {
     List<String> cases = ImmutableList.of("http://airbnb.com/guests", "https://airbnb.com/guests",
-      "http://de.airbnb.com/guests", "https://de.airbnb.com/guests");
+      "http://de.airbnb.com/guests", "https://de.airbnb.com/guests", "http://ro.airbnb.com/guests");
     for (String uri : cases) {
       Intent launchedIntent = getLaunchedIntent(uri);
       assertThat(launchedIntent.getComponent(),
@@ -129,9 +140,14 @@ public class CustomPrefixesActivityTest {
   private Intent getLaunchedIntent(String uri) {
     Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(uri));
     DeepLinkActivity deepLinkActivity = Robolectric.buildActivity(DeepLinkActivity.class, intent)
-        .create().get();
+            .create().get();
     ShadowActivity shadowActivity = shadowOf(deepLinkActivity);
 
-    return shadowActivity.peekNextStartedActivityForResult().intent;
+    ShadowActivity.IntentForResult intentForResult = shadowActivity.peekNextStartedActivityForResult();
+    if (intentForResult == null) {
+      return null;
+    } else {
+      return intentForResult.intent;
+    }
   }
 }

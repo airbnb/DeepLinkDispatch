@@ -274,8 +274,8 @@ class DeepLinkEntryTest {
         val match = testRegistry.idxMatch(DeepLinkUri.parse("airbnb://baz/qux"))
         val parameters = match!!.getParameters(DeepLinkUri.parse("airbnb://baz/qux"))
         assertThat(parameters)
-                .hasSize(2)
-                .contains(entry("foo", "baz"), entry("bar", "qux"))
+            .hasSize(2)
+            .contains(entry("foo", "baz"), entry("bar", "qux"))
     }
 
     @Test
@@ -287,8 +287,8 @@ class DeepLinkEntryTest {
         val match = testRegistry.idxMatch(matchUri)
         val parameters = match!!.getParameters(matchUri)
         assertThat(parameters)
-                .hasSize(2)
-                .contains(entry("foo", "baz"), entry("bar", "qux"))
+            .hasSize(2)
+            .contains(entry("foo", "baz"), entry("bar", "qux"))
     }
 
     @Test
@@ -308,13 +308,13 @@ class DeepLinkEntryTest {
         val entryWihtPlaceholderSchemeHost = activityDeepLinkEntry("http{scheme}://{host}airbnb.com/test")
         val testRegistry = getTestRegistry(listOf(entryWihtPlaceholderSchemeHost))
 
-        testParametrizedUrl(testRegistry, "http://en.airbnb.com/test", mapOf("scheme" to "" , "host" to "en."))
-        testParametrizedUrl(testRegistry, "http://www.airbnb.com/test", mapOf("scheme" to "" , "host" to "www."))
-        testParametrizedUrl(testRegistry, "http://airbnb.com/test", mapOf("scheme" to "" , "host" to ""))
+        testParametrizedUrl(testRegistry, "http://en.airbnb.com/test", mapOf("scheme" to "", "host" to "en."))
+        testParametrizedUrl(testRegistry, "http://www.airbnb.com/test", mapOf("scheme" to "", "host" to "www."))
+        testParametrizedUrl(testRegistry, "http://airbnb.com/test", mapOf("scheme" to "", "host" to ""))
 
-        testParametrizedUrl(testRegistry, "https://en.airbnb.com/test", mapOf("scheme" to "s" , "host" to "en.", "scheme" to "s"))
-        testParametrizedUrl(testRegistry, "https://www.airbnb.com/test", mapOf("scheme" to "s" , "host" to "www.", "scheme" to "s"))
-        testParametrizedUrl(testRegistry, "https://airbnb.com/test", mapOf("scheme" to "s" , "host" to "", "scheme" to "s"))
+        testParametrizedUrl(testRegistry, "https://en.airbnb.com/test", mapOf("scheme" to "s", "host" to "en.", "scheme" to "s"))
+        testParametrizedUrl(testRegistry, "https://www.airbnb.com/test", mapOf("scheme" to "s", "host" to "www.", "scheme" to "s"))
+        testParametrizedUrl(testRegistry, "https://airbnb.com/test", mapOf("scheme" to "s", "host" to "", "scheme" to "s"))
 
         val matchDeTld = testRegistry.idxMatch(DeepLinkUri.parse("http://www.airbnb.de/test"))
         assertThat(matchDeTld).isNull()
@@ -339,7 +339,9 @@ class DeepLinkEntryTest {
     }
 
     private fun testParametrizedUrl(
-        testRegistry: TestDeepLinkRegistry, urlString: String, parameterMap: Map<String, String>
+        testRegistry: TestDeepLinkRegistry,
+        urlString: String,
+        parameterMap: Map<String, String>
     ) {
         val url = DeepLinkUri.parse(urlString)
         val matchEnHost = testRegistry.idxMatch(url)

@@ -26,6 +26,42 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
                 }
                 """
     )
+    private val customAnnotationPlaceholderWithValidAllowedElementsInSchemeHostAppLink =
+        Source.JavaSource(
+            "com.example.PlaceholderDeepLink",
+            """
+                package com.example;
+                import com.airbnb.deeplinkdispatch.DeepLinkSpec;
+                @DeepLinkSpec(prefix = { "http{scheme(|s)}://{host(|www.)}example.com/" })
+                public @interface PlaceholderDeepLink {
+                    String[] value();
+                }
+                """
+        )
+    private val customAnnotationPlaceholderWithDuplicateAllowedElementsInSchemeHostAppLink =
+        Source.JavaSource(
+            "com.example.PlaceholderDeepLink",
+            """
+                package com.example;
+                import com.airbnb.deeplinkdispatch.DeepLinkSpec;
+                @DeepLinkSpec(prefix = { "http{scheme(|s)(|test)}://{host(|www.)}example.com/" })
+                public @interface PlaceholderDeepLink {
+                    String[] value();
+                }
+                """
+        )
+    private val customAnnotationPlaceholderWithValidElementsNotAtEndInSchemeHostAppLink =
+        Source.JavaSource(
+            "com.example.PlaceholderDeepLink",
+            """
+                package com.example;
+                import com.airbnb.deeplinkdispatch.DeepLinkSpec;
+                @DeepLinkSpec(prefix = { "http{scheme(|s)}://{(|www.)host}example.com/" })
+                public @interface PlaceholderDeepLink {
+                    String[] value();
+                }
+                """
+        )
     private val sampleActivityWithStandardAndCustomDeepLink = Source.JavaSource(
         "com.example.SampleActivity",
         """
@@ -279,6 +315,139 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
             
                     """.trimIndent()
             )
+        )
+    }
+
+    @Test
+    fun testIncrementalProcessorWithCustomDeepLinkWithPlaceholdersAndValidAllowedValuesRegistration() {
+        val sourceFiles = listOf(
+            customAnnotationPlaceholderWithValidAllowedElementsInSchemeHostAppLink,
+            module,
+            sampleActivityWithOnlyCustomPlaceholderDeepLink,
+            fakeBaseDeeplinkDelegate
+        )
+        val results = listOf(
+            compileIncremental(
+                sourceFiles = sourceFiles,
+                customDeepLinks = listOf("com.example.PlaceholderDeepLink"),
+                useKsp = false,
+            ),
+            compileIncremental(
+                sourceFiles = sourceFiles,
+                customDeepLinks = listOf("com.example.PlaceholderDeepLink"),
+                useKsp = true,
+            )
+        )
+        assertGeneratedCode(
+            results = results,
+            registryClassName = "com.example.SampleModuleRegistry",
+            indexEntries = listOf(
+                DeepLinkEntry(
+                    uriTemplate = "http{scheme(|s)}://{host(|www.)}example.com/deepLink",
+                    className = "com.example.SampleActivity",
+                    method = null
+                )
+            ),
+            generatedFiles = mapOf(
+                "DeepLinkDelegate.java" to
+                    """
+                package com.example;
+
+                import com.airbnb.deeplinkdispatch.BaseDeepLinkDelegate;
+                import java.lang.String;
+                import java.util.Arrays;
+                import java.util.Map;
+
+                public final class DeepLinkDelegate extends BaseDeepLinkDelegate {
+                  public DeepLinkDelegate(SampleModuleRegistry sampleModuleRegistry) {
+                    super(Arrays.asList(
+                      sampleModuleRegistry
+                    ));
+                  }
+
+                  public DeepLinkDelegate(SampleModuleRegistry sampleModuleRegistry,
+                      Map<String, String> configurablePathSegmentReplacements) {
+                    super(Arrays.asList(
+                      sampleModuleRegistry),
+                      configurablePathSegmentReplacements
+                    );
+                  }
+                }
+                
+                    """.trimIndent(),
+                "SampleModuleRegistry.java" to
+                    """
+                package com.example;
+
+                import com.airbnb.deeplinkdispatch.BaseRegistry;
+                import com.airbnb.deeplinkdispatch.base.Utils;
+                import java.lang.String;
+
+                public final class SampleModuleRegistry extends BaseRegistry {
+                  public SampleModuleRegistry() {
+                    super(Utils.readMatchIndexFromStrings( new String[] {matchIndex0(), }),
+                    new String[]{});
+                  }
+
+                  private static String matchIndex0() {
+                    return "\u0001\u0001\u0000\u0000\u0000\u0000\u0000\u009br\u0012\u0010\u0000\u0000\u0000\u0000\u0000\u0083http{scheme(|s)}\u0014\u0018\u0000\u0000\u0000\u0000\u0000c{host(|www.)}example.com\b\b\u0000S\u0000\u0000\u0000\u0000deepLink\u00004http{scheme(|s)}://{host(|www.)}example.com/deepLink\u0000\u001acom.example.SampleActivity\u0000";
+                  }
+                }
+            
+                    """.trimIndent()
+            )
+        )
+    }
+
+    @Test
+    fun testIncrementalProcessorWithCustomDeepLinkWithPlaceholdersAndDupliateAllowedValuesRegistration() {
+        val sourceFiles = listOf(
+            customAnnotationPlaceholderWithDuplicateAllowedElementsInSchemeHostAppLink,
+            module,
+            sampleActivityWithOnlyCustomPlaceholderDeepLink,
+            fakeBaseDeeplinkDelegate
+        )
+        val results = listOf(
+            compileIncremental(
+                sourceFiles = sourceFiles,
+                customDeepLinks = listOf("com.example.PlaceholderDeepLink"),
+                useKsp = false,
+            ),
+            compileIncremental(
+                sourceFiles = sourceFiles,
+                customDeepLinks = listOf("com.example.PlaceholderDeepLink"),
+                useKsp = true,
+            )
+        )
+        assertCompileError(
+            results,
+            "Only one allowed placeholder values section allowed per placeholder."
+        )
+    }
+
+    @Test
+    fun testIncrementalProcessorWithCustomDeepLinkWithPlaceholdersAndAllowedValuesNotAtEndRegistration() {
+        val sourceFiles = listOf(
+            customAnnotationPlaceholderWithValidElementsNotAtEndInSchemeHostAppLink,
+            module,
+            sampleActivityWithOnlyCustomPlaceholderDeepLink,
+            fakeBaseDeeplinkDelegate
+        )
+        val results = listOf(
+            compileIncremental(
+                sourceFiles = sourceFiles,
+                customDeepLinks = listOf("com.example.PlaceholderDeepLink"),
+                useKsp = false,
+            ),
+            compileIncremental(
+                sourceFiles = sourceFiles,
+                customDeepLinks = listOf("com.example.PlaceholderDeepLink"),
+                useKsp = true,
+            )
+        )
+        assertCompileError(
+            results,
+            "Allowed placeholder values must be last in placeholder."
         )
     }
 

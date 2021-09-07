@@ -1,7 +1,10 @@
 package com.airbnb.deeplinkdispatch
 
 import com.airbnb.deeplinkdispatch.base.MatchIndex
-import junit.framework.TestCase.*
+import junit.framework.TestCase.assertEquals
+import junit.framework.TestCase.assertNotNull
+import junit.framework.TestCase.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 private const val ONE_PARAM_SCHEMA = "scheme://host/one/{param}/three"
@@ -63,7 +66,7 @@ class DeepLinkMatchTests {
         }
     }
 
-    @Test fun testMatchArraySerializationDeserializationNoMatch(){
+    @Test fun testMatchArraySerializationDeserializationNoMatch() {
         val entryFromArray = MatchIndex(ByteArray(0)).getMatchResultFromIndex(
             0,
             0,

@@ -1,9 +1,8 @@
 package com.airbnb.deeplinkdispatch.sample
 
 import com.airbnb.deeplinkdispatch.sample.benchmarkable.BenchmarkDeepLinkModuleRegistry
-import com.airbnb.deeplinkdispatch.sample.library.LibraryDeepLinkModuleRegistry
 import com.airbnb.deeplinkdispatch.sample.kaptlibrary.KaptLibraryDeepLinkModuleRegistry
-
+import com.airbnb.deeplinkdispatch.sample.library.LibraryDeepLinkModuleRegistry
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.core.IsEqual.equalTo
 import org.junit.Test
@@ -16,27 +15,27 @@ import org.robolectric.annotation.Config
 class ConfigurablePathSegmentTest {
 
     private val configurablePathSegmentReplacementsAllEmpty = mapOf(
-            "configurable-path-segment" to "",
-            "configurable-path-segment-one" to "",
-            "configurable-path-segment-two" to ""
+        "configurable-path-segment" to "",
+        "configurable-path-segment-one" to "",
+        "configurable-path-segment-two" to ""
     )
 
     private val configurablePathSegmentReplacementFirstSet = mapOf(
-            "configurable-path-segment" to "foo",
-            "configurable-path-segment-one" to "",
-            "configurable-path-segment-two" to ""
+        "configurable-path-segment" to "foo",
+        "configurable-path-segment-one" to "",
+        "configurable-path-segment-two" to ""
     )
 
     private val configurablePathSegmentReplacementsOneEmpty = mapOf(
-            "configurable-path-segment" to "",
-            "configurable-path-segment-one" to "",
-            "configurable-path-segment-two" to "bar"
+        "configurable-path-segment" to "",
+        "configurable-path-segment-one" to "",
+        "configurable-path-segment-two" to "bar"
     )
 
     private val configurablePathSegmentReplacementsTwoEmpty = mapOf(
-            "configurable-path-segment" to "",
-            "configurable-path-segment-one" to "bar",
-            "configurable-path-segment-two" to ""
+        "configurable-path-segment" to "",
+        "configurable-path-segment-one" to "bar",
+        "configurable-path-segment-two" to ""
     )
 
     @Test

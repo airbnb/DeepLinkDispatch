@@ -17,8 +17,10 @@ package com.airbnb.deeplinkdispatch
 
 import kotlin.math.min
 
-data class DeepLinkMatchResult(val deeplinkEntry: DeepLinkEntry,
-                               val parameterMap: Map<DeepLinkUri, Map<String, String>>) : Comparable<DeepLinkMatchResult> {
+data class DeepLinkMatchResult(
+    val deeplinkEntry: DeepLinkEntry,
+    val parameterMap: Map<DeepLinkUri, Map<String, String>>
+) : Comparable<DeepLinkMatchResult> {
     /**
      * Generates a map of parameters and the values from the given deep link.
      *
@@ -100,7 +102,7 @@ sealed class DeepLinkEntry(open val uriTemplate: String, open val className: Str
         } catch (e: ClassNotFoundException) {
             throw IllegalStateException(
                 "Deeplink class $className not found. If you are using Proguard" +
-                        "/R8/Dexguard please consult README.md for correct configuration.",
+                    "/R8/Dexguard please consult README.md for correct configuration.",
                 e
             )
         }

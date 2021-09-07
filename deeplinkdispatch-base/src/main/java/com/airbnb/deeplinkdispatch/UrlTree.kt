@@ -2,7 +2,16 @@
 
 package com.airbnb.deeplinkdispatch
 
-import com.airbnb.deeplinkdispatch.base.MatchIndex.*
+import com.airbnb.deeplinkdispatch.base.MatchIndex.HEADER_LENGTH
+import com.airbnb.deeplinkdispatch.base.MatchIndex.HEADER_MATCH_LENGTH
+import com.airbnb.deeplinkdispatch.base.MatchIndex.HEADER_NODE_METADATA_LENGTH
+import com.airbnb.deeplinkdispatch.base.MatchIndex.HEADER_VALUE_LENGTH
+import com.airbnb.deeplinkdispatch.base.MatchIndex.MATCH_DATA_CLASS_LENGTH
+import com.airbnb.deeplinkdispatch.base.MatchIndex.MATCH_DATA_METHOD_LENGTH
+import com.airbnb.deeplinkdispatch.base.MatchIndex.MATCH_DATA_TYPE_LENGTH
+import com.airbnb.deeplinkdispatch.base.MatchIndex.MATCH_DATA_URL_TEMPLATE_LENGTH
+import com.airbnb.deeplinkdispatch.base.MatchIndex.MATCH_INDEX_ENCODING
+import com.airbnb.deeplinkdispatch.base.MatchIndex.ROOT_VALUE
 import com.airbnb.deeplinkdispatch.base.Utils.validateIfComponentParam
 import com.airbnb.deeplinkdispatch.base.Utils.validateIfConfigurablePathSegment
 import com.airbnb.deeplinkdispatch.base.chunkOnModifiedUtf8ByteSize
@@ -46,7 +55,7 @@ open class TreeNode(open val id: String, internal val metadata: NodeMetadata) {
 
     /**
      * Byte array format is:
-     * 0                                                      [NodeMetadata] flags; 1 byte
+     * 0 [NodeMetadata] flags; 1 byte
      * 1                                                      length of value sub-array
      * 2..3                                                   length of match sub-array
      * 4...7                                                  length of node's children sub-array
@@ -61,12 +70,14 @@ open class TreeNode(open val id: String, internal val metadata: NodeMetadata) {
         val valueByteArray = serializedId().toByteArray(UTF_8).toUByteArray()
         val matchByteArray = matchByteArray(match)
         val header = generateHeader(metadata, valueByteArray, matchByteArray, childrenByteArrays)
-        val resultByteArray = UByteArray(arrayLength(
+        val resultByteArray = UByteArray(
+            arrayLength(
                 childArrays = childrenByteArrays,
                 valueArray = valueByteArray,
                 matchArray = matchByteArray,
                 headerArray = header
-        ))
+            )
+        )
         header.copyInto(resultByteArray)
         var position = header.size
         position = valueByteArray.copyIntoPosition(resultByteArray, position)
@@ -96,14 +107,17 @@ open class TreeNode(open val id: String, internal val metadata: NodeMetadata) {
         return UByteArray(HEADER_LENGTH).apply {
             set(0, metadata.metadata.toUByte()) // flag
             set(HEADER_NODE_METADATA_LENGTH, value.size.toUByte()) // value length
-            writeUShortAt(startIndex = HEADER_NODE_METADATA_LENGTH + HEADER_VALUE_LENGTH,
-                    value = matchByteArray.size.toUShort()) // match length
-            writeUIntAt(startIndex = HEADER_NODE_METADATA_LENGTH + HEADER_VALUE_LENGTH + HEADER_MATCH_LENGTH,
-                    value = childrenLength.toUInt()) // children length
+            writeUShortAt(
+                startIndex = HEADER_NODE_METADATA_LENGTH + HEADER_VALUE_LENGTH,
+                value = matchByteArray.size.toUShort()
+            ) // match length
+            writeUIntAt(
+                startIndex = HEADER_NODE_METADATA_LENGTH + HEADER_VALUE_LENGTH + HEADER_MATCH_LENGTH,
+                value = childrenLength.toUInt()
+            ) // children length
         }
     }
 }
-
 
 private const val MAX_CODE_STRING_BYTE_SIZE = 65535 // (2^16)-1 as the chunk needs to be 16 bit addressable.
 
@@ -193,34 +207,35 @@ fun matchByteArray(match: UriMatch?): UByteArray {
 
     val uriTemplateByteArray = match.uriTemplate.toByteArray(UTF_8).toUByteArray()
     val classNameByteArray = match.annotatedClassFullyQualifiedName.toByteArray(UTF_8).toUByteArray()
-    val methodNameByteArray = match.annotatedMethod?.toByteArray(UTF_8)?.toUByteArray()
-            ?: UByteArray(0)
+    val methodNameByteArray = match.annotatedMethod?.let { it.toByteArray(UTF_8)?.toUByteArray() ?: UByteArray(0)}
+        ?: UByteArray(0)
     return UByteArray(
-        MATCH_DATA_TYPE_LENGTH + MATCH_DATA_URL_TEMPLATE_LENGTH + uriTemplateByteArray.size
-            + MATCH_DATA_CLASS_LENGTH + classNameByteArray.size
-            + MATCH_DATA_METHOD_LENGTH + methodNameByteArray.size)
-            .apply {
-                var position = 0
-                // Type
-                this[position] = match.type.flagValue
-                position += MATCH_DATA_TYPE_LENGTH
-                // Uri template
-                writeUShortAt(startIndex = position, value = uriTemplateByteArray.size.toUShort())
-                position += MATCH_DATA_URL_TEMPLATE_LENGTH
-                uriTemplateByteArray.copyInto(destination = this, destinationOffset = position)
-                position += uriTemplateByteArray.size
+        MATCH_DATA_TYPE_LENGTH + MATCH_DATA_URL_TEMPLATE_LENGTH + uriTemplateByteArray.size +
+            MATCH_DATA_CLASS_LENGTH + classNameByteArray.size +
+            MATCH_DATA_METHOD_LENGTH + methodNameByteArray.size
+    )
+        .apply {
+            var position = 0
+            // Type
+            this[position] = match.type.flagValue
+            position += MATCH_DATA_TYPE_LENGTH
+            // Uri template
+            writeUShortAt(startIndex = position, value = uriTemplateByteArray.size.toUShort())
+            position += MATCH_DATA_URL_TEMPLATE_LENGTH
+            uriTemplateByteArray.copyInto(destination = this, destinationOffset = position)
+            position += uriTemplateByteArray.size
 
-                // Class name
-                writeUShortAt(startIndex = position, value = classNameByteArray.size.toUShort())
-                position += MATCH_DATA_CLASS_LENGTH
-                classNameByteArray.copyInto(destination = this, destinationOffset = position)
-                position += classNameByteArray.size
+            // Class name
+            writeUShortAt(startIndex = position, value = classNameByteArray.size.toUShort())
+            position += MATCH_DATA_CLASS_LENGTH
+            classNameByteArray.copyInto(destination = this, destinationOffset = position)
+            position += classNameByteArray.size
 
-                // method
-                this.set(position, methodNameByteArray.size.toUByte())
-                position += MATCH_DATA_METHOD_LENGTH
-                if (methodNameByteArray.isNotEmpty()) methodNameByteArray.copyInto(destination = this, destinationOffset = position)
-            }
+            // method
+            this.set(position, methodNameByteArray.size.toUByte())
+            position += MATCH_DATA_METHOD_LENGTH
+            if (methodNameByteArray.isNotEmpty()) methodNameByteArray.copyInto(destination = this, destinationOffset = position)
+        }
 }
 
 fun UByteArray.writeUIntAt(startIndex: Int, value: UInt) {

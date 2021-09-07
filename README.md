@@ -293,8 +293,22 @@ public @interface WebDeepLink {
 
 You will get the value of `url_scheme_suffix` which -- in this case would be "" for http and "s"
 when https is used -- in the extras bundle of your annotated method. If you want to limit which
-values are accepted, you can do that in your annotated method and just return null for the intent
-which will result in a noop.
+values are accepted, you can do that directly within the placeholder by defining it with allowed
+values like this: `http{url_scheme_suffix(|s)}://airbnb.com`. In this case valid values would be
+`""` and `"s"` (`http` and `https`). Values are pipe(`|`) separated, there can only be one `(...)`
+section per placeholder and it has to be at the end of the placeholder.
+
+```java
+// Match all deeplinks which a scheme staring with "http".
+@DeepLinkSpec(prefix = { "http{url_scheme_suffix(|s)}://{prefix(|www.)}airbnb.{domain(com|de)}")
+@Retention(RetentionPolicy.CLASS)
+public @interface WebDeepLink {
+  String[] value();
+}
+```
+
+The above code would match URLs that start with `http` or `https`, are for `airbnb.com` or
+`airbnb.de` or `www.airbnb.com` and `www.airbnb.de`. They would e.g. not match `airbnb.ro`.
 
 ```java
 // This activity is gonna handle the following deep links:

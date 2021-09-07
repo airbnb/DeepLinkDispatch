@@ -5,7 +5,11 @@ import androidx.benchmark.junit4.BenchmarkRule
 import androidx.benchmark.junit4.measureRepeated
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.rule.ActivityTestRule
-import com.airbnb.deeplinkdispatch.*
+import com.airbnb.deeplinkdispatch.BaseDeepLinkDelegate
+import com.airbnb.deeplinkdispatch.BaseRegistry
+import com.airbnb.deeplinkdispatch.DeepLinkMatchResult
+import com.airbnb.deeplinkdispatch.DeepLinkResult
+import com.airbnb.deeplinkdispatch.DeepLinkUri
 import com.airbnb.deeplinkdispatch.sample.benchmarkable.BenchmarkDeepLinkModuleRegistry
 import com.airbnb.deeplinkdispatch.sample.benchmarkable.ScaleTestActivity
 import org.junit.Assert
@@ -42,7 +46,6 @@ class DeeplinkBenchmarks {
         benchmarkRule.measureRepeated {
             BenchmarkDeepLinkModuleRegistry()
         }
-
     }
 
     @Test
@@ -116,5 +119,3 @@ class DeeplinkBenchmarks {
 }
 
 class DeepLinkDelegate() : BaseDeepLinkDelegate(listOf<BaseRegistry>(BenchmarkDeepLinkModuleRegistry()))
-
-
