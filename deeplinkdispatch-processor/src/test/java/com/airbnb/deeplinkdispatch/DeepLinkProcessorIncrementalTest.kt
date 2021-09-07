@@ -342,10 +342,9 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
             results = results,
             registryClassName = "com.example.SampleModuleRegistry",
             indexEntries = listOf(
-                DeepLinkEntry(
+                DeepLinkEntry.ActivityDeeplinkEntry(
                     uriTemplate = "http{scheme(|s)}://{host(|www.)}example.com/deepLink",
-                    className = "com.example.SampleActivity",
-                    method = null
+                    className = "com.example.SampleActivity"
                 )
             ),
             generatedFiles = mapOf(
@@ -390,7 +389,7 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
                   }
 
                   private static String matchIndex0() {
-                    return "\u0001\u0001\u0000\u0000\u0000\u0000\u0000\u009br\u0012\u0010\u0000\u0000\u0000\u0000\u0000\u0083http{scheme(|s)}\u0014\u0018\u0000\u0000\u0000\u0000\u0000c{host(|www.)}example.com\b\b\u0000S\u0000\u0000\u0000\u0000deepLink\u00004http{scheme(|s)}://{host(|www.)}example.com/deepLink\u0000\u001acom.example.SampleActivity\u0000";
+                    return "\u0001\u0001\u0000\u0000\u0000\u0000\u0000\u009cr\u0012\u0010\u0000\u0000\u0000\u0000\u0000\u0084http{scheme(|s)}\u0014\u0018\u0000\u0000\u0000\u0000\u0000d{host(|www.)}example.com\b\b\u0000T\u0000\u0000\u0000\u0000deepLink\u0000\u00004http{scheme(|s)}://{host(|www.)}example.com/deepLink\u0000\u001acom.example.SampleActivity\u0000";
                   }
                 }
             

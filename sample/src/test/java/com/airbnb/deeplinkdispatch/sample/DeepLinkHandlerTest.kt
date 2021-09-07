@@ -100,4 +100,3 @@ class DeepLinkHandlerTest {
         verify(exactly = 1) { SampleJavaStaticTestHelper.invokedHandler(expectedDeepLinkParams) }
     }
 }
-

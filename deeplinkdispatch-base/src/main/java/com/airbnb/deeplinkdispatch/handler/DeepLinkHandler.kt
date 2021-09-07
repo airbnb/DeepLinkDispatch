@@ -9,12 +9,12 @@ const val DEEP_LINK_HANDLER_METHOD_NAME = "handleDeepLink"
  * and query parameters).
  */
 abstract class DeepLinkHandler<T> {
-     abstract fun handleDeepLink(parameters: T)
+    abstract fun handleDeepLink(parameters: T)
 
-     /**
-      * These lambdas are called if a value cannot be converted to the desired type. The default
-      * behavior is to make these values 0/null respectively but the default behavior can be overridden.
-      */
-     open val typeConversionErrorNullable: (String) -> Int? = { value: String -> null }
-     open val typeConversionErrorNonNullable: (String) -> Int = { value: String -> 0 }
+    /**
+     * These lambdas are called if a value cannot be converted to the desired type. The default
+     * behavior is to make these values 0/null respectively but the default behavior can be overridden.
+     */
+    open val typeConversionErrorNullable: (String) -> Int? = { value: String -> null }
+    open val typeConversionErrorNonNullable: (String) -> Int = { value: String -> 0 }
 }

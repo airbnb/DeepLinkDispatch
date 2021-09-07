@@ -324,8 +324,8 @@ class DeepLinkEntryTest {
 
     @Test
     fun testSupportsWithNonExistantClass() {
-        class NotInAppClassPath {}
-        val deeplinkEntryWithNonExistentClass = activityDeepLinkEntry("http://test.com/", className = "notExisting" )
+        val deeplinkEntryWithNonExistentClass =
+            activityDeepLinkEntry("http://test.com/", className = "notExisting")
         val testRegistry = getTestRegistry(listOf(deeplinkEntryWithNonExistentClass))
         assertThat(testRegistry.supports(DeepLinkUri.parse("http://test.com/"))).isTrue
         assertThat(testRegistry.supports(DeepLinkUri.parse("http://false.com/"))).isFalse
@@ -333,7 +333,8 @@ class DeepLinkEntryTest {
 
     @Test
     fun testIdxMatchWithNonExistantClass() {
-        val deeplinkEntryWithNonExistentClass = activityDeepLinkEntry("http://test.com/", className = "notExisting" )
+        val deeplinkEntryWithNonExistentClass =
+            activityDeepLinkEntry("http://test.com/", className = "notExisting")
         val testRegistry = getTestRegistry(listOf(deeplinkEntryWithNonExistentClass))
         assertThat(testRegistry.idxMatch(DeepLinkUri.parse("http://test.com/"))).isNotNull
     }

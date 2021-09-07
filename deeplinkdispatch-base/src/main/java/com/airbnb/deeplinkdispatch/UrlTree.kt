@@ -19,7 +19,12 @@ import java.io.OutputStream
 import java.nio.charset.Charset
 import kotlin.text.Charsets.UTF_8
 
-data class UriMatch(val type: MatchType, val uriTemplate: String, val annotatedClassFullyQualifiedName: String, val annotatedMethod: String?)
+data class UriMatch(
+    val type: MatchType,
+    val uriTemplate: String,
+    val annotatedClassFullyQualifiedName: String,
+    val annotatedMethod: String?
+)
 
 enum class MatchType(val flagValue: UByte) {
     Activity(0u), Method(1u), Handler(2u);
@@ -39,7 +44,8 @@ open class TreeNode(open val id: String, internal val metadata: NodeMetadata) {
     val children = mutableSetOf<TreeNode>()
     var match: UriMatch? = null
         set(value) {
-            if (field != null) error("Ambiguous URI. Same match for two URIs ($field vs $value)") else field = value
+            if (field != null) error("Ambiguous URI. Same match for two URIs ($field vs $value)") else field =
+                value
         }
 
     fun addNode(node: TreeNode): TreeNode {
@@ -48,7 +54,8 @@ open class TreeNode(open val id: String, internal val metadata: NodeMetadata) {
 
     fun serializedId(): String {
         if (metadata.isConfigurablePathSegment) {
-            return id.substringAfter(configurablePathSegmentPrefix).substringBefore(configurablePathSegmentSuffix)
+            return id.substringAfter(configurablePathSegmentPrefix)
+                .substringBefore(configurablePathSegmentSuffix)
         }
         return id
     }
@@ -95,14 +102,30 @@ open class TreeNode(open val id: String, internal val metadata: NodeMetadata) {
         }
     }
 
-    private fun arrayLength(childArrays: List<UByteArray>, valueArray: UByteArray, matchArray: UByteArray, headerArray: UByteArray): Int {
+    private fun arrayLength(
+        childArrays: List<UByteArray>,
+        valueArray: UByteArray,
+        matchArray: UByteArray,
+        headerArray: UByteArray
+    ): Int {
         return headerArray.size + valueArray.size + matchArray.size + childArrays.sumOf { it.size }
     }
 
     // Make sure we match concrete matches before placeholders or configurable path segments
-    private fun generateChildrenByteArrays(): List<UByteArray> = children.sortedWith(compareBy({ it.metadata.isConfigurablePathSegment }, { it.metadata.isComponentParam }, { it.id })).map { it.toUByteArray() }
+    private fun generateChildrenByteArrays(): List<UByteArray> = children.sortedWith(
+        compareBy(
+            { it.metadata.isConfigurablePathSegment },
+            { it.metadata.isComponentParam },
+            { it.id }
+        )
+    ).map { it.toUByteArray() }
 
-    private fun generateHeader(metadata: NodeMetadata, value: UByteArray, matchByteArray: UByteArray, children: List<UByteArray>? = null): UByteArray {
+    private fun generateHeader(
+        metadata: NodeMetadata,
+        value: UByteArray,
+        matchByteArray: UByteArray,
+        children: List<UByteArray>? = null
+    ): UByteArray {
         val childrenLength: Int = children?.sumOf { it.size } ?: 0
         return UByteArray(HEADER_LENGTH).apply {
             set(0, metadata.metadata.toUByte()) // flag
@@ -119,9 +142,11 @@ open class TreeNode(open val id: String, internal val metadata: NodeMetadata) {
     }
 }
 
-private const val MAX_CODE_STRING_BYTE_SIZE = 65535 // (2^16)-1 as the chunk needs to be 16 bit addressable.
+private const val MAX_CODE_STRING_BYTE_SIZE =
+    65535 // (2^16)-1 as the chunk needs to be 16 bit addressable.
 
-data class Root(override val id: String = "r") : TreeNode(ROOT_VALUE, NodeMetadata(MetadataMasks.ComponentTypeRootMask, id)) {
+data class Root(override val id: String = "r") :
+    TreeNode(ROOT_VALUE, NodeMetadata(MetadataMasks.ComponentTypeRootMask, id)) {
     fun writeToOutoutStream(openOutputStream: OutputStream) {
         openOutputStream.write(this.toUByteArray().toByteArray())
     }
@@ -133,7 +158,10 @@ data class Root(override val id: String = "r") : TreeNode(ROOT_VALUE, NodeMetada
      * of this not allowed to be larger than 65535. So we chunk our string exactly to that size.
      */
     fun getStrings(): List<CharSequence> {
-        return String(bytes = this.toUByteArray().toByteArray(), charset = Charset.forName(MATCH_INDEX_ENCODING)).chunkOnModifiedUtf8ByteSize(MAX_CODE_STRING_BYTE_SIZE)
+        return String(
+            bytes = this.toUByteArray().toByteArray(),
+            charset = Charset.forName(MATCH_INDEX_ENCODING)
+        ).chunkOnModifiedUtf8ByteSize(MAX_CODE_STRING_BYTE_SIZE)
     }
 
     /**
@@ -182,11 +210,14 @@ data class Root(override val id: String = "r") : TreeNode(ROOT_VALUE, NodeMetada
         }
 }
 
-data class Scheme(override val id: String) : TreeNode(id = id, metadata = NodeMetadata(MetadataMasks.ComponentTypeSchemeMask, id))
+data class Scheme(override val id: String) :
+    TreeNode(id = id, metadata = NodeMetadata(MetadataMasks.ComponentTypeSchemeMask, id))
 
-data class Host(override val id: String) : TreeNode(id = id, metadata = NodeMetadata(MetadataMasks.ComponentTypeHostMask, id))
+data class Host(override val id: String) :
+    TreeNode(id = id, metadata = NodeMetadata(MetadataMasks.ComponentTypeHostMask, id))
 
-data class PathSegment(override val id: String) : TreeNode(id = id, metadata = NodeMetadata(MetadataMasks.ComponentTypePathSegmentMask, id))
+data class PathSegment(override val id: String) :
+    TreeNode(id = id, metadata = NodeMetadata(MetadataMasks.ComponentTypePathSegmentMask, id))
 
 /**
  * Match data byte array format is:
@@ -206,8 +237,9 @@ fun matchByteArray(match: UriMatch?): UByteArray {
     if (match == null) return UByteArray(0)
 
     val uriTemplateByteArray = match.uriTemplate.toByteArray(UTF_8).toUByteArray()
-    val classNameByteArray = match.annotatedClassFullyQualifiedName.toByteArray(UTF_8).toUByteArray()
-    val methodNameByteArray = match.annotatedMethod?.let { it.toByteArray(UTF_8)?.toUByteArray() ?: UByteArray(0)}
+    val classNameByteArray =
+        match.annotatedClassFullyQualifiedName.toByteArray(UTF_8).toUByteArray()
+    val methodNameByteArray = match.annotatedMethod?.let { it.toByteArray(UTF_8).toUByteArray() }
         ?: UByteArray(0)
     return UByteArray(
         MATCH_DATA_TYPE_LENGTH + MATCH_DATA_URL_TEMPLATE_LENGTH + uriTemplateByteArray.size +
@@ -234,7 +266,10 @@ fun matchByteArray(match: UriMatch?): UByteArray {
             // method
             this.set(position, methodNameByteArray.size.toUByte())
             position += MATCH_DATA_METHOD_LENGTH
-            if (methodNameByteArray.isNotEmpty()) methodNameByteArray.copyInto(destination = this, destinationOffset = position)
+            if (methodNameByteArray.isNotEmpty()) methodNameByteArray.copyInto(
+                destination = this,
+                destinationOffset = position
+            )
         }
 }
 

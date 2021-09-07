@@ -40,4 +40,3 @@ class TestKotlinNoDataClassDeepLinkHandlerDeepLinkArgs(
     @DeeplinkParam("show_taxes", DeepLinkParamType.Query) val show_taxes: Boolean?,
     @DeeplinkParam("queryParam", DeepLinkParamType.Query) var queryParam: Int?
 )
-

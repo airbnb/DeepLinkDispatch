@@ -298,7 +298,7 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
         val argsTypeElement = argsType.typeElement
         if (argsTypeElement?.isPublic() == false) {
             throw DeepLinkProcessorException(
-                element = argsTypeElement ?: element,
+                element = argsTypeElement,
                 message = "Argument class must be public."
             )
         }
@@ -313,7 +313,7 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
         val allQueryParameters = allArgParameters.filterAnnotationType(DeepLinkParamType.Query)
         if (allPathParameters.size + allQueryParameters.size != allArgParameters.size) {
             throw DeepLinkProcessorException(
-                element = argsTypeElement ?: element,
+                element = argsTypeElement,
                 message = "All elements of the constructor need to be annotated with the @${DeeplinkParam::class.simpleName} annotation.\n" +
                     "Parameters: ${allArgParameters.joinToString { it.name }} " +
                     "Annotated parameters: ${(allPathParameters + allQueryParameters).joinToString { it.name }}"
@@ -321,13 +321,13 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
         }
         if (allPathParameters.any { !isAllowedNonNullableType(it.type) }) {
             throw DeepLinkProcessorException(
-                element = argsTypeElement ?: element,
+                element = argsTypeElement,
                 message = "For args constructor elements of type ${DeepLinkParamType.Path.name} only the following simple types are allowed: ${allowedNonNullableTypes.joinToString()}"
             )
         }
         if (allQueryParameters.any { !isAllowedNullableType(it.type) }) {
             throw DeepLinkProcessorException(
-                element = argsTypeElement ?: element,
+                element = argsTypeElement,
                 message = "For args constructor elements of type ${DeepLinkParamType.Query.name} only the following simple types are allowed: ${allowedNullableTypes.joinToString()}"
             )
         }
@@ -338,7 +338,7 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
         }.toSet()
         if (annotatedPathParameterNames != templateHostPathSchemePlaceholders) {
             throw DeepLinkProcessorException(
-                element = argsTypeElement ?: element,
+                element = argsTypeElement,
                 message = "All scheme/host/path placeholders in the uri template must be annotated in the argument class constructor. " +
                     "Present in urlTemplate: ${templateHostPathSchemePlaceholders.joinToString()} " +
                     "Present in constructor: ${annotatedPathParameterNames.joinToString()}"
@@ -350,7 +350,7 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
         }.toSet()
         if (annotatedQueryParameterNames != templateQueryParameters) {
             throw DeepLinkProcessorException(
-                element = argsTypeElement ?: element,
+                element = argsTypeElement,
                 message = "All query elements in the uri template must be annotated in the argument class constructor. " +
                     "Present in urlTemplate: ${templateQueryParameters.joinToString()} " +
                     "Present in constructor: ${annotatedQueryParameterNames.joinToString()}"
@@ -378,7 +378,7 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
             )
         }
         if (element.getAllMethods()
-            .filter { it.name == DEEP_LINK_HANDLER_METHOD_NAME && it.parameters.size == 1 }.size != 1
+            .filter { it.name == DEEP_LINK_HANDLER_METHOD_NAME && it.parameters.size == 1 }.count() != 1
         ) {
             throw DeepLinkProcessorException(
                 element = element,
@@ -484,7 +484,7 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
     private val allowedValuesRegex = "(?<=\\()(.*?)(?=\\))".toRegex()
 
     private fun validateAllowedPlaceholderValues(annotatedElements: List<DeepLinkAnnotatedElement>) {
-        val bla = annotatedElements.forEach { annotatedElement ->
+        annotatedElements.forEach { annotatedElement ->
             val placeholderStrings = placeholderRegex.findAll(annotatedElement.uri).map { it.value }
             placeholderStrings.forEach { placeholderString ->
                 val placeholderMatches = allowedValuesRegex.findAll(placeholderString)

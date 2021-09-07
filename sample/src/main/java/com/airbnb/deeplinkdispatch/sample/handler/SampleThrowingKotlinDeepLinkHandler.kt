@@ -14,13 +14,12 @@ object SampleThrowingKotlinDeepLinkHandler : DeepLinkHandler<TestArgsForFailedTy
          */
     }
 
-    override val typeConversionErrorNonNullable = { _ : String -> throw NumberFormatException()}
+    override val typeConversionErrorNonNullable = { _: String -> throw NumberFormatException() }
 
-    override val typeConversionErrorNullable = { _ : String -> throw NumberFormatException()}
+    override val typeConversionErrorNullable = { _: String -> throw NumberFormatException() }
 }
 
 data class TestArgsForFailedTypeConversion(
     // path params can be non null
     @DeeplinkParam("path_segment_variable_1", DeepLinkParamType.Path) val uuid: Long,
 )
-
