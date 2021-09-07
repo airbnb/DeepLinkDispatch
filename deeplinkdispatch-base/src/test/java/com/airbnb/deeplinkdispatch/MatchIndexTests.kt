@@ -1,6 +1,5 @@
 package com.airbnb.deeplinkdispatch
 
-import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 
@@ -14,17 +13,17 @@ class MatchIndexTests {
     private val allowedValuesPlaceholderNames = setOf("scheme", "tld")
 
     private val testEntries: List<DeepLinkEntry> = listOf(
-            DeepLinkEntry("http://www.example.com/somePath1/differentPath2", MatchIndexTests::class.java.name, "someMethod1"),
-            DeepLinkEntry("https://www.example.com/path1/path2", MatchIndexTests::class.java.name, "someMethod2"),
-            DeepLinkEntry("dld://dldPath1/dldPath2", MatchIndexTests::class.java.name, "someMethod3"),
-            DeepLinkEntry("http://example.de/", MatchIndexTests::class.java.name, "someMethod4"),
-            DeepLinkEntry("http://example.com/path1", MatchIndexTests::class.java.name, "someMethod7"),
-            DeepLinkEntry("http://example.com/somethingElse", MatchIndexTests::class.java.name, "someMethod9"),
-            DeepLinkEntry("http://example.com/path1/pathElement2/path3", MatchIndexTests::class.java.name, "someMethod5"),
-            DeepLinkEntry("http://example.com/path1/someOtherPathElement2", MatchIndexTests::class.java.name, "someMethod6"),
-            DeepLinkEntry("http://example.com/", MatchIndexTests::class.java.name, "someMethod8"),
-            entryWithAllowedValues,
-            entryWithAllowedValueOnlyOneElement
+        DeepLinkEntry("http://www.example.com/somePath1/differentPath2", MatchIndexTests::class.java.name, "someMethod1"),
+        DeepLinkEntry("https://www.example.com/path1/path2", MatchIndexTests::class.java.name, "someMethod2"),
+        DeepLinkEntry("dld://dldPath1/dldPath2", MatchIndexTests::class.java.name, "someMethod3"),
+        DeepLinkEntry("http://example.de/", MatchIndexTests::class.java.name, "someMethod4"),
+        DeepLinkEntry("http://example.com/path1", MatchIndexTests::class.java.name, "someMethod7"),
+        DeepLinkEntry("http://example.com/somethingElse", MatchIndexTests::class.java.name, "someMethod9"),
+        DeepLinkEntry("http://example.com/path1/pathElement2/path3", MatchIndexTests::class.java.name, "someMethod5"),
+        DeepLinkEntry("http://example.com/path1/someOtherPathElement2", MatchIndexTests::class.java.name, "someMethod6"),
+        DeepLinkEntry("http://example.com/", MatchIndexTests::class.java.name, "someMethod8"),
+        entryWithAllowedValues,
+        entryWithAllowedValueOnlyOneElement
     ).sortedBy { it.uriTemplate }
 
     private fun testRegistry(entries: List<DeepLinkEntry>): TestRegistry {
@@ -40,7 +39,6 @@ class MatchIndexTests {
         val allEntries = testRegistry(testEntries).getAllEntries().sortedBy { it.uriTemplate }
         assertThat(allEntries).isEqualTo(testEntries)
     }
-
 
     @Test
     fun testMatchWithAllowedValuesInPlaceholders() {
