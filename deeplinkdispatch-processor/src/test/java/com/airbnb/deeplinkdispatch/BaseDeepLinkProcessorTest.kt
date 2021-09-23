@@ -12,21 +12,21 @@ import java.io.File
 
 open class BaseDeepLinkProcessorTest {
     @JvmField
-    protected val fakeBaseDeeplinkDelegate = Source.JavaSource(
-        "com.airbnb.deeplinkdispatch.BaseDeepLinkDelegate",
+    protected val fakeBaseDeeplinkDelegate = Source.KotlinSource(
+        "com/airbnb/deeplinkdispatch/BaseDeepLinkDelegate.kt",
         """
-                package com.airbnb.deeplinkdispatch;
+                package com.airbnb.deeplinkdispatch
                 
-                import java.util.List;
-                import java.util.Map;
+                import com.airbnb.deeplinkdispatch.handler.TypeConverters
                 
-                public class BaseDeepLinkDelegate {  public BaseDeepLinkDelegate(List<? extends BaseRegistry> registries) {
-                  }
-                  public BaseDeepLinkDelegate(
-                    List<? extends BaseRegistry> registries,
-                    Map<String, String> configurablePathSegmentReplacements
-                  ) {}
-                }
+                open class BaseDeepLinkDelegate @JvmOverloads constructor(
+                    private val registries: List<BaseRegistry>,
+                    configurablePathSegmentReplacements: Map<String, String> = emptyMap(),
+                    private val typeConverters: TypeConverters = TypeConverters(),
+                    private val errorHandler: ErrorHandler? = null,
+                    private val typeConversionErrorNullable: (String) -> Int? = { value: String -> null },
+                    private val typeConversionErrorNonNullable: (String) -> Int = { value: String -> 0 }
+                ) {}
                 """
     )
 

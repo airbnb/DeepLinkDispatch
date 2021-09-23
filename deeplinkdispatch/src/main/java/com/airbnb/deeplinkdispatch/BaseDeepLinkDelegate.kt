@@ -1,5 +1,6 @@
 package com.airbnb.deeplinkdispatch
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
@@ -11,14 +12,19 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.airbnb.deeplinkdispatch.base.Utils.toByteArrayMap
 import com.airbnb.deeplinkdispatch.handler.DeepLinkParamType
 import com.airbnb.deeplinkdispatch.handler.DeeplinkParam
+import com.airbnb.deeplinkdispatch.handler.TypeConverters
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
 import java.lang.reflect.ParameterizedType
+import java.lang.reflect.Type
 
 open class BaseDeepLinkDelegate @JvmOverloads constructor(
     private val registries: List<BaseRegistry>,
     configurablePathSegmentReplacements: Map<String, String> = emptyMap(),
-    private val errorHandler: ErrorHandler? = null
+    private val typeConverters: TypeConverters = TypeConverters(),
+    private val errorHandler: ErrorHandler? = null,
+    private val typeConversionErrorNullable: (String) -> Int? = { value: String -> null }, // ktlint-disable unused
+    private val typeConversionErrorNonNullable: (String) -> Int = { value: String -> 0 } // ktlint-disable unused
 ) {
 
     /**
@@ -108,20 +114,38 @@ open class BaseDeepLinkDelegate @JvmOverloads constructor(
                 is DeepLinkEntry.ActivityDeeplinkEntry ->
                     activity.startActivity(result.methodResult.intent)
                 is DeepLinkEntry.HandlerDeepLinkEntry ->
-                    if (result.isSuccessful) callDeeplinkHandler(result)
+                    if (result.isSuccessful) callDeeplinkHandler(activity, result)
             }
         }
     }
 
-    private fun callDeeplinkHandler(result: DeepLinkResult) {
+    fun Array<Type>.getDeepLinkArgClassFromTypeArguments(): Class<*>? {
+        return filterIsInstance<Class<*>>().singleOrNull { typeArgumentClass ->
+            typeArgumentClass.constructors.any { constructor ->
+                constructor.parameterAnnotations.any { parameter ->
+                    parameter.any { annotation -> annotation.annotationClass == DeeplinkParam::class }
+                }
+            }
+        }
+    }
+
+    @SuppressLint("NewApi")
+    private fun callDeeplinkHandler(context: Context, result: DeepLinkResult) {
         val handlerClazz = result.deepLinkMatchResult?.deeplinkEntry?.clazz!!
-        // Ok to call single here as we would have failed above if we would have more than one type.
-        // It is ok to get the generic type here as the way we use it it has not been erased by the
-        // compiler.
+        // This relies on the fact that the Processor already checked that every annotated class
+        // correctly implements the DeepLinkHandler<T> interface.
         val handlerParameterClazz =
-            (handlerClazz.genericSuperclass as ParameterizedType).actualTypeArguments.firstOrNull()
-                ?.let { it as Class<*> }
-                ?: error("DeepLinkHandler class ${handlerClazz.name} has zero or more than one type parameter.")
+            // First check if the handler directly implements the interface. If so get the type from
+            // the interface.
+            handlerClazz.genericInterfaces.filterIsInstance<ParameterizedType>().singleOrNull {
+                it.typeName.startsWith(
+                    com.airbnb.deeplinkdispatch.handler.DeepLinkHandler::class.java.name
+                )
+            }?.actualTypeArguments?.getDeepLinkArgClassFromTypeArguments()
+                // If we cannot get the type from the interface the handler does not directly implement it
+                // need to look at the super class and check its type arguments.
+                ?: (handlerClazz.genericSuperclass as ParameterizedType).actualTypeArguments.getDeepLinkArgClassFromTypeArguments()
+                ?: error("Unable to determine parameter class type for ${handlerClazz.name}.")
         val handlerParameterClazzConstructor = handlerParameterClazz.constructors.singleOrNull()
             ?: error("Handler parameter class can only have one constructor.")
         val annotationList: List<DeeplinkParam> =
@@ -145,34 +169,28 @@ open class BaseDeepLinkDelegate @JvmOverloads constructor(
         } as com.airbnb.deeplinkdispatch.handler.DeepLinkHandler<Any>
         val handlerArgsConstructorParams = createParamArray(
             typeNameMap = typeNameMap,
-            parameters = result.parameters,
-            typeConversionErrorNullable = handlerInstance.typeConversionErrorNullable,
-            typeConversionErrorNonNullable = handlerInstance.typeConversionErrorNonNullable
+            parameters = result.parameters
         )
         val handlerParameters =
             handlerParameterClazzConstructor.newInstance(*handlerArgsConstructorParams)
-        handlerInstance.handleDeepLink(handlerParameters)
+        handlerInstance.handleDeepLink(context, handlerParameters)
     }
 
     private fun createParamArray(
         typeNameMap: List<Pair<DeeplinkParam, Class<*>>>,
-        parameters: Map<String, String>,
-        typeConversionErrorNullable: (String) -> Int?,
-        typeConversionErrorNonNullable: (String) -> Int
+        parameters: Map<String, String>
     ): Array<Any?> {
         return typeNameMap.map { (annotation, type) ->
             when (annotation.type) {
                 DeepLinkParamType.Path ->
                     mapNotNullableType(
                         value = parameters.getOrElse(annotation.name) { error("Non existent non nullable element for name: ${annotation.name}") },
-                        type = type,
-                        typeConversionError = typeConversionErrorNonNullable
+                        type = type
                     )
                 DeepLinkParamType.Query ->
                     mapNullableType(
                         value = parameters[annotation.name],
-                        type = type,
-                        typeConversionError = typeConversionErrorNullable
+                        type = type
                     )
             }
         }.toTypedArray()
@@ -181,11 +199,10 @@ open class BaseDeepLinkDelegate @JvmOverloads constructor(
     private fun mapNullableType(
         value: String?,
         type: Class<*>,
-        typeConversionError: (String) -> Int?
     ): Any? {
         if (value == null) return null
         return try {
-            when (type) {
+            typeConverters[type]?.convert(value = value) ?: when (type) {
                 Boolean::class.javaObjectType -> value.toBoolean()
                 Int::class.javaObjectType -> value.toInt()
                 Long::class.javaObjectType -> value.toLong()
@@ -193,20 +210,25 @@ open class BaseDeepLinkDelegate @JvmOverloads constructor(
                 Byte::class.javaObjectType -> value.toByte()
                 Double::class.javaObjectType -> value.toDouble()
                 Float::class.javaObjectType -> value.toFloat()
-                else -> value
+                String::class.javaObjectType -> value
+                else -> error(
+                    "Missing type converter for type $type! You must register a custom" +
+                        " type converter via the DeepLinkDelegate constructor element for all" +
+                        " but simple data types."
+                )
             }
         } catch (e: NumberFormatException) {
-            typeConversionError(value)
+            typeConversionErrorNullable(value)
         }
     }
 
     private fun mapNotNullableType(
         value: String,
-        type: Class<*>,
-        typeConversionError: (String) -> Int
+        type: Class<*>
     ): Any {
+
         return try {
-            when (type) {
+            typeConverters[type]?.convert(value = value) ?: when (type) {
                 Boolean::class.javaPrimitiveType -> value.toBoolean()
                 Int::class.javaPrimitiveType -> value.toInt()
                 Long::class.javaPrimitiveType -> value.toLong()
@@ -214,10 +236,15 @@ open class BaseDeepLinkDelegate @JvmOverloads constructor(
                 Byte::class.javaPrimitiveType -> value.toByte()
                 Double::class.javaPrimitiveType -> value.toDouble()
                 Float::class.javaPrimitiveType -> value.toFloat()
-                else -> value
+                String::class.javaObjectType -> value
+                else -> error(
+                    "Missing type converter for type $type! You must register a custom" +
+                        " type converter via the DeepLinkDelegate constructor element for all" +
+                        " but simple data types."
+                )
             }
         } catch (e: NumberFormatException) {
-            typeConversionError(value)
+            typeConversionErrorNonNullable(value)
         }
     }
 
@@ -475,8 +502,12 @@ open class BaseDeepLinkDelegate @JvmOverloads constructor(
         return registries.any { it.supports(uri, configurablePathSegmentReplacements) }
     }
 
+    /**
+     * Get all DeepLinkEntry objects that are handled by all registries handled by this
+     * DeepLinkDelegate.
+     */
     val allDeepLinkEntries by lazy {
-        registries.map { it.getAllEntries() }.flatten()
+        registries.flatMap { it.getAllEntries() }
     }
 
     companion object {

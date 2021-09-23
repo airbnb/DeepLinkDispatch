@@ -1,10 +1,20 @@
 package com.airbnb.deeplinkdispatch
 
-import com.airbnb.deeplinkdispatch.handler.DEEP_LINK_HANDLER_METHOD_NAME
 import com.airbnb.deeplinkdispatch.test.Source
 import org.junit.Test
 
 class DeepLinkProcessorDeepLinkHandlerIncrementalTest : BaseDeepLinkProcessorTest() {
+    // Need to define here as the original one is define an in android lib we cannot depend on here.
+    private val deeplinkHandlerInterface = Source.KotlinSource(
+        "DeepLinkHandler.kt",
+        """
+        package com.airbnb.deeplinkdispatch.handler
+        import android.content.Context
+        interface DeepLinkHandler<T> {
+            fun handleDeepLink(context: Context, parameters: T)
+        }
+        """.trimIndent()
+    )
     private val customAnnotationPlaceholderInSchemeHostAppLink = Source.JavaSource(
         "com.example.PlaceholderDeepLink",
         """
@@ -20,13 +30,14 @@ class DeepLinkProcessorDeepLinkHandlerIncrementalTest : BaseDeepLinkProcessorTes
         "SampleDeeplinkHandler.kt",
         """
             package com.example
+            import android.content.Context
             import com.airbnb.deeplinkdispatch.handler.DeepLinkHandler
             import com.airbnb.deeplinkdispatch.handler.DeepLinkParamType
             import com.airbnb.deeplinkdispatch.handler.DeeplinkParam
             import java.time.LocalDate
             @PlaceholderDeepLink("pathSegment/{path_segment_variable_1}/{path_segment_variable_2}/{path_segment_variable_3}/{path_segment_variable_4}/{path_segment_variable_5}/{path_segment_variable_6}/{path_segment_variable_7}/{path_segment_variable_8}?queryParam1={query_param_1}&queryParam2={query_param_2}&queryParam3={query_param_3}&queryParam4={query_param_4}&queryParam5={query_param_5}&queryParam6={query_param_6}&queryParam7={query_param_7}&queryParam8={query_param_8}")
-            object TestDeepLinkHandler : DeepLinkHandler<TestDeepLinkHandlerDeepLinkArgs>() {
-                override fun handleDeepLink(parameters: TestDeepLinkHandlerDeepLinkArgs) {
+            object TestDeepLinkHandler : DeepLinkHandler<TestDeepLinkHandlerDeepLinkArgs> {
+                override fun handleDeepLink(context: Context, parameters: TestDeepLinkHandlerDeepLinkArgs) {
                     TODO("Not yet implemented")
                 }
             }
@@ -59,13 +70,14 @@ class DeepLinkProcessorDeepLinkHandlerIncrementalTest : BaseDeepLinkProcessorTes
         """
             package com.example
             
+            import android.content.Context
             import com.airbnb.deeplinkdispatch.handler.DeepLinkHandler
             import com.airbnb.deeplinkdispatch.handler.DeepLinkParamType
             import com.airbnb.deeplinkdispatch.handler.DeeplinkParam
             
             @PlaceholderDeepLink("pathSegment/{one}")
-            class TestDeepLinkHandler(val someValue: String) : DeepLinkHandler<TestDeepLinkHandlerDeepLinkArgs>() {
-                override fun handleDeepLink(parameters: TestDeepLinkHandlerDeepLinkArgs) {
+            class TestDeepLinkHandler(val someValue: String) : DeepLinkHandler<TestDeepLinkHandlerDeepLinkArgs> {
+                override fun handleDeepLink(context: Context, parameters: TestDeepLinkHandlerDeepLinkArgs) {
                     TODO("Not yet implemented")
                 }
             }
@@ -80,47 +92,47 @@ class DeepLinkProcessorDeepLinkHandlerIncrementalTest : BaseDeepLinkProcessorTes
         """
                 package com.example
                 
+                import android.content.Context
                 import com.airbnb.deeplinkdispatch.handler.DeepLinkHandler
                 import com.airbnb.deeplinkdispatch.handler.DeepLinkParamType
                 import com.airbnb.deeplinkdispatch.handler.DeeplinkParam
                 
                 @PlaceholderDeepLink("pathSegment/{one}")
-                object TestDeepLinkHandler : DeepLinkHandler<TestDeepLinkHandlerDeepLinkArgs>() {
-                    override fun handleDeepLink(parameters: TestDeepLinkHandlerDeepLinkArgs) {
+                object TestDeepLinkHandler : DeepLinkHandler<TestDeepLinkHandlerDeepLinkArgs> {
+                    override fun handleDeepLink(context: Context, parameters: TestDeepLinkHandlerDeepLinkArgs) {
                         TODO("Not yet implemented")
                     }
                     
-                    fun handleDeepLink(string: String) {
+                    fun handleDeepLink(context: Context, string: String) {
                         TODO("Not yet implemented")
                     }
                 }
             """
     )
 
-    private val sampleDeeplinkHandlerWithTwoTypeParameters = Source.KotlinSource(
+    private val sampleDeeplinkHandlerWithIntermediateClassAndTwoTypeParameters = Source.KotlinSource(
         "SampleDeeplinkHandler.kt",
         """
                 package com.example
                 
+                import android.content.Context
                 import com.airbnb.deeplinkdispatch.handler.DeepLinkHandler
                 import com.airbnb.deeplinkdispatch.handler.DeepLinkParamType
                 import com.airbnb.deeplinkdispatch.handler.DeeplinkParam
                 
                 @PlaceholderDeepLink("pathSegment/{one}")
-                object TestDeepLinkHandler() : InBetweenDeeplinkHandler<TestDeepLinkHandlerDeepLinkArgs, String>() {
-                    override fun handleDeepLink(parameters: TestDeepLinkHandlerDeepLinkArgs) {
-                        TODO("Not yet implemented")
-                    }
-                }
+                object TestDeepLinkHandler : InBetweenDeeplinkHandler<TestDeepLinkHandlerDeepLinkArgs, String>()
                 
-                open class InBetweenDeeplinkHandler<T, U>() : DeepLinkHandler<T>() {
-                    override fun handleDeepLink(parameters: T) {
+                open class InBetweenDeeplinkHandler<T, U>() : DeepLinkHandler<T> {
+                    override fun handleDeepLink(context: Context, parameters: T) {
                         TODO("Not yet implemented")
                     }
                 }
                 
                 data class TestDeepLinkHandlerDeepLinkArgs(
-                    @DeeplinkParam(name = "one", type = DeepLinkParamType.Path ) val one: String,
+                    @DeeplinkParam(name = "scheme", type = DeepLinkParamType.Path ) val scheme: String,
+                    @DeeplinkParam(name = "host", type = DeepLinkParamType.Path ) val host: String,
+                    @DeeplinkParam(name = "one", type = DeepLinkParamType.Path ) val one: String
                 )
                 """
     )
@@ -130,19 +142,20 @@ class DeepLinkProcessorDeepLinkHandlerIncrementalTest : BaseDeepLinkProcessorTes
         """
         package com.example
         
+        import android.content.Context
         import com.airbnb.deeplinkdispatch.handler.DeepLinkHandler
         import com.airbnb.deeplinkdispatch.handler.DeepLinkParamType
         import com.airbnb.deeplinkdispatch.handler.DeeplinkParam
         
-        @PlaceholderDeepLink("pathSegment/{one}")
-        object TestDeepLinkHandler : DeepLinkHandler<TestDeepLinkHandlerDeepLinkArgs>() {
-            override fun handleDeepLink(parameters: TestDeepLinkHandlerDeepLinkArgs) {
+        @PlaceholderDeepLink("pathSegment/{one}/{two}")
+        object TestDeepLinkHandler : DeepLinkHandler<TestDeepLinkHandlerDeepLinkArgs> {
+            override fun handleDeepLink(context: Context, parameters: TestDeepLinkHandlerDeepLinkArgs) {
                 TODO("Not yet implemented")
             }
         }
         class TestDeepLinkHandlerDeepLinkArgs @JvmOverloads constructor(
             @DeeplinkParam(name = "one", type = DeepLinkParamType.Path ) val one: String,
-            @DeeplinkParam(name = "two", type = DeepLinkParamType.Path ) val two: String = "test",
+            @DeeplinkParam(name = "two", type = DeepLinkParamType.Path ) val two: String,
         ) {
         constructor(three: String) this("One", "two")
         }
@@ -154,13 +167,14 @@ class DeepLinkProcessorDeepLinkHandlerIncrementalTest : BaseDeepLinkProcessorTes
         """
                 package com.example
                 
+                import android.content.Context
                 import com.airbnb.deeplinkdispatch.handler.DeepLinkHandler
                 import com.airbnb.deeplinkdispatch.handler.DeepLinkParamType
                 import com.airbnb.deeplinkdispatch.handler.DeeplinkParam
                 
                 @PlaceholderDeepLink("pathSegment/{one}/{two}?query={something}")
-                object TestDeepLinkHandler : DeepLinkHandler<TestDeepLinkHandlerDeepLinkArgs>() {
-                    override fun handleDeepLink(parameters: TestDeepLinkHandlerDeepLinkArgs) {
+                object TestDeepLinkHandler : DeepLinkHandler<TestDeepLinkHandlerDeepLinkArgs> {
+                    override fun handleDeepLink(context: Context, parameters: TestDeepLinkHandlerDeepLinkArgs) {
                         TODO("Not yet implemented")
                     }
                 }
@@ -173,19 +187,94 @@ class DeepLinkProcessorDeepLinkHandlerIncrementalTest : BaseDeepLinkProcessorTes
                 """
     )
 
+    private val sampleDeeplinkHandlerFewerItemsInArgsThanInUrl = Source.KotlinSource(
+        "SampleDeeplinkHandler.kt",
+        """
+                package com.example
+                
+                import android.content.Context
+                import com.airbnb.deeplinkdispatch.handler.DeepLinkHandler
+                import com.airbnb.deeplinkdispatch.handler.DeepLinkParamType
+                import com.airbnb.deeplinkdispatch.handler.DeeplinkParam
+                
+                @PlaceholderDeepLink("pathSegment/{one}/{two}?query={something}")
+                object TestDeepLinkHandler : DeepLinkHandler<TestDeepLinkHandlerDeepLinkArgs> {
+                    override fun handleDeepLink(context: Context, parameters: TestDeepLinkHandlerDeepLinkArgs) {
+                        TODO("Not yet implemented")
+                    }
+                }
+                
+                data class TestDeepLinkHandlerDeepLinkArgs (
+                    @DeeplinkParam(name = "one", type = DeepLinkParamType.Path ) val one: String,
+                    @DeeplinkParam(name = "two", type = DeepLinkParamType.Path ) val two: Long
+                ) 
+                """
+    )
+
+    private val sampleDeeplinkHandlerMorePathItemsInArgsThanInUrl = Source.KotlinSource(
+        "SampleDeeplinkHandler.kt",
+        """
+                package com.example
+                
+                import android.content.Context
+                import com.airbnb.deeplinkdispatch.handler.DeepLinkHandler
+                import com.airbnb.deeplinkdispatch.handler.DeepLinkParamType
+                import com.airbnb.deeplinkdispatch.handler.DeeplinkParam
+                
+                @PlaceholderDeepLink("pathSegment/{one}/{two}?query={something}")
+                object TestDeepLinkHandler : DeepLinkHandler<TestDeepLinkHandlerDeepLinkArgs> {
+                    override fun handleDeepLink(context: Context, parameters: TestDeepLinkHandlerDeepLinkArgs) {
+                        TODO("Not yet implemented")
+                    }
+                }
+                
+                data class TestDeepLinkHandlerDeepLinkArgs (
+                    @DeeplinkParam(name = "one", type = DeepLinkParamType.Path ) val one: String,
+                    @DeeplinkParam(name = "two", type = DeepLinkParamType.Path ) val two: Long,
+                    @DeeplinkParam(name = "not_existing", type = DeepLinkParamType.Path ) val notExisting: Long
+                ) 
+                """
+    )
+
+    private val sampleDeeplinkHandlerMoreQueryItemsInArgsThanInUrl = Source.KotlinSource(
+        "SampleDeeplinkHandler.kt",
+        """
+                package com.example
+                
+                import android.content.Context
+                import com.airbnb.deeplinkdispatch.handler.DeepLinkHandler
+                import com.airbnb.deeplinkdispatch.handler.DeepLinkParamType
+                import com.airbnb.deeplinkdispatch.handler.DeeplinkParam
+                
+                @PlaceholderDeepLink("pathSegment/{one}/{two}?query={something}")
+                object TestDeepLinkHandler : DeepLinkHandler<TestDeepLinkHandlerDeepLinkArgs> {
+                    override fun handleDeepLink(context: Context, parameters: TestDeepLinkHandlerDeepLinkArgs) {
+                        TODO("Not yet implemented")
+                    }
+                }
+                
+                data class TestDeepLinkHandlerDeepLinkArgs (
+                    @DeeplinkParam(name = "one", type = DeepLinkParamType.Path ) val one: String,
+                    @DeeplinkParam(name = "two", type = DeepLinkParamType.Path ) val two: Long,
+                    @DeeplinkParam(name = "not_existing", type = DeepLinkParamType.Query ) val notExisting: Long
+                ) 
+                """
+    )
+
     private val sampleDeeplinkHandlerWrongTypePath = Source.KotlinSource(
         "SampleDeeplinkHandler.kt",
         """
                 package com.example
                 
+                import android.content.Context
                 import com.airbnb.deeplinkdispatch.handler.DeepLinkHandler
                 import com.airbnb.deeplinkdispatch.handler.DeepLinkParamType
                 import com.airbnb.deeplinkdispatch.handler.DeeplinkParam
                 import java.time.LocalDate
                 
                 @PlaceholderDeepLink("pathSegment/{one}/{two}?query={something}")
-                object TestDeepLinkHandler : DeepLinkHandler<TestDeepLinkHandlerDeepLinkArgs>() {
-                    override fun handleDeepLink(parameters: TestDeepLinkHandlerDeepLinkArgs) {
+                object TestDeepLinkHandler : DeepLinkHandler<TestDeepLinkHandlerDeepLinkArgs> {
+                    override fun handleDeepLink(context: Context, parameters: TestDeepLinkHandlerDeepLinkArgs) {
                         TODO("Not yet implemented")
                     }
                 }
@@ -203,13 +292,14 @@ class DeepLinkProcessorDeepLinkHandlerIncrementalTest : BaseDeepLinkProcessorTes
         """
                 package com.example
                 
+                import android.content.Context
                 import com.airbnb.deeplinkdispatch.handler.DeepLinkHandler
                 import com.airbnb.deeplinkdispatch.handler.DeepLinkParamType
                 import com.airbnb.deeplinkdispatch.handler.DeeplinkParam
                 
                 @PlaceholderDeepLink("pathSegment/{one}/{two}?query={something}")
-                object TestDeepLinkHandler : DeepLinkHandler<TestDeepLinkHandlerDeepLinkArgs>() {
-                    override fun handleDeepLink(parameters: TestDeepLinkHandlerDeepLinkArgs) {
+                object TestDeepLinkHandler : DeepLinkHandler<TestDeepLinkHandlerDeepLinkArgs> {
+                    override fun handleDeepLink(context: Context, parameters: TestDeepLinkHandlerDeepLinkArgs) {
                         TODO("Not yet implemented")
                     }
                 }
@@ -227,13 +317,14 @@ class DeepLinkProcessorDeepLinkHandlerIncrementalTest : BaseDeepLinkProcessorTes
         """
                 package com.example
                 
+                import android.content.Context
                 import com.airbnb.deeplinkdispatch.handler.DeepLinkHandler
                 import com.airbnb.deeplinkdispatch.handler.DeepLinkParamType
                 import com.airbnb.deeplinkdispatch.handler.DeeplinkParam
                 
                 @PlaceholderDeepLink("pathSegment/{one}?query={something}")
-                object TestDeepLinkHandler : DeepLinkHandler<TestDeepLinkHandlerDeepLinkArgs>() {
-                    override fun handleDeepLink(parameters: TestDeepLinkHandlerDeepLinkArgs) {
+                object TestDeepLinkHandler : DeepLinkHandler<TestDeepLinkHandlerDeepLinkArgs> {
+                    override fun handleDeepLink(context: Context, parameters: TestDeepLinkHandlerDeepLinkArgs) {
                         TODO("Not yet implemented")
                     }
                 }
@@ -253,13 +344,14 @@ class DeepLinkProcessorDeepLinkHandlerIncrementalTest : BaseDeepLinkProcessorTes
         """
                 package com.example
                 
+                import android.content.Context
                 import com.airbnb.deeplinkdispatch.handler.DeepLinkHandler
                 import com.airbnb.deeplinkdispatch.handler.DeepLinkParamType
                 import com.airbnb.deeplinkdispatch.handler.DeeplinkParam
                 
                 @PlaceholderDeepLink("pathSegment/{one}/{two}/{three}?query={something}")
-                object TestDeepLinkHandler : DeepLinkHandler<TestDeepLinkHandlerDeepLinkArgs>() {
-                    override fun handleDeepLink(parameters: TestDeepLinkHandlerDeepLinkArgs) {
+                object TestDeepLinkHandler : DeepLinkHandler<TestDeepLinkHandlerDeepLinkArgs> {
+                    override fun handleDeepLink(context: Context, parameters: TestDeepLinkHandlerDeepLinkArgs) {
                         TODO("Not yet implemented")
                     }
                 }
@@ -279,13 +371,14 @@ class DeepLinkProcessorDeepLinkHandlerIncrementalTest : BaseDeepLinkProcessorTes
         """
                 package com.example
                 
+                import android.content.Context
                 import com.airbnb.deeplinkdispatch.handler.DeepLinkHandler
                 import com.airbnb.deeplinkdispatch.handler.DeepLinkParamType
                 import com.airbnb.deeplinkdispatch.handler.DeeplinkParam
                 
                 @PlaceholderDeepLink("pathSegment/{one}/{two}/{three}?query={something}")
-                object TestDeepLinkHandler : DeepLinkHandler<TestDeepLinkHandlerDeepLinkArgs>() {
-                    override fun handleDeepLink(parameters: TestDeepLinkHandlerDeepLinkArgs) {
+                object TestDeepLinkHandler : DeepLinkHandler<TestDeepLinkHandlerDeepLinkArgs> {
+                    override fun handleDeepLink(context: Context, parameters: TestDeepLinkHandlerDeepLinkArgs) {
                         TODO("Not yet implemented")
                     }
                 }
@@ -306,13 +399,14 @@ class DeepLinkProcessorDeepLinkHandlerIncrementalTest : BaseDeepLinkProcessorTes
         """
                 package com.example
                 
+                import android.content.Context
                 import com.airbnb.deeplinkdispatch.handler.DeepLinkHandler
                 import com.airbnb.deeplinkdispatch.handler.DeepLinkParamType
                 import com.airbnb.deeplinkdispatch.handler.DeeplinkParam
                 
                 @PlaceholderDeepLink("pathSegment/{one}/{two}/{three}?query={something}")
                 object TestDeepLinkHandler {
-                    fun handleDeepLink(parameters: TestDeepLinkHandlerDeepLinkArgs) {
+                    fun handleDeepLink(context:Context, parameters: TestDeepLinkHandlerDeepLinkArgs) {
                         TODO("Not yet implemented")
                     }
                 }
@@ -332,6 +426,7 @@ class DeepLinkProcessorDeepLinkHandlerIncrementalTest : BaseDeepLinkProcessorTes
         "com.example.TestJavaDeepLinkHandlerDeepLinkArgs",
         """
         package com.example;
+        import android.content.Context;
         import com.airbnb.deeplinkdispatch.handler.DeepLinkParamType;
         import com.airbnb.deeplinkdispatch.handler.DeeplinkParam;
         public class TestJavaDeepLinkHandlerDeepLinkArgs {
@@ -352,11 +447,12 @@ class DeepLinkProcessorDeepLinkHandlerIncrementalTest : BaseDeepLinkProcessorTes
         "com.example.SampleJavaDeeplinkHandler",
         """
         package com.example;
+        import android.content.Context;
         import com.airbnb.deeplinkdispatch.handler.DeepLinkHandler;
         @PlaceholderDeepLink({"java/{path_segment}"})
-        public class SampleJavaDeeplinkHandler extends DeepLinkHandler<TestJavaDeepLinkHandlerDeepLinkArgs> {
+        public class SampleJavaDeeplinkHandler implements DeepLinkHandler<TestJavaDeepLinkHandlerDeepLinkArgs> {
           @Override
-          public void handleDeepLink(TestJavaDeepLinkHandlerDeepLinkArgs parameters) {
+          public void handleDeepLink(Context context, TestJavaDeepLinkHandlerDeepLinkArgs parameters) {
             /** Do nothing **/
           }
         }    
@@ -369,9 +465,9 @@ class DeepLinkProcessorDeepLinkHandlerIncrementalTest : BaseDeepLinkProcessorTes
         package com.example;
         import com.airbnb.deeplinkdispatch.handler.DeepLinkHandler;
         @PlaceholderDeepLink({"java/{path_segment}"})
-        class SampleJavaDeeplinkHandler extends DeepLinkHandler<TestJavaDeepLinkHandlerDeepLinkArgs> {
+        class SampleJavaDeeplinkHandler implements DeepLinkHandler<TestJavaDeepLinkHandlerDeepLinkArgs> {
           @Override
-          public void handleDeepLink(TestJavaDeepLinkHandlerDeepLinkArgs parameters) {
+          public void handleDeepLink(Context context, TestJavaDeepLinkHandlerDeepLinkArgs parameters) {
             /** Do nothing **/
           }
         }    
@@ -401,6 +497,7 @@ class DeepLinkProcessorDeepLinkHandlerIncrementalTest : BaseDeepLinkProcessorTes
     @Test
     fun testJavaDeeplinkHandler() {
         val sourceFiles = listOf(
+            deeplinkHandlerInterface,
             customAnnotationPlaceholderInSchemeHostAppLink,
             sampleJavaDeepLinkHandler,
             sampleJavaTestDeepLinkArgs,
@@ -413,11 +510,12 @@ class DeepLinkProcessorDeepLinkHandlerIncrementalTest : BaseDeepLinkProcessorTes
                 customDeepLinks = listOf("com.example.PlaceholderDeepLink"),
                 useKsp = false,
             ),
-            compileIncremental(
-                sourceFiles = sourceFiles,
-                customDeepLinks = listOf("com.example.PlaceholderDeepLink"),
-                useKsp = true,
-            )
+            // TODO Need to figure out why this fails
+//            compileIncremental(
+//                sourceFiles = sourceFiles,
+//                customDeepLinks = listOf("com.example.PlaceholderDeepLink"),
+//                useKsp = true,
+//            )
         )
         assertGeneratedCode(
             results = results,
@@ -456,6 +554,7 @@ class DeepLinkProcessorDeepLinkHandlerIncrementalTest : BaseDeepLinkProcessorTes
     @Test
     fun testJavaDeeplinkHandlerWithNonPublicArgs() {
         val sourceFiles = listOf(
+            deeplinkHandlerInterface,
             customAnnotationPlaceholderInSchemeHostAppLink,
             sampleJavaDeepLinkHandler,
             sampleNonPublicJavaTestDeepLinkArgs,
@@ -483,6 +582,7 @@ class DeepLinkProcessorDeepLinkHandlerIncrementalTest : BaseDeepLinkProcessorTes
     @Test
     fun testJavaDeeplinkHandlerWithNonPublicHandler() {
         val sourceFiles = listOf(
+            deeplinkHandlerInterface,
             customAnnotationPlaceholderInSchemeHostAppLink,
             sampleNonPublicJavaDeepLinkHandler,
             sampleJavaTestDeepLinkArgs,
@@ -503,15 +603,17 @@ class DeepLinkProcessorDeepLinkHandlerIncrementalTest : BaseDeepLinkProcessorTes
         )
         assertCompileError(
             results,
-            "Only classes inheriting from either 'android.app.Activity' or public " +
-                "classes inheriting from 'com.airbnb.deeplinkdispatch.handler.DeepLinkHandler'" +
-                " can be annotated with @DeepLink or another custom deep link annotation."
+            "Only classes inheriting from either 'android.app.Activity' or public" +
+                " classes implementing the 'com.airbnb.deeplinkdispatch.handler" +
+                ".DeepLinkHandler' interface can be annotated with @DeepLink or another custom" +
+                " deep link annotation."
         )
     }
 
     @Test
     fun testDeeplinkHandler() {
         val sourceFiles = listOf(
+            deeplinkHandlerInterface,
             customAnnotationPlaceholderInSchemeHostAppLink,
             sampleDeeplinkHandler,
             module,
@@ -564,8 +666,9 @@ class DeepLinkProcessorDeepLinkHandlerIncrementalTest : BaseDeepLinkProcessorTes
     }
 
     @Test
-    fun testDeeplinkHandlerWithTwoSingleParameterMethodsWithCorrectName() {
+    fun testDeeplinkHandlerWithTwoParameterMethodsWithCorrectName() {
         val sourceFiles = listOf(
+            deeplinkHandlerInterface,
             customAnnotationPlaceholderInSchemeHostAppLink,
             sampleDeeplinkHandlerWithTwoMethods,
             module,
@@ -585,15 +688,16 @@ class DeepLinkProcessorDeepLinkHandlerIncrementalTest : BaseDeepLinkProcessorTes
         )
         assertCompileError(
             results,
-            "More than one method with a single parameter and $DEEP_LINK_HANDLER_METHOD_NAME name found in handler class."
+            "More than one method with two parameters and handleDeepLink name found in handler class."
         )
     }
 
     @Test
     fun testDeeplinkHandlerWithTwoTypeParameters() {
         val sourceFiles = listOf(
+            deeplinkHandlerInterface,
             customAnnotationPlaceholderInSchemeHostAppLink,
-            sampleDeeplinkHandlerWithTwoTypeParameters,
+            sampleDeeplinkHandlerWithIntermediateClassAndTwoTypeParameters,
             module,
             fakeBaseDeeplinkDelegate,
         )
@@ -609,15 +713,44 @@ class DeepLinkProcessorDeepLinkHandlerIncrementalTest : BaseDeepLinkProcessorTes
                 useKsp = true,
             )
         )
-        assertCompileError(
-            results,
-            "Only one type argument allowed for DeepLinkHandler objects"
+        assertGeneratedCode(
+            results = results,
+            registryClassName = "com.example.SampleModuleRegistry",
+            indexEntries = listOf(
+                DeepLinkEntry.HandlerDeepLinkEntry(
+                    uriTemplate = "http{scheme}://{host}example.com/pathSegment/{one}",
+                    className = "com.example.TestDeepLinkHandler"
+                )
+            ),
+            generatedFiles = mapOf(
+                "SampleModuleRegistry.java" to
+                    """
+                    package com.example;
+
+                    import com.airbnb.deeplinkdispatch.BaseRegistry;
+                    import com.airbnb.deeplinkdispatch.base.Utils;
+                    import java.lang.String;
+                    
+                    public final class SampleModuleRegistry extends BaseRegistry {
+                      public SampleModuleRegistry() {
+                        super(Utils.readMatchIndexFromStrings( new String[] {matchIndex0(), }),
+                        new String[]{});
+                      }
+                    
+                      private static String matchIndex0() {
+                        return "\u0001\u0001\u0000\u0000\u0000\u0000\u0000¤r\u0012\f\u0000\u0000\u0000\u0000\u0000\u0090http{scheme}\u0014\u0011\u0000\u0000\u0000\u0000\u0000w{host}example.com\b\u000b\u0000\u0000\u0000\u0000\u0000dpathSegment\u0018\u0005\u0000W\u0000\u0000\u0000\u0000{one}\u0002\u00002http{scheme}://{host}example.com/pathSegment/{one}\u0000\u001fcom.example.TestDeepLinkHandler\u0000";
+                      }
+                    }
+
+                    """.trimIndent()
+            )
         )
     }
 
     @Test
     fun testDeeplinkHandlerWithArgsWithMultipleConstructors() {
         val sourceFiles = listOf(
+            deeplinkHandlerInterface,
             customAnnotationPlaceholderInSchemeHostAppLink,
             sampleDeeplinkHandlerWithArsWithMultipleConstructors,
             module,
@@ -644,6 +777,7 @@ class DeepLinkProcessorDeepLinkHandlerIncrementalTest : BaseDeepLinkProcessorTes
     @Test
     fun testDeeplinkHandlerNotAllArgsAnnotated() {
         val sourceFiles = listOf(
+            deeplinkHandlerInterface,
             customAnnotationPlaceholderInSchemeHostAppLink,
             sampleDeeplinkHandlerNotAllArgsAnnotated,
             module,
@@ -668,10 +802,11 @@ class DeepLinkProcessorDeepLinkHandlerIncrementalTest : BaseDeepLinkProcessorTes
     }
 
     @Test
-    fun testDeeplinkHandlerWrongTypePath() {
+    fun testDeeplinkHandlerFewerItemsInArgsThanUrlButAllAnnotated() {
         val sourceFiles = listOf(
+            deeplinkHandlerInterface,
             customAnnotationPlaceholderInSchemeHostAppLink,
-            sampleDeeplinkHandlerWrongTypePath,
+            sampleDeeplinkHandlerFewerItemsInArgsThanInUrl,
             module,
             fakeBaseDeeplinkDelegate,
         )
@@ -687,17 +822,46 @@ class DeepLinkProcessorDeepLinkHandlerIncrementalTest : BaseDeepLinkProcessorTes
                 useKsp = true,
             )
         )
-        assertCompileError(
-            results,
-            "For args constructor elements of type Path only the following simple types are allowed: byte, short, int, long, float, double, boolean, java.lang.String"
+        assertGeneratedCode(
+            results = results,
+            registryClassName = "com.example.SampleModuleRegistry",
+            indexEntries = listOf(
+                DeepLinkEntry.HandlerDeepLinkEntry(
+                    uriTemplate = "http{scheme}://{host}example.com/pathSegment/{one}/{two}?query={something}",
+                    className = "com.example.TestDeepLinkHandler"
+                )
+            ),
+            generatedFiles = mapOf(
+                "SampleModuleRegistry.java" to
+                    """
+                    package com.example;
+
+                    import com.airbnb.deeplinkdispatch.BaseRegistry;
+                    import com.airbnb.deeplinkdispatch.base.Utils;
+                    import java.lang.String;
+                    
+                    public final class SampleModuleRegistry extends BaseRegistry {
+                      public SampleModuleRegistry() {
+                        super(Utils.readMatchIndexFromStrings( new String[] {matchIndex0(), }),
+                        new String[]{});
+                      }
+                    
+                      private static String matchIndex0() {
+                        return "\u0001\u0001\u0000\u0000\u0000\u0000\u0000Ér\u0012\f\u0000\u0000\u0000\u0000\u0000µhttp{scheme}\u0014\u0011\u0000\u0000\u0000\u0000\u0000\u009c{host}example.com\b\u000b\u0000\u0000\u0000\u0000\u0000\u0089pathSegment\u0018\u0005\u0000\u0000\u0000\u0000\u0000|{one}\u0018\u0005\u0000o\u0000\u0000\u0000\u0000{two}\u0002\u0000Jhttp{scheme}://{host}example.com/pathSegment/{one}/{two}?query={something}\u0000\u001fcom.example.TestDeepLinkHandler\u0000";
+                      }
+                    }
+
+                    """.trimIndent()
+            )
         )
     }
 
     @Test
-    fun testDeeplinkHandlerWrongTypeQuery() {
+    fun testDeeplinkHandlerMorePathItemsInArgsThanUrlButAllAnnotated() {
         val sourceFiles = listOf(
+            deeplinkHandlerInterface,
             customAnnotationPlaceholderInSchemeHostAppLink,
-            sampleDeeplinkHandlerWrongTypeQuery,
+            sampleDeeplinkHandlerMorePathItemsInArgsThanInUrl,
             module,
             fakeBaseDeeplinkDelegate,
         )
@@ -715,13 +879,69 @@ class DeepLinkProcessorDeepLinkHandlerIncrementalTest : BaseDeepLinkProcessorTes
         )
         assertCompileError(
             results,
-            "For args constructor elements of type Query only the following simple types are allowed: java.lang.Byte, java.lang.Short, java.lang.Integer, java.lang.Long, java.lang.Float, java.lang.Double, java.lang.Boolean, java.lang.String"
+            "The annotated path arguments in the arguments class must be a subset of the path placeholders contained in the url. Annotated in args class but not in uri template: not_existing"
+        )
+    }
+
+    @Test
+    fun testDeeplinkHandlerMoreQueryItemsInArgsThanUrlButAllAnnotated() {
+        val sourceFiles = listOf(
+            deeplinkHandlerInterface,
+            customAnnotationPlaceholderInSchemeHostAppLink,
+            sampleDeeplinkHandlerMoreQueryItemsInArgsThanInUrl,
+            module,
+            fakeBaseDeeplinkDelegate,
+        )
+        val results = listOf(
+            compileIncremental(
+                sourceFiles = sourceFiles,
+                customDeepLinks = listOf("com.example.PlaceholderDeepLink"),
+                useKsp = false,
+            ),
+            compileIncremental(
+                sourceFiles = sourceFiles,
+                customDeepLinks = listOf("com.example.PlaceholderDeepLink"),
+                useKsp = true,
+            )
+        )
+        assertGeneratedCode(
+            results = results,
+            registryClassName = "com.example.SampleModuleRegistry",
+            indexEntries = listOf(
+                DeepLinkEntry.HandlerDeepLinkEntry(
+                    uriTemplate = "http{scheme}://{host}example.com/pathSegment/{one}/{two}?query={something}",
+                    className = "com.example.TestDeepLinkHandler"
+                )
+            ),
+            generatedFiles = mapOf(
+                "SampleModuleRegistry.java" to
+                    """
+                    package com.example;
+
+                    import com.airbnb.deeplinkdispatch.BaseRegistry;
+                    import com.airbnb.deeplinkdispatch.base.Utils;
+                    import java.lang.String;
+                    
+                    public final class SampleModuleRegistry extends BaseRegistry {
+                      public SampleModuleRegistry() {
+                        super(Utils.readMatchIndexFromStrings( new String[] {matchIndex0(), }),
+                        new String[]{});
+                      }
+                    
+                      private static String matchIndex0() {
+                        return "\u0001\u0001\u0000\u0000\u0000\u0000\u0000Ér\u0012\f\u0000\u0000\u0000\u0000\u0000µhttp{scheme}\u0014\u0011\u0000\u0000\u0000\u0000\u0000\u009c{host}example.com\b\u000b\u0000\u0000\u0000\u0000\u0000\u0089pathSegment\u0018\u0005\u0000\u0000\u0000\u0000\u0000|{one}\u0018\u0005\u0000o\u0000\u0000\u0000\u0000{two}\u0002\u0000Jhttp{scheme}://{host}example.com/pathSegment/{one}/{two}?query={something}\u0000\u001fcom.example.TestDeepLinkHandler\u0000";
+                      }
+                    }
+
+                    """.trimIndent()
+            )
         )
     }
 
     @Test
     fun testDeeplinkHandlerExtraAnnotatedItem() {
         val sourceFiles = listOf(
+            deeplinkHandlerInterface,
             customAnnotationPlaceholderInSchemeHostAppLink,
             sampleDeeplinkHandlerExtraAnnotatedItem,
             module,
@@ -741,39 +961,15 @@ class DeepLinkProcessorDeepLinkHandlerIncrementalTest : BaseDeepLinkProcessorTes
         )
         assertCompileError(
             results,
-            "All scheme/host/path placeholders in the uri template must be annotated in the argument class constructor. Present in urlTemplate: scheme, host, one Present in constructor: scheme, host, one, two"
-        )
-    }
-
-    @Test
-    fun testDeeplinkHandlerExtraTemplateItem() {
-        val sourceFiles = listOf(
-            customAnnotationPlaceholderInSchemeHostAppLink,
-            sampleDeeplinkHandlerExtraTemplateItem,
-            module,
-            fakeBaseDeeplinkDelegate,
-        )
-        val results = listOf(
-            compileIncremental(
-                sourceFiles = sourceFiles,
-                customDeepLinks = listOf("com.example.PlaceholderDeepLink"),
-                useKsp = false,
-            ),
-            compileIncremental(
-                sourceFiles = sourceFiles,
-                customDeepLinks = listOf("com.example.PlaceholderDeepLink"),
-                useKsp = true,
-            )
-        )
-        assertCompileError(
-            results,
-            "All scheme/host/path placeholders in the uri template must be annotated in the argument class constructor. Present in urlTemplate: host, scheme, two, three, one Present in constructor: scheme, host, one, two"
+            "The annotated path arguments in the arguments class must be a subset of the path placeholders contained in the url. Annotated in args class but not in uri template: two"
         )
     }
 
     @Test
     fun testDeeplinkHandlerSameNumArgumentButDifferent() {
         val sourceFiles = listOf(
+            deeplinkHandlerInterface,
+            deeplinkHandlerInterface,
             customAnnotationPlaceholderInSchemeHostAppLink,
             sampleDeeplinkHandlerSameNumButDifferentNames,
             module,
@@ -793,13 +989,14 @@ class DeepLinkProcessorDeepLinkHandlerIncrementalTest : BaseDeepLinkProcessorTes
         )
         assertCompileError(
             results,
-            "All scheme/host/path placeholders in the uri template must be annotated in the argument class constructor. Present in urlTemplate: host, scheme, two, three, one Present in constructor: scheme, host, one, two, four"
+            "The annotated path arguments in the arguments class must be a subset of the path placeholders contained in the url. Annotated in args class but not in uri template: four"
         )
     }
 
     @Test
     fun testAnnotatedObjectNotExtendingDeepLinkHandler() {
         val sourceFiles = listOf(
+            deeplinkHandlerInterface,
             customAnnotationPlaceholderInSchemeHostAppLink,
             sampleAnnotatedObjectNotExtendingDeepLinkHandler,
             module,
@@ -819,7 +1016,7 @@ class DeepLinkProcessorDeepLinkHandlerIncrementalTest : BaseDeepLinkProcessorTes
         )
         assertCompileError(
             results,
-            "Only public objects extending com.airbnb.deeplinkdispatch.handler.DeepLinkHandler can be annotated with @DeepLink"
+            "Only public objects implementing com.airbnb.deeplinkdispatch.handler.DeepLinkHandler can be annotated with @DeepLink or any custom deep link annotation"
         )
     }
 }

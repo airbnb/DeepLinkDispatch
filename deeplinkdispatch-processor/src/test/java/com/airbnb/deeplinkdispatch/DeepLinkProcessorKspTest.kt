@@ -77,26 +77,55 @@ class DeepLinkProcessorKspTest : BaseDeepLinkProcessorTest() {
                     package com.example;
 
                     import com.airbnb.deeplinkdispatch.BaseDeepLinkDelegate;
+                    import com.airbnb.deeplinkdispatch.handler.TypeConverters;
+                    import java.lang.Integer;
                     import java.lang.String;
                     import java.util.Arrays;
                     import java.util.Map;
-
+                    import kotlin.jvm.functions.Function1;
+                    import org.jetbrains.annotations.NotNull;
+                    
                     public final class DeepLinkDelegate extends BaseDeepLinkDelegate {
-                      public DeepLinkDelegate(SampleModuleRegistry sampleModuleRegistry) {
+                      public DeepLinkDelegate(@NotNull SampleModuleRegistry sampleModuleRegistry) {
                         super(Arrays.asList(
-                          sampleModuleRegistry
-                        ));
+                          sampleModuleRegistry)
+                        );
                       }
-
-                      public DeepLinkDelegate(SampleModuleRegistry sampleModuleRegistry,
-                          Map<String, String> configurablePathSegmentReplacements) {
+                    
+                      public DeepLinkDelegate(@NotNull SampleModuleRegistry sampleModuleRegistry,
+                          @NotNull Map<String, String> configurablePathSegmentReplacements) {
                         super(Arrays.asList(
                           sampleModuleRegistry),
                           configurablePathSegmentReplacements
                         );
                       }
-                    }
                     
+                      public DeepLinkDelegate(@NotNull SampleModuleRegistry sampleModuleRegistry,
+                          @NotNull Map<String, String> configurablePathSegmentReplacements,
+                          @NotNull TypeConverters typeConverters) {
+                        super(Arrays.asList(
+                          sampleModuleRegistry),
+                          configurablePathSegmentReplacements,
+                          typeConverters
+                        );
+                      }
+                    
+                      public DeepLinkDelegate(@NotNull SampleModuleRegistry sampleModuleRegistry,
+                          @NotNull Map<String, String> configurablePathSegmentReplacements,
+                          @NotNull TypeConverters typeConverters,
+                          @NotNull Function1<? super String, Integer> typeConversionErrorNullable,
+                          @NotNull Function1<? super String, Integer> typeConversionErrorNonNullable) {
+                        super(Arrays.asList(
+                          sampleModuleRegistry),
+                          configurablePathSegmentReplacements,
+                          typeConverters,
+                          null,
+                          typeConversionErrorNullable,
+                          typeConversionErrorNonNullable
+                        );
+                      }
+                    }
+
                     """.trimIndent(),
                 "SampleModuleRegistry.java" to
                     """
@@ -240,28 +269,57 @@ class DeepLinkProcessorKspTest : BaseDeepLinkProcessorTest() {
                 "DeepLinkDelegate.java" to
                     """
                     package com.example;
-    
+
                     import com.airbnb.deeplinkdispatch.BaseDeepLinkDelegate;
+                    import com.airbnb.deeplinkdispatch.handler.TypeConverters;
+                    import java.lang.Integer;
                     import java.lang.String;
                     import java.util.Arrays;
                     import java.util.Map;
-    
+                    import kotlin.jvm.functions.Function1;
+                    import org.jetbrains.annotations.NotNull;
+                    
                     public final class DeepLinkDelegate extends BaseDeepLinkDelegate {
-                      public DeepLinkDelegate(SampleModuleRegistry sampleModuleRegistry) {
+                      public DeepLinkDelegate(@NotNull SampleModuleRegistry sampleModuleRegistry) {
                         super(Arrays.asList(
-                          sampleModuleRegistry
-                        ));
+                          sampleModuleRegistry)
+                        );
                       }
-    
-                      public DeepLinkDelegate(SampleModuleRegistry sampleModuleRegistry,
-                          Map<String, String> configurablePathSegmentReplacements) {
+                    
+                      public DeepLinkDelegate(@NotNull SampleModuleRegistry sampleModuleRegistry,
+                          @NotNull Map<String, String> configurablePathSegmentReplacements) {
                         super(Arrays.asList(
                           sampleModuleRegistry),
                           configurablePathSegmentReplacements
                         );
                       }
-                    }
                     
+                      public DeepLinkDelegate(@NotNull SampleModuleRegistry sampleModuleRegistry,
+                          @NotNull Map<String, String> configurablePathSegmentReplacements,
+                          @NotNull TypeConverters typeConverters) {
+                        super(Arrays.asList(
+                          sampleModuleRegistry),
+                          configurablePathSegmentReplacements,
+                          typeConverters
+                        );
+                      }
+                    
+                      public DeepLinkDelegate(@NotNull SampleModuleRegistry sampleModuleRegistry,
+                          @NotNull Map<String, String> configurablePathSegmentReplacements,
+                          @NotNull TypeConverters typeConverters,
+                          @NotNull Function1<? super String, Integer> typeConversionErrorNullable,
+                          @NotNull Function1<? super String, Integer> typeConversionErrorNonNullable) {
+                        super(Arrays.asList(
+                          sampleModuleRegistry),
+                          configurablePathSegmentReplacements,
+                          typeConverters,
+                          null,
+                          typeConversionErrorNullable,
+                          typeConversionErrorNonNullable
+                        );
+                      }
+                    }
+
                     """.trimIndent(),
                 "SampleModuleRegistry.java" to
                     """
@@ -406,28 +464,57 @@ class DeepLinkProcessorKspTest : BaseDeepLinkProcessorTest() {
                 "DeepLinkDelegate.java" to
                     """
                     package com.example;
-    
+
                     import com.airbnb.deeplinkdispatch.BaseDeepLinkDelegate;
+                    import com.airbnb.deeplinkdispatch.handler.TypeConverters;
+                    import java.lang.Integer;
                     import java.lang.String;
                     import java.util.Arrays;
                     import java.util.Map;
-    
+                    import kotlin.jvm.functions.Function1;
+                    import org.jetbrains.annotations.NotNull;
+                    
                     public final class DeepLinkDelegate extends BaseDeepLinkDelegate {
-                      public DeepLinkDelegate(SampleModuleRegistry sampleModuleRegistry) {
+                      public DeepLinkDelegate(@NotNull SampleModuleRegistry sampleModuleRegistry) {
                         super(Arrays.asList(
-                          sampleModuleRegistry
-                        ));
+                          sampleModuleRegistry)
+                        );
                       }
-    
-                      public DeepLinkDelegate(SampleModuleRegistry sampleModuleRegistry,
-                          Map<String, String> configurablePathSegmentReplacements) {
+                    
+                      public DeepLinkDelegate(@NotNull SampleModuleRegistry sampleModuleRegistry,
+                          @NotNull Map<String, String> configurablePathSegmentReplacements) {
                         super(Arrays.asList(
                           sampleModuleRegistry),
                           configurablePathSegmentReplacements
                         );
                       }
-                    }
                     
+                      public DeepLinkDelegate(@NotNull SampleModuleRegistry sampleModuleRegistry,
+                          @NotNull Map<String, String> configurablePathSegmentReplacements,
+                          @NotNull TypeConverters typeConverters) {
+                        super(Arrays.asList(
+                          sampleModuleRegistry),
+                          configurablePathSegmentReplacements,
+                          typeConverters
+                        );
+                      }
+                    
+                      public DeepLinkDelegate(@NotNull SampleModuleRegistry sampleModuleRegistry,
+                          @NotNull Map<String, String> configurablePathSegmentReplacements,
+                          @NotNull TypeConverters typeConverters,
+                          @NotNull Function1<? super String, Integer> typeConversionErrorNullable,
+                          @NotNull Function1<? super String, Integer> typeConversionErrorNonNullable) {
+                        super(Arrays.asList(
+                          sampleModuleRegistry),
+                          configurablePathSegmentReplacements,
+                          typeConverters,
+                          null,
+                          typeConversionErrorNullable,
+                          typeConversionErrorNonNullable
+                        );
+                      }
+                    }
+
                     """.trimIndent(),
                 "SampleModuleRegistry.java" to
                     """
