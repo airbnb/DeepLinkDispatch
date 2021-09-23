@@ -7,6 +7,8 @@ import com.airbnb.deeplinkdispatch.sample.typeconversion.ComparableColorDrawable
 import com.airbnb.deeplinkdispatch.sample.typeconversion.TypeConversionErrorHandlerCustomTypeDeepLinkActivity
 import com.airbnb.deeplinkdispatch.sample.typeconversion.TypeConversionTestArgs
 import com.airbnb.deeplinkdispatch.sample.typeconversion.TypeConversionTestDeepLinkHandler
+import com.airbnb.deeplinkdispatch.sample.typeconversion.TypeConversionTestParametrizedArgs
+import com.airbnb.deeplinkdispatch.sample.typeconversion.TypeConversionTestWihtParametrizedTypeDeepLinkHandler
 import io.mockk.mockkObject
 import io.mockk.verify
 import org.junit.Test
@@ -60,6 +62,25 @@ class DeepLinkHandlerTypeConversionTest {
         }
     }
 
+    @Test
+    fun testCustomTypeConversionParametrizedType() {
+        mockkObject(TypeConversionTestWihtParametrizedTypeDeepLinkHandler)
+        val intent = Intent(
+            Intent.ACTION_VIEW,
+            Uri.parse("http://testing.com/typeConversionParameter/5/one,two,three")
+        )
+        val context = Robolectric.buildActivity(TypeConversionErrorHandlerCustomTypeDeepLinkActivity::class.java, intent).create().get()
+
+        val expectedDeepLinkParams =
+            TypeConversionTestParametrizedArgs(5, listOf("one","two","three"))
+        verify(exactly = 1) {
+            TypeConversionTestWihtParametrizedTypeDeepLinkHandler.handleDeepLink(
+                context,
+                expectedDeepLinkParams
+            )
+        }
+    }
+
     @Test(expected = NumberFormatException::class)
     fun testCustomThrowingTypeConversionErrorHandler() {
         mockkObject(TypeConversionTestDeepLinkHandler)
@@ -69,4 +90,7 @@ class DeepLinkHandlerTypeConversionTest {
         )
         Robolectric.buildActivity(TypeConversionErrorHandlerCustomTypeDeepLinkActivity::class.java, intent).create().get()
     }
+
+
+
 }

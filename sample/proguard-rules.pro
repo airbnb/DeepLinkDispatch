@@ -31,3 +31,8 @@
 -keepclasseswithmembers class * {
     @com.airbnb.deeplinkdispatch.sample.WebPlaceholderDeepLink <methods>;
 }
+
+# Need to keep as we use reflection to read this field to get the type.
+-keepclassmembers class com.airbnb.deeplinkdispatch.sample.typeconversion.TypeConversionErrorHandlerCustomTypeDeepLinkActivity {
+    stringList;
+}

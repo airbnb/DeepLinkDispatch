@@ -15,7 +15,9 @@ import com.airbnb.deeplinkdispatch.sample.kaptlibrary.KaptLibraryDeepLinkModuleR
 import com.airbnb.deeplinkdispatch.sample.library.LibraryDeepLinkModule;
 import com.airbnb.deeplinkdispatch.sample.library.LibraryDeepLinkModuleRegistry;
 
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import kotlin.jvm.functions.Function1;
@@ -24,6 +26,8 @@ import kotlin.jvm.functions.Function1;
 public class TypeConversionErrorHandlerCustomTypeDeepLinkActivity extends Activity {
 
   private static final String TAG = "ErrorHandlerCustomType";
+
+  List<String> stringList;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -40,13 +44,19 @@ public class TypeConversionErrorHandlerCustomTypeDeepLinkActivity extends Activi
           return new ComparableColorDrawable(0xffffffff);
       }
     });
+    try {
+      // Not very elegant reflection way to get the right type to add to the mapper.
+      typeConverters.put(TypeConversionErrorHandlerCustomTypeDeepLinkActivity.class.getDeclaredField("stringList").getGenericType(), value -> Arrays.asList(value.split(",")));
+    } catch (NoSuchFieldException e) {
+      e.printStackTrace();
+    }
     Function1<? super String, Integer> typeConversionErrorNullable = (Function1<String, Integer>) s -> {
       Log.e(TAG, "Unable to convert " + s + " to a number. Returning null.");
-      throw new NumberFormatException("For input string: \"" + s +"\"");
+      throw new NumberFormatException("For input string: \"" + s + "\"");
     };
     Function1<? super String, Integer> typeConversionErrorNonNullable = (Function1<String, Integer>) s -> {
       Log.e(TAG, "Unable to convert " + s + " to a number. Returning 0.");
-      throw new NumberFormatException("For input string: \"" + s +"\"");
+      throw new NumberFormatException("For input string: \"" + s + "\"");
     };
     super.onCreate(savedInstanceState);
     Map configurablePlaceholdersMap = new HashMap();
@@ -67,5 +77,6 @@ public class TypeConversionErrorHandlerCustomTypeDeepLinkActivity extends Activi
     deepLinkDelegate.dispatchFrom(this);
     finish();
   }
+
 }
 

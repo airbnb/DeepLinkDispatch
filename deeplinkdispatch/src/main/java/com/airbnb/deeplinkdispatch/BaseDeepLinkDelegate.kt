@@ -152,7 +152,7 @@ open class BaseDeepLinkDelegate @JvmOverloads constructor(
             handlerParameterClazzConstructor.parameterAnnotations.flatten()
                 .filterNotNull().filter { it.annotationClass == DeeplinkParam::class }
                 .map { it as DeeplinkParam }
-        val typeNameMap = handlerParameterClazzConstructor.parameterTypes.let {
+        val typeNameMap = handlerParameterClazzConstructor.genericParameterTypes.let {
             // Check if we have as many parameters as annotations, the DeeplinkParam annotation is not
             // repeatable we cannot have multiple for just one element.
             if (annotationList.size == it.size) {
@@ -177,7 +177,7 @@ open class BaseDeepLinkDelegate @JvmOverloads constructor(
     }
 
     private fun createParamArray(
-        typeNameMap: List<Pair<DeeplinkParam, Class<*>>>,
+        typeNameMap: List<Pair<DeeplinkParam, Type>>,
         parameters: Map<String, String>
     ): Array<Any?> {
         return typeNameMap.map { (annotation, type) ->
@@ -198,7 +198,7 @@ open class BaseDeepLinkDelegate @JvmOverloads constructor(
 
     private fun mapNullableType(
         value: String?,
-        type: Class<*>,
+        type: Type,
     ): Any? {
         if (value == null) return null
         return try {
@@ -224,7 +224,7 @@ open class BaseDeepLinkDelegate @JvmOverloads constructor(
 
     private fun mapNotNullableType(
         value: String,
-        type: Class<*>
+        type: Type
     ): Any {
 
         return try {
