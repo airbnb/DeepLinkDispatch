@@ -29,6 +29,7 @@ class BaseDeepLinkDelegateTest {
     }
 
     @Test(expected = NullPointerException::class)
+    @Suppress("UNREACHABLE_CODE")
     fun testDispatchNullActivity() {
         val entry = activityDeepLinkEntry("airbnb://foo/{bar}")
         val testDelegate = getOneRegistryTestDelegate(listOf(entry), null)
@@ -36,6 +37,7 @@ class BaseDeepLinkDelegateTest {
     }
 
     @Test(expected = NullPointerException::class)
+    @Suppress("UNREACHABLE_CODE")
     fun testDispatchNullActivityNullIntent() {
         val entry = activityDeepLinkEntry("airbnb://foo/{bar}")
         val testDelegate = getOneRegistryTestDelegate(listOf(entry), null)
@@ -52,6 +54,7 @@ class BaseDeepLinkDelegateTest {
     }
 
     @Test(expected = NullPointerException::class)
+    @Suppress("UNREACHABLE_CODE")
     fun testDispatchNonNullActivityNullIntent() {
         val entry = activityDeepLinkEntry("airbnb://foo/{bar}")
         val testDelegate = getOneRegistryTestDelegate(listOf(entry), null)
@@ -61,6 +64,7 @@ class BaseDeepLinkDelegateTest {
     }
 
     @Test(expected = NullPointerException::class)
+    @Suppress("UNREACHABLE_CODE")
     fun testCreateResultAllNull() {
         val entry = activityDeepLinkEntry("airbnb://foo/{bar}")
         val testDelegate = getOneRegistryTestDelegate(listOf(entry), null)
@@ -68,6 +72,7 @@ class BaseDeepLinkDelegateTest {
     }
 
     @Test(expected = NullPointerException::class)
+    @Suppress("UNREACHABLE_CODE")
     fun testCreateResultNullIntent() {
         val entry = activityDeepLinkEntry("airbnb://foo/{bar}")
         val testDelegate = getOneRegistryTestDelegate(listOf(entry), null)

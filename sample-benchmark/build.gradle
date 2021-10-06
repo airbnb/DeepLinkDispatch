@@ -1,7 +1,6 @@
 apply plugin: 'com.android.library'
 apply plugin: 'androidx.benchmark'
 apply plugin: 'kotlin-android'
-apply plugin: 'kotlin-android-extensions'
 apply plugin: 'org.jmailen.kotlinter'
 
 android {

@@ -69,10 +69,13 @@ class DeepLinkHandlerTypeConversionTest {
             Intent.ACTION_VIEW,
             Uri.parse("http://testing.com/typeConversionParameter/5/one,two,three")
         )
-        val context = Robolectric.buildActivity(TypeConversionErrorHandlerCustomTypeDeepLinkActivity::class.java, intent).create().get()
+        val context = Robolectric.buildActivity(
+            TypeConversionErrorHandlerCustomTypeDeepLinkActivity::class.java,
+            intent
+        ).create().get()
 
         val expectedDeepLinkParams =
-            TypeConversionTestParametrizedArgs(5, listOf("one","two","three"))
+            TypeConversionTestParametrizedArgs(5, listOf("one", "two", "three"))
         verify(exactly = 1) {
             TypeConversionTestWihtParametrizedTypeDeepLinkHandler.handleDeepLink(
                 context,
@@ -90,7 +93,4 @@ class DeepLinkHandlerTypeConversionTest {
         )
         Robolectric.buildActivity(TypeConversionErrorHandlerCustomTypeDeepLinkActivity::class.java, intent).create().get()
     }
-
-
-
 }

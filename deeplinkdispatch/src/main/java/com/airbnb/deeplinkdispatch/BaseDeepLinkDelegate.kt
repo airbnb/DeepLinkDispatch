@@ -119,9 +119,9 @@ open class BaseDeepLinkDelegate @JvmOverloads constructor(
         }
     }
 
-    fun Array<Type>.getDeepLinkArgClassFromTypeArguments(): Class<*>? {
+    private fun Array<Type>.getDeepLinkArgClassFromTypeArguments(): Class<*>? {
         return filterIsInstance<Class<*>>().singleOrNull { typeArgumentClass ->
-            typeArgumentClass.constructors.any { constructor ->
+            typeArgumentClass == Object::class.java || typeArgumentClass.constructors.any { constructor ->
                 constructor.parameterAnnotations.any { parameter ->
                     parameter.any { annotation -> annotation.annotationClass == DeeplinkParam::class }
                 }
@@ -146,20 +146,7 @@ open class BaseDeepLinkDelegate @JvmOverloads constructor(
                 // need to look at the super class and check its type arguments.
                 ?: (handlerClazz.genericSuperclass as ParameterizedType).actualTypeArguments.getDeepLinkArgClassFromTypeArguments()
                 ?: error("Unable to determine parameter class type for ${handlerClazz.name}.")
-        val handlerParameterClazzConstructor = handlerParameterClazz.constructors.singleOrNull()
-            ?: error("Handler parameter class can only have one constructor.")
-        val annotationList: List<DeeplinkParam> =
-            handlerParameterClazzConstructor.parameterAnnotations.flatten()
-                .filterNotNull().filter { it.annotationClass == DeeplinkParam::class }
-                .map { it as DeeplinkParam }
-        val typeNameMap = handlerParameterClazzConstructor.genericParameterTypes.let {
-            // Check if we have as many parameters as annotations, the DeeplinkParam annotation is not
-            // repeatable we cannot have multiple for just one element.
-            if (annotationList.size == it.size) {
-                annotationList.zip(it)
-            } else error("There are ${annotationList.size} annotations but ${it.size} parameters!")
-        }
-
+        val handlerParameters = getHandlerParameters(handlerParameterClazz, result)
         val handlerInstance = try {
             handlerClazz.getField("INSTANCE").get(null)
         } catch (e: NoSuchFieldException) {
@@ -167,13 +154,35 @@ open class BaseDeepLinkDelegate @JvmOverloads constructor(
                 if (it.typeParameters.isNotEmpty()) null else it.newInstance()
             } ?: error("Handler class must have single zero argument constructor.")
         } as com.airbnb.deeplinkdispatch.handler.DeepLinkHandler<Any>
-        val handlerArgsConstructorParams = createParamArray(
-            typeNameMap = typeNameMap,
-            parameters = result.parameters
-        )
-        val handlerParameters =
-            handlerParameterClazzConstructor.newInstance(*handlerArgsConstructorParams)
         handlerInstance.handleDeepLink(context, handlerParameters)
+    }
+
+    private fun getHandlerParameters(
+        handlerParameterClazz: Class<out Any>,
+        result: DeepLinkResult
+    ): Any {
+        return if (handlerParameterClazz == Object::class.java) {
+            Object()
+        } else {
+            val handlerParameterClazzConstructor = handlerParameterClazz.constructors.singleOrNull()
+                ?: error("Handler parameter class can only have one constructor.")
+            val annotationList: List<DeeplinkParam> =
+                handlerParameterClazzConstructor.parameterAnnotations.flatten()
+                    .filterNotNull().filter { it.annotationClass == DeeplinkParam::class }
+                    .map { it as DeeplinkParam }
+            val typeNameMap = handlerParameterClazzConstructor.genericParameterTypes.let {
+                // Check if we have as many parameters as annotations, the DeeplinkParam annotation is not
+                // repeatable we cannot have multiple for just one element.
+                if (annotationList.size == it.size) {
+                    annotationList.zip(it)
+                } else error("There are ${annotationList.size} annotations but ${it.size} parameters!")
+            }
+            val handlerArgsConstructorParams = createParamArray(
+                typeNameMap = typeNameMap,
+                parameters = result.parameters
+            )
+            handlerParameterClazzConstructor.newInstance(*handlerArgsConstructorParams)
+        }
     }
 
     private fun createParamArray(

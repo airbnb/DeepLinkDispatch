@@ -6,7 +6,7 @@ import android.util.Log;
 public class SampleJavaStaticTestHelper {
 
   public static void invokedHandler(Context context, TestJavaDeepLinkHandlerDeepLinkArgs parameters) {
-    Log.d("SampleJavaDeeplinkHand", "Received handler call with " + parameters.toString());
+    Log.d("JavaDeeplinkHandler", "Received handler call with " + parameters.toString());
   }
 
 }

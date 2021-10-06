@@ -1,22 +1,25 @@
 package com.airbnb.deeplinkdispatch.sample.typeconversion
 
 import android.content.Context
+import android.util.Log
 import com.airbnb.deeplinkdispatch.DeepLink
 import com.airbnb.deeplinkdispatch.handler.DeepLinkHandler
 import com.airbnb.deeplinkdispatch.handler.DeepLinkParamType
 import com.airbnb.deeplinkdispatch.handler.DeeplinkParam
 
+const val TAG = "DeepLinkTypeConversion"
+
 @DeepLink("http://testing.com/typeConversion/{number}/{color}")
 object TypeConversionTestDeepLinkHandler : DeepLinkHandler<TypeConversionTestArgs> {
     override fun handleDeepLink(context: Context, parameters: TypeConversionTestArgs) {
-        // Handle the deep link here
+        Log.d(TAG, "TypeConversionTestDeepLinkHandler with $parameters")
     }
 }
 
 @DeepLink("http://testing.com/typeConversionParameter/{number}/{list}")
 object TypeConversionTestWihtParametrizedTypeDeepLinkHandler : DeepLinkHandler<TypeConversionTestParametrizedArgs> {
     override fun handleDeepLink(context: Context, parameters: TypeConversionTestParametrizedArgs) {
-        // Handle the deep link here
+        Log.d(TAG, "TypeConversionTestWihtParametrizedTypeDeepLinkHandler with $parameters")
     }
 }
 

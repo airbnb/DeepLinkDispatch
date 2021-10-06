@@ -1,10 +1,13 @@
 package com.airbnb.deeplinkdispatch.sample.handler
 
 import android.content.Context
+import android.util.Log
 import com.airbnb.deeplinkdispatch.handler.DeepLinkHandler
 import com.airbnb.deeplinkdispatch.handler.DeepLinkParamType
 import com.airbnb.deeplinkdispatch.handler.DeeplinkParam
 import com.airbnb.deeplinkdispatch.sample.WebDeepLink
+
+const val TAG = "KotlinDeepLinkHandler"
 
 @WebDeepLink("/kotlin/{path_segment_variable_1}/{path_segment_variable_2}/{path_segment_variable_3}/{path_segment_variable_4}?show_taxes={query_param_1}&queryParam={query_param_2}")
 object SampleKotlinDeepLinkHandler :
@@ -16,19 +19,35 @@ object SampleKotlinDeepLinkHandler :
         /**
          * From here any internal/3rd party navigation framework can be called the provided args.
          */
+        Log.d(TAG, "SampleKotlinDeepLinkHandler with $parameters")
     }
 }
 
 @WebDeepLink("/partial/{path_segment_variable_1}/{path_segment_variable_2}/{path_segment_variable_3}/{path_segment_variable_4}?show_taxes={query_param_1}&queryParam={query_param_2}")
 object SamplePartialParamKotlinDeepLinkHandler :
-    DeepLinkHandler<TestKotlinDeepLinkHandlerDeepLinkArgsMissingPathParamExtraQueryParm> {
+    DeepLinkHandler<TestKotlinDeepLinkHandlerDeepLinkArgsMissingPathParamExtraQueryParam> {
     override fun handleDeepLink(
         context: Context,
-        parameters: TestKotlinDeepLinkHandlerDeepLinkArgsMissingPathParamExtraQueryParm
+        parameters: TestKotlinDeepLinkHandlerDeepLinkArgsMissingPathParamExtraQueryParam
     ) {
         /**
          * From here any internal/3rd party navigation framework can be called the provided args.
          */
+        Log.d(TAG, "SamplePartialParamKotlinDeepLinkHandler with $parameters")
+    }
+}
+
+@WebDeepLink("/noparams/{path_segment_variable_1}/{path_segment_variable_2}/{path_segment_variable_3}/{path_segment_variable_4}?show_taxes={query_param_1}&queryParam={query_param_2}")
+object SampleNoParamsKotlinDeepLinkHandler :
+    DeepLinkHandler<Any> {
+    override fun handleDeepLink(
+        context: Context,
+        parameters: Any
+    ) {
+        /**
+         * From here any internal/3rd party navigation framework can be called the provided args.
+         */
+        Log.d(TAG, "SampleNoParamsKotlinDeepLinkHandler with $parameters")
     }
 }
 
@@ -60,7 +79,7 @@ class TestKotlinNoDataClassDeepLinkHandlerDeepLinkArgs(
     @DeeplinkParam("queryParam", DeepLinkParamType.Query) var queryParam: Int?
 )
 
-data class TestKotlinDeepLinkHandlerDeepLinkArgsMissingPathParamExtraQueryParm(
+data class TestKotlinDeepLinkHandlerDeepLinkArgsMissingPathParamExtraQueryParam(
     // path params can be non null
     @DeeplinkParam("path_segment_variable_1", DeepLinkParamType.Path) val uuid: Long,
     @DeeplinkParam("show_taxes", DeepLinkParamType.Query) val show_taxes: Boolean?,
