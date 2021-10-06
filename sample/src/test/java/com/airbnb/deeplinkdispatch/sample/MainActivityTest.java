@@ -77,7 +77,7 @@ public class MainActivityTest {
     ShadowActivity shadowActivity = shadowOf(deepLinkActivity);
     Intent launchedIntent = shadowActivity.peekNextStartedActivityForResult().intent;
     assertThat(launchedIntent.getComponent(),
-      equalTo(new ComponentName(deepLinkActivity, SecondActivity.class)));
+      equalTo(new ComponentName(deepLinkActivity, MainActivity.class)));
 
     assertThat(launchedIntent.getBooleanExtra(DeepLink.IS_DEEP_LINK, false), equalTo(true));
     assertThat(launchedIntent.getAction(), equalTo(MainActivity.ACTION_DEEP_LINK_INNER));

@@ -54,7 +54,7 @@ public class MainActivity extends AppCompatActivity {
   public static class InnerClass {
     @DeepLink("dld://innerClassDeeplink")
     public static Intent intentForDeepLinkMethod(Context context) {
-      return new Intent(context, SecondActivity.class).setAction(ACTION_DEEP_LINK_INNER);
+      return new Intent(context, MainActivity.class).setAction(ACTION_DEEP_LINK_INNER);
     }
   }
 
