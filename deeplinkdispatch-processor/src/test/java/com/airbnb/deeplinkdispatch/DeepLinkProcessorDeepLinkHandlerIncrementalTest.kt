@@ -156,6 +156,33 @@ class DeepLinkProcessorDeepLinkHandlerIncrementalTest : BaseDeepLinkProcessorTes
                 """
     )
 
+    private val sampleDeeplinkHandlerWithIntermediateInterface = Source.KotlinSource(
+        "SampleDeeplinkHandler.kt",
+        """
+                package com.example
+                
+                import android.content.Context
+                import com.airbnb.deeplinkdispatch.handler.DeepLinkHandler
+                import com.airbnb.deeplinkdispatch.handler.DeepLinkParamType
+                import com.airbnb.deeplinkdispatch.handler.DeeplinkParam
+                
+                @PlaceholderDeepLink("pathSegment/{one}")
+                object TestDeepLinkHandler : InBetweenDeeplinkHandlerInterface<TestDeepLinkHandlerDeepLinkArgs> {
+                    override fun handleDeepLink(context: Context, parameters: TestDeepLinkHandlerDeepLinkArgs) {
+                        TODO("Not yet implemented")
+                    }
+                }
+                
+                interface InBetweenDeeplinkHandlerInterface<T> : DeepLinkHandler<T>
+                
+                data class TestDeepLinkHandlerDeepLinkArgs(
+                    @DeeplinkParam(name = "scheme", type = DeepLinkParamType.Path ) val scheme: String,
+                    @DeeplinkParam(name = "host", type = DeepLinkParamType.Path ) val host: String,
+                    @DeeplinkParam(name = "one", type = DeepLinkParamType.Path ) val one: String
+                )
+                """
+    )
+
     private val sampleDeeplinkHandlerWithArsWithMultipleConstructors = Source.KotlinSource(
         "SampleDeeplinkHandler.kt",
         """
@@ -763,6 +790,61 @@ class DeepLinkProcessorDeepLinkHandlerIncrementalTest : BaseDeepLinkProcessorTes
         assertCompileError(
             results,
             "More than one method with two parameters and handleDeepLink name found in handler class."
+        )
+    }
+
+    @Test
+    fun testDeeplinkHandlerWithIntermediateInterface() {
+        val sourceFiles = listOf(
+            deeplinkHandlerInterface,
+            customAnnotationPlaceholderInSchemeHostAppLink,
+            sampleDeeplinkHandlerWithIntermediateInterface,
+            module,
+            fakeBaseDeeplinkDelegate,
+        )
+        val results = listOf(
+            compileIncremental(
+                sourceFiles = sourceFiles,
+                customDeepLinks = listOf("com.example.PlaceholderDeepLink"),
+                useKsp = false,
+            ),
+            compileIncremental(
+                sourceFiles = sourceFiles,
+                customDeepLinks = listOf("com.example.PlaceholderDeepLink"),
+                useKsp = true,
+            )
+        )
+        assertGeneratedCode(
+            results = results,
+            registryClassName = "com.example.SampleModuleRegistry",
+            indexEntries = listOf(
+                DeepLinkEntry.HandlerDeepLinkEntry(
+                    uriTemplate = "http{scheme}://{host}example.com/pathSegment/{one}",
+                    className = "com.example.TestDeepLinkHandler"
+                )
+            ),
+            generatedFiles = mapOf(
+                "SampleModuleRegistry.java" to
+                    """
+                    package com.example;
+
+                    import com.airbnb.deeplinkdispatch.BaseRegistry;
+                    import com.airbnb.deeplinkdispatch.base.Utils;
+                    import java.lang.String;
+                    
+                    public final class SampleModuleRegistry extends BaseRegistry {
+                      public SampleModuleRegistry() {
+                        super(Utils.readMatchIndexFromStrings( new String[] {matchIndex0(), }),
+                        new String[]{});
+                      }
+                    
+                      private static String matchIndex0() {
+                        return "\u0001\u0001\u0000\u0000\u0000\u0000\u0000¤r\u0012\f\u0000\u0000\u0000\u0000\u0000\u0090http{scheme}\u0014\u0011\u0000\u0000\u0000\u0000\u0000w{host}example.com\b\u000b\u0000\u0000\u0000\u0000\u0000dpathSegment\u0018\u0005\u0000W\u0000\u0000\u0000\u0000{one}\u0002\u00002http{scheme}://{host}example.com/pathSegment/{one}\u0000\u001fcom.example.TestDeepLinkHandler\u0000";
+                      }
+                    }
+
+                    """.trimIndent()
+            )
         )
     }
 

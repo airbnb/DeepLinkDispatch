@@ -22,7 +22,7 @@ open class BaseDeepLinkProcessorTest {
                 open class BaseDeepLinkDelegate @JvmOverloads constructor(
                     private val registries: List<BaseRegistry>,
                     configurablePathSegmentReplacements: Map<String, String> = emptyMap(),
-                    private val typeConverters: TypeConverters = TypeConverters(),
+                    private val typeConverters: () -> TypeConverters = { TypeConverters() },
                     private val errorHandler: ErrorHandler? = null,
                     private val typeConversionErrorNullable: (String) -> Int? = { value: String -> null },
                     private val typeConversionErrorNonNullable: (String) -> Int = { value: String -> 0 }

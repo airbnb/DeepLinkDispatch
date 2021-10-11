@@ -17,9 +17,12 @@ object ProcessorUtils {
 }
 
 fun XTypeElement.implementedInterfaces(): List<XTypeElement> {
-    return (
-        superType?.typeElement?.implementedInterfaces() ?: emptyList()
-        ) + getSuperInterfaceElements()
+    // Implemented interfaces of supertype (recursively)
+    return (superType?.typeElement?.implementedInterfaces() ?: emptyList()) +
+        // Implemented interface by this element
+        getSuperInterfaceElements() +
+        // Implemented interfaces the interfaces implemented by this type (recursively)
+        getSuperInterfaceElements().flatMap { it.implementedInterfaces() }
 }
 
 fun XTypeElement.implementsInterfaces(fqnList: List<String>) =

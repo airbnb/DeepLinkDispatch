@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import kotlin.jvm.functions.Function0;
 import kotlin.jvm.functions.Function1;
 
 @DeepLinkHandler({SampleModule.class, LibraryDeepLinkModule.class, BenchmarkDeepLinkModule.class, KaptLibraryDeepLinkModule.class})
@@ -29,9 +30,11 @@ public class TypeConversionErrorHandlerCustomTypeDeepLinkActivity extends Activi
 
   List<String> stringList;
 
+  private TypeConverters typeConverters;
+
   @Override
   protected void onCreate(Bundle savedInstanceState) {
-    TypeConverters typeConverters = new TypeConverters();
+    typeConverters = new TypeConverters();
     typeConverters.put(ComparableColorDrawable.class, value -> {
       switch (value.toLowerCase()) {
         case "red":
@@ -58,6 +61,8 @@ public class TypeConversionErrorHandlerCustomTypeDeepLinkActivity extends Activi
       Log.e(TAG, "Unable to convert " + s + " to a number. Returning 0.");
       throw new NumberFormatException("For input string: \"" + s + "\"");
     };
+    Function0<TypeConverters> typeConvertersLambda = () -> typeConverters;
+
     super.onCreate(savedInstanceState);
     Map configurablePlaceholdersMap = new HashMap();
     configurablePlaceholdersMap.put("configPathOne", "somePathThree");
@@ -71,7 +76,7 @@ public class TypeConversionErrorHandlerCustomTypeDeepLinkActivity extends Activi
       new BenchmarkDeepLinkModuleRegistry(),
       new KaptLibraryDeepLinkModuleRegistry(),
       configurablePlaceholdersMap,
-      typeConverters,
+      typeConvertersLambda,
       typeConversionErrorNullable,
       typeConversionErrorNonNullable);
     deepLinkDelegate.dispatchFrom(this);

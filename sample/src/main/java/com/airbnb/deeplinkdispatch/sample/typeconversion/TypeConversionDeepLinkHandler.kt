@@ -11,15 +11,15 @@ const val TAG = "DeepLinkTypeConversion"
 
 @DeepLink("http://testing.com/typeConversion/{number}/{color}")
 object TypeConversionTestDeepLinkHandler : DeepLinkHandler<TypeConversionTestArgs> {
-    override fun handleDeepLink(context: Context, parameters: TypeConversionTestArgs) {
-        Log.d(TAG, "TypeConversionTestDeepLinkHandler with $parameters")
+    override fun handleDeepLink(context: Context, deepLinkArgs: TypeConversionTestArgs) {
+        Log.d(TAG, "TypeConversionTestDeepLinkHandler with $deepLinkArgs")
     }
 }
 
 @DeepLink("http://testing.com/typeConversionParameter/{number}/{list}")
 object TypeConversionTestWihtParametrizedTypeDeepLinkHandler : DeepLinkHandler<TypeConversionTestParametrizedArgs> {
-    override fun handleDeepLink(context: Context, parameters: TypeConversionTestParametrizedArgs) {
-        Log.d(TAG, "TypeConversionTestWihtParametrizedTypeDeepLinkHandler with $parameters")
+    override fun handleDeepLink(context: Context, deepLinkArgs: TypeConversionTestParametrizedArgs) {
+        Log.d(TAG, "TypeConversionTestWihtParametrizedTypeDeepLinkHandler with $deepLinkArgs")
     }
 }
 

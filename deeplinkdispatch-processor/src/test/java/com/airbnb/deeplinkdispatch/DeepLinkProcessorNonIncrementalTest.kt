@@ -59,6 +59,7 @@ class DeepLinkProcessorNonIncrementalTest : BaseDeepLinkProcessorTest() {
                 import java.lang.String;
                 import java.util.Arrays;
                 import java.util.Map;
+                import kotlin.jvm.functions.Function0;
                 import kotlin.jvm.functions.Function1;
                 import org.jetbrains.annotations.NotNull;
                 
@@ -79,7 +80,7 @@ class DeepLinkProcessorNonIncrementalTest : BaseDeepLinkProcessorTest() {
                 
                   public DeepLinkDelegate(@NotNull SampleModuleRegistry sampleModuleRegistry,
                       @NotNull Map<String, String> configurablePathSegmentReplacements,
-                      @NotNull TypeConverters typeConverters) {
+                      @NotNull Function0<TypeConverters> typeConverters) {
                     super(Arrays.asList(
                       sampleModuleRegistry),
                       configurablePathSegmentReplacements,
@@ -89,7 +90,7 @@ class DeepLinkProcessorNonIncrementalTest : BaseDeepLinkProcessorTest() {
                 
                   public DeepLinkDelegate(@NotNull SampleModuleRegistry sampleModuleRegistry,
                       @NotNull Map<String, String> configurablePathSegmentReplacements,
-                      @NotNull TypeConverters typeConverters,
+                      @NotNull Function0<TypeConverters> typeConverters,
                       @NotNull Function1<? super String, Integer> typeConversionErrorNullable,
                       @NotNull Function1<? super String, Integer> typeConversionErrorNonNullable) {
                     super(Arrays.asList(
@@ -220,6 +221,7 @@ class DeepLinkProcessorNonIncrementalTest : BaseDeepLinkProcessorTest() {
                 import java.lang.String;
                 import java.util.Arrays;
                 import java.util.Map;
+                import kotlin.jvm.functions.Function0;
                 import kotlin.jvm.functions.Function1;
                 import org.jetbrains.annotations.NotNull;
                 
@@ -240,7 +242,7 @@ class DeepLinkProcessorNonIncrementalTest : BaseDeepLinkProcessorTest() {
                 
                   public DeepLinkDelegate(@NotNull SampleModuleRegistry sampleModuleRegistry,
                       @NotNull Map<String, String> configurablePathSegmentReplacements,
-                      @NotNull TypeConverters typeConverters) {
+                      @NotNull Function0<TypeConverters> typeConverters) {
                     super(Arrays.asList(
                       sampleModuleRegistry),
                       configurablePathSegmentReplacements,
@@ -250,7 +252,7 @@ class DeepLinkProcessorNonIncrementalTest : BaseDeepLinkProcessorTest() {
                 
                   public DeepLinkDelegate(@NotNull SampleModuleRegistry sampleModuleRegistry,
                       @NotNull Map<String, String> configurablePathSegmentReplacements,
-                      @NotNull TypeConverters typeConverters,
+                      @NotNull Function0<TypeConverters> typeConverters,
                       @NotNull Function1<? super String, Integer> typeConversionErrorNullable,
                       @NotNull Function1<? super String, Integer> typeConversionErrorNonNullable) {
                     super(Arrays.asList(
@@ -419,6 +421,7 @@ class DeepLinkProcessorNonIncrementalTest : BaseDeepLinkProcessorTest() {
                 import java.lang.String;
                 import java.util.Arrays;
                 import java.util.Map;
+                import kotlin.jvm.functions.Function0;
                 import kotlin.jvm.functions.Function1;
                 import org.jetbrains.annotations.NotNull;
                 
@@ -439,7 +442,7 @@ class DeepLinkProcessorNonIncrementalTest : BaseDeepLinkProcessorTest() {
                 
                   public DeepLinkDelegate(@NotNull SampleModuleRegistry sampleModuleRegistry,
                       @NotNull Map<String, String> configurablePathSegmentReplacements,
-                      @NotNull TypeConverters typeConverters) {
+                      @NotNull Function0<TypeConverters> typeConverters) {
                     super(Arrays.asList(
                       sampleModuleRegistry),
                       configurablePathSegmentReplacements,
@@ -449,7 +452,7 @@ class DeepLinkProcessorNonIncrementalTest : BaseDeepLinkProcessorTest() {
                 
                   public DeepLinkDelegate(@NotNull SampleModuleRegistry sampleModuleRegistry,
                       @NotNull Map<String, String> configurablePathSegmentReplacements,
-                      @NotNull TypeConverters typeConverters,
+                      @NotNull Function0<TypeConverters> typeConverters,
                       @NotNull Function1<? super String, Integer> typeConversionErrorNullable,
                       @NotNull Function1<? super String, Integer> typeConversionErrorNonNullable) {
                     super(Arrays.asList(
@@ -689,6 +692,7 @@ class DeepLinkProcessorNonIncrementalTest : BaseDeepLinkProcessorTest() {
                 import java.lang.String;
                 import java.util.Arrays;
                 import java.util.Map;
+                import kotlin.jvm.functions.Function0;
                 import kotlin.jvm.functions.Function1;
                 import org.jetbrains.annotations.NotNull;
                 
@@ -709,7 +713,7 @@ class DeepLinkProcessorNonIncrementalTest : BaseDeepLinkProcessorTest() {
                 
                   public DeepLinkDelegate(@NotNull SampleModuleRegistry sampleModuleRegistry,
                       @NotNull Map<String, String> configurablePathSegmentReplacements,
-                      @NotNull TypeConverters typeConverters) {
+                      @NotNull Function0<TypeConverters> typeConverters) {
                     super(Arrays.asList(
                       sampleModuleRegistry),
                       configurablePathSegmentReplacements,
@@ -719,7 +723,7 @@ class DeepLinkProcessorNonIncrementalTest : BaseDeepLinkProcessorTest() {
                 
                   public DeepLinkDelegate(@NotNull SampleModuleRegistry sampleModuleRegistry,
                       @NotNull Map<String, String> configurablePathSegmentReplacements,
-                      @NotNull TypeConverters typeConverters,
+                      @NotNull Function0<TypeConverters> typeConverters,
                       @NotNull Function1<? super String, Integer> typeConversionErrorNullable,
                       @NotNull Function1<? super String, Integer> typeConversionErrorNonNullable) {
                     super(Arrays.asList(

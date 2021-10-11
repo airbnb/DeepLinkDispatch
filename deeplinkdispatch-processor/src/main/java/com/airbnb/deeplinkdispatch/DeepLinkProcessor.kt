@@ -587,21 +587,25 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
                             .build()
                     )
                 }
-                if (parameters.contains(ConstructorParameters.TypeConverters)) {
-                    addParameter(
-                        ParameterSpec.builder(
-                            TypeConverters::class.java,
-                            "typeConverters"
-                        ).addAnnotation(NotNull::class.java)
-                            .build()
-                    )
-                }
                 val superOfString = WildcardTypeName.supertypeOf(String::class.java)
                 val functionalParameter = ParameterizedTypeName.get(
                     ClassName.get("kotlin.jvm.functions", "Function1"),
                     superOfString,
                     TypeName.get(Integer::class.java)
                 )
+                if (parameters.contains(ConstructorParameters.TypeConverters)) {
+                    val typeConverterFunctionalParameter = ParameterizedTypeName.get(
+                        ClassName.get("kotlin.jvm.functions", "Function0"),
+                        TypeName.get(TypeConverters::class.java)
+                    )
+                    addParameter(
+                        ParameterSpec.builder(
+                            typeConverterFunctionalParameter,
+                            "typeConverters"
+                        ).addAnnotation(NotNull::class.java)
+                            .build()
+                    )
+                }
                 if (parameters.contains((ConstructorParameters.TypeConversionErrorNullable))) {
                     // Function1<? super String, Integer> typeConversionErrorNullable
                     addParameter(

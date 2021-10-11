@@ -18,5 +18,5 @@ import android.content.Context
  * have any.
  */
 interface DeepLinkHandler<T> {
-    fun handleDeepLink(context: Context, parameters: T)
+    fun handleDeepLink(context: Context, deepLinkArgs: T)
 }

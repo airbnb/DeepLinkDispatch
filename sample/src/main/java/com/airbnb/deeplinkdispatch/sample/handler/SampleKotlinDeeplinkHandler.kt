@@ -14,12 +14,12 @@ object SampleKotlinDeepLinkHandler :
     IntermediateDeepLinkHandler1<TestKotlinDeepLinkHandlerDeepLinkArgs>() {
     override fun handleDeepLink(
         context: Context,
-        parameters: TestKotlinDeepLinkHandlerDeepLinkArgs
+        deepLinkArgs: TestKotlinDeepLinkHandlerDeepLinkArgs
     ) {
         /**
          * From here any internal/3rd party navigation framework can be called the provided args.
          */
-        Log.d(TAG, "SampleKotlinDeepLinkHandler with $parameters")
+        Log.d(TAG, "SampleKotlinDeepLinkHandler with $deepLinkArgs")
     }
 }
 
@@ -28,12 +28,12 @@ object SamplePartialParamKotlinDeepLinkHandler :
     DeepLinkHandler<TestKotlinDeepLinkHandlerDeepLinkArgsMissingPathParamExtraQueryParam> {
     override fun handleDeepLink(
         context: Context,
-        parameters: TestKotlinDeepLinkHandlerDeepLinkArgsMissingPathParamExtraQueryParam
+        deepLinkArgs: TestKotlinDeepLinkHandlerDeepLinkArgsMissingPathParamExtraQueryParam
     ) {
         /**
          * From here any internal/3rd party navigation framework can be called the provided args.
          */
-        Log.d(TAG, "SamplePartialParamKotlinDeepLinkHandler with $parameters")
+        Log.d(TAG, "SamplePartialParamKotlinDeepLinkHandler with $deepLinkArgs")
     }
 }
 
@@ -42,19 +42,19 @@ object SampleNoParamsKotlinDeepLinkHandler :
     DeepLinkHandler<Any> {
     override fun handleDeepLink(
         context: Context,
-        parameters: Any
+        deepLinkArgs: Any
     ) {
         /**
          * From here any internal/3rd party navigation framework can be called the provided args.
          */
-        Log.d(TAG, "SampleNoParamsKotlinDeepLinkHandler with $parameters")
+        Log.d(TAG, "SampleNoParamsKotlinDeepLinkHandler with $deepLinkArgs")
     }
 }
 
 abstract class IntermediateDeepLinkHandler1<T> : IntermediateDeepLinkHandler2<T>()
 
 abstract class IntermediateDeepLinkHandler2<T> : DeepLinkHandler<T> {
-    override fun handleDeepLink(context: Context, parameters: T) {
+    override fun handleDeepLink(context: Context, deepLinkArgs: T) {
         TODO("Not yet implemented")
     }
 }

@@ -1,5 +1,5 @@
 def versions = [
-    kotlinVersion                : '1.5.30',
+    kotlinVersion                : '1.5.31',
     appCompatVersion             : '1.2.0',
     localBroadcastManagerVersion : '1.0.0',
     roboelectricVersion          : '4.5.1',

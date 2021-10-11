@@ -21,10 +21,10 @@ import java.lang.reflect.Type
 open class BaseDeepLinkDelegate @JvmOverloads constructor(
     private val registries: List<BaseRegistry>,
     configurablePathSegmentReplacements: Map<String, String> = emptyMap(),
-    private val typeConverters: TypeConverters = TypeConverters(),
+    private val typeConverters: () -> TypeConverters = { TypeConverters() },
     private val errorHandler: ErrorHandler? = null,
-    private val typeConversionErrorNullable: (String) -> Int? = { value: String -> null }, // ktlint-disable unused
-    private val typeConversionErrorNonNullable: (String) -> Int = { value: String -> 0 } // ktlint-disable unused
+    private val typeConversionErrorNullable: (String) -> Int? = { _: String -> null }, // ktlint-disable unused
+    private val typeConversionErrorNonNullable: (String) -> Int = { _: String -> 0 } // ktlint-disable unused
 ) {
 
     /**
@@ -134,7 +134,7 @@ open class BaseDeepLinkDelegate @JvmOverloads constructor(
         val handlerClazz = result.deepLinkMatchResult?.deeplinkEntry?.clazz!!
         // This relies on the fact that the Processor already checked that every annotated class
         // correctly implements the DeepLinkHandler<T> interface.
-        val handlerParameterClazz =
+        val deepLinkArgsClazz =
             // First check if the handler directly implements the interface. If so get the type from
             // the interface.
             handlerClazz.genericInterfaces.filterIsInstance<ParameterizedType>().singleOrNull {
@@ -146,7 +146,7 @@ open class BaseDeepLinkDelegate @JvmOverloads constructor(
                 // need to look at the super class and check its type arguments.
                 ?: (handlerClazz.genericSuperclass as ParameterizedType).actualTypeArguments.getDeepLinkArgClassFromTypeArguments()
                 ?: error("Unable to determine parameter class type for ${handlerClazz.name}.")
-        val handlerParameters = getHandlerParameters(handlerParameterClazz, result)
+        val deepLinkArgs = getDeepLinkArgs(deepLinkArgsClazz, result)
         val handlerInstance = try {
             handlerClazz.getField("INSTANCE").get(null)
         } catch (e: NoSuchFieldException) {
@@ -154,34 +154,34 @@ open class BaseDeepLinkDelegate @JvmOverloads constructor(
                 if (it.typeParameters.isNotEmpty()) null else it.newInstance()
             } ?: error("Handler class must have single zero argument constructor.")
         } as com.airbnb.deeplinkdispatch.handler.DeepLinkHandler<Any>
-        handlerInstance.handleDeepLink(context, handlerParameters)
+        handlerInstance.handleDeepLink(context, deepLinkArgs)
     }
 
-    private fun getHandlerParameters(
-        handlerParameterClazz: Class<out Any>,
+    private fun getDeepLinkArgs(
+        deepLinkArgsClazz: Class<out Any>,
         result: DeepLinkResult
     ): Any {
-        return if (handlerParameterClazz == Object::class.java) {
+        return if (deepLinkArgsClazz == Object::class.java) {
             Object()
         } else {
-            val handlerParameterClazzConstructor = handlerParameterClazz.constructors.singleOrNull()
+            val deepLinkArgsClazzConstructor = deepLinkArgsClazz.constructors.singleOrNull()
                 ?: error("Handler parameter class can only have one constructor.")
             val annotationList: List<DeeplinkParam> =
-                handlerParameterClazzConstructor.parameterAnnotations.flatten()
+                deepLinkArgsClazzConstructor.parameterAnnotations.flatten()
                     .filterNotNull().filter { it.annotationClass == DeeplinkParam::class }
                     .map { it as DeeplinkParam }
-            val typeNameMap = handlerParameterClazzConstructor.genericParameterTypes.let {
+            val typeNameMap = deepLinkArgsClazzConstructor.genericParameterTypes.let {
                 // Check if we have as many parameters as annotations, the DeeplinkParam annotation is not
                 // repeatable we cannot have multiple for just one element.
                 if (annotationList.size == it.size) {
                     annotationList.zip(it)
                 } else error("There are ${annotationList.size} annotations but ${it.size} parameters!")
             }
-            val handlerArgsConstructorParams = createParamArray(
+            val deepLinkArgsConstructorParams = createParamArray(
                 typeNameMap = typeNameMap,
                 parameters = result.parameters
             )
-            handlerParameterClazzConstructor.newInstance(*handlerArgsConstructorParams)
+            deepLinkArgsClazzConstructor.newInstance(*deepLinkArgsConstructorParams)
         }
     }
 
@@ -211,7 +211,7 @@ open class BaseDeepLinkDelegate @JvmOverloads constructor(
     ): Any? {
         if (value == null) return null
         return try {
-            typeConverters[type]?.convert(value = value) ?: when (type) {
+            typeConverters()[type]?.convert(value = value) ?: when (type) {
                 Boolean::class.javaObjectType -> value.toBoolean()
                 Int::class.javaObjectType -> value.toInt()
                 Long::class.javaObjectType -> value.toLong()
@@ -237,7 +237,7 @@ open class BaseDeepLinkDelegate @JvmOverloads constructor(
     ): Any {
 
         return try {
-            typeConverters[type]?.convert(value = value) ?: when (type) {
+            typeConverters()[type]?.convert(value = value) ?: when (type) {
                 Boolean::class.javaPrimitiveType -> value.toBoolean()
                 Int::class.javaPrimitiveType -> value.toInt()
                 Long::class.javaPrimitiveType -> value.toLong()
