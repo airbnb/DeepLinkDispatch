@@ -172,6 +172,20 @@ public class MainActivity extends AppCompatActivity {
       getTaskStackBuilder(context, ACTION_DEEP_LINK_INTENT_AND_TASK_STACK_BUILDER));
   }
 
+  @DeepLink("dld://host/methodResult/null")
+  public static DeepLinkMethodResult nullDeepLinkMethiodResult(Context context) {
+    return null;
+  }
+
+  @DeepLink("dld://host/taskStackBuilder/null")
+  public static TaskStackBuilder nullTaskStackBuilder(Context context) {
+    return null;
+  }
+
+  @DeepLink("dld://host/intent/null")
+  public static Intent nullIntent(Context context) {
+    return null;
+  }
 
   /**
    * This method is a less concrete match for the URI

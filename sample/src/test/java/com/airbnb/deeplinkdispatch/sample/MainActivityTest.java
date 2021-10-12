@@ -30,6 +30,8 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.robolectric.Shadows.shadowOf;
 
+import androidx.core.app.TaskStackBuilder;
+
 @Config(sdk = 21, manifest = "../sample/src/main/AndroidManifest.xml", shadows = {ShadowTaskStackBuilder.class})
 @RunWith(RobolectricTestRunner.class)
 public class MainActivityTest {
@@ -346,5 +348,32 @@ public class MainActivityTest {
     Intent launchedIntent = shadowActivity.peekNextStartedActivityForResult().intent;
     assertThat(launchedIntent.getComponent(),
       equalTo(new ComponentName(deepLinkActivity, LibraryActivity.class)));
+  }
+
+  @Test
+  public void testNullDeepLinkMethodResult() {
+    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("dld://host/methodResult/null"));
+    DeepLinkActivity deepLinkActivity = Robolectric.buildActivity(DeepLinkActivity.class, intent)
+      .create().get();
+    ShadowActivity shadowActivity = shadowOf(deepLinkActivity);
+    assertNull(shadowActivity.peekNextStartedActivityForResult());
+  }
+
+  @Test
+  public void testNullTaskStackBuilder() {
+    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("dld://host/taskStackBuilder/null"));
+    DeepLinkActivity deepLinkActivity = Robolectric.buildActivity(DeepLinkActivity.class, intent)
+      .create().get();
+    ShadowActivity shadowActivity = shadowOf(deepLinkActivity);
+    assertNull(shadowActivity.peekNextStartedActivityForResult());
+  }
+
+  @Test
+  public void testNullIntent() {
+    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("dld://host/intent/null"));
+    DeepLinkActivity deepLinkActivity = Robolectric.buildActivity(DeepLinkActivity.class, intent)
+      .create().get();
+    ShadowActivity shadowActivity = shadowOf(deepLinkActivity);
+    assertNull(shadowActivity.peekNextStartedActivityForResult());
   }
 }

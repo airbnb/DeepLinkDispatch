@@ -106,15 +106,15 @@ open class BaseDeepLinkDelegate @JvmOverloads constructor(
         result: DeepLinkResult,
         activity: Activity
     ) {
-        result.deepLinkMatchResult?.let { matchedDeepLinkResult ->
-            when (matchedDeepLinkResult.deeplinkEntry) {
+        if (result.isSuccessful) {
+            when (result.deepLinkMatchResult?.deeplinkEntry) {
                 is DeepLinkEntry.MethodDeeplinkEntry ->
                     result.methodResult.taskStackBuilder?.startActivities()
-                        ?: activity.startActivity(result.methodResult.intent)
+                        ?: result.methodResult.intent?.let { activity.startActivity(it) }
                 is DeepLinkEntry.ActivityDeeplinkEntry ->
-                    activity.startActivity(result.methodResult.intent)
+                    result.methodResult.intent?.let { activity.startActivity(it) }
                 is DeepLinkEntry.HandlerDeepLinkEntry ->
-                    if (result.isSuccessful) callDeeplinkHandler(activity, result)
+                    callDeeplinkHandler(activity, result)
             }
         }
     }
@@ -415,35 +415,35 @@ open class BaseDeepLinkDelegate @JvmOverloads constructor(
     ) = when (method.returnType) {
         TaskStackBuilder::class.java ->
             intentFromTaskStackBuilder(
-                methodInvocation as TaskStackBuilder,
+                methodInvocation as TaskStackBuilder?,
                 method.name
             )
         DeepLinkMethodResult::class.java ->
             intentFromDeepLinkMethodResult(
-                methodInvocation as DeepLinkMethodResult,
+                methodInvocation as DeepLinkMethodResult?,
                 method.name
             )
-        else -> IntentTaskStackBuilderPair(methodInvocation as Intent, null)
+        else -> IntentTaskStackBuilderPair(methodInvocation as Intent?, null)
     }
 
     private fun intentFromDeepLinkMethodResult(
-        deepLinkMethodResult: DeepLinkMethodResult,
+        deepLinkMethodResult: DeepLinkMethodResult?,
         methodName: String
     ): IntentTaskStackBuilderPair {
-        return if (deepLinkMethodResult.taskStackBuilder != null) {
+        return if (deepLinkMethodResult?.taskStackBuilder != null) {
             intentFromTaskStackBuilder(deepLinkMethodResult.taskStackBuilder, methodName)
-        } else IntentTaskStackBuilderPair(deepLinkMethodResult.intent, null)
+        } else IntentTaskStackBuilderPair(deepLinkMethodResult?.intent, null)
     }
 
     private fun intentFromTaskStackBuilder(
-        taskStackBuilder: TaskStackBuilder,
+        taskStackBuilder: TaskStackBuilder?,
         methodName: String
     ): IntentTaskStackBuilderPair {
-        return if (taskStackBuilder.intentCount == 0) {
+        return if (taskStackBuilder?.intentCount == 0) {
             throw DeeplLinkMethodError("Could not deep link to method: $methodName intents length == 0")
         } else {
             IntentTaskStackBuilderPair(
-                taskStackBuilder.editIntentAt(taskStackBuilder.intentCount - 1),
+                taskStackBuilder?.editIntentAt(taskStackBuilder.intentCount - 1),
                 taskStackBuilder
             )
         }
