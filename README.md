@@ -51,7 +51,7 @@ public class MainActivity extends Activity {
 ### DeepLinkHandler Annotations
 
 You can annotate a Kotlin `object` that is extending `com.airbnb.deeplinkdispatch.handler.DeepLinkHandler`
-with an `@DeepLink` annotation. e.g.DeepLinkHandler.
+with an `@DeepLink` annotation.
 
 ```kotlin
 @DeepLink("foo://example.com/handlerDeepLink/{param1}?query1={queryParameter}")
@@ -69,14 +69,14 @@ data class ProjectDeepLinkHandlerArgs(
 )
 ```
 
-DeepLinkDispatch will then call `handleDeepLink` function in your handler with the path placeholders
+DeepLinkDispatch will then call the `handleDeepLink` function in your handler with the path placeholders
 and queryParameters converted into an instance of the specified type class.
 
 Query parameter conversion is supported for nullable and non nullable versions of `Boolean`,`Int`,
 `Long`,`Short`,`Byte`,`Double`,`Float` and `String` as well as the same types in Java. For other
 types see: [Type conversion](#type-conversion)
 
-This will give compile time safety as all placeholders and query parameters specified in the template
+This will give compile time safety, as all placeholders and query parameters specified in the template
 inside the `@DeepLink` annotation must be present in the arguments class for the processor to pass.
 This is also true the other way around as all fields in the arguments class must be annotated and must
 be present in the template inside the annotation.
@@ -84,26 +84,26 @@ be present in the template inside the annotation.
 From this function you can now call into any internal or 3rd party navigation system
 without any Intent being fired at all and with type safety for your arguments.
 
-*Note:* That even though they must be listed in the template and annotation, argument values annotated
+*Note:* Even though they must be listed in the template and annotation, argument values annotated
 with `DeepLinkParamType.Query` can be null as they are allowed to not be present in the matched url.
 
 #### Type conversion
 
 If you want to support the automatic conversions of types other than `Boolean`,`Int`,`Long`,`Short`,`Byte`,
 `Double`,`Float` and `String` in deep link argument classes you can add support by adding your own type
-converters in the `DeepLinkDelegate` class that you are extending.
+converters in the `DeepLinkDelegate` class that you are instantiating.
 
-Type conversion is handled via a lambda that you can set in the `DeepLinkDelegate` constructor.java
+Type conversion is handled via a lambda that you can set in the `DeepLinkDelegate` constructor.
 
 All type converters you want to add get added to an instance of `TypeConverters` which then in turn
 gets returned by the lambda. This way you can add type converters on the fly while the app is running
 (e.g. if you just downloaded a dynamic feature which supports additional types).
 
-There is an example of this in the sample, here is a brief overview:
+There is an example of this in the `sample` app for this. Here is a brief overview:
 
 ```java
-typeConverters = new TypeConverters();
-typeConverters.put(ComparableColorDrawable.class, value -> {
+TypeConverters typeConverters = new TypeConverters();
+typeConverters.put(ColorDrawable.class, value -> {
   switch (value.toLowerCase()) {
     case "red":
       return new ColorDrawable(0xff0000ff);
@@ -120,11 +120,11 @@ DeepLinkDelegate deepLinkDelegate = new DeepLinkDelegate(
 
 #### Type conversion errors
 
-If a url parameter cannot be converted to the specified type the system will, by default, set the
+If a url parameter cannot be converted to the specified type, the system will -- by default -- set the
 value to `0` or `null`, depending on if the type is nullable. However this behavior can be overwritten
 by implementing a lambda `Function3<DeepLinkUri, Type, String, Integer>` and setting it to
 `typeConversionErrorNullable` and/or `typeConversionErrorNonNullable` via the `DeepLinkDelegate`
-constructor. When called the lambda will let you know about the matching `DeepLinkUri` template, the
+constructor. When called, the lambda will let you know about the matching `DeepLinkUri` template, the
 type and the value that was tried to type convert so you can also log these events.
 
 ### Method Annotations
