@@ -57,6 +57,16 @@
                 <data android:scheme="app" android:host="airbnb"/>
             </intent-filter>
         </activity>
+        <activity
+            android:name="com.airbnb.deeplinkdispatch.sample.typeconversion.TypeConversionErrorHandlerCustomTypeDeepLinkActivity"
+            android:theme="@android:style/Theme.NoDisplay">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="http" android:host="testing.com" />
+            </intent-filter>
+        </activity>
     </application>
 
 </manifest>

@@ -2,6 +2,7 @@ package com.airbnb.deeplinkdispatch
 
 import android.content.Intent
 import androidx.core.app.TaskStackBuilder
+import com.airbnb.deeplinkdispatch.handler.DeepLinkHandler
 
 data class DeepLinkResult(
     /**
@@ -10,8 +11,10 @@ data class DeepLinkResult(
     val isSuccessful: Boolean,
     val uriString: String?,
     val error: String,
-    val deepLinkEntry: DeepLinkMatchResult?,
-    val methodResult: DeepLinkMethodResult
+    val deepLinkMatchResult: DeepLinkMatchResult?,
+    val methodResult: DeepLinkMethodResult,
+    val parameters: Map<String, String> = emptyMap(),
+    val deepLinkHandlerResult: DeepLinkHandlerResult<Any>?,
 ) {
     /**
      * This exists so that calls from Kotlin code [error()] are maintained across major version 4.
@@ -35,6 +38,11 @@ data class DeepLinkResult(
  * If both are not null we will use the taskStackBuilder.
  */
 data class DeepLinkMethodResult(
-    val intent: Intent?,
-    val taskStackBuilder: TaskStackBuilder?
+    val intent: Intent? = null,
+    val taskStackBuilder: TaskStackBuilder? = null
+)
+
+data class DeepLinkHandlerResult<T>(
+    val deepLinkHandler: DeepLinkHandler<T>,
+    val deepLinkHandlerArgs: T
 )

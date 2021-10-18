@@ -5,11 +5,41 @@ import org.junit.Test
 
 class DeepLinkMatchResultTests {
 
-    private val concrete = DeepLinkMatchResult(DeepLinkEntry("scheme://host/one/two/three", this.javaClass.name, null), emptyMap())
-    private val parmSecondPathElement = DeepLinkMatchResult(DeepLinkEntry("scheme://host/one/{param}/three", this.javaClass.name, null), emptyMap())
-    private val parmFirstPathElement = DeepLinkMatchResult(DeepLinkEntry("scheme://host/{param}/two/three", this.javaClass.name, null), emptyMap())
-    private val cpsSecondPathSegment = DeepLinkMatchResult(DeepLinkEntry("scheme://host/one/<config>/three", this.javaClass.name, null), emptyMap())
-    private val cpsFirstPathSegment = DeepLinkMatchResult(DeepLinkEntry("scheme://host/<config>/two/three", this.javaClass.name, null), emptyMap())
+    private val concrete = DeepLinkMatchResult(
+        deeplinkEntry = DeepLinkEntry.ActivityDeeplinkEntry(
+            uriTemplate = "scheme://host/one/two/three",
+            className = this.javaClass.name,
+        ),
+        parameterMap = emptyMap()
+    )
+    private val parmSecondPathElement = DeepLinkMatchResult(
+        deeplinkEntry = DeepLinkEntry.ActivityDeeplinkEntry(
+            uriTemplate = "scheme://host/one/{param}/three",
+            className = this.javaClass.name,
+        ),
+        parameterMap = emptyMap()
+    )
+    private val parmFirstPathElement = DeepLinkMatchResult(
+        deeplinkEntry = DeepLinkEntry.ActivityDeeplinkEntry(
+            uriTemplate = "scheme://host/{param}/two/three",
+            className = this.javaClass.name,
+        ),
+        parameterMap = emptyMap()
+    )
+    private val cpsSecondPathSegment = DeepLinkMatchResult(
+        deeplinkEntry = DeepLinkEntry.ActivityDeeplinkEntry(
+            uriTemplate = "scheme://host/one/<config>/three",
+            className = this.javaClass.name,
+        ),
+        parameterMap = emptyMap()
+    )
+    private val cpsFirstPathSegment = DeepLinkMatchResult(
+        deeplinkEntry = DeepLinkEntry.ActivityDeeplinkEntry(
+            uriTemplate = "scheme://host/<config>/two/three",
+            className = this.javaClass.name,
+        ),
+        parameterMap = emptyMap()
+    )
 
     @Test
     fun testSameness() {

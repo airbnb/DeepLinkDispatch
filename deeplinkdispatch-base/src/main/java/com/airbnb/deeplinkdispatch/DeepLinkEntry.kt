@@ -33,13 +33,21 @@ data class DeepLinkMatchResult(
 
     override fun toString(): String {
         return "uriTemplate: ${deeplinkEntry.uriTemplate} " +
-            "activity: ${deeplinkEntry.activityClass.name} " +
-            "method: ${deeplinkEntry.method} " +
+            "activity: ${deeplinkEntry.clazz.name} " +
+            "${if (deeplinkEntry is DeepLinkEntry.MethodDeeplinkEntry) "method: ${deeplinkEntry.method} " else ""}" +
             "parameters: $parameterMap"
     }
 
-    private val firstConfigurablePathSegmentIndex: Int by lazy { deeplinkEntry.uriTemplate.indexOf(configurablePathSegmentPrefixChar) }
-    private val firstPlaceholderIndex: Int by lazy { deeplinkEntry.uriTemplate.indexOf(componentParamPrefixChar) }
+    private val firstConfigurablePathSegmentIndex: Int by lazy {
+        deeplinkEntry.uriTemplate.indexOf(
+            configurablePathSegmentPrefixChar
+        )
+    }
+    private val firstPlaceholderIndex: Int by lazy {
+        deeplinkEntry.uriTemplate.indexOf(
+            componentParamPrefixChar
+        )
+    }
     private val firstNonConcreteIndex: Int by lazy {
         if (firstPlaceholderIndex == -1 && firstConfigurablePathSegmentIndex == -1) {
             -1
@@ -78,21 +86,25 @@ data class DeepLinkMatchResult(
     }
 }
 
-data class DeepLinkEntry(
-    val uriTemplate: String,
-    /**
-     * The class name where the annotation corresponding to where an instance of DeepLinkEntry is declared.
-     */
-    val className: String,
-    val method: String?
-) {
+sealed class DeepLinkEntry(open val uriTemplate: String, open val className: String) {
 
-    enum class Type {
-        CLASS,
-        METHOD
-    }
+    data class ActivityDeeplinkEntry(
+        override val uriTemplate: String,
+        override val className: String
+    ) : DeepLinkEntry(uriTemplate, className)
 
-    val activityClass: Class<*> by lazy {
+    data class MethodDeeplinkEntry(
+        override val uriTemplate: String,
+        override val className: String,
+        val method: String
+    ) : DeepLinkEntry(uriTemplate, className)
+
+    data class HandlerDeepLinkEntry(
+        override val uriTemplate: String,
+        override val className: String
+    ) : DeepLinkEntry(uriTemplate, className)
+
+    val clazz: Class<*> by lazy {
         try {
             Class.forName(className)
         } catch (e: ClassNotFoundException) {
@@ -102,9 +114,5 @@ data class DeepLinkEntry(
                 e
             )
         }
-    }
-
-    override fun toString(): String {
-        return "uriTemplate: $uriTemplate className: $className method: $method"
     }
 }

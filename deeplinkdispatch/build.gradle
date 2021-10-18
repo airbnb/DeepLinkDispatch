@@ -33,6 +33,7 @@ android {
     minSdkVersion androidConfig.minSdkVersion
     targetSdkVersion androidConfig.compileSdkVersion
     testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    consumerProguardFiles 'proguard-rules.pro'
   }
   testOptions {
     unitTests.returnDefaultValues = true

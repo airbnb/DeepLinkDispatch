@@ -3,10 +3,11 @@ package com.airbnb.deeplinkdispatch.base;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.airbnb.deeplinkdispatch.DeepLinkEntry;
 import com.airbnb.deeplinkdispatch.DeepLinkUri;
 import com.airbnb.deeplinkdispatch.DeepLinkMatchResult;
+import com.airbnb.deeplinkdispatch.MatchType;
 import com.airbnb.deeplinkdispatch.NodeMetadata;
+import com.airbnb.deeplinkdispatch.DeepLinkEntry;
 import com.airbnb.deeplinkdispatch.UrlElement;
 
 import java.io.UnsupportedEncodingException;
@@ -23,18 +24,33 @@ import java.util.Map;
  * <hr/>
  * <table border="1">
  * <tr>
- * <td>Node's metadata flags</td>
- * <td>value length</td>
- * <td>children length</td><td>match id</td><td>value</td><td>children</td>
+ *   <td>Node's metadata flags</td>
+ *   <td>value length</td>
+ *   <td>match length</td>
+ *   <td>children length</td>
+ *   <td>value data</td>
+ *   <td>match data</td>
+ *   <td>children data</td>
  * </tr>
  * <tr>
- * <td>1 byte</td><td>1 byte</td><td>4 bytes</td><td>2 bytes</td>
- * <td>9 + value length bytes</td><td>9 + value length + children length bytes</td>
+ *   <td>0 (1 byte)</td>
+ *   <td>1 (1 byte)</td>
+ *   <td>2 (2 bytes)</td>
+ *   <td>4 (4 bytes)</td>
+ *   <td>8 (value length bytes)</td>
+ *   <td>8+value length (match length bytes)</td>
+ *   <td>8+value length+match length (children length bytes)</td>
  * </tr>
  * <tr>
- * <td>{@linkplain com.airbnb.deeplinkdispatch.NodeMetadata}
- * e.g. scheme, authority, path segment, transformation</td><td>length of the
- * node's (string) value, in bytes</td>
+ *   <td>{@linkplain com.airbnb.deeplinkdispatch.NodeMetadata} e.g. scheme, authority, path segment,
+ *     transformation</td>
+ *   <td>length of the node's (string) value.</td>
+ *   <td>length of the node's match length (can be 0 if this is no leaf note that has
+ *   encodes a match.</td>
+ *   <td>length of the node's children sub array.</td>
+ *   <td>actual value sub array</td>
+ *   <td>match data sub array (if match length is 0 this does not exist)</td>
+ *   <td>children data sub array</td>
  * </tr>
  * </table>
  * <hr/>
@@ -47,7 +63,6 @@ import java.util.Map;
  * instructions to be added that are not necessary.</p>
  */
 public class MatchIndex {
-
   /**
    * Encoding used for serialization
    */
@@ -62,6 +77,7 @@ public class MatchIndex {
   public static final int HEADER_MATCH_LENGTH = 2;
   public static final int HEADER_CHILDREN_LENGTH = 4;
   public static final int MATCH_DATA_URL_TEMPLATE_LENGTH = 2;
+  public static final int MATCH_DATA_TYPE_LENGTH = 1;
   public static final int MATCH_DATA_CLASS_LENGTH = 2;
   public static final int MATCH_DATA_METHOD_LENGTH = 1;
 
@@ -227,6 +243,8 @@ public class MatchIndex {
       return null;
     }
     int position = matchStartPosition;
+    MatchType matchType = MatchType.fromInt(readOneByteAsInt(byteArray, position));
+    position += MATCH_DATA_TYPE_LENGTH;
     int urlTemplateLength = readTwoBytesAsInt(byteArray, position);
     position += MATCH_DATA_URL_TEMPLATE_LENGTH;
     String urlTemplate = getStringFromByteArray(byteArray, position, urlTemplateLength);
@@ -241,7 +259,16 @@ public class MatchIndex {
       position += MATCH_DATA_METHOD_LENGTH;
       methodName = getStringFromByteArray(byteArray, position, methodLength);
     }
-    return new DeepLinkEntry(urlTemplate, className, methodName);
+    switch (matchType) {
+      case Activity:
+        return new DeepLinkEntry.ActivityDeeplinkEntry(urlTemplate, className);
+      case Method:
+        return new DeepLinkEntry.MethodDeeplinkEntry(urlTemplate, className, methodName);
+      case Handler:
+        return new DeepLinkEntry.HandlerDeepLinkEntry(urlTemplate, className);
+      default:
+        throw new IllegalStateException("Unhandled match type: " + matchType);
+    }
   }
 
   /**

@@ -30,7 +30,9 @@ sealed class DeepLinkAnnotatedElement @Throws(MalformedURLException::class) cons
         val method = element.name
     }
 
-    class ClassAnnotatedElement(uri: String, element: XTypeElement) : DeepLinkAnnotatedElement(uri, element, element)
+    class ActivityAnnotatedElement(uri: String, element: XTypeElement) : DeepLinkAnnotatedElement(uri, element, element)
+
+    class HandlerAnnotatedElement(uri: String, element: XTypeElement) : DeepLinkAnnotatedElement(uri, element, element)
 
     init {
         DeepLinkUri.parseTemplate(uri)

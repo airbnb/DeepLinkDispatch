@@ -69,7 +69,7 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
                  import com.airbnb.deeplinkdispatch.DeepLink;
                  @DeepLink("airbnb://example.com/deepLink")
                  @AppDeepLink({"example.com/deepLink","example.com/another"})
-                 public class SampleActivity {
+                 public class SampleActivity extends android.app.Activity {
                  }
                  """
     )
@@ -83,7 +83,7 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
                  import android.content.Context;
 
                  @DeepLinkHandler({ SampleModule.class })
-                 public class SampleActivity {
+                 public class SampleActivity extends android.app.Activity {
                        public static class InnerClass { 
                               @DeepLink("airbnb://example.com/innerClassDeeplink")
                               public static Intent intentForDeepLinkMethod(Context context) {
@@ -93,6 +93,28 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
                  }
                  """
     )
+
+    private val secondSampleActivityWithInnerClassDeeplinkJava = Source.JavaSource(
+        "com.example.SecondSampleActivity",
+        """
+                 package com.example;
+                 import com.airbnb.deeplinkdispatch.DeepLink;
+                 import com.airbnb.deeplinkdispatch.DeepLinkHandler;
+                 import android.content.Intent;
+                 import android.content.Context;
+
+                 @DeepLinkHandler({ SampleModule.class })
+                 public class SecondSampleActivity extends android.app.Activity {
+                       public static class InnerClass { 
+                              @DeepLink("airbnb://example.com/second/innerClassDeeplink")
+                              public static Intent intentForDeepLinkMethod(Context context) {
+                                return new Intent();
+                              }
+                        }
+                 }
+                 """
+    )
+
     private val sampleActivityWithInnerClassDeeplinkKotlin = Source.KotlinSource(
         "SampleActivity.kt",
         """
@@ -103,7 +125,7 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
                  import android.content.Context
 
                  @DeepLinkHandler(SampleModule::class)
-                 class SampleActivity {
+                 class SampleActivity : android.app.Activity() {
                        class InnerClass { 
                                 object DeepLinks {
                                     @DeepLink("airbnb://example.com/innerClassDeeplink")
@@ -114,6 +136,21 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
                  }
                  """
     )
+
+    private val sampleWrongClassTypeAnnotated = Source.KotlinSource(
+        "SampleDeeplinkHandler.kt",
+        """
+            package com.example
+            import com.airbnb.deeplinkdispatch.handler.DeepLinkHandler
+            import com.airbnb.deeplinkdispatch.handler.PathParam
+            import com.airbnb.deeplinkdispatch.handler.QueryParam
+            import java.time.LocalDate
+            @PlaceholderDeepLink("pathSegment/{path_segment_variable_1}/{path_segment_variable_2}/{path_segment_variable_3}?queryParam={query_param_1}")
+            class TestDeepLinkHandler {
+            }
+            """
+    )
+
     private val sampleActivityWithOnlyCustomDeepLink = Source.JavaSource(
         "com.example.SampleActivity",
         """
@@ -124,7 +161,7 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
                  
                  @AppDeepLink({"example.com/deepLink"})
                  @DeepLinkHandler({ SampleModule.class })
-                 public class SampleActivity {
+                 public class SampleActivity extends android.app.Activity {
                  }
                  """
     )
@@ -138,7 +175,7 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
                  
                  @PlaceholderDeepLink({"deepLink"})
                  @DeepLinkHandler({ SampleModule.class })
-                 public class SampleActivity {
+                 public class SampleActivity extends android.app.Activity {
                  }
                  """
     )
@@ -167,10 +204,9 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
             results = results,
             registryClassName = "com.example.SampleModuleRegistry",
             indexEntries = listOf(
-                DeepLinkEntry(
+                DeepLinkEntry.ActivityDeeplinkEntry(
                     uriTemplate = "example://example.com/deepLink",
-                    className = "com.example.SampleActivity",
-                    method = null
+                    className = "com.example.SampleActivity"
                 )
             ),
             generatedFiles = mapOf(
@@ -179,26 +215,58 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
                 package com.example;
 
                 import com.airbnb.deeplinkdispatch.BaseDeepLinkDelegate;
+                import com.airbnb.deeplinkdispatch.DeepLinkUri;
+                import com.airbnb.deeplinkdispatch.handler.TypeConverters;
+                import java.lang.Integer;
                 import java.lang.String;
+                import java.lang.reflect.Type;
                 import java.util.Arrays;
                 import java.util.Map;
-
+                import kotlin.jvm.functions.Function0;
+                import kotlin.jvm.functions.Function3;
+                import org.jetbrains.annotations.NotNull;
+                
                 public final class DeepLinkDelegate extends BaseDeepLinkDelegate {
-                  public DeepLinkDelegate(SampleModuleRegistry sampleModuleRegistry) {
+                  public DeepLinkDelegate(@NotNull SampleModuleRegistry sampleModuleRegistry) {
                     super(Arrays.asList(
-                      sampleModuleRegistry
-                    ));
+                      sampleModuleRegistry)
+                    );
                   }
-
-                  public DeepLinkDelegate(SampleModuleRegistry sampleModuleRegistry,
-                      Map<String, String> configurablePathSegmentReplacements) {
+                
+                  public DeepLinkDelegate(@NotNull SampleModuleRegistry sampleModuleRegistry,
+                      @NotNull Map<String, String> configurablePathSegmentReplacements) {
                     super(Arrays.asList(
                       sampleModuleRegistry),
                       configurablePathSegmentReplacements
                     );
                   }
+                
+                  public DeepLinkDelegate(@NotNull SampleModuleRegistry sampleModuleRegistry,
+                      @NotNull Map<String, String> configurablePathSegmentReplacements,
+                      @NotNull Function0<TypeConverters> typeConverters) {
+                    super(Arrays.asList(
+                      sampleModuleRegistry),
+                      configurablePathSegmentReplacements,
+                      typeConverters
+                    );
+                  }
+                
+                  public DeepLinkDelegate(@NotNull SampleModuleRegistry sampleModuleRegistry,
+                      @NotNull Map<String, String> configurablePathSegmentReplacements,
+                      @NotNull Function0<TypeConverters> typeConverters,
+                      @NotNull Function3<DeepLinkUri, Type, ? super String, Integer> typeConversionErrorNullable,
+                      @NotNull Function3<DeepLinkUri, Type, ? super String, Integer> typeConversionErrorNonNullable) {
+                    super(Arrays.asList(
+                      sampleModuleRegistry),
+                      configurablePathSegmentReplacements,
+                      typeConverters,
+                      null,
+                      typeConversionErrorNullable,
+                      typeConversionErrorNonNullable
+                    );
+                  }
                 }
-            
+
                     """.trimIndent(),
                 "SampleModuleRegistry.java" to
                     """
@@ -215,7 +283,7 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
                   }
 
                   private static String matchIndex0() {
-                    return "\u0001\u0001\u0000\u0000\u0000\u0000\u0000or\u0002\u0007\u0000\u0000\u0000\u0000\u0000`example\u0004\u000b\u0000\u0000\u0000\u0000\u0000Mexample.com\b\b\u0000=\u0000\u0000\u0000\u0000deepLink\u0000\u001eexample://example.com/deepLink\u0000\u001acom.example.SampleActivity\u0000";
+                    return "\u0001\u0001\u0000\u0000\u0000\u0000\u0000pr\u0002\u0007\u0000\u0000\u0000\u0000\u0000aexample\u0004\u000b\u0000\u0000\u0000\u0000\u0000Nexample.com\b\b\u0000>\u0000\u0000\u0000\u0000deepLink\u0000\u0000\u001eexample://example.com/deepLink\u0000\u001acom.example.SampleActivity\u0000";
                   }
                 }
             
@@ -248,10 +316,9 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
             results = results,
             registryClassName = "com.example.SampleModuleRegistry",
             indexEntries = listOf(
-                DeepLinkEntry(
+                DeepLinkEntry.ActivityDeeplinkEntry(
                     uriTemplate = "http{scheme}://{host}example.com/deepLink",
                     className = "com.example.SampleActivity",
-                    method = null
                 )
             ),
             generatedFiles = mapOf(
@@ -260,26 +327,58 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
                 package com.example;
 
                 import com.airbnb.deeplinkdispatch.BaseDeepLinkDelegate;
+                import com.airbnb.deeplinkdispatch.DeepLinkUri;
+                import com.airbnb.deeplinkdispatch.handler.TypeConverters;
+                import java.lang.Integer;
                 import java.lang.String;
+                import java.lang.reflect.Type;
                 import java.util.Arrays;
                 import java.util.Map;
-
+                import kotlin.jvm.functions.Function0;
+                import kotlin.jvm.functions.Function3;
+                import org.jetbrains.annotations.NotNull;
+                
                 public final class DeepLinkDelegate extends BaseDeepLinkDelegate {
-                  public DeepLinkDelegate(SampleModuleRegistry sampleModuleRegistry) {
+                  public DeepLinkDelegate(@NotNull SampleModuleRegistry sampleModuleRegistry) {
                     super(Arrays.asList(
-                      sampleModuleRegistry
-                    ));
+                      sampleModuleRegistry)
+                    );
                   }
-
-                  public DeepLinkDelegate(SampleModuleRegistry sampleModuleRegistry,
-                      Map<String, String> configurablePathSegmentReplacements) {
+                
+                  public DeepLinkDelegate(@NotNull SampleModuleRegistry sampleModuleRegistry,
+                      @NotNull Map<String, String> configurablePathSegmentReplacements) {
                     super(Arrays.asList(
                       sampleModuleRegistry),
                       configurablePathSegmentReplacements
                     );
                   }
-                }
                 
+                  public DeepLinkDelegate(@NotNull SampleModuleRegistry sampleModuleRegistry,
+                      @NotNull Map<String, String> configurablePathSegmentReplacements,
+                      @NotNull Function0<TypeConverters> typeConverters) {
+                    super(Arrays.asList(
+                      sampleModuleRegistry),
+                      configurablePathSegmentReplacements,
+                      typeConverters
+                    );
+                  }
+                
+                  public DeepLinkDelegate(@NotNull SampleModuleRegistry sampleModuleRegistry,
+                      @NotNull Map<String, String> configurablePathSegmentReplacements,
+                      @NotNull Function0<TypeConverters> typeConverters,
+                      @NotNull Function3<DeepLinkUri, Type, ? super String, Integer> typeConversionErrorNullable,
+                      @NotNull Function3<DeepLinkUri, Type, ? super String, Integer> typeConversionErrorNonNullable) {
+                    super(Arrays.asList(
+                      sampleModuleRegistry),
+                      configurablePathSegmentReplacements,
+                      typeConverters,
+                      null,
+                      typeConversionErrorNullable,
+                      typeConversionErrorNonNullable
+                    );
+                  }
+                }
+
                     """.trimIndent(),
                 "SampleModuleRegistry.java" to
                     """
@@ -296,7 +395,7 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
                   }
 
                   private static String matchIndex0() {
-                    return "\u0001\u0001\u0000\u0000\u0000\u0000\u0000\u0085r\u0012\f\u0000\u0000\u0000\u0000\u0000qhttp{scheme}\u0014\u0011\u0000\u0000\u0000\u0000\u0000X{host}example.com\b\b\u0000H\u0000\u0000\u0000\u0000deepLink\u0000)http{scheme}://{host}example.com/deepLink\u0000\u001acom.example.SampleActivity\u0000";
+                    return "\u0001\u0001\u0000\u0000\u0000\u0000\u0000\u0086r\u0012\f\u0000\u0000\u0000\u0000\u0000rhttp{scheme}\u0014\u0011\u0000\u0000\u0000\u0000\u0000Y{host}example.com\b\b\u0000I\u0000\u0000\u0000\u0000deepLink\u0000\u0000)http{scheme}://{host}example.com/deepLink\u0000\u001acom.example.SampleActivity\u0000";
                   }
                 }
             
@@ -314,11 +413,11 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
             fakeBaseDeeplinkDelegate
         )
         val results = listOf(
-            compileIncremental(
-                sourceFiles = sourceFiles,
-                customDeepLinks = listOf("com.example.PlaceholderDeepLink"),
-                useKsp = false,
-            ),
+//            compileIncremental(
+//                sourceFiles = sourceFiles,
+//                customDeepLinks = listOf("com.example.PlaceholderDeepLink"),
+//                useKsp = false,
+//            ),
             compileIncremental(
                 sourceFiles = sourceFiles,
                 customDeepLinks = listOf("com.example.PlaceholderDeepLink"),
@@ -329,10 +428,9 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
             results = results,
             registryClassName = "com.example.SampleModuleRegistry",
             indexEntries = listOf(
-                DeepLinkEntry(
+                DeepLinkEntry.ActivityDeeplinkEntry(
                     uriTemplate = "http{scheme(|s)}://{host(|www.)}example.com/deepLink",
-                    className = "com.example.SampleActivity",
-                    method = null
+                    className = "com.example.SampleActivity"
                 )
             ),
             generatedFiles = mapOf(
@@ -341,26 +439,58 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
                 package com.example;
 
                 import com.airbnb.deeplinkdispatch.BaseDeepLinkDelegate;
+                import com.airbnb.deeplinkdispatch.DeepLinkUri;
+                import com.airbnb.deeplinkdispatch.handler.TypeConverters;
+                import java.lang.Integer;
                 import java.lang.String;
+                import java.lang.reflect.Type;
                 import java.util.Arrays;
                 import java.util.Map;
-
+                import kotlin.jvm.functions.Function0;
+                import kotlin.jvm.functions.Function3;
+                import org.jetbrains.annotations.NotNull;
+                
                 public final class DeepLinkDelegate extends BaseDeepLinkDelegate {
-                  public DeepLinkDelegate(SampleModuleRegistry sampleModuleRegistry) {
+                  public DeepLinkDelegate(@NotNull SampleModuleRegistry sampleModuleRegistry) {
                     super(Arrays.asList(
-                      sampleModuleRegistry
-                    ));
+                      sampleModuleRegistry)
+                    );
                   }
-
-                  public DeepLinkDelegate(SampleModuleRegistry sampleModuleRegistry,
-                      Map<String, String> configurablePathSegmentReplacements) {
+                
+                  public DeepLinkDelegate(@NotNull SampleModuleRegistry sampleModuleRegistry,
+                      @NotNull Map<String, String> configurablePathSegmentReplacements) {
                     super(Arrays.asList(
                       sampleModuleRegistry),
                       configurablePathSegmentReplacements
                     );
                   }
-                }
                 
+                  public DeepLinkDelegate(@NotNull SampleModuleRegistry sampleModuleRegistry,
+                      @NotNull Map<String, String> configurablePathSegmentReplacements,
+                      @NotNull Function0<TypeConverters> typeConverters) {
+                    super(Arrays.asList(
+                      sampleModuleRegistry),
+                      configurablePathSegmentReplacements,
+                      typeConverters
+                    );
+                  }
+                
+                  public DeepLinkDelegate(@NotNull SampleModuleRegistry sampleModuleRegistry,
+                      @NotNull Map<String, String> configurablePathSegmentReplacements,
+                      @NotNull Function0<TypeConverters> typeConverters,
+                      @NotNull Function3<DeepLinkUri, Type, ? super String, Integer> typeConversionErrorNullable,
+                      @NotNull Function3<DeepLinkUri, Type, ? super String, Integer> typeConversionErrorNonNullable) {
+                    super(Arrays.asList(
+                      sampleModuleRegistry),
+                      configurablePathSegmentReplacements,
+                      typeConverters,
+                      null,
+                      typeConversionErrorNullable,
+                      typeConversionErrorNonNullable
+                    );
+                  }
+                }
+
                     """.trimIndent(),
                 "SampleModuleRegistry.java" to
                     """
@@ -377,7 +507,7 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
                   }
 
                   private static String matchIndex0() {
-                    return "\u0001\u0001\u0000\u0000\u0000\u0000\u0000\u009br\u0012\u0010\u0000\u0000\u0000\u0000\u0000\u0083http{scheme(|s)}\u0014\u0018\u0000\u0000\u0000\u0000\u0000c{host(|www.)}example.com\b\b\u0000S\u0000\u0000\u0000\u0000deepLink\u00004http{scheme(|s)}://{host(|www.)}example.com/deepLink\u0000\u001acom.example.SampleActivity\u0000";
+                    return "\u0001\u0001\u0000\u0000\u0000\u0000\u0000\u009cr\u0012\u0010\u0000\u0000\u0000\u0000\u0000\u0084http{scheme(|s)}\u0014\u0018\u0000\u0000\u0000\u0000\u0000d{host(|www.)}example.com\b\b\u0000T\u0000\u0000\u0000\u0000deepLink\u0000\u00004http{scheme(|s)}://{host(|www.)}example.com/deepLink\u0000\u001acom.example.SampleActivity\u0000";
                   }
                 }
             
@@ -466,26 +596,58 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
                 package com.example;
 
                 import com.airbnb.deeplinkdispatch.BaseDeepLinkDelegate;
+                import com.airbnb.deeplinkdispatch.DeepLinkUri;
+                import com.airbnb.deeplinkdispatch.handler.TypeConverters;
+                import java.lang.Integer;
                 import java.lang.String;
+                import java.lang.reflect.Type;
                 import java.util.Arrays;
                 import java.util.Map;
-
+                import kotlin.jvm.functions.Function0;
+                import kotlin.jvm.functions.Function3;
+                import org.jetbrains.annotations.NotNull;
+                
                 public final class DeepLinkDelegate extends BaseDeepLinkDelegate {
-                  public DeepLinkDelegate(SampleModuleRegistry sampleModuleRegistry) {
+                  public DeepLinkDelegate(@NotNull SampleModuleRegistry sampleModuleRegistry) {
                     super(Arrays.asList(
-                      sampleModuleRegistry
-                    ));
+                      sampleModuleRegistry)
+                    );
                   }
-
-                  public DeepLinkDelegate(SampleModuleRegistry sampleModuleRegistry,
-                      Map<String, String> configurablePathSegmentReplacements) {
+                
+                  public DeepLinkDelegate(@NotNull SampleModuleRegistry sampleModuleRegistry,
+                      @NotNull Map<String, String> configurablePathSegmentReplacements) {
                     super(Arrays.asList(
                       sampleModuleRegistry),
                       configurablePathSegmentReplacements
                     );
                   }
-                }
                 
+                  public DeepLinkDelegate(@NotNull SampleModuleRegistry sampleModuleRegistry,
+                      @NotNull Map<String, String> configurablePathSegmentReplacements,
+                      @NotNull Function0<TypeConverters> typeConverters) {
+                    super(Arrays.asList(
+                      sampleModuleRegistry),
+                      configurablePathSegmentReplacements,
+                      typeConverters
+                    );
+                  }
+                
+                  public DeepLinkDelegate(@NotNull SampleModuleRegistry sampleModuleRegistry,
+                      @NotNull Map<String, String> configurablePathSegmentReplacements,
+                      @NotNull Function0<TypeConverters> typeConverters,
+                      @NotNull Function3<DeepLinkUri, Type, ? super String, Integer> typeConversionErrorNullable,
+                      @NotNull Function3<DeepLinkUri, Type, ? super String, Integer> typeConversionErrorNonNullable) {
+                    super(Arrays.asList(
+                      sampleModuleRegistry),
+                      configurablePathSegmentReplacements,
+                      typeConverters,
+                      null,
+                      typeConversionErrorNullable,
+                      typeConversionErrorNonNullable
+                    );
+                  }
+                }
+
                     """.trimIndent(),
                 "SampleModuleRegistry.java" to
                     """
@@ -551,7 +713,6 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
             // https://github.com/tschuchortdev/kotlin-compile-testing/issues/105
 //            compileIncremental(
 //                sourceFiles = sourceFiles,
-//                customDeepLinks = null,
 //                useKsp = true,
 //            )
         )
@@ -559,7 +720,7 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
             results = results,
             registryClassName = "com.example.SampleModuleRegistry",
             indexEntries = listOf(
-                DeepLinkEntry(
+                DeepLinkEntry.MethodDeeplinkEntry(
                     uriTemplate = "airbnb://example.com/innerClassDeeplink",
                     className = "com.example.SampleActivity\$InnerClass",
                     method = "intentForDeepLinkMethod"
@@ -568,29 +729,61 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
             generatedFiles = mapOf(
                 "DeepLinkDelegate.java" to
                     """
-                    package com.example;
+                package com.example;
 
-                    import com.airbnb.deeplinkdispatch.BaseDeepLinkDelegate;
-                    import java.lang.String;
-                    import java.util.Arrays;
-                    import java.util.Map;
+                import com.airbnb.deeplinkdispatch.BaseDeepLinkDelegate;
+                import com.airbnb.deeplinkdispatch.DeepLinkUri;
+                import com.airbnb.deeplinkdispatch.handler.TypeConverters;
+                import java.lang.Integer;
+                import java.lang.String;
+                import java.lang.reflect.Type;
+                import java.util.Arrays;
+                import java.util.Map;
+                import kotlin.jvm.functions.Function0;
+                import kotlin.jvm.functions.Function3;
+                import org.jetbrains.annotations.NotNull;
 
-                    public final class DeepLinkDelegate extends BaseDeepLinkDelegate {
-                      public DeepLinkDelegate(SampleModuleRegistry sampleModuleRegistry) {
-                        super(Arrays.asList(
-                          sampleModuleRegistry
-                        ));
-                      }
+                public final class DeepLinkDelegate extends BaseDeepLinkDelegate {
+                  public DeepLinkDelegate(@NotNull SampleModuleRegistry sampleModuleRegistry) {
+                    super(Arrays.asList(
+                      sampleModuleRegistry)
+                    );
+                  }
+                
+                  public DeepLinkDelegate(@NotNull SampleModuleRegistry sampleModuleRegistry,
+                      @NotNull Map<String, String> configurablePathSegmentReplacements) {
+                    super(Arrays.asList(
+                      sampleModuleRegistry),
+                      configurablePathSegmentReplacements
+                    );
+                  }
+                
+                  public DeepLinkDelegate(@NotNull SampleModuleRegistry sampleModuleRegistry,
+                      @NotNull Map<String, String> configurablePathSegmentReplacements,
+                      @NotNull Function0<TypeConverters> typeConverters) {
+                    super(Arrays.asList(
+                      sampleModuleRegistry),
+                      configurablePathSegmentReplacements,
+                      typeConverters
+                    );
+                  }
+                
+                  public DeepLinkDelegate(@NotNull SampleModuleRegistry sampleModuleRegistry,
+                      @NotNull Map<String, String> configurablePathSegmentReplacements,
+                      @NotNull Function0<TypeConverters> typeConverters,
+                      @NotNull Function3<DeepLinkUri, Type, ? super String, Integer> typeConversionErrorNullable,
+                      @NotNull Function3<DeepLinkUri, Type, ? super String, Integer> typeConversionErrorNonNullable) {
+                    super(Arrays.asList(
+                      sampleModuleRegistry),
+                      configurablePathSegmentReplacements,
+                      typeConverters,
+                      null,
+                      typeConversionErrorNullable,
+                      typeConversionErrorNonNullable
+                    );
+                  }
+                }
 
-                      public DeepLinkDelegate(SampleModuleRegistry sampleModuleRegistry,
-                          Map<String, String> configurablePathSegmentReplacements) {
-                        super(Arrays.asList(
-                          sampleModuleRegistry),
-                          configurablePathSegmentReplacements
-                        );
-                      }
-                    }
-                    
                     """.trimIndent(),
                 "SampleModuleRegistry.java" to
                     """
@@ -607,7 +800,7 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
                       }
                     
                       private static String matchIndex0() {
-                        return "\u0001\u0001\u0000\u0000\u0000\u0000\u0000£r\u0002\u0006\u0000\u0000\u0000\u0000\u0000\u0095airbnb\u0004\u000b\u0000\u0000\u0000\u0000\u0000\u0082example.com\b\u0012\u0000h\u0000\u0000\u0000\u0000innerClassDeeplink\u0000'airbnb://example.com/innerClassDeeplink\u0000%com.example.SampleActivity${"\$"}InnerClass\u0017intentForDeepLinkMethod";
+                        return "\u0001\u0001\u0000\u0000\u0000\u0000\u0000¤r\u0002\u0006\u0000\u0000\u0000\u0000\u0000\u0096airbnb\u0004\u000b\u0000\u0000\u0000\u0000\u0000\u0083example.com\b\u0012\u0000i\u0000\u0000\u0000\u0000innerClassDeeplink\u0001\u0000'airbnb://example.com/innerClassDeeplink\u0000%com.example.SampleActivity${"\$"}InnerClass\u0017intentForDeepLinkMethod";
                       }
                     }
 
@@ -638,7 +831,7 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
             results = results,
             registryClassName = "com.example.SampleModuleRegistry",
             indexEntries = listOf(
-                DeepLinkEntry(
+                DeepLinkEntry.MethodDeeplinkEntry(
                     uriTemplate = "airbnb://example.com/innerClassDeeplink",
                     className = "com.example.SampleActivity\$InnerClass\$DeepLinks",
                     method = "intentForDeepLinkMethod"
@@ -650,26 +843,58 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
                     package com.example;
 
                     import com.airbnb.deeplinkdispatch.BaseDeepLinkDelegate;
+                    import com.airbnb.deeplinkdispatch.DeepLinkUri;
+                    import com.airbnb.deeplinkdispatch.handler.TypeConverters;
+                    import java.lang.Integer;
                     import java.lang.String;
+                    import java.lang.reflect.Type;
                     import java.util.Arrays;
                     import java.util.Map;
-
+                    import kotlin.jvm.functions.Function0;
+                    import kotlin.jvm.functions.Function3;
+                    import org.jetbrains.annotations.NotNull;
+                    
                     public final class DeepLinkDelegate extends BaseDeepLinkDelegate {
-                      public DeepLinkDelegate(SampleModuleRegistry sampleModuleRegistry) {
+                      public DeepLinkDelegate(@NotNull SampleModuleRegistry sampleModuleRegistry) {
                         super(Arrays.asList(
-                          sampleModuleRegistry
-                        ));
+                          sampleModuleRegistry)
+                        );
                       }
-
-                      public DeepLinkDelegate(SampleModuleRegistry sampleModuleRegistry,
-                          Map<String, String> configurablePathSegmentReplacements) {
+                    
+                      public DeepLinkDelegate(@NotNull SampleModuleRegistry sampleModuleRegistry,
+                          @NotNull Map<String, String> configurablePathSegmentReplacements) {
                         super(Arrays.asList(
                           sampleModuleRegistry),
                           configurablePathSegmentReplacements
                         );
                       }
-                    }
                     
+                      public DeepLinkDelegate(@NotNull SampleModuleRegistry sampleModuleRegistry,
+                          @NotNull Map<String, String> configurablePathSegmentReplacements,
+                          @NotNull Function0<TypeConverters> typeConverters) {
+                        super(Arrays.asList(
+                          sampleModuleRegistry),
+                          configurablePathSegmentReplacements,
+                          typeConverters
+                        );
+                      }
+                    
+                      public DeepLinkDelegate(@NotNull SampleModuleRegistry sampleModuleRegistry,
+                          @NotNull Map<String, String> configurablePathSegmentReplacements,
+                          @NotNull Function0<TypeConverters> typeConverters,
+                          @NotNull Function3<DeepLinkUri, Type, ? super String, Integer> typeConversionErrorNullable,
+                          @NotNull Function3<DeepLinkUri, Type, ? super String, Integer> typeConversionErrorNonNullable) {
+                        super(Arrays.asList(
+                          sampleModuleRegistry),
+                          configurablePathSegmentReplacements,
+                          typeConverters,
+                          null,
+                          typeConversionErrorNullable,
+                          typeConversionErrorNonNullable
+                        );
+                      }
+                    }
+
                     """.trimIndent(),
                 "SampleModuleRegistry.java" to
                     """
@@ -686,12 +911,69 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
                       }
                     
                       private static String matchIndex0() {
-                        return "\u0001\u0001\u0000\u0000\u0000\u0000\u0000­r\u0002\u0006\u0000\u0000\u0000\u0000\u0000\u009fairbnb\u0004\u000b\u0000\u0000\u0000\u0000\u0000\u008cexample.com\b\u0012\u0000r\u0000\u0000\u0000\u0000innerClassDeeplink\u0000'airbnb://example.com/innerClassDeeplink\u0000/com.example.SampleActivity${"$"}InnerClass${"$"}DeepLinks\u0017intentForDeepLinkMethod";
+                        return "\u0001\u0001\u0000\u0000\u0000\u0000\u0000®r\u0002\u0006\u0000\u0000\u0000\u0000\u0000 airbnb\u0004\u000b\u0000\u0000\u0000\u0000\u0000\u008dexample.com\b\u0012\u0000s\u0000\u0000\u0000\u0000innerClassDeeplink\u0001\u0000'airbnb://example.com/innerClassDeeplink\u0000/com.example.SampleActivity${"\$"}InnerClass${"\$"}DeepLinks\u0017intentForDeepLinkMethod";
                       }
                     }
 
                     """.trimIndent()
             )
+        )
+    }
+
+    @Test
+    fun testMultipleDeepLinkHandlersPerPackage() {
+        val sourceFiles = listOf(
+            customAnnotationPlaceholderInSchemeHostAppLink,
+            sampleActivityWithInnerClassDeeplinkJava,
+            secondSampleActivityWithInnerClassDeeplinkJava,
+            module,
+            fakeBaseDeeplinkDelegate,
+        )
+        val results = listOf(
+            compileIncremental(
+                sourceFiles = sourceFiles,
+                customDeepLinks = listOf("com.example.PlaceholderDeepLink"),
+                useKsp = false,
+            ),
+            compileIncremental(
+                sourceFiles = sourceFiles,
+                customDeepLinks = listOf("com.example.PlaceholderDeepLink"),
+                useKsp = true,
+            )
+        )
+        assertCompileError(
+            results,
+            "Only one @DeepLinkHandler annotated element allowed per package!" +
+                " com.example has com.example.SampleActivity, com.example.SecondSampleActivity."
+        )
+    }
+
+    @Test
+    fun testWrongClassTypeAnnotated() {
+        val sourceFiles = listOf(
+            customAnnotationPlaceholderInSchemeHostAppLink,
+            sampleWrongClassTypeAnnotated,
+            module,
+            fakeBaseDeeplinkDelegate,
+        )
+        val results = listOf(
+            compileIncremental(
+                sourceFiles = sourceFiles,
+                customDeepLinks = listOf("com.example.PlaceholderDeepLink"),
+                useKsp = false,
+            ),
+            compileIncremental(
+                sourceFiles = sourceFiles,
+                customDeepLinks = listOf("com.example.PlaceholderDeepLink"),
+                useKsp = true,
+            )
+        )
+        assertCompileError(
+            results,
+            "Only classes inheriting from either 'android.app.Activity' or public" +
+                " classes implementing the 'com.airbnb.deeplinkdispatch.handler" +
+                ".DeepLinkHandler' interface can be annotated with @DeepLink or another custom" +
+                " deep link annotation."
         )
     }
 }

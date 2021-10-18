@@ -17,6 +17,7 @@ package com.airbnb.deeplinkdispatch
 
 import androidx.room.compiler.processing.XAnnotation
 import androidx.room.compiler.processing.XElement
+import androidx.room.compiler.processing.XExecutableParameterElement
 import androidx.room.compiler.processing.XFiler
 import androidx.room.compiler.processing.XMethodElement
 import androidx.room.compiler.processing.XProcessingEnv
@@ -31,6 +32,9 @@ import com.airbnb.deeplinkdispatch.ProcessorUtils.hasEmptyOrNullString
 import com.airbnb.deeplinkdispatch.base.MatchIndex.ALLOWED_VALUES_DELIMITER
 import com.airbnb.deeplinkdispatch.base.Utils
 import com.airbnb.deeplinkdispatch.base.Utils.isConfigurablePathSegment
+import com.airbnb.deeplinkdispatch.handler.DeepLinkParamType
+import com.airbnb.deeplinkdispatch.handler.DeeplinkParam
+import com.airbnb.deeplinkdispatch.handler.TypeConverters
 import com.google.devtools.ksp.processing.SymbolProcessorEnvironment
 import com.squareup.javapoet.ClassName
 import com.squareup.javapoet.CodeBlock
@@ -38,8 +42,12 @@ import com.squareup.javapoet.JavaFile
 import com.squareup.javapoet.MethodSpec
 import com.squareup.javapoet.ParameterSpec
 import com.squareup.javapoet.ParameterizedTypeName
+import com.squareup.javapoet.TypeName
 import com.squareup.javapoet.TypeSpec
+import com.squareup.javapoet.WildcardTypeName
+import org.jetbrains.annotations.NotNull
 import java.io.IOException
+import java.lang.reflect.Type
 import java.net.MalformedURLException
 import java.util.Arrays
 import javax.lang.model.SourceVersion
@@ -52,6 +60,18 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
     BaseProcessor(symbolProcessorEnvironment) {
 
     private val documentor by lazy { Documentor(environment) }
+
+    private val deepLinkHandlerQName = "com.airbnb.deeplinkdispatch.handler.DeepLinkHandler"
+    private val deepLinkHandlerHandleDeepLinkMethodName = "handleDeepLink"
+
+    private val deepLinkHandlerInterface by lazy {
+        environment.findTypeElement(deepLinkHandlerQName)!!
+    }
+    private val handleDeepLinkInterfaceMethod by lazy {
+        deepLinkHandlerInterface.getAllMethods().toList()
+            .firstOrNull { it.name == "handleDeepLink" }
+            ?: error("Interface has no single 'handleDeepLink' method which is impossible.")
+    }
 
     private val incrementalMetadata: IncrementalMetadata by lazy {
         IncrementalMetadata(
@@ -122,28 +142,38 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
                 customAnnotations.flatMap { round.getElementsAnnotatedWith(it.qualifiedName) } +
                     round.getElementsAnnotatedWith(DEEP_LINK_CLASS)
 
-            val annotatedMethodElements = allDeepLinkAnnotatedElements.filterIsInstance<XMethodElement>().toSet()
-            val annotatedClassElements = allDeepLinkAnnotatedElements.filterIsInstance<XTypeElement>()
-                .filter { it.isClass() }.toSet()
+            val annotatedMethodElements =
+                allDeepLinkAnnotatedElements.filterIsInstance<XMethodElement>().toSet()
+            val annotatedClassElements =
+                allDeepLinkAnnotatedElements.filterIsInstance<XTypeElement>()
+                    .filter { it.isClass() }.toSet()
+            val annotatedObjectElements =
+                allDeepLinkAnnotatedElements.filterIsInstance<XTypeElement>()
+                    .filter { it.isKotlinObject() }.toSet()
 
             verifyAnnotatedType(
                 allDeepLinkAnnotatedElements,
                 annotatedClassElements,
-                annotatedMethodElements
+                annotatedObjectElements,
+                annotatedMethodElements,
             )
 
             // Create DeepLinkDelegate classes
-            createDeeplinkDelegates(roundEnv = round)
+            if (!createDeeplinkDelegates(roundEnv = round)) {
+                return
+            }
 
             // Create DeepLinkRegistry classes
             createDeeplinkRegistries(
                 roundEnv = round,
                 annotatedClassElements = annotatedClassElements,
                 annotatedMethodElements = annotatedMethodElements,
+                annotatedObjectElements = annotatedObjectElements,
                 deepLinkElements = collectDeepLinkElements(
                     prefixes = customAnnotationPrefixes(customAnnotations),
                     classElementsToProcess = annotatedClassElements,
-                    methodElementsToProcess = annotatedMethodElements
+                    objectElementsToProcess = annotatedObjectElements,
+                    methodElementsToProcess = annotatedMethodElements,
                 ),
             )
         } catch (e: DeepLinkProcessorException) {
@@ -157,10 +187,15 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
     private fun collectDeepLinkElements(
         prefixes: Map<XType, Array<String>>,
         classElementsToProcess: Set<XTypeElement>,
+        objectElementsToProcess: Set<XTypeElement>,
         methodElementsToProcess: Set<XMethodElement>
     ): List<DeepLinkAnnotatedElement> {
         return (
             classElementsToProcess.flatMap { element ->
+                verifyCass(element)
+                mapUrisToDeepLinkAnnotatedElement(element, prefixes)
+            } + objectElementsToProcess.flatMap { element ->
+                verifyObjectElement(element)
                 mapUrisToDeepLinkAnnotatedElement(element, prefixes)
             } + methodElementsToProcess.flatMap { element ->
                 verifyMethod(element)
@@ -172,21 +207,39 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
     private fun mapUrisToDeepLinkAnnotatedElement(
         element: XElement,
         prefixes: Map<XType, Array<String>>
-    ): List<DeepLinkAnnotatedElement?> = getAllUrisForAnnotatedElement(element, prefixes).mapNotNull { uri ->
-        try {
-            when (element) {
-                is XMethodElement ->
-                    DeepLinkAnnotatedElement.MethodAnnotatedElement(uri, element)
-                else -> DeepLinkAnnotatedElement.ClassAnnotatedElement(uri, element as XTypeElement)
+    ): List<DeepLinkAnnotatedElement?> =
+        getAllUrisForAnnotatedElement(element, prefixes).mapNotNull { uri ->
+            try {
+                when {
+                    element is XMethodElement -> DeepLinkAnnotatedElement.MethodAnnotatedElement(
+                        uri = uri,
+                        element = element
+                    )
+                    element is XTypeElement && element.isActivity() ->
+                        DeepLinkAnnotatedElement.ActivityAnnotatedElement(
+                            uri = uri,
+                            element = element
+                        )
+                    element is XTypeElement && element.isHandler() -> {
+                        verifyHandlerMatchArgs(element, uri)
+                        DeepLinkAnnotatedElement.HandlerAnnotatedElement(
+                            uri = uri,
+                            element = element
+                        )
+                    }
+                    else -> error(
+                        "Internal error: Elements can only be 'MethodAnnotatedElement', " +
+                            "'ActivityAnnotatedElement' or 'HandlerAnnotatedElement'"
+                    )
+                }
+            } catch (e: MalformedURLException) {
+                environment.messager.printMessage(
+                    kind = Diagnostic.Kind.ERROR,
+                    msg = "Malformed Deep Link URL $uri"
+                )
+                null
             }
-        } catch (e: MalformedURLException) {
-            environment.messager.printMessage(
-                kind = Diagnostic.Kind.ERROR,
-                msg = "Malformed Deep Link URL $uri"
-            )
-            null
         }
-    }
 
     private fun getAllUrisForAnnotatedElement(
         element: XElement,
@@ -198,28 +251,124 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
         ) + (element.getAnnotation(DEEP_LINK_CLASS)?.value?.value?.toList() ?: emptyList())
     }
 
+    private fun verifyCass(classElement: XTypeElement) {
+        if (!validClassElement(classElement)) {
+            throw DeepLinkProcessorException(
+                element = classElement,
+                message =
+                "Only classes inheriting from either 'android.app.Activity' or public classes" +
+                    " implementing the '$deepLinkHandlerQName' interface can be annotated with" +
+                    " @DeepLink or another custom deep link annotation."
+            )
+        }
+    }
+
+    private fun validClassElement(classElement: XTypeElement) =
+        classElement.isActivity() || classElement.isHandler()
+
     private fun verifyMethod(methodElement: XMethodElement) {
         if (!methodElement.isStatic()) {
-            logError(
+            throw DeepLinkProcessorException(
                 element = methodElement,
                 message = "Only static methods can be annotated with @${DEEP_LINK_CLASS.simpleName}",
             )
-        }
+        } else
         // FIXME This is crashing with an NPE on internal classes when accessing the returnType.
         // You can jut comment this check out for now if you need this to pass.
-        if (methodElement.returnType.typeElement?.qualifiedName !in listOf(
-                "android.content.Intent",
-                "androidx.core.app.TaskStackBuilder",
-                "com.airbnb.deeplinkdispatch.DeepLinkMethodResult"
+            if (methodElement.returnType.typeElement?.qualifiedName !in listOf(
+                    "android.content.Intent",
+                    "androidx.core.app.TaskStackBuilder",
+                    "com.airbnb.deeplinkdispatch.DeepLinkMethodResult"
+                )
+            ) {
+                throw DeepLinkProcessorException(
+                    element = methodElement,
+                    message = (
+                        "Only `Intent`, `androidx.core.app.TaskStackBuilder` or " +
+                            "'com.airbnb.deeplinkdispatch.DeepLinkMethodResult' are supported. Please double " +
+                            "check your imports and try again."
+                        )
+                )
+            }
+    }
+
+    private fun verifyHandlerMatchArgs(element: XTypeElement, uriTemplate: String) {
+
+        // Find a method on our element that override the DeepLinkHandler interface method
+        val argsType = element.getAllMethods().singleOrNull {
+            it.overrides(
+                other = handleDeepLinkInterfaceMethod,
+                owner = deepLinkHandlerInterface
             )
+        }?.parameters?.last()?.type ?: error("Is not overriding method from interface. This is impossible.")
+
+        val argsTypeElement = argsType.typeElement
+        if (argsTypeElement?.isPublic() == false) {
+            throw DeepLinkProcessorException(
+                element = argsTypeElement,
+                message = "Argument class must be public."
+            )
+        }
+        val argsConstructor = argsTypeElement?.getConstructors()?.singleOrNull() ?: run {
+            throw DeepLinkProcessorException(
+                element = argsTypeElement ?: element,
+                message = "Argument class can only have one constructor"
+            )
+        }
+        val allArgParameters = argsConstructor.parameters
+        val allPathParameters = allArgParameters.filterAnnotationType(DeepLinkParamType.Path)
+        val allQueryParameters = allArgParameters.filterAnnotationType(DeepLinkParamType.Query)
+        if (allPathParameters.size + allQueryParameters.size != allArgParameters.size) {
+            throw DeepLinkProcessorException(
+                element = argsTypeElement,
+                message = "All elements of the constructor need to be annotated with the @${DeeplinkParam::class.simpleName} annotation.\n" +
+                    "Parameters: ${allArgParameters.joinToString { it.name }} " +
+                    "Annotated parameters: ${(allPathParameters + allQueryParameters).joinToString { it.name }}"
+            )
+        }
+        val deepLinkUriTemplate = DeepLinkUri.parseTemplate(uriTemplate)
+        val templateHostPathSchemePlaceholders = deepLinkUriTemplate.schemeHostPathPlaceholders
+        val annotatedPathParameterNames = allPathParameters.mapNotNull {
+            it.getAnnotation(DeeplinkParam::class)?.value?.name
+        }.toSet()
+        val annotatedPathParametersThatAreNotInUrlTemplate =
+            annotatedPathParameterNames.filter { !templateHostPathSchemePlaceholders.contains(it) }
+        if (annotatedPathParametersThatAreNotInUrlTemplate.isNotEmpty()) {
+            throw DeepLinkProcessorException(
+                element = argsTypeElement,
+                message = "The annotated path arguments in the arguments class must be a subset of" +
+                    " the path placeholders contained in the url. Annotated in args class but not" +
+                    " in uri template: ${annotatedPathParametersThatAreNotInUrlTemplate.joinToString()}"
+            )
+        }
+    }
+
+    private fun List<XExecutableParameterElement>.filterAnnotationType(
+        deepLinkParamType: DeepLinkParamType
+    ) =
+        filter { argParameter ->
+            argParameter.getAllAnnotations().find { annotation ->
+                annotation.qualifiedName == DeeplinkParam::class.qualifiedName
+            }?.annotationValues?.any { annotationValue ->
+                annotationValue.value.toString() == deepLinkParamType.toString()
+            } ?: false
+        }
+
+    private fun verifyObjectElement(element: XTypeElement) {
+        if (!element.isHandler()) {
+            throw DeepLinkProcessorException(
+                element = element,
+                message = "Only public objects implementing $deepLinkHandlerQName can be annotated" +
+                    " with @${DEEP_LINK_CLASS.simpleName} or any custom deep link annotation"
+            )
+        }
+        if (element.getAllMethods()
+            .filter { it.name == deepLinkHandlerHandleDeepLinkMethodName && it.parameters.size == 2 }.count() != 1
         ) {
-            logError(
-                element = methodElement,
-                message = (
-                    "Only `Intent`, `androidx.core.app.TaskStackBuilder` or " +
-                        "'com.airbnb.deeplinkdispatch.DeepLinkMethodResult' are supported. Please double " +
-                        "check your imports and try again."
-                    )
+            throw DeepLinkProcessorException(
+                element = element,
+                message = "More than one method with two parameters and" +
+                    " $deepLinkHandlerHandleDeepLinkMethodName name found in handler class."
             )
         }
     }
@@ -252,21 +401,37 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
     private fun verifyAnnotatedType(
         allAnnotatedElements: List<XElement>,
         annotatedClassElements: Set<XTypeElement>,
+        annotatedObjectElements: Set<XTypeElement>,
         annotatedMethodElements: Set<XMethodElement>
     ) {
         allAnnotatedElements.filter { annotatedElement ->
-            !annotatedClassElements.contains(annotatedElement) && !annotatedMethodElements.contains(annotatedElement)
+            !annotatedClassElements.contains(annotatedElement) && !annotatedMethodElements.contains(
+                annotatedElement
+            ) && !annotatedObjectElements.contains(annotatedElement)
         }.forEach { annotatedElementThatIsNeitherClassNorMethod ->
             logError(
                 element = annotatedElementThatIsNeitherClassNorMethod,
-                message = "Only classes and methods can be annotated with @${DEEP_LINK_CLASS.simpleName}",
+                message = "Only classes, objects and methods can be annotated with @${DEEP_LINK_CLASS.simpleName} or custom deep link annotation",
             )
         }
     }
 
-    private fun createDeeplinkDelegates(roundEnv: XRoundEnv) {
-        val deeplinkHandlerAnnotatedElements = roundEnv.getElementsAnnotatedWith(DeepLinkHandler::class)
-            .filterIsInstance<XTypeElement>()
+    private fun createDeeplinkDelegates(roundEnv: XRoundEnv): Boolean {
+        val deeplinkHandlerAnnotatedElements =
+            roundEnv.getElementsAnnotatedWith(DeepLinkHandler::class)
+                .filterIsInstance<XTypeElement>()
+        val packagesWithMoreThanOneDeepLinkHandler =
+            deeplinkHandlerAnnotatedElements.groupBy { it.packageName }.filter { it.value.size > 1 }
+        if (packagesWithMoreThanOneDeepLinkHandler.isNotEmpty()) {
+            packagesWithMoreThanOneDeepLinkHandler.forEach { it ->
+                logError(
+                    element = it.value.first().enclosingTypeElement,
+                    message = "Only one @DeepLinkHandler annotated element allowed per package!" +
+                        " ${it.key} has ${it.value.joinToString { it.qualifiedName }}.",
+                )
+            }
+            return false
+        }
         deeplinkHandlerAnnotatedElements.forEach { deepLinkHandlerElement ->
             val deepLinkModuleElements =
                 deepLinkHandlerElement.getAnnotation(DeepLinkHandler::class)?.getAsTypeList("value")
@@ -281,16 +446,19 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
                 }
             }
         }
+        return true
     }
 
     private fun createDeeplinkRegistries(
         roundEnv: XRoundEnv,
         annotatedClassElements: Set<XTypeElement>,
         annotatedMethodElements: Set<XMethodElement>,
+        annotatedObjectElements: Set<XTypeElement>,
         deepLinkElements: List<DeepLinkAnnotatedElement>
     ) {
         val deepLinkModuleAnnotatedElements =
-            roundEnv.getElementsAnnotatedWith(DeepLinkModule::class).filterIsInstance<XTypeElement>()
+            roundEnv.getElementsAnnotatedWith(DeepLinkModule::class)
+                .filterIsInstance<XTypeElement>()
         validateAllowedPlaceholderValues(deepLinkElements)
         deepLinkModuleAnnotatedElements.forEach { deepLinkModuleElement ->
             tryCatchFileWriting {
@@ -298,7 +466,7 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
                     packageName = deepLinkModuleElement.packageName,
                     className = deepLinkModuleElement.className.simpleName(),
                     deepLinkElements = deepLinkElements,
-                    originatingElements = annotatedClassElements + annotatedMethodElements + deepLinkModuleElement
+                    originatingElements = annotatedClassElements + annotatedMethodElements + annotatedObjectElements + deepLinkModuleElement
                 )
             }
         }
@@ -309,7 +477,7 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
     private val allowedValuesRegex = "(?<=\\()(.*?)(?=\\))".toRegex()
 
     private fun validateAllowedPlaceholderValues(annotatedElements: List<DeepLinkAnnotatedElement>) {
-        val bla = annotatedElements.forEach { annotatedElement ->
+        annotatedElements.forEach { annotatedElement ->
             val placeholderStrings = placeholderRegex.findAll(annotatedElement.uri).map { it.value }
             placeholderStrings.forEach { placeholderString ->
                 val placeholderMatches = allowedValuesRegex.findAll(placeholderString)
@@ -336,7 +504,10 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
         try {
             action.invoke()
         } catch (e: IOException) {
-            environment.messager.printMessage(Diagnostic.Kind.ERROR, "Error creating file: ${e.stackTraceToString()}")
+            environment.messager.printMessage(
+                Diagnostic.Kind.ERROR,
+                "Error creating file: ${e.stackTraceToString()}"
+            )
         } catch (e: RuntimeException) {
             environment.messager.printMessage(
                 Diagnostic.Kind.ERROR,
@@ -351,71 +522,162 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
         registryClasses: List<XTypeElement>,
         originatingElement: XElement
     ) {
-        val moduleRegistriesArgument = CodeBlock.builder()
-        val totalElements = registryClasses.size
-        for (i in 0 until totalElements) {
-            moduleRegistriesArgument.add(
-                "\$L\$L",
-                moduleNameToRegistryName(registryClasses[i]).decapitalizeIfNotTwoFirstCharsUpperCase(),
-                if (i < totalElements - 1) ",\n" else ""
-            )
-        }
-        val registriesInitializerBuilder = CodeBlock.builder()
-            .add("super(\$T.asList(\n", ClassName.get(Arrays::class.java))
-            .indent()
-            .add(moduleRegistriesArgument.build())
-            .add("\n").unindent().add("));\n")
-            .build()
-        val registriesInitializerBuilderWithPathVariables = CodeBlock.builder()
-            .add("super(\$T.asList(\n", ClassName.get(Arrays::class.java))
-            .indent()
-            .add(moduleRegistriesArgument.build())
-            .add("),\nconfigurablePathSegmentReplacements").unindent().add("\n);\n")
-            .build()
-        val constructor = MethodSpec.constructorBuilder()
-            .addModifiers(Modifier.PUBLIC)
-            .addParameters(
-                registryClasses.map { registryClass ->
-                    ParameterSpec.builder(
-                        moduleElementToRegistryClassName(registryClass),
-                        moduleNameToRegistryName(registryClass).decapitalizeIfNotTwoFirstCharsUpperCase()
-                    ).build()
-                }.toList()
-            )
-            .addCode(registriesInitializerBuilder)
-            .build()
-        val configurablePathSegmentReplacementsParam = ParameterSpec.builder(
-            ParameterizedTypeName.get(
-                MutableMap::class.java,
-                String::class.java,
-                String::class.java
-            ),
-            "configurablePathSegmentReplacements"
-        )
-            .build()
-        val constructorWithPathVariables = MethodSpec.constructorBuilder()
-            .addModifiers(Modifier.PUBLIC)
-            .addParameters(
-                registryClasses.map { registryClass ->
-                    ParameterSpec.builder(
-                        moduleElementToRegistryClassName(registryClass),
-                        moduleNameToRegistryName(registryClass).decapitalizeIfNotTwoFirstCharsUpperCase()
-                    )
-                        .build()
-                }.toList()
-            )
-            .addParameter(configurablePathSegmentReplacementsParam)
-            .addCode(registriesInitializerBuilderWithPathVariables)
-            .build()
         val deepLinkDelegateBuilder = TypeSpec.classBuilder("DeepLinkDelegate")
             .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
             .superclass(CLASS_BASE_DEEP_LINK_DELEGATE)
-            .addMethod(constructor)
-            .addMethod(constructorWithPathVariables)
+            .addMethod(constructorWith(emptyList(), registryClasses))
+            .addMethod(
+                constructorWith(
+                    listOf(ConstructorParameters.ConfigurablePathSegments),
+                    registryClasses
+                )
+            )
+            .addMethod(
+                constructorWith(
+                    listOf(
+                        ConstructorParameters.ConfigurablePathSegments,
+                        ConstructorParameters.TypeConverters
+                    ),
+                    registryClasses
+                )
+            )
+            .addMethod(
+                constructorWith(
+                    listOf(
+                        ConstructorParameters.ConfigurablePathSegments,
+                        ConstructorParameters.TypeConverters,
+                        ConstructorParameters.TypeConversionErrorNullable,
+                        ConstructorParameters.TypeConversionErrorNonNullable
+                    ),
+                    registryClasses
+                )
+            )
             .addOriginatingElement(originatingElement)
         JavaFile.builder(packageName, deepLinkDelegateBuilder.build())
             .build()
             .writeTo(environment.filer, XFiler.Mode.Isolating)
+    }
+
+    private fun constructorWith(
+        parameters: List<ConstructorParameters>,
+        registryClasses: List<XTypeElement>
+    ): MethodSpec {
+        return MethodSpec.constructorBuilder()
+            .addModifiers(Modifier.PUBLIC)
+            .apply {
+                addParameters(
+                    registryClasses.map { registryClass ->
+                        ParameterSpec.builder(
+                            moduleElementToRegistryClassName(registryClass),
+                            moduleNameToRegistryName(registryClass).decapitalizeIfNotTwoFirstCharsUpperCase()
+                        )
+                            .addAnnotation(NotNull::class.java)
+                            .build()
+                    }.toList()
+                )
+                if (parameters.contains(ConstructorParameters.ConfigurablePathSegments)) {
+                    addParameter(
+                        ParameterSpec.builder(
+                            ParameterizedTypeName.get(
+                                MutableMap::class.java,
+                                String::class.java,
+                                String::class.java
+                            ),
+                            "configurablePathSegmentReplacements"
+                        ).addAnnotation(NotNull::class.java)
+                            .build()
+                    )
+                }
+                val superOfString = WildcardTypeName.supertypeOf(String::class.java)
+                val function3 = Function3::class.java
+                val functionalParameter = ParameterizedTypeName.get(
+                    ClassName.get(function3.packageName, function3.simpleName),
+                    TypeName.get(DeepLinkUri::class.java),
+                    TypeName.get(Type::class.java),
+                    superOfString,
+                    TypeName.get(Integer::class.java)
+                )
+                if (parameters.contains(ConstructorParameters.TypeConverters)) {
+                    val function0 = Function0::class.java
+                    val typeConverterFunctionalParameter = ParameterizedTypeName.get(
+                        ClassName.get(function0.packageName, function0.simpleName),
+                        TypeName.get(TypeConverters::class.java)
+                    )
+                    addParameter(
+                        ParameterSpec.builder(
+                            typeConverterFunctionalParameter,
+                            "typeConverters"
+                        ).addAnnotation(NotNull::class.java)
+                            .build()
+                    )
+                }
+                if (parameters.contains((ConstructorParameters.TypeConversionErrorNullable))) {
+                    // Function1<? super String, Integer> typeConversionErrorNullable
+                    addParameter(
+                        ParameterSpec.builder(
+                            functionalParameter,
+                            "typeConversionErrorNullable"
+                        ).addAnnotation(NotNull::class.java)
+                            .build()
+                    ).build()
+                }
+                if (parameters.contains(ConstructorParameters.TypeConversionErrorNonNullable)) {
+                    addParameter(
+                        ParameterSpec.builder(
+                            functionalParameter,
+                            "typeConversionErrorNonNullable"
+                        )
+                            .addAnnotation(NotNull::class.java)
+                            .build()
+                    ).build()
+                }
+                addCode(initCodeblock(parameters, registryClasses))
+            }.build()
+    }
+
+    private fun initCodeblock(
+        parameters: List<DeepLinkProcessor.ConstructorParameters>,
+        registryClasses: List<XTypeElement>
+    ): CodeBlock? {
+        return CodeBlock.builder().apply {
+            add("super(\$T.asList(\n", ClassName.get(Arrays::class.java))
+            val moduleRegistriesArgument = CodeBlock.builder()
+            val totalElements = registryClasses.size
+            for (i in 0 until totalElements) {
+                moduleRegistriesArgument.add(
+                    "\$L\$L",
+                    moduleNameToRegistryName(registryClasses[i]).decapitalizeIfNotTwoFirstCharsUpperCase(),
+                    if (i < totalElements - 1) ",\n" else ""
+                )
+            }
+            moduleRegistriesArgument.add(")")
+            indent()
+            add(moduleRegistriesArgument.build())
+            if (parameters.contains(ConstructorParameters.ConfigurablePathSegments)) {
+                add(",\nconfigurablePathSegmentReplacements")
+            }
+            if (parameters.contains(ConstructorParameters.TypeConverters)) {
+                add(",\ntypeConverters")
+            }
+            if (parameters.contains((ConstructorParameters.TypeConversionErrorNullable)) || parameters.contains(
+                    ConstructorParameters.TypeConversionErrorNonNullable
+                )
+            ) {
+                add(",\nnull")
+            }
+            if (parameters.contains((ConstructorParameters.TypeConversionErrorNullable))) {
+                add(",\ntypeConversionErrorNullable")
+            }
+            if (parameters.contains(ConstructorParameters.TypeConversionErrorNonNullable)) {
+                add(",\ntypeConversionErrorNonNullable")
+            }
+            unindent()
+            add("\n);\n")
+        }.build()
+    }
+
+    enum class ConstructorParameters {
+        ConfigurablePathSegments, TypeConverters, ErrorHandler, TypeConversionErrorNullable, TypeConversionErrorNonNullable
     }
 
     private fun logError(element: XElement?, message: String) {
@@ -437,19 +699,27 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
             val uriTemplate = element.uri
             try {
                 when (element) {
-                    is DeepLinkAnnotatedElement.ClassAnnotatedElement ->
+                    is DeepLinkAnnotatedElement.ActivityAnnotatedElement ->
                         urisTrie.addToTrie(
-                            deepLinkUriTemplate = uriTemplate,
-                            annotatedClassFullyQualifiedName = element.annotatedClass.className.reflectionName()
-                                ?: "",
-                            annotatedMethod = null
+                            DeepLinkEntry.ActivityDeeplinkEntry(
+                                uriTemplate = uriTemplate,
+                                className = element.annotatedClass.className.reflectionName() ?: ""
+                            )
                         )
                     is DeepLinkAnnotatedElement.MethodAnnotatedElement ->
                         urisTrie.addToTrie(
-                            deepLinkUriTemplate = uriTemplate,
-                            annotatedClassFullyQualifiedName = element.annotatedClass.className.reflectionName()
-                                ?: "",
-                            annotatedMethod = element.method
+                            DeepLinkEntry.MethodDeeplinkEntry(
+                                uriTemplate = uriTemplate,
+                                className = element.annotatedClass.className.reflectionName() ?: "",
+                                method = element.method
+                            )
+                        )
+                    is DeepLinkAnnotatedElement.HandlerAnnotatedElement ->
+                        urisTrie.addToTrie(
+                            DeepLinkEntry.HandlerDeepLinkEntry(
+                                uriTemplate = uriTemplate,
+                                className = element.annotatedClass.className.reflectionName() ?: "",
+                            )
                         )
                 }
             } catch (e: IllegalArgumentException) {
@@ -548,7 +818,10 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
         return stringMethodNames
     }
 
-    private class IncrementalMetadata(val incremental: Boolean, val customAnnotations: Set<XTypeElement>)
+    private class IncrementalMetadata(
+        val incremental: Boolean,
+        val customAnnotations: Set<XTypeElement>
+    )
 
     companion object {
         private const val PACKAGE_NAME = "com.airbnb.deeplinkdispatch"
@@ -563,7 +836,7 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
 
         /**
          * For the given element find all custom deeplink elements on it and build all possible
-         * URIs that are supported by theset custom deeplinks.
+         * URIs that are supported by the set custom deeplinks.
          */
         private fun getAllDeeplinkUrIsFromCustomDeepLinksOnElement(
             element: XElement,
@@ -581,7 +854,11 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
         }
 
         internal inline fun <reified T : Annotation> XElement.findAnnotatedAnnotation(): List<XAnnotation> {
-            return getAllAnnotations().filter { annotation -> annotation.type.typeElement?.hasAnnotation(T::class) == true }
+            return getAllAnnotations().filter { annotation ->
+                annotation.type.typeElement?.hasAnnotation(
+                    T::class
+                ) == true
+            }
         }
 
         private fun Set<XTypeElement>.filterAnnotatedAnnotations(klass: KClass<*>): Set<XTypeElement> =
@@ -595,6 +872,13 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
 
         private fun moduleElementToRegistryClassName(element: XTypeElement): ClassName {
             return ClassName.get(
+                getPackage(element),
+                element.className.simpleName() + REGISTRY_CLASS_SUFFIX
+            )
+        }
+
+        private fun moduleElementToRegistryKClassName(element: XTypeElement): com.squareup.kotlinpoet.ClassName {
+            return com.squareup.kotlinpoet.ClassName(
                 getPackage(element),
                 element.className.simpleName() + REGISTRY_CLASS_SUFFIX
             )
@@ -619,11 +903,13 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
             }
             if (comparisonResult == 0) {
                 val element1Representation = when (element1) {
-                    is DeepLinkAnnotatedElement.ClassAnnotatedElement -> element1.uri + DeepLinkAnnotatedElement.ClassAnnotatedElement::class.simpleName
+                    is DeepLinkAnnotatedElement.ActivityAnnotatedElement -> element1.uri + DeepLinkAnnotatedElement.ActivityAnnotatedElement::class.simpleName
+                    is DeepLinkAnnotatedElement.HandlerAnnotatedElement -> "handler_" + element1.uri + DeepLinkAnnotatedElement.ActivityAnnotatedElement::class.simpleName
                     is DeepLinkAnnotatedElement.MethodAnnotatedElement -> element1.uri + element1.method + DeepLinkAnnotatedElement.MethodAnnotatedElement::class.simpleName
                 }
                 val element2Representation = when (element2) {
-                    is DeepLinkAnnotatedElement.ClassAnnotatedElement -> element2.uri + DeepLinkAnnotatedElement.ClassAnnotatedElement::class.simpleName
+                    is DeepLinkAnnotatedElement.ActivityAnnotatedElement -> element2.uri + DeepLinkAnnotatedElement.ActivityAnnotatedElement::class.simpleName
+                    is DeepLinkAnnotatedElement.HandlerAnnotatedElement -> "handler_" + element2.uri + DeepLinkAnnotatedElement.ActivityAnnotatedElement::class.simpleName
                     is DeepLinkAnnotatedElement.MethodAnnotatedElement -> element2.uri + element2.method + DeepLinkAnnotatedElement.MethodAnnotatedElement::class.simpleName
                 }
                 comparisonResult = element1Representation.compareTo(element2Representation)
@@ -631,4 +917,10 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
             return comparisonResult
         }
     }
+
+    private fun XTypeElement.isActivity() =
+        inheritanceHierarchyContains(listOf("android.app.Activity"))
+
+    private fun XTypeElement.isHandler() =
+        implementsInterfaces(listOf(deepLinkHandlerQName)) && isPublic()
 }

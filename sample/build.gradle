@@ -23,6 +23,15 @@ android {
     versionCode 1
     versionName "1.0"
   }
+  buildTypes {
+    release {
+      minifyEnabled true
+      shrinkResources true
+      proguardFiles getDefaultProguardFile(
+              'proguard-android-optimize.txt'),
+              'proguard-rules.pro'
+    }
+  }
   packagingOptions {
     exclude 'META-INF/services/javax.annotation.processing.Processor'
   }
@@ -48,6 +57,7 @@ dependencies {
   testImplementation deps.androidxTestCore
   testImplementation deps.roboelectric
   testImplementation deps.junit
+  testImplementation deps.mockk
 }
 
 ksp {

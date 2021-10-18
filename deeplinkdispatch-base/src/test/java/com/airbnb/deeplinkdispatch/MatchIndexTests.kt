@@ -6,22 +6,22 @@ import org.junit.Test
 @kotlin.ExperimentalUnsignedTypes
 class MatchIndexTests {
 
-    private val entryWithAllowedValues = DeepLinkEntry("http{scheme(|s)}://www.example.{tld(de|fr)}/somePath1/differentPath2", MatchIndexTests::class.java.name, "someMethod10")
-    private val entryWithAllowedValueOnlyOneElement = DeepLinkEntry("http{scheme(s)}://www.justtesting.com/somePath", MatchIndexTests::class.java.name, "someMethod10")
-    private val entryWithEmptyAllowedValue = DeepLinkEntry("http{scheme()}://www.anothertest.com/somePath", MatchIndexTests::class.java.name, "someMethod10")
+    private val entryWithAllowedValues = DeepLinkEntry.MethodDeeplinkEntry("http{scheme(|s)}://www.example.{tld(de|fr)}/somePath1/differentPath2", MatchIndexTests::class.java.name, "someMethod10")
+    private val entryWithAllowedValueOnlyOneElement = DeepLinkEntry.MethodDeeplinkEntry("http{scheme(s)}://www.justtesting.com/somePath", MatchIndexTests::class.java.name, "someMethod10")
+    private val entryWithEmptyAllowedValue = DeepLinkEntry.MethodDeeplinkEntry("http{scheme()}://www.anothertest.com/somePath", MatchIndexTests::class.java.name, "someMethod10")
 
     private val allowedValuesPlaceholderNames = setOf("scheme", "tld")
 
     private val testEntries: List<DeepLinkEntry> = listOf(
-        DeepLinkEntry("http://www.example.com/somePath1/differentPath2", MatchIndexTests::class.java.name, "someMethod1"),
-        DeepLinkEntry("https://www.example.com/path1/path2", MatchIndexTests::class.java.name, "someMethod2"),
-        DeepLinkEntry("dld://dldPath1/dldPath2", MatchIndexTests::class.java.name, "someMethod3"),
-        DeepLinkEntry("http://example.de/", MatchIndexTests::class.java.name, "someMethod4"),
-        DeepLinkEntry("http://example.com/path1", MatchIndexTests::class.java.name, "someMethod7"),
-        DeepLinkEntry("http://example.com/somethingElse", MatchIndexTests::class.java.name, "someMethod9"),
-        DeepLinkEntry("http://example.com/path1/pathElement2/path3", MatchIndexTests::class.java.name, "someMethod5"),
-        DeepLinkEntry("http://example.com/path1/someOtherPathElement2", MatchIndexTests::class.java.name, "someMethod6"),
-        DeepLinkEntry("http://example.com/", MatchIndexTests::class.java.name, "someMethod8"),
+        DeepLinkEntry.MethodDeeplinkEntry("http://www.example.com/somePath1/differentPath2", MatchIndexTests::class.java.name, "someMethod1"),
+        DeepLinkEntry.MethodDeeplinkEntry("https://www.example.com/path1/path2", MatchIndexTests::class.java.name, "someMethod2"),
+        DeepLinkEntry.MethodDeeplinkEntry("dld://dldPath1/dldPath2", MatchIndexTests::class.java.name, "someMethod3"),
+        DeepLinkEntry.MethodDeeplinkEntry("http://example.de/", MatchIndexTests::class.java.name, "someMethod4"),
+        DeepLinkEntry.MethodDeeplinkEntry("http://example.com/path1", MatchIndexTests::class.java.name, "someMethod7"),
+        DeepLinkEntry.MethodDeeplinkEntry("http://example.com/somethingElse", MatchIndexTests::class.java.name, "someMethod9"),
+        DeepLinkEntry.MethodDeeplinkEntry("http://example.com/path1/pathElement2/path3", MatchIndexTests::class.java.name, "someMethod5"),
+        DeepLinkEntry.MethodDeeplinkEntry("http://example.com/path1/someOtherPathElement2", MatchIndexTests::class.java.name, "someMethod6"),
+        DeepLinkEntry.MethodDeeplinkEntry("http://example.com/", MatchIndexTests::class.java.name, "someMethod8"),
         entryWithAllowedValues,
         entryWithAllowedValueOnlyOneElement
     ).sortedBy { it.uriTemplate }
@@ -29,7 +29,7 @@ class MatchIndexTests {
     private fun testRegistry(entries: List<DeepLinkEntry>): TestRegistry {
         val root = Root()
         entries.forEach {
-            root.addToTrie(it.uriTemplate, it.className, it.method)
+            root.addToTrie(it)
         }
         return TestRegistry(root.toUByteArray().toByteArray())
     }
