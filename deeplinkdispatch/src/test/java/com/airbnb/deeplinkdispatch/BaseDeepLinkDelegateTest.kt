@@ -96,7 +96,8 @@ class BaseDeepLinkDelegateTest {
                 DeepLinkMethodResult(
                     null,
                     null
-                )
+                ),
+                deepLinkHandlerResult = null
             )
         )
     }

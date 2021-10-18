@@ -51,6 +51,24 @@ object SampleNoParamsKotlinDeepLinkHandler :
     }
 }
 
+abstract class InBetweenAnnotatedAndImplementingClass : DeepLinkHandlerThatIsUsedAsExtensionByAnotherClass()
+
+abstract class DeepLinkHandlerThatIsUsedAsExtensionByAnotherClass :
+    DeepLinkHandler<Any> {
+    override fun handleDeepLink(
+        context: Context,
+        deepLinkArgs: Any
+    ) {
+        /**
+         * From here any internal/3rd party navigation framework can be called the provided args.
+         */
+        Log.d(TAG, "SampleNoParamsKotlinDeepLinkHandler with $deepLinkArgs")
+    }
+}
+
+@WebDeepLink("/noparamsExtension/{path_segment_variable_1}/{path_segment_variable_2}/{path_segment_variable_3}/{path_segment_variable_4}?show_taxes={query_param_1}&queryParam={query_param_2}")
+object SomeObjectThatExtendsAClassThatImplementsTheDeepLinkHandler : InBetweenAnnotatedAndImplementingClass()
+
 abstract class IntermediateDeepLinkHandler1<T> : IntermediateDeepLinkHandler2<T>()
 
 abstract class IntermediateDeepLinkHandler2<T> : DeepLinkHandler<T> {

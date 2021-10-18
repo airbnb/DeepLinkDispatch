@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.util.Log;
 
 import com.airbnb.deeplinkdispatch.DeepLinkHandler;
+import com.airbnb.deeplinkdispatch.DeepLinkUri;
 import com.airbnb.deeplinkdispatch.handler.TypeConverters;
 import com.airbnb.deeplinkdispatch.sample.SampleModule;
 import com.airbnb.deeplinkdispatch.sample.SampleModuleRegistry;
@@ -15,13 +16,14 @@ import com.airbnb.deeplinkdispatch.sample.kaptlibrary.KaptLibraryDeepLinkModuleR
 import com.airbnb.deeplinkdispatch.sample.library.LibraryDeepLinkModule;
 import com.airbnb.deeplinkdispatch.sample.library.LibraryDeepLinkModuleRegistry;
 
+import java.lang.reflect.Type;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import kotlin.jvm.functions.Function0;
-import kotlin.jvm.functions.Function1;
+import kotlin.jvm.functions.Function3;
 
 @DeepLinkHandler({SampleModule.class, LibraryDeepLinkModule.class, BenchmarkDeepLinkModule.class, KaptLibraryDeepLinkModule.class})
 public class TypeConversionErrorHandlerCustomTypeDeepLinkActivity extends Activity {
@@ -53,12 +55,12 @@ public class TypeConversionErrorHandlerCustomTypeDeepLinkActivity extends Activi
     } catch (NoSuchFieldException e) {
       e.printStackTrace();
     }
-    Function1<? super String, Integer> typeConversionErrorNullable = (Function1<String, Integer>) s -> {
-      Log.e(TAG, "Unable to convert " + s + " to a number. Returning null.");
+    Function3<DeepLinkUri, Type, ? super String, Integer> typeConversionErrorNullable = (Function3<DeepLinkUri, Type, String, Integer>) (uriTemplate, type, s) -> {
+      Log.e(TAG, "Unable to convert " + s + " used in urlTemplate " + uriTemplate + " to a " + type + ". Returning null.");
       throw new NumberFormatException("For input string: \"" + s + "\"");
     };
-    Function1<? super String, Integer> typeConversionErrorNonNullable = (Function1<String, Integer>) s -> {
-      Log.e(TAG, "Unable to convert " + s + " to a number. Returning 0.");
+    Function3<DeepLinkUri, Type, ? super String, Integer> typeConversionErrorNonNullable = (Function3<DeepLinkUri, Type, String, Integer>) (uriTemplate, type, s) -> {
+      Log.e(TAG, "Unable to convert " + s + " used in urlTemplate " + uriTemplate + " to a " + type + ". Returning 0.");
       throw new NumberFormatException("For input string: \"" + s + "\"");
     };
     Function0<TypeConverters> typeConvertersLambda = () -> typeConverters;

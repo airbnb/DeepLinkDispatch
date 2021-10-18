@@ -23,8 +23,8 @@ open class BaseDeepLinkDelegate @JvmOverloads constructor(
     configurablePathSegmentReplacements: Map<String, String> = emptyMap(),
     private val typeConverters: () -> TypeConverters = { TypeConverters() },
     private val errorHandler: ErrorHandler? = null,
-    private val typeConversionErrorNullable: (String) -> Int? = { _: String -> null }, // ktlint-disable unused
-    private val typeConversionErrorNonNullable: (String) -> Int = { _: String -> 0 } // ktlint-disable unused
+    private val typeConversionErrorNullable: (DeepLinkUri, Type, String) -> Int? = { _, _, _: String -> null }, // ktlint-disable unused
+    private val typeConversionErrorNonNullable: (DeepLinkUri, Type, String) -> Int = { _, _, _: String -> 0 } // ktlint-disable unused
 ) {
 
     /**
@@ -131,35 +131,27 @@ open class BaseDeepLinkDelegate @JvmOverloads constructor(
 
     @SuppressLint("NewApi")
     private fun callDeeplinkHandler(context: Context, result: DeepLinkResult) {
-        val handlerClazz = result.deepLinkMatchResult?.deeplinkEntry?.clazz!!
-        // This relies on the fact that the Processor already checked that every annotated class
-        // correctly implements the DeepLinkHandler<T> interface.
-        val deepLinkArgsClazz =
-            // First check if the handler directly implements the interface. If so get the type from
-            // the interface.
-            handlerClazz.genericInterfaces.filterIsInstance<ParameterizedType>().singleOrNull {
-                it.typeName.startsWith(
-                    com.airbnb.deeplinkdispatch.handler.DeepLinkHandler::class.java.name
-                )
-            }?.actualTypeArguments?.getDeepLinkArgClassFromTypeArguments()
-                // If we cannot get the type from the interface the handler does not directly implement it
-                // need to look at the super class and check its type arguments.
-                ?: (handlerClazz.genericSuperclass as ParameterizedType).actualTypeArguments.getDeepLinkArgClassFromTypeArguments()
-                ?: error("Unable to determine parameter class type for ${handlerClazz.name}.")
-        val deepLinkArgs = getDeepLinkArgs(deepLinkArgsClazz, result)
-        val handlerInstance = try {
+        result.deepLinkHandlerResult?.let { deepLinkHandlerResult ->
+            deepLinkHandlerResult.deepLinkHandler.handleDeepLink(
+                context = context,
+                deepLinkArgs = deepLinkHandlerResult.deepLinkHandlerArgs
+            )
+        }
+    }
+
+    private fun deepLinkHandlerInstance(handlerClazz: Class<*>): com.airbnb.deeplinkdispatch.handler.DeepLinkHandler<Any> =
+        try {
             handlerClazz.getField("INSTANCE").get(null)
         } catch (e: NoSuchFieldException) {
             handlerClazz.constructors.singleOrNull()?.let {
                 if (it.typeParameters.isNotEmpty()) null else it.newInstance()
             } ?: error("Handler class must have single zero argument constructor.")
         } as com.airbnb.deeplinkdispatch.handler.DeepLinkHandler<Any>
-        handlerInstance.handleDeepLink(context, deepLinkArgs)
-    }
 
     private fun getDeepLinkArgs(
         deepLinkArgsClazz: Class<out Any>,
-        result: DeepLinkResult
+        parameters: Map<String, String>,
+        uriTemplate: DeepLinkUri
     ): Any {
         return if (deepLinkArgsClazz == Object::class.java) {
             Object()
@@ -179,7 +171,8 @@ open class BaseDeepLinkDelegate @JvmOverloads constructor(
             }
             val deepLinkArgsConstructorParams = createParamArray(
                 typeNameMap = typeNameMap,
-                parameters = result.parameters
+                parameters = parameters,
+                uriTemplate = uriTemplate
             )
             deepLinkArgsClazzConstructor.newInstance(*deepLinkArgsConstructorParams)
         }
@@ -187,19 +180,22 @@ open class BaseDeepLinkDelegate @JvmOverloads constructor(
 
     private fun createParamArray(
         typeNameMap: List<Pair<DeeplinkParam, Type>>,
-        parameters: Map<String, String>
+        parameters: Map<String, String>,
+        uriTemplate: DeepLinkUri
     ): Array<Any?> {
         return typeNameMap.map { (annotation, type) ->
             when (annotation.type) {
                 DeepLinkParamType.Path ->
                     mapNotNullableType(
                         value = parameters.getOrElse(annotation.name) { error("Non existent non nullable element for name: ${annotation.name}") },
-                        type = type
+                        type = type,
+                        uriTemplate = uriTemplate
                     )
                 DeepLinkParamType.Query ->
                     mapNullableType(
                         value = parameters[annotation.name],
-                        type = type
+                        type = type,
+                        uriTemplate = uriTemplate
                     )
             }
         }.toTypedArray()
@@ -208,6 +204,7 @@ open class BaseDeepLinkDelegate @JvmOverloads constructor(
     private fun mapNullableType(
         value: String?,
         type: Type,
+        uriTemplate: DeepLinkUri,
     ): Any? {
         if (value == null) return null
         return try {
@@ -227,13 +224,14 @@ open class BaseDeepLinkDelegate @JvmOverloads constructor(
                 )
             }
         } catch (e: NumberFormatException) {
-            typeConversionErrorNullable(value)
+            typeConversionErrorNullable(uriTemplate, type, value)
         }
     }
 
     private fun mapNotNullableType(
         value: String,
-        type: Type
+        type: Type,
+        uriTemplate: DeepLinkUri
     ): Any {
 
         return try {
@@ -253,7 +251,7 @@ open class BaseDeepLinkDelegate @JvmOverloads constructor(
                 )
             }
         } catch (e: NumberFormatException) {
-            typeConversionErrorNonNullable(value)
+            typeConversionErrorNonNullable(uriTemplate, type, value)
         }
     }
 
@@ -278,7 +276,8 @@ open class BaseDeepLinkDelegate @JvmOverloads constructor(
                 uriString = null,
                 error = "No Uri in given activity's intent.",
                 deepLinkMatchResult = deeplinkMatchResult,
-                methodResult = DeepLinkMethodResult(null, null)
+                methodResult = DeepLinkMethodResult(null, null),
+                deepLinkHandlerResult = null
             )
         val deepLinkUri = DeepLinkUri.parse(originalIntentUri.toString())
         if (deeplinkMatchResult == null) {
@@ -287,7 +286,8 @@ open class BaseDeepLinkDelegate @JvmOverloads constructor(
                 uriString = null,
                 error = "DeepLinkEntry cannot be null",
                 deepLinkMatchResult = null,
-                methodResult = DeepLinkMethodResult(null, null)
+                methodResult = DeepLinkMethodResult(null, null),
+                deepLinkHandlerResult = null
             )
         }
         val queryAndPathParameters = queryAndPathParameters(
@@ -298,12 +298,13 @@ open class BaseDeepLinkDelegate @JvmOverloads constructor(
         val intentBundle =
             createIntentBundle(sourceIntent, originalIntentUri, queryAndPathParameters)
         return try {
-            val intentAndTaskStackBuilderPair = intentAndTaskStackBuilderFromClass(
+            val intermediateDeepLinkResult = processResultForType(
                 matchedDeeplinkEntry = deeplinkMatchResult.deeplinkEntry,
+                parameters = queryAndPathParameters,
                 activity = activity,
                 intentBundle = intentBundle
             )
-            intentAndTaskStackBuilderPair.intent?.let { intent ->
+            intermediateDeepLinkResult.intent?.let { intent ->
                 if (intent.action == null) {
                     intent.action = sourceIntent.action
                 }
@@ -323,9 +324,10 @@ open class BaseDeepLinkDelegate @JvmOverloads constructor(
                     deepLinkMatchResult = deeplinkMatchResult,
                     methodResult = DeepLinkMethodResult(
                         intent,
-                        intentAndTaskStackBuilderPair.taskStackBuilder
+                        intermediateDeepLinkResult.taskStackBuilder
                     ),
-                    parameters = queryAndPathParameters
+                    parameters = queryAndPathParameters,
+                    deepLinkHandlerResult = intermediateDeepLinkResult.deepLinkHandlerResult
                 )
             } ?: return DeepLinkResult(
                 isSuccessful = false,
@@ -333,9 +335,10 @@ open class BaseDeepLinkDelegate @JvmOverloads constructor(
                 error = "Destination Intent is null!",
                 deepLinkMatchResult = deeplinkMatchResult,
                 methodResult = DeepLinkMethodResult(
-                    intentAndTaskStackBuilderPair.intent,
-                    intentAndTaskStackBuilderPair.taskStackBuilder
-                )
+                    intermediateDeepLinkResult.intent,
+                    intermediateDeepLinkResult.taskStackBuilder
+                ),
+                deepLinkHandlerResult = intermediateDeepLinkResult.deepLinkHandlerResult
             )
         } catch (deepLinkMethodError: DeeplLinkMethodError) {
             return DeepLinkResult(
@@ -343,7 +346,8 @@ open class BaseDeepLinkDelegate @JvmOverloads constructor(
                 uriString = originalIntentUri.toString(),
                 error = deepLinkMethodError.message ?: "",
                 deepLinkMatchResult = deeplinkMatchResult,
-                methodResult = DeepLinkMethodResult(null, null)
+                methodResult = DeepLinkMethodResult(null, null),
+                deepLinkHandlerResult = null
             )
         }
     }
@@ -363,15 +367,16 @@ open class BaseDeepLinkDelegate @JvmOverloads constructor(
         return intentBundle
     }
 
-    private fun intentAndTaskStackBuilderFromClass(
+    private fun processResultForType(
         matchedDeeplinkEntry: DeepLinkEntry,
+        parameters: Map<String, String>,
         activity: Activity,
         intentBundle: Bundle
-    ): IntentTaskStackBuilderPair {
+    ): IntermediateDeepLinkResult {
         val clazz = matchedDeeplinkEntry.clazz
         return when (matchedDeeplinkEntry) {
             is DeepLinkEntry.ActivityDeeplinkEntry ->
-                IntentTaskStackBuilderPair(Intent(activity, clazz), null)
+                IntermediateDeepLinkResult(Intent(activity, clazz), null, null)
             is DeepLinkEntry.MethodDeeplinkEntry -> {
                 try {
                     try {
@@ -397,54 +402,98 @@ open class BaseDeepLinkDelegate @JvmOverloads constructor(
                     throw DeeplLinkMethodError("Could not deep link to method: ${matchedDeeplinkEntry.method}")
                 }
             }
-            is DeepLinkEntry.HandlerDeepLinkEntry ->
-                // The handler does not need any Intent, we will call it directly, but we just make
-                // one here to to not fail later.
-                IntentTaskStackBuilderPair(Intent(activity, clazz), null)
+            is DeepLinkEntry.HandlerDeepLinkEntry -> {
+                IntermediateDeepLinkResult(
+                    Intent(activity, clazz),
+                    null,
+                    DeepLinkHandlerResult(
+                        deepLinkHandler = deepLinkHandlerInstance(matchedDeeplinkEntry.clazz),
+                        deepLinkHandlerArgs = deepLinkHandlerArgs(matchedDeeplinkEntry, parameters)
+                    )
+                )
+            }
         }
     }
 
-    data class IntentTaskStackBuilderPair(
+    private fun deepLinkHandlerArgs(
+        matchedDeeplinkEntry: DeepLinkEntry,
+        parameters: Map<String, String>
+    ): Any {
+        val handlerClazz = matchedDeeplinkEntry.clazz
+
+        val deepLinkArgsClazz = clazz(handlerClazz)
+            ?: error("Unable to determine parameter class type for ${handlerClazz.name}.")
+        return getDeepLinkArgs(
+            deepLinkArgsClazz,
+            parameters,
+            DeepLinkUri.parseTemplate(matchedDeeplinkEntry.uriTemplate)
+        )
+    }
+
+    private fun clazz(handlerClazz: Class<*>): Class<*>? {
+        // This relies on the fact that the Processor already checked that every annotated class
+        // correctly implements the DeepLinkHandler<T> interface.
+        //
+        // First check if the handler directly implements the interface. If so get the type from
+        // the interface.
+        return handlerClazz.genericInterfaces.filterIsInstance<ParameterizedType>()
+            .singleOrNull {
+                (it.rawType as Class<*>).canonicalName.startsWith(
+                    com.airbnb.deeplinkdispatch.handler.DeepLinkHandler::class.java.name
+                )
+            }?.actualTypeArguments?.getDeepLinkArgClassFromTypeArguments()
+            // If we cannot get the type from the interface the handler does not directly implement it
+            // need to look at the super class and check its type arguments.
+            ?: if (handlerClazz.genericSuperclass is ParameterizedType) (handlerClazz.genericSuperclass as ParameterizedType).actualTypeArguments.getDeepLinkArgClassFromTypeArguments() else clazz(
+                handlerClazz.genericSuperclass as Class<*>
+            )
+    }
+
+    private data class IntermediateDeepLinkResult(
         val intent: Intent?,
-        val taskStackBuilder: TaskStackBuilder?
+        val taskStackBuilder: TaskStackBuilder?,
+        val deepLinkHandlerResult: DeepLinkHandlerResult<Any>?,
     )
 
     private fun intentFromDeeplinkMethod(
         method: Method,
         methodInvocation: Any?
-    ) = when (method.returnType) {
-        TaskStackBuilder::class.java ->
-            intentFromTaskStackBuilder(
-                methodInvocation as TaskStackBuilder?,
-                method.name
-            )
-        DeepLinkMethodResult::class.java ->
-            intentFromDeepLinkMethodResult(
-                methodInvocation as DeepLinkMethodResult?,
-                method.name
-            )
-        else -> IntentTaskStackBuilderPair(methodInvocation as Intent?, null)
+    ): IntermediateDeepLinkResult {
+        return when (method.returnType) {
+            TaskStackBuilder::class.java ->
+                intentFromTaskStackBuilder(
+                    methodInvocation as TaskStackBuilder?,
+                    method.name
+                )
+            DeepLinkMethodResult::class.java ->
+                intentFromDeepLinkMethodResult(
+                    methodInvocation as DeepLinkMethodResult?,
+                    method.name
+                )
+            else -> IntermediateDeepLinkResult(methodInvocation as Intent?, null, null)
+        }
     }
 
     private fun intentFromDeepLinkMethodResult(
         deepLinkMethodResult: DeepLinkMethodResult?,
         methodName: String
-    ): IntentTaskStackBuilderPair {
+    ): IntermediateDeepLinkResult {
         return if (deepLinkMethodResult?.taskStackBuilder != null) {
             intentFromTaskStackBuilder(deepLinkMethodResult.taskStackBuilder, methodName)
-        } else IntentTaskStackBuilderPair(deepLinkMethodResult?.intent, null)
+        } else IntermediateDeepLinkResult(deepLinkMethodResult?.intent, null, null)
     }
 
     private fun intentFromTaskStackBuilder(
         taskStackBuilder: TaskStackBuilder?,
         methodName: String
-    ): IntentTaskStackBuilderPair {
+    ): IntermediateDeepLinkResult {
         return if (taskStackBuilder?.intentCount == 0) {
             throw DeeplLinkMethodError("Could not deep link to method: $methodName intents length == 0")
         } else {
-            IntentTaskStackBuilderPair(
+            IntermediateDeepLinkResult(
                 taskStackBuilder?.editIntentAt(taskStackBuilder.intentCount - 1),
-                taskStackBuilder
+                taskStackBuilder,
+                null
             )
         }
     }

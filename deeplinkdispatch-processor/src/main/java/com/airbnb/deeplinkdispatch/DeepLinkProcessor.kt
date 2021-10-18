@@ -47,6 +47,7 @@ import com.squareup.javapoet.TypeSpec
 import com.squareup.javapoet.WildcardTypeName
 import org.jetbrains.annotations.NotNull
 import java.io.IOException
+import java.lang.reflect.Type
 import java.net.MalformedURLException
 import java.util.Arrays
 import javax.lang.model.SourceVersion
@@ -588,14 +589,18 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
                     )
                 }
                 val superOfString = WildcardTypeName.supertypeOf(String::class.java)
+                val function3 = Function3::class.java
                 val functionalParameter = ParameterizedTypeName.get(
-                    ClassName.get("kotlin.jvm.functions", "Function1"),
+                    ClassName.get(function3.packageName, function3.simpleName),
+                    TypeName.get(DeepLinkUri::class.java),
+                    TypeName.get(Type::class.java),
                     superOfString,
                     TypeName.get(Integer::class.java)
                 )
                 if (parameters.contains(ConstructorParameters.TypeConverters)) {
+                    val function0 = Function0::class.java
                     val typeConverterFunctionalParameter = ParameterizedTypeName.get(
-                        ClassName.get("kotlin.jvm.functions", "Function0"),
+                        ClassName.get(function0.packageName, function0.simpleName),
                         TypeName.get(TypeConverters::class.java)
                     )
                     addParameter(

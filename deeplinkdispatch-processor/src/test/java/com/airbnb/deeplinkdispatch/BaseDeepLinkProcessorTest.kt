@@ -18,14 +18,15 @@ open class BaseDeepLinkProcessorTest {
                 package com.airbnb.deeplinkdispatch
                 
                 import com.airbnb.deeplinkdispatch.handler.TypeConverters
-                
+                import java.lang.reflect.Type
+
                 open class BaseDeepLinkDelegate @JvmOverloads constructor(
                     private val registries: List<BaseRegistry>,
                     configurablePathSegmentReplacements: Map<String, String> = emptyMap(),
                     private val typeConverters: () -> TypeConverters = { TypeConverters() },
                     private val errorHandler: ErrorHandler? = null,
-                    private val typeConversionErrorNullable: (String) -> Int? = { value: String -> null },
-                    private val typeConversionErrorNonNullable: (String) -> Int = { value: String -> 0 }
+                    private val typeConversionErrorNullable: (DeepLinkUri, Type, String) -> Int? = { _, _, _: String -> null },
+                    private val typeConversionErrorNonNullable: (DeepLinkUri, Type, String) -> Int = { _, _, _: String -> 0 }
                 ) {}
                 """
     )

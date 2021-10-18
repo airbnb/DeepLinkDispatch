@@ -215,13 +215,15 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
                 package com.example;
 
                 import com.airbnb.deeplinkdispatch.BaseDeepLinkDelegate;
+                import com.airbnb.deeplinkdispatch.DeepLinkUri;
                 import com.airbnb.deeplinkdispatch.handler.TypeConverters;
                 import java.lang.Integer;
                 import java.lang.String;
+                import java.lang.reflect.Type;
                 import java.util.Arrays;
                 import java.util.Map;
                 import kotlin.jvm.functions.Function0;
-                import kotlin.jvm.functions.Function1;
+                import kotlin.jvm.functions.Function3;
                 import org.jetbrains.annotations.NotNull;
                 
                 public final class DeepLinkDelegate extends BaseDeepLinkDelegate {
@@ -252,8 +254,8 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
                   public DeepLinkDelegate(@NotNull SampleModuleRegistry sampleModuleRegistry,
                       @NotNull Map<String, String> configurablePathSegmentReplacements,
                       @NotNull Function0<TypeConverters> typeConverters,
-                      @NotNull Function1<? super String, Integer> typeConversionErrorNullable,
-                      @NotNull Function1<? super String, Integer> typeConversionErrorNonNullable) {
+                      @NotNull Function3<DeepLinkUri, Type, ? super String, Integer> typeConversionErrorNullable,
+                      @NotNull Function3<DeepLinkUri, Type, ? super String, Integer> typeConversionErrorNonNullable) {
                     super(Arrays.asList(
                       sampleModuleRegistry),
                       configurablePathSegmentReplacements,
@@ -325,13 +327,15 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
                 package com.example;
 
                 import com.airbnb.deeplinkdispatch.BaseDeepLinkDelegate;
+                import com.airbnb.deeplinkdispatch.DeepLinkUri;
                 import com.airbnb.deeplinkdispatch.handler.TypeConverters;
                 import java.lang.Integer;
                 import java.lang.String;
+                import java.lang.reflect.Type;
                 import java.util.Arrays;
                 import java.util.Map;
                 import kotlin.jvm.functions.Function0;
-                import kotlin.jvm.functions.Function1;
+                import kotlin.jvm.functions.Function3;
                 import org.jetbrains.annotations.NotNull;
                 
                 public final class DeepLinkDelegate extends BaseDeepLinkDelegate {
@@ -362,8 +366,8 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
                   public DeepLinkDelegate(@NotNull SampleModuleRegistry sampleModuleRegistry,
                       @NotNull Map<String, String> configurablePathSegmentReplacements,
                       @NotNull Function0<TypeConverters> typeConverters,
-                      @NotNull Function1<? super String, Integer> typeConversionErrorNullable,
-                      @NotNull Function1<? super String, Integer> typeConversionErrorNonNullable) {
+                      @NotNull Function3<DeepLinkUri, Type, ? super String, Integer> typeConversionErrorNullable,
+                      @NotNull Function3<DeepLinkUri, Type, ? super String, Integer> typeConversionErrorNonNullable) {
                     super(Arrays.asList(
                       sampleModuleRegistry),
                       configurablePathSegmentReplacements,
@@ -435,13 +439,15 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
                 package com.example;
 
                 import com.airbnb.deeplinkdispatch.BaseDeepLinkDelegate;
+                import com.airbnb.deeplinkdispatch.DeepLinkUri;
                 import com.airbnb.deeplinkdispatch.handler.TypeConverters;
                 import java.lang.Integer;
                 import java.lang.String;
+                import java.lang.reflect.Type;
                 import java.util.Arrays;
                 import java.util.Map;
                 import kotlin.jvm.functions.Function0;
-                import kotlin.jvm.functions.Function1;
+                import kotlin.jvm.functions.Function3;
                 import org.jetbrains.annotations.NotNull;
                 
                 public final class DeepLinkDelegate extends BaseDeepLinkDelegate {
@@ -472,8 +478,8 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
                   public DeepLinkDelegate(@NotNull SampleModuleRegistry sampleModuleRegistry,
                       @NotNull Map<String, String> configurablePathSegmentReplacements,
                       @NotNull Function0<TypeConverters> typeConverters,
-                      @NotNull Function1<? super String, Integer> typeConversionErrorNullable,
-                      @NotNull Function1<? super String, Integer> typeConversionErrorNonNullable) {
+                      @NotNull Function3<DeepLinkUri, Type, ? super String, Integer> typeConversionErrorNullable,
+                      @NotNull Function3<DeepLinkUri, Type, ? super String, Integer> typeConversionErrorNonNullable) {
                     super(Arrays.asList(
                       sampleModuleRegistry),
                       configurablePathSegmentReplacements,
@@ -590,13 +596,15 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
                 package com.example;
 
                 import com.airbnb.deeplinkdispatch.BaseDeepLinkDelegate;
+                import com.airbnb.deeplinkdispatch.DeepLinkUri;
                 import com.airbnb.deeplinkdispatch.handler.TypeConverters;
                 import java.lang.Integer;
                 import java.lang.String;
+                import java.lang.reflect.Type;
                 import java.util.Arrays;
                 import java.util.Map;
                 import kotlin.jvm.functions.Function0;
-                import kotlin.jvm.functions.Function1;
+                import kotlin.jvm.functions.Function3;
                 import org.jetbrains.annotations.NotNull;
                 
                 public final class DeepLinkDelegate extends BaseDeepLinkDelegate {
@@ -627,8 +635,8 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
                   public DeepLinkDelegate(@NotNull SampleModuleRegistry sampleModuleRegistry,
                       @NotNull Map<String, String> configurablePathSegmentReplacements,
                       @NotNull Function0<TypeConverters> typeConverters,
-                      @NotNull Function1<? super String, Integer> typeConversionErrorNullable,
-                      @NotNull Function1<? super String, Integer> typeConversionErrorNonNullable) {
+                      @NotNull Function3<DeepLinkUri, Type, ? super String, Integer> typeConversionErrorNullable,
+                      @NotNull Function3<DeepLinkUri, Type, ? super String, Integer> typeConversionErrorNonNullable) {
                     super(Arrays.asList(
                       sampleModuleRegistry),
                       configurablePathSegmentReplacements,
@@ -705,7 +713,6 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
             // https://github.com/tschuchortdev/kotlin-compile-testing/issues/105
 //            compileIncremental(
 //                sourceFiles = sourceFiles,
-//                customDeepLinks = null,
 //                useKsp = true,
 //            )
         )
@@ -725,13 +732,15 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
                 package com.example;
 
                 import com.airbnb.deeplinkdispatch.BaseDeepLinkDelegate;
+                import com.airbnb.deeplinkdispatch.DeepLinkUri;
                 import com.airbnb.deeplinkdispatch.handler.TypeConverters;
                 import java.lang.Integer;
                 import java.lang.String;
+                import java.lang.reflect.Type;
                 import java.util.Arrays;
                 import java.util.Map;
                 import kotlin.jvm.functions.Function0;
-                import kotlin.jvm.functions.Function1;
+                import kotlin.jvm.functions.Function3;
                 import org.jetbrains.annotations.NotNull;
 
                 public final class DeepLinkDelegate extends BaseDeepLinkDelegate {
@@ -762,8 +771,8 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
                   public DeepLinkDelegate(@NotNull SampleModuleRegistry sampleModuleRegistry,
                       @NotNull Map<String, String> configurablePathSegmentReplacements,
                       @NotNull Function0<TypeConverters> typeConverters,
-                      @NotNull Function1<? super String, Integer> typeConversionErrorNullable,
-                      @NotNull Function1<? super String, Integer> typeConversionErrorNonNullable) {
+                      @NotNull Function3<DeepLinkUri, Type, ? super String, Integer> typeConversionErrorNullable,
+                      @NotNull Function3<DeepLinkUri, Type, ? super String, Integer> typeConversionErrorNonNullable) {
                     super(Arrays.asList(
                       sampleModuleRegistry),
                       configurablePathSegmentReplacements,
@@ -834,13 +843,15 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
                     package com.example;
 
                     import com.airbnb.deeplinkdispatch.BaseDeepLinkDelegate;
+                    import com.airbnb.deeplinkdispatch.DeepLinkUri;
                     import com.airbnb.deeplinkdispatch.handler.TypeConverters;
                     import java.lang.Integer;
                     import java.lang.String;
+                    import java.lang.reflect.Type;
                     import java.util.Arrays;
                     import java.util.Map;
                     import kotlin.jvm.functions.Function0;
-                    import kotlin.jvm.functions.Function1;
+                    import kotlin.jvm.functions.Function3;
                     import org.jetbrains.annotations.NotNull;
                     
                     public final class DeepLinkDelegate extends BaseDeepLinkDelegate {
@@ -871,8 +882,8 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
                       public DeepLinkDelegate(@NotNull SampleModuleRegistry sampleModuleRegistry,
                           @NotNull Map<String, String> configurablePathSegmentReplacements,
                           @NotNull Function0<TypeConverters> typeConverters,
-                          @NotNull Function1<? super String, Integer> typeConversionErrorNullable,
-                          @NotNull Function1<? super String, Integer> typeConversionErrorNonNullable) {
+                          @NotNull Function3<DeepLinkUri, Type, ? super String, Integer> typeConversionErrorNullable,
+                          @NotNull Function3<DeepLinkUri, Type, ? super String, Integer> typeConversionErrorNonNullable) {
                         super(Arrays.asList(
                           sampleModuleRegistry),
                           configurablePathSegmentReplacements,

@@ -7,6 +7,7 @@ import com.airbnb.deeplinkdispatch.sample.handler.SampleJavaStaticTestHelper
 import com.airbnb.deeplinkdispatch.sample.handler.SampleKotlinDeepLinkHandler
 import com.airbnb.deeplinkdispatch.sample.handler.SampleNoParamsKotlinDeepLinkHandler
 import com.airbnb.deeplinkdispatch.sample.handler.SamplePartialParamKotlinDeepLinkHandler
+import com.airbnb.deeplinkdispatch.sample.handler.SomeObjectThatExtendsAClassThatImplementsTheDeepLinkHandler
 import com.airbnb.deeplinkdispatch.sample.handler.TestJavaDeepLinkHandlerDeepLinkArgs
 import com.airbnb.deeplinkdispatch.sample.handler.TestKotlinDeepLinkHandlerDeepLinkArgs
 import com.airbnb.deeplinkdispatch.sample.handler.TestKotlinDeepLinkHandlerDeepLinkArgsMissingPathParamExtraQueryParam
@@ -130,6 +131,23 @@ class DeepLinkHandlerTest {
         Shadows.shadowOf(Looper.getMainLooper()).idle()
         verify(exactly = 1) {
             SampleNoParamsKotlinDeepLinkHandler.handleDeepLink(
+                context,
+                any()
+            )
+        }
+    }
+
+    @Test
+    fun testKotlinHandlerNoArgumentClassWhenExtendingActualHandler() {
+        mockkObject(SomeObjectThatExtendsAClassThatImplementsTheDeepLinkHandler)
+        val intent = Intent(
+            Intent.ACTION_VIEW,
+            Uri.parse("https://airbnb.com/noparamsExtension/1/pathData2/5/true?queryParam=17")
+        )
+        val context = Robolectric.buildActivity(DeepLinkActivity::class.java, intent).create().get()
+        Shadows.shadowOf(Looper.getMainLooper()).idle()
+        verify(exactly = 1) {
+            SomeObjectThatExtendsAClassThatImplementsTheDeepLinkHandler.handleDeepLink(
                 context,
                 any()
             )
