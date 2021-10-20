@@ -32,6 +32,17 @@ class DeeplinkUriTest {
     }
 
     @Test
+    fun testParseDeepLinkUriTemplateWithVeryLongHost() {
+        val host =
+            "www.example.{url_domain_suffix(just|a|lot|of|values|in|here|that|make|the|url|very|long|longer|than|264|characters|to|be|creating|some|problems|with|ID|decode)}"
+        val deeplinkUriTemplate = DeepLinkUri.parseTemplate("http{scheme_suffix}://$host/path1/path2")
+        assertNotNull(deeplinkUriTemplate)
+        assertEquals("http{scheme_suffix}", deeplinkUriTemplate.scheme())
+        assertEquals(host, deeplinkUriTemplate.host())
+        assertEquals(listOf("path1", "path2"), deeplinkUriTemplate.pathSegments())
+    }
+
+    @Test
     fun testParseDeepLinkUriTemplateWithOnlyPlaceholderAsHostAndScheme() {
         val deeplinkUriTemplate = DeepLinkUri.parseTemplate("{scheme}://{host}/path1/path2")
         assertNotNull(deeplinkUriTemplate)
