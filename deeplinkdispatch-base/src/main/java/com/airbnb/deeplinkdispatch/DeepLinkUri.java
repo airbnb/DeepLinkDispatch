@@ -1217,6 +1217,9 @@ public final class DeepLinkUri {
      */
     private static String domainToAscii(String input) {
       try {
+        // When this is a template URI it might get to long with all the placeholder definitions
+        // to pass verification.
+        // This will replace the placeholders with other shorter placeholders for URI validation.
         Set<String> placeholders = getPlaceHolders(input);
         String mappedInput = input;
         Map<String, String> placeholderMap = new HashMap(placeholders.size());
