@@ -1,13 +1,13 @@
 apply plugin: 'com.android.library'
 
 android {
-  compileSdkVersion androidConfig.compileSdkVersion
+    compileSdk androidConfig.compileSdkVersion
 
-  defaultConfig {
-    minSdkVersion androidConfig.minSdkVersion
-    targetSdkVersion androidConfig.compileSdkVersion
+    defaultConfig {
+        minSdk androidConfig.minSdkVersion
+        targetSdk androidConfig.compileSdkVersion
 
-    javaCompileOptions {
+        javaCompileOptions {
       annotationProcessorOptions {
         arguments = [
           'deepLink.incremental': 'true',

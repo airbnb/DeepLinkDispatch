@@ -14,13 +14,13 @@ checkstyle {
 }
 
 android {
-  compileSdkVersion androidConfig.compileSdkVersion
+    compileSdk androidConfig.compileSdkVersion
 
-  defaultConfig {
+    defaultConfig {
     applicationId "com.airbnb.deeplinkdispatch.sample"
-    minSdkVersion androidConfig.minSdkVersion
-    targetSdkVersion androidConfig.compileSdkVersion
-    versionCode 1
+        minSdk androidConfig.minSdkVersion
+        targetSdk androidConfig.compileSdkVersion
+        versionCode 1
     versionName "1.0"
   }
   buildTypes {
@@ -32,20 +32,21 @@ android {
               'proguard-rules.pro'
     }
   }
-  packagingOptions {
-    exclude 'META-INF/services/javax.annotation.processing.Processor'
-  }
-  lintOptions {
-    disable 'InvalidPackage'
-  }
+    packagingOptions {
+        resources {
+            excludes += ['META-INF/services/javax.annotation.processing.Processor']
+        }
+    }
 
-  kotlinOptions {
-    jvmTarget = "1.8"
+    kotlinOptions {
+    jvmTarget = "11"
   }
+    lint {
+        disable 'InvalidPackage'
+    }
 }
 
 dependencies {
-  implementation deps.kotlinStdLib
   implementation project(':deeplinkdispatch')
   ksp project(':deeplinkdispatch-processor')
   implementation project(':sample-library')
