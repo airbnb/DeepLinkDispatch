@@ -1221,13 +1221,13 @@ public final class DeepLinkUri {
         String mappedInput = input;
         Map<String, String> placeholderMap = new HashMap(placeholders.size());
         int i = 0;
-        for(String placeholder: placeholders) {
-          String replacedValue = ""+(i++);
+        for (String placeholder : placeholders) {
+          String replacedValue = "" + (i++);
           mappedInput = mappedInput.replace(placeholder, replacedValue);
           placeholderMap.put(placeholder, replacedValue);
         }
         String result = IDN.toASCII(mappedInput).toLowerCase(Locale.US);
-        for(Map.Entry<String, String> entry : placeholderMap.entrySet()){
+        for (Map.Entry<String, String> entry : placeholderMap.entrySet()) {
           result = result.replace(entry.getValue(), entry.getKey());
         }
         if (result.isEmpty()) return null;
