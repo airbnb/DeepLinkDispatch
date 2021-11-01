@@ -6,7 +6,7 @@ def versions = [
     benchmarkVersion             : '1.0.0',
     compileTestingVersion        : '1.4.2',
     kspVersion                   : '1.5.31-1.0.0',
-    xProcessorVersion            : '2.4.0-alpha04',
+    xProcessorVersion            : '2.4.0-beta01',
     mockkVersion                 : '1.12.0',
     ktlintGradlePluginVersion    : '3.4.5'
 ]
