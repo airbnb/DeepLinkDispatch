@@ -32,10 +32,12 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -321,7 +323,7 @@ public final class DeepLinkUri {
   }
 
   @NotNull
-  private Set<String> getPlaceHolders(String input) {
+  private static Set<String> getPlaceHolders(String input) {
     final Matcher matcher = PLACEHOLDER_REGEX.matcher(input);
     Set<String> placeholders = new HashSet<>(matcher.groupCount());
     while (matcher.find()) {
@@ -1215,7 +1217,22 @@ public final class DeepLinkUri {
      */
     private static String domainToAscii(String input) {
       try {
-        String result = IDN.toASCII(input).toLowerCase(Locale.US);
+        // When this is a template URI it might get to long (> 256 chars) with all the placeholder
+        // definitions to pass verification.
+        // This will replace the placeholders with other shorter placeholders for URI validation.
+        Set<String> placeholders = getPlaceHolders(input);
+        String mappedInput = input;
+        Map<String, String> placeholderMap = new HashMap(placeholders.size());
+        int i = 0;
+        for (String placeholder : placeholders) {
+          String replacedValue = "" + (i++);
+          mappedInput = mappedInput.replace(placeholder, replacedValue);
+          placeholderMap.put(placeholder, replacedValue);
+        }
+        String result = IDN.toASCII(mappedInput).toLowerCase(Locale.US);
+        for (Map.Entry<String, String> entry : placeholderMap.entrySet()) {
+          result = result.replace(entry.getValue(), entry.getKey());
+        }
         if (result.isEmpty()) return null;
 
         if (result == null) return null;
