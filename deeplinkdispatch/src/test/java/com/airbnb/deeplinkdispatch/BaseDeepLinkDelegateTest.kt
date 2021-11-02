@@ -150,18 +150,6 @@ class BaseDeepLinkDelegateTest {
         assertThat(deepLinkEntry!!.equals(entry2))
     }
 
-    private class TestDeepLinkRegistry(registry: List<DeepLinkEntry>) : BaseRegistry(getSearchIndex(registry), arrayOf()) {
-        companion object {
-            private fun getSearchIndex(deepLinkEntries: List<DeepLinkEntry>): ByteArray {
-                val trieRoot = Root()
-                for (entry in deepLinkEntries) {
-                    trieRoot.addToTrie(entry)
-                }
-                return trieRoot.toUByteArray().toByteArray()
-            }
-        }
-    }
-
     private fun parameterMap(
         url: String,
         parameterMap: Map<String, String>
@@ -186,23 +174,12 @@ class BaseDeepLinkDelegateTest {
             return DeepLinkEntry.ActivityDeeplinkEntry(uri, className)
         }
 
-        /**
-         * Helper method to get a class extending [BaseRegistry] acting as the delegate
-         * for the
-         *
-         * @param deepLinkEntries
-         * @return
-         */
-        private fun getTestRegistry(deepLinkEntries: List<DeepLinkEntry>): TestDeepLinkRegistry {
-            return TestDeepLinkRegistry(deepLinkEntries)
-        }
-
         private fun getTwoRegistriesTestDelegate(entriesFirstRegistry: List<DeepLinkEntry>, entriesSecondRegistry: List<DeepLinkEntry>, errorHandler: ErrorHandler): TestDeepLinkDelegate {
-            return TestDeepLinkDelegate(listOf(getTestRegistry(entriesFirstRegistry), getTestRegistry(entriesSecondRegistry)), errorHandler)
+            return TestDeepLinkDelegate(listOf(testRegistry(entriesFirstRegistry), testRegistry(entriesSecondRegistry)), errorHandler)
         }
 
         private fun getOneRegistryTestDelegate(entries: List<DeepLinkEntry>, errorHandler: ErrorHandler?): TestDeepLinkDelegate {
-            return TestDeepLinkDelegate(listOf(getTestRegistry(entries)), errorHandler)
+            return TestDeepLinkDelegate(listOf(testRegistry(entries)), errorHandler)
         }
     }
 }

@@ -63,14 +63,14 @@ open class TreeNode(open val id: String, internal val metadata: NodeMetadata) {
     /**
      * Byte array format is:
      * 0 [NodeMetadata] flags; 1 byte
-     * 1                                                      length of value sub-array
-     * 2..3                                                   length of match sub-array
-     * 4...7                                                  length of node's children sub-array
-     * 8..(8+value length)                                    actual value sub-array
-     * (8+value length)..
-     * ((8+value length)+children length)                     match data (can be 0 length)
-     * (8+value length+match data length)..
-     * ((8+value length+match data length)+children length)   actual children sub-array
+     * 1..2                                                   length of value sub-array
+     * 3..4                                                   length of match sub-array
+     * 5...8                                                  length of node's children sub-array
+     * 9..(9+value length)                                    actual value sub-array
+     * (9+value length)..
+     * ((9+value length)+children length)                     match data (can be 0 length)
+     * (9+value length+match data length)..
+     * ((9+value length+match data length)+children length)   actual children sub-array
      */
     fun toUByteArray(): UByteArray {
         val childrenByteArrays: List<UByteArray> = generateChildrenByteArrays()
@@ -129,7 +129,10 @@ open class TreeNode(open val id: String, internal val metadata: NodeMetadata) {
         val childrenLength: Int = children?.sumOf { it.size } ?: 0
         return UByteArray(HEADER_LENGTH).apply {
             set(0, metadata.metadata.toUByte()) // flag
-            set(HEADER_NODE_METADATA_LENGTH, value.size.toUByte()) // value length
+            writeUShortAt(
+                startIndex = HEADER_NODE_METADATA_LENGTH,
+                value = value.size.toUShort()
+            ) // value length
             writeUShortAt(
                 startIndex = HEADER_NODE_METADATA_LENGTH + HEADER_VALUE_LENGTH,
                 value = matchByteArray.size.toUShort()
@@ -222,7 +225,7 @@ data class PathSegment(override val id: String) :
 /**
  * Match data byte array format is:
  * 0                                                               match type
- * 1..1 url                                                        url template length
+ * 1..2 url                                                        url template length
  * 3..(2+url template length)                                      url template
  * (3+url template length)..
  * (3+url template length)+2                                       classname length

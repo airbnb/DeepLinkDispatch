@@ -9,7 +9,7 @@ class DeepLinkEntryTest {
     @Test
     fun testSingleParam() {
         val entry = activityDeepLinkEntry("airbnb://foo/{bar}")
-        val testRegistry = getTestRegistry(listOf(entry))
+        val testRegistry = testRegistry(listOf(entry))
         val match = testRegistry.idxMatch(DeepLinkUri.parse("airbnb://foo/myData"))
         assertThat(match!!.getParameters(DeepLinkUri.parse("airbnb://foo/myData"))["bar"]).isEqualTo("myData")
     }
@@ -17,7 +17,7 @@ class DeepLinkEntryTest {
     @Test
     fun testSinglePartialParam() {
         val entry = activityDeepLinkEntry("airbnb://foo/pre{bar}post")
-        val testRegistry = getTestRegistry(listOf(entry))
+        val testRegistry = testRegistry(listOf(entry))
 
         val match = testRegistry.idxMatch(DeepLinkUri.parse("airbnb://foo/premyDatapost"))
         assertThat(match).isNotNull
@@ -37,7 +37,7 @@ class DeepLinkEntryTest {
     @Test
     fun testSinglePartialParamLast() {
         val entry = activityDeepLinkEntry("airbnb://foo/pre{bar}")
-        val testRegistry = getTestRegistry(listOf(entry))
+        val testRegistry = testRegistry(listOf(entry))
         val match = testRegistry.idxMatch(DeepLinkUri.parse("airbnb://foo/premyData"))
         assertThat(match!!.getParameters(DeepLinkUri.parse("airbnb://foo/premyData"))["bar"]).isEqualTo("myData")
     }
@@ -45,7 +45,7 @@ class DeepLinkEntryTest {
     @Test
     fun testSinglePartialParamLastEmpty() {
         val entry = activityDeepLinkEntry("airbnb://foo/pre{bar}")
-        val testRegistry = getTestRegistry(listOf(entry))
+        val testRegistry = testRegistry(listOf(entry))
         val noMatchLastCharDifferent = testRegistry.idxMatch(DeepLinkUri.parse("airbnb://foo/pro"))
         assertThat(noMatchLastCharDifferent).isNull()
 
@@ -56,7 +56,7 @@ class DeepLinkEntryTest {
     @Test
     fun testTwoParams() {
         val entry = activityDeepLinkEntry("airbnb://test/{param1}/{param2}")
-        val testRegistry = getTestRegistry(listOf(entry))
+        val testRegistry = testRegistry(listOf(entry))
         val match = testRegistry.idxMatch(DeepLinkUri.parse("airbnb://test/12345/alice"))
         val parameters = match!!.getParameters(DeepLinkUri.parse("airbnb://test/12345/alice"))
         assertThat(parameters["param1"]).isEqualTo("12345")
@@ -73,7 +73,7 @@ class DeepLinkEntryTest {
     fun testOneAndTwoParamsSubPath() {
         val entryOneParams = activityDeepLinkEntry("airbnb://test/path/{param3}")
         val entryTwoParams = activityDeepLinkEntry("airbnb://test/path/{param2}/{param1}")
-        val testRegistry = getTestRegistry(listOf(entryTwoParams, entryOneParams))
+        val testRegistry = testRegistry(listOf(entryTwoParams, entryOneParams))
         val url2Params = "airbnb://test/path/bob/alice"
         val matchTwo = testRegistry.idxMatch(DeepLinkUri.parse(url2Params))
         assertThat(matchTwo).isNotNull
@@ -93,7 +93,7 @@ class DeepLinkEntryTest {
     @Throws(Exception::class)
     fun testParamWithSpecialCharacters() {
         val entry = activityDeepLinkEntry("airbnb://foo/{bar}")
-        val testRegistry = getTestRegistry(listOf(entry))
+        val testRegistry = testRegistry(listOf(entry))
         val match = testRegistry.idxMatch(DeepLinkUri.parse("airbnb://foo/hyphens-and_underscores123"))
         val parameters = match!!.getParameters(DeepLinkUri.parse("airbnb://foo/hyphens-and_underscores123"))
         assertThat(parameters["bar"]).isEqualTo("hyphens-and_underscores123")
@@ -102,7 +102,7 @@ class DeepLinkEntryTest {
     @Test
     fun testParamWithTildeAndDollarSign() {
         val entry = activityDeepLinkEntry("airbnb://test/{param1}")
-        val testRegistry = getTestRegistry(listOf(entry))
+        val testRegistry = testRegistry(listOf(entry))
         val match = testRegistry.idxMatch(DeepLinkUri.parse("airbnb://test/tilde~dollar\$ign"))
         val parameters = match!!.getParameters(DeepLinkUri.parse("airbnb://test/tilde~dollar\$ign"))
         assertThat(parameters["param1"]).isEqualTo("tilde~dollar\$ign")
@@ -111,7 +111,7 @@ class DeepLinkEntryTest {
     @Test
     fun testParamWithDotAndComma() {
         val entry = activityDeepLinkEntry("airbnb://test/{param1}")
-        val testRegistry = getTestRegistry(listOf(entry))
+        val testRegistry = testRegistry(listOf(entry))
         val match = testRegistry.idxMatch(DeepLinkUri.parse("airbnb://test/N1.55,22.11"))
         val parameters = match!!.getParameters(DeepLinkUri.parse("airbnb://test/N1.55,22.11"))
         assertThat(parameters["param1"]).isEqualTo("N1.55,22.11")
@@ -120,7 +120,7 @@ class DeepLinkEntryTest {
     @Test
     fun testParamForAtSign() {
         val entry = activityDeepLinkEntry("airbnb://test/{param1}")
-        val testRegistry = getTestRegistry(listOf(entry))
+        val testRegistry = testRegistry(listOf(entry))
         val match = testRegistry.idxMatch(DeepLinkUri.parse("airbnb://test/somename@gmail.com"))
         val parameters = match!!.getParameters(DeepLinkUri.parse("airbnb://test/somename@gmail.com"))
         assertThat(parameters["param1"]).isEqualTo("somename@gmail.com")
@@ -129,7 +129,7 @@ class DeepLinkEntryTest {
     @Test
     fun testParamForColon() {
         val entry = activityDeepLinkEntry("airbnb://test/{param1}")
-        val testRegistry = getTestRegistry(listOf(entry))
+        val testRegistry = testRegistry(listOf(entry))
         val match = testRegistry.idxMatch(DeepLinkUri.parse("airbnb://test/a1:b2:c3"))
         val parameters = match!!.getParameters(DeepLinkUri.parse("airbnb://test/a1:b2:c3"))
         assertThat(parameters["param1"]).isEqualTo("a1:b2:c3")
@@ -138,7 +138,7 @@ class DeepLinkEntryTest {
     @Test
     fun testParamWithSlash() {
         val entry = activityDeepLinkEntry("airbnb://test/{param1}/foo")
-        val testRegistry = getTestRegistry(listOf(entry))
+        val testRegistry = testRegistry(listOf(entry))
         val match = testRegistry.idxMatch(DeepLinkUri.parse("airbnb://test/123/foo"))
         val parameters = match!!.getParameters(DeepLinkUri.parse("airbnb://test/123/foo"))
         assertThat(parameters["param1"]).isEqualTo("123")
@@ -147,7 +147,7 @@ class DeepLinkEntryTest {
     @Test
     fun testNoMatchesFound() {
         val entry = activityDeepLinkEntry("airbnb://foo/{bar}")
-        val testRegistry = getTestRegistry(listOf(entry))
+        val testRegistry = testRegistry(listOf(entry))
         assertThat(testRegistry.idxMatch(DeepLinkUri.parse("airbnb://test.com"))).isNull()
     }
 
@@ -155,7 +155,7 @@ class DeepLinkEntryTest {
     @Throws(Exception::class)
     fun testEmptyParametersDontMatch() {
         val entry = activityDeepLinkEntry("dld://foo/{id}/bar")
-        val testRegistry = getTestRegistry(listOf(entry))
+        val testRegistry = testRegistry(listOf(entry))
         val match = testRegistry.idxMatch(DeepLinkUri.parse("dld://foo//bar"))
         assertThat(match).isNull()
     }
@@ -164,7 +164,7 @@ class DeepLinkEntryTest {
     @Throws(Exception::class)
     fun testEmptyParametersNameDontMatch() {
         val entry = activityDeepLinkEntry("dld://foo/{}/bar")
-        val testRegistry = getTestRegistry(listOf(entry))
+        val testRegistry = testRegistry(listOf(entry))
         val match = testRegistry.idxMatch(DeepLinkUri.parse("dld://foo/bla/bar"))
         assertThat(match).isNull()
     }
@@ -177,9 +177,9 @@ class DeepLinkEntryTest {
         val entry = activityDeepLinkEntry(urlTemplate)
         val entryNoParam = activityDeepLinkEntry(url)
         val entryMatchNoParam = DeepLinkMatchResult(entryNoParam, mapOf(DeepLinkUri.parse(url) to emptyMap()))
-        val testRegistry = getTestRegistry(listOf(entry))
+        val testRegistry = testRegistry(listOf(entry))
         val match = testRegistry.idxMatch(DeepLinkUri.parse(url))
-        val testRegistryNoParam = getTestRegistry(listOf(entryNoParam))
+        val testRegistryNoParam = testRegistry(listOf(entryNoParam))
         val matchNoParam = testRegistryNoParam.idxMatch(DeepLinkUri.parse(url))
         assertThat(match).isNull()
         assertThat(matchNoParam).isEqualTo(entryMatchNoParam)
@@ -188,7 +188,7 @@ class DeepLinkEntryTest {
     @Test
     fun testWithQueryParam() {
         val entry = activityDeepLinkEntry("airbnb://something")
-        val testRegistry = getTestRegistry(listOf(entry))
+        val testRegistry = testRegistry(listOf(entry))
         val matchResult = DeepLinkMatchResult(entry, mapOf(DeepLinkUri.parse("airbnb://something?foo=bar") to emptyMap()))
         val match = testRegistry.idxMatch(DeepLinkUri.parse("airbnb://something?foo=bar"))
         assertThat(match).isNotNull
@@ -198,7 +198,7 @@ class DeepLinkEntryTest {
     @Test
     fun noMatches() {
         val entry = activityDeepLinkEntry("airbnb://something.com/some-path")
-        val testRegistry = getTestRegistry(listOf(entry))
+        val testRegistry = testRegistry(listOf(entry))
         val match = testRegistry.idxMatch(DeepLinkUri.parse("airbnb://something.com/something-else"))
         assertThat(match).isNull()
     }
@@ -206,7 +206,7 @@ class DeepLinkEntryTest {
     @Test
     fun pathParamAndQueryString() {
         val entry = activityDeepLinkEntry("airbnb://foo/{bar}")
-        val testRegistry = getTestRegistry(listOf(entry))
+        val testRegistry = testRegistry(listOf(entry))
         val match = testRegistry.idxMatch(DeepLinkUri.parse("airbnb://foo/baz?kit=kat"))
         val parameters = match!!.getParameters(DeepLinkUri.parse("airbnb://foo/baz?kit=kat"))
         assertThat(parameters["bar"]).isEqualTo("baz")
@@ -215,7 +215,7 @@ class DeepLinkEntryTest {
     @Test
     fun urlWithSpaces() {
         val entry = activityDeepLinkEntry("http://example.com/{query}")
-        val testRegistry = getTestRegistry(listOf(entry))
+        val testRegistry = testRegistry(listOf(entry))
         val match = testRegistry.idxMatch(DeepLinkUri.parse("http://example.com/search%20paris"))
         val parameters = match!!.getParameters(DeepLinkUri.parse("http://example.com/search%20paris"))
         assertThat(parameters["query"]).isEqualTo("search%20paris")
@@ -224,7 +224,7 @@ class DeepLinkEntryTest {
     @Test
     fun noMatchesDifferentScheme() {
         val entry = activityDeepLinkEntry("airbnb://something")
-        val testRegistry = getTestRegistry(listOf(entry))
+        val testRegistry = testRegistry(listOf(entry))
         val match = testRegistry.idxMatch(DeepLinkUri.parse("http://something"))
         assertThat(match).isNull()
     }
@@ -232,7 +232,7 @@ class DeepLinkEntryTest {
     @Test
     fun testNoMatchForPartialOfRealMatch() {
         val entry = activityDeepLinkEntry("airbnb://host/something/something")
-        val testRegistry = getTestRegistry(listOf(entry))
+        val testRegistry = testRegistry(listOf(entry))
         val match = testRegistry.idxMatch(DeepLinkUri.parse("airbnb://host/something"))
         assertThat(match).isNull()
     }
@@ -240,7 +240,7 @@ class DeepLinkEntryTest {
     @Test
     fun invalidUrl() {
         val entry = activityDeepLinkEntry("airbnb://something")
-        val testRegistry = getTestRegistry(listOf(entry))
+        val testRegistry = testRegistry(listOf(entry))
         val match = testRegistry.idxMatch(DeepLinkUri.parse("airbnb://"))
         assertThat(match).isNull()
     }
@@ -252,7 +252,7 @@ class DeepLinkEntryTest {
         val entry = activityDeepLinkEntry(matchTemplate)
         val parametersMap = mapOf(DeepLinkUri.parse(matchUrl) to mapOf("query" to "Sant'Eufemia-a-Maiella--Italia"))
         val entryMatch = DeepLinkMatchResult(entry, parametersMap)
-        val testRegistry = getTestRegistry(listOf(entry))
+        val testRegistry = testRegistry(listOf(entry))
         val match = testRegistry.idxMatch(DeepLinkUri.parse(matchUrl))
         assertThat(match).isEqualTo(entryMatch)
     }
@@ -262,7 +262,7 @@ class DeepLinkEntryTest {
         val deeplinkUrl = "jackson5://example.com"
         val entry = activityDeepLinkEntry(deeplinkUrl)
         val entryMatch = DeepLinkMatchResult(entry, mapOf(DeepLinkUri.parse(deeplinkUrl) to emptyMap()))
-        val testRegistry = getTestRegistry(listOf(entry))
+        val testRegistry = testRegistry(listOf(entry))
         val match = testRegistry.idxMatch(DeepLinkUri.parse(deeplinkUrl))
         assertThat(match).isEqualTo(entryMatch)
     }
@@ -270,7 +270,7 @@ class DeepLinkEntryTest {
     @Test
     fun multiplePathParams() {
         val entry = activityDeepLinkEntry("airbnb://{foo}/{bar}")
-        val testRegistry = getTestRegistry(listOf(entry))
+        val testRegistry = testRegistry(listOf(entry))
         val match = testRegistry.idxMatch(DeepLinkUri.parse("airbnb://baz/qux"))
         val parameters = match!!.getParameters(DeepLinkUri.parse("airbnb://baz/qux"))
         assertThat(parameters)
@@ -282,7 +282,7 @@ class DeepLinkEntryTest {
     fun placeholderOverlapBetweenMatchAndNonMach() {
         val entryMatch = activityDeepLinkEntry("airbnb://{foo}/{bar}/match")
         val entryNoMatch = activityDeepLinkEntry("airbnb://{hey}/{ho}/noMatch")
-        val testRegistry = getTestRegistry(listOf(entryNoMatch, entryMatch))
+        val testRegistry = testRegistry(listOf(entryNoMatch, entryMatch))
         val matchUri = DeepLinkUri.parse("airbnb://baz/qux/match")
         val match = testRegistry.idxMatch(matchUri)
         val parameters = match!!.getParameters(matchUri)
@@ -306,7 +306,7 @@ class DeepLinkEntryTest {
     @Test
     fun testSchemaHostParam() {
         val entryWihtPlaceholderSchemeHost = activityDeepLinkEntry("http{scheme}://{host}airbnb.com/test")
-        val testRegistry = getTestRegistry(listOf(entryWihtPlaceholderSchemeHost))
+        val testRegistry = testRegistry(listOf(entryWihtPlaceholderSchemeHost))
 
         testParametrizedUrl(testRegistry, "http://en.airbnb.com/test", mapOf("scheme" to "", "host" to "en."))
         testParametrizedUrl(testRegistry, "http://www.airbnb.com/test", mapOf("scheme" to "", "host" to "www."))
@@ -326,7 +326,7 @@ class DeepLinkEntryTest {
     fun testSupportsWithNonExistantClass() {
         val deeplinkEntryWithNonExistentClass =
             activityDeepLinkEntry("http://test.com/", className = "notExisting")
-        val testRegistry = getTestRegistry(listOf(deeplinkEntryWithNonExistentClass))
+        val testRegistry = testRegistry(listOf(deeplinkEntryWithNonExistentClass))
         assertThat(testRegistry.supports(DeepLinkUri.parse("http://test.com/"))).isTrue
         assertThat(testRegistry.supports(DeepLinkUri.parse("http://false.com/"))).isFalse
     }
@@ -335,12 +335,12 @@ class DeepLinkEntryTest {
     fun testIdxMatchWithNonExistantClass() {
         val deeplinkEntryWithNonExistentClass =
             activityDeepLinkEntry("http://test.com/", className = "notExisting")
-        val testRegistry = getTestRegistry(listOf(deeplinkEntryWithNonExistentClass))
+        val testRegistry = testRegistry(listOf(deeplinkEntryWithNonExistentClass))
         assertThat(testRegistry.idxMatch(DeepLinkUri.parse("http://test.com/"))).isNotNull
     }
 
     private fun testParametrizedUrl(
-        testRegistry: TestDeepLinkRegistry,
+        testRegistry: TestRegistry,
         urlString: String,
         parameterMap: Map<String, String>
     ) {
@@ -351,32 +351,9 @@ class DeepLinkEntryTest {
         assertThat(matchEnHost!!.parameterMap[url]).isEqualTo(parameterMap)
     }
 
-    private class TestDeepLinkRegistry(registry: List<DeepLinkEntry>) : BaseRegistry(getSearchIndex(registry), arrayOf()) {
-
-        companion object {
-            private fun getSearchIndex(registry: List<DeepLinkEntry>): ByteArray {
-                val trieRoot = Root()
-                for (entry in registry) {
-                    trieRoot.addToTrie(entry)
-                }
-                return trieRoot.toUByteArray().toByteArray()
-            }
-        }
-    }
-
     companion object {
         private fun activityDeepLinkEntry(uriTemplate: String, className: String = "java.lang.String"): DeepLinkEntry {
             return DeepLinkEntry.ActivityDeeplinkEntry(uriTemplate, className)
-        }
-
-        /**
-         * Helper method to get a class extending [BaseRegistry] acting as the delegate
-         * for the
-         * @param deepLinkEntries
-         * @return
-         */
-        private fun getTestRegistry(deepLinkEntries: List<DeepLinkEntry>): TestDeepLinkRegistry {
-            return TestDeepLinkRegistry(deepLinkEntries)
         }
     }
 }
