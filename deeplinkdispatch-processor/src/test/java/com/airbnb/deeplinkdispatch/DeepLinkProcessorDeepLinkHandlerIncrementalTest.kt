@@ -588,7 +588,7 @@ class DeepLinkProcessorDeepLinkHandlerIncrementalTest : BaseDeepLinkProcessorTes
                       }
                     
                       private static String matchIndex0() {
-                        return "\u0001\u0001\u0000\u0000\u0000\u0000\u0000®r\u0012\f\u0000\u0000\u0000\u0000\u0000\u009ahttp{scheme}\u0014\u0011\u0000\u0000\u0000\u0000\u0000\u0081{host}example.com\b\u0004\u0000\u0000\u0000\u0000\u0000ujava\u0018\u000e\u0000_\u0000\u0000\u0000\u0000{path_segment}\u0002\u00004http{scheme}://{host}example.com/java/{path_segment}\u0000%com.example.SampleJavaDeeplinkHandler\u0000";
+                        return "\u0001\u0000\u0001\u0000\u0000\u0000\u0000\u0000²r\u0012\u0000\f\u0000\u0000\u0000\u0000\u0000\u009dhttp{scheme}\u0014\u0000\u0011\u0000\u0000\u0000\u0000\u0000\u0083{host}example.com\b\u0000\u0004\u0000\u0000\u0000\u0000\u0000vjava\u0018\u0000\u000e\u0000_\u0000\u0000\u0000\u0000{path_segment}\u0002\u00004http{scheme}://{host}example.com/java/{path_segment}\u0000%com.example.SampleJavaDeeplinkHandler\u0000";
                       }
                     }
 
@@ -702,7 +702,7 @@ class DeepLinkProcessorDeepLinkHandlerIncrementalTest : BaseDeepLinkProcessorTes
                       }
                     
                       private static String matchIndex0() {
-                        return "\u0001\u0001\u0000\u0000\u0000\u0000\u0003Ir\u0012\f\u0000\u0000\u0000\u0000\u00035http{scheme}\u0014\u0011\u0000\u0000\u0000\u0000\u0003\u001c{host}example.com\b\u000b\u0000\u0000\u0000\u0000\u0003\tpathSegment\u0018\u0019\u0000\u0000\u0000\u0000\u0002è{path_segment_variable_1}\u0018\u0019\u0000\u0000\u0000\u0000\u0002Ç{path_segment_variable_2}\u0018\u0019\u0000\u0000\u0000\u0000\u0002¦{path_segment_variable_3}\u0018\u0019\u0000\u0000\u0000\u0000\u0002\u0085{path_segment_variable_4}\u0018\u0019\u0000\u0000\u0000\u0000\u0002d{path_segment_variable_5}\u0018\u0019\u0000\u0000\u0000\u0000\u0002C{path_segment_variable_6}\u0018\u0019\u0000\u0000\u0000\u0000\u0002\"{path_segment_variable_7}\u0018\u0019\u0002\u0001\u0000\u0000\u0000\u0000{path_segment_variable_8}\u0002\u0001Ühttp{scheme}://{host}example.com/pathSegment/{path_segment_variable_1}/{path_segment_variable_2}/{path_segment_variable_3}/{path_segment_variable_4}/{path_segment_variable_5}/{path_segment_variable_6}/{path_segment_variable_7}/{path_segment_variable_8}?queryParam1={query_param_1}&queryParam2={query_param_2}&queryParam3={query_param_3}&queryParam4={query_param_4}&queryParam5={query_param_5}&queryParam6={query_param_6}&queryParam7={query_param_7}&queryParam8={query_param_8}\u0000\u001fcom.example.TestDeepLinkHandler\u0000";
+                        return "\u0001\u0000\u0001\u0000\u0000\u0000\u0000\u0003Tr\u0012\u0000\f\u0000\u0000\u0000\u0000\u0003?http{scheme}\u0014\u0000\u0011\u0000\u0000\u0000\u0000\u0003%{host}example.com\b\u0000\u000b\u0000\u0000\u0000\u0000\u0003\u0011pathSegment\u0018\u0000\u0019\u0000\u0000\u0000\u0000\u0002ï{path_segment_variable_1}\u0018\u0000\u0019\u0000\u0000\u0000\u0000\u0002Í{path_segment_variable_2}\u0018\u0000\u0019\u0000\u0000\u0000\u0000\u0002«{path_segment_variable_3}\u0018\u0000\u0019\u0000\u0000\u0000\u0000\u0002\u0089{path_segment_variable_4}\u0018\u0000\u0019\u0000\u0000\u0000\u0000\u0002g{path_segment_variable_5}\u0018\u0000\u0019\u0000\u0000\u0000\u0000\u0002E{path_segment_variable_6}\u0018\u0000\u0019\u0000\u0000\u0000\u0000\u0002#{path_segment_variable_7}\u0018\u0000\u0019\u0002\u0001\u0000\u0000\u0000\u0000{path_segment_variable_8}\u0002\u0001Ühttp{scheme}://{host}example.com/pathSegment/{path_segment_variable_1}/{path_segment_variable_2}/{path_segment_variable_3}/{path_segment_variable_4}/{path_segment_variable_5}/{path_segment_variable_6}/{path_segment_variable_7}/{path_segment_variable_8}?queryParam1={query_param_1}&queryParam2={query_param_2}&queryParam3={query_param_3}&queryParam4={query_param_4}&queryParam5={query_param_5}&queryParam6={query_param_6}&queryParam7={query_param_7}&queryParam8={query_param_8}\u0000\u001fcom.example.TestDeepLinkHandler\u0000";
                       }
                     }
 
@@ -757,7 +757,7 @@ class DeepLinkProcessorDeepLinkHandlerIncrementalTest : BaseDeepLinkProcessorTes
                       }
                     
                       private static String matchIndex0() {
-                        return "\u0001\u0001\u0000\u0000\u0000\u0000\u0003Ir\u0012\f\u0000\u0000\u0000\u0000\u00035http{scheme}\u0014\u0011\u0000\u0000\u0000\u0000\u0003\u001c{host}example.com\b\u000b\u0000\u0000\u0000\u0000\u0003\tpathSegment\u0018\u0019\u0000\u0000\u0000\u0000\u0002è{path_segment_variable_1}\u0018\u0019\u0000\u0000\u0000\u0000\u0002Ç{path_segment_variable_2}\u0018\u0019\u0000\u0000\u0000\u0000\u0002¦{path_segment_variable_3}\u0018\u0019\u0000\u0000\u0000\u0000\u0002\u0085{path_segment_variable_4}\u0018\u0019\u0000\u0000\u0000\u0000\u0002d{path_segment_variable_5}\u0018\u0019\u0000\u0000\u0000\u0000\u0002C{path_segment_variable_6}\u0018\u0019\u0000\u0000\u0000\u0000\u0002\"{path_segment_variable_7}\u0018\u0019\u0002\u0001\u0000\u0000\u0000\u0000{path_segment_variable_8}\u0002\u0001Ühttp{scheme}://{host}example.com/pathSegment/{path_segment_variable_1}/{path_segment_variable_2}/{path_segment_variable_3}/{path_segment_variable_4}/{path_segment_variable_5}/{path_segment_variable_6}/{path_segment_variable_7}/{path_segment_variable_8}?queryParam1={query_param_1}&queryParam2={query_param_2}&queryParam3={query_param_3}&queryParam4={query_param_4}&queryParam5={query_param_5}&queryParam6={query_param_6}&queryParam7={query_param_7}&queryParam8={query_param_8}\u0000\u001fcom.example.TestDeepLinkHandler\u0000";
+                        return "\u0001\u0000\u0001\u0000\u0000\u0000\u0000\u0003Tr\u0012\u0000\f\u0000\u0000\u0000\u0000\u0003?http{scheme}\u0014\u0000\u0011\u0000\u0000\u0000\u0000\u0003%{host}example.com\b\u0000\u000b\u0000\u0000\u0000\u0000\u0003\u0011pathSegment\u0018\u0000\u0019\u0000\u0000\u0000\u0000\u0002ï{path_segment_variable_1}\u0018\u0000\u0019\u0000\u0000\u0000\u0000\u0002Í{path_segment_variable_2}\u0018\u0000\u0019\u0000\u0000\u0000\u0000\u0002«{path_segment_variable_3}\u0018\u0000\u0019\u0000\u0000\u0000\u0000\u0002\u0089{path_segment_variable_4}\u0018\u0000\u0019\u0000\u0000\u0000\u0000\u0002g{path_segment_variable_5}\u0018\u0000\u0019\u0000\u0000\u0000\u0000\u0002E{path_segment_variable_6}\u0018\u0000\u0019\u0000\u0000\u0000\u0000\u0002#{path_segment_variable_7}\u0018\u0000\u0019\u0002\u0001\u0000\u0000\u0000\u0000{path_segment_variable_8}\u0002\u0001Ühttp{scheme}://{host}example.com/pathSegment/{path_segment_variable_1}/{path_segment_variable_2}/{path_segment_variable_3}/{path_segment_variable_4}/{path_segment_variable_5}/{path_segment_variable_6}/{path_segment_variable_7}/{path_segment_variable_8}?queryParam1={query_param_1}&queryParam2={query_param_2}&queryParam3={query_param_3}&queryParam4={query_param_4}&queryParam5={query_param_5}&queryParam6={query_param_6}&queryParam7={query_param_7}&queryParam8={query_param_8}\u0000\u001fcom.example.TestDeepLinkHandler\u0000";
                       }
                     }
 
@@ -839,7 +839,7 @@ class DeepLinkProcessorDeepLinkHandlerIncrementalTest : BaseDeepLinkProcessorTes
                       }
                     
                       private static String matchIndex0() {
-                        return "\u0001\u0001\u0000\u0000\u0000\u0000\u0000¤r\u0012\f\u0000\u0000\u0000\u0000\u0000\u0090http{scheme}\u0014\u0011\u0000\u0000\u0000\u0000\u0000w{host}example.com\b\u000b\u0000\u0000\u0000\u0000\u0000dpathSegment\u0018\u0005\u0000W\u0000\u0000\u0000\u0000{one}\u0002\u00002http{scheme}://{host}example.com/pathSegment/{one}\u0000\u001fcom.example.TestDeepLinkHandler\u0000";
+                        return "\u0001\u0000\u0001\u0000\u0000\u0000\u0000\u0000¨r\u0012\u0000\f\u0000\u0000\u0000\u0000\u0000\u0093http{scheme}\u0014\u0000\u0011\u0000\u0000\u0000\u0000\u0000y{host}example.com\b\u0000\u000b\u0000\u0000\u0000\u0000\u0000epathSegment\u0018\u0000\u0005\u0000W\u0000\u0000\u0000\u0000{one}\u0002\u00002http{scheme}://{host}example.com/pathSegment/{one}\u0000\u001fcom.example.TestDeepLinkHandler\u0000";
                       }
                     }
 
@@ -894,7 +894,7 @@ class DeepLinkProcessorDeepLinkHandlerIncrementalTest : BaseDeepLinkProcessorTes
                       }
                     
                       private static String matchIndex0() {
-                        return "\u0001\u0001\u0000\u0000\u0000\u0000\u0000¤r\u0012\f\u0000\u0000\u0000\u0000\u0000\u0090http{scheme}\u0014\u0011\u0000\u0000\u0000\u0000\u0000w{host}example.com\b\u000b\u0000\u0000\u0000\u0000\u0000dpathSegment\u0018\u0005\u0000W\u0000\u0000\u0000\u0000{one}\u0002\u00002http{scheme}://{host}example.com/pathSegment/{one}\u0000\u001fcom.example.TestDeepLinkHandler\u0000";
+                        return "\u0001\u0000\u0001\u0000\u0000\u0000\u0000\u0000¨r\u0012\u0000\f\u0000\u0000\u0000\u0000\u0000\u0093http{scheme}\u0014\u0000\u0011\u0000\u0000\u0000\u0000\u0000y{host}example.com\b\u0000\u000b\u0000\u0000\u0000\u0000\u0000epathSegment\u0018\u0000\u0005\u0000W\u0000\u0000\u0000\u0000{one}\u0002\u00002http{scheme}://{host}example.com/pathSegment/{one}\u0000\u001fcom.example.TestDeepLinkHandler\u0000";
                       }
                     }
 
@@ -1003,7 +1003,7 @@ class DeepLinkProcessorDeepLinkHandlerIncrementalTest : BaseDeepLinkProcessorTes
                       }
                     
                       private static String matchIndex0() {
-                        return "\u0001\u0001\u0000\u0000\u0000\u0000\u0000Ér\u0012\f\u0000\u0000\u0000\u0000\u0000µhttp{scheme}\u0014\u0011\u0000\u0000\u0000\u0000\u0000\u009c{host}example.com\b\u000b\u0000\u0000\u0000\u0000\u0000\u0089pathSegment\u0018\u0005\u0000\u0000\u0000\u0000\u0000|{one}\u0018\u0005\u0000o\u0000\u0000\u0000\u0000{two}\u0002\u0000Jhttp{scheme}://{host}example.com/pathSegment/{one}/{two}?query={something}\u0000\u001fcom.example.TestDeepLinkHandler\u0000";
+                        return "\u0001\u0000\u0001\u0000\u0000\u0000\u0000\u0000Îr\u0012\u0000\f\u0000\u0000\u0000\u0000\u0000¹http{scheme}\u0014\u0000\u0011\u0000\u0000\u0000\u0000\u0000\u009f{host}example.com\b\u0000\u000b\u0000\u0000\u0000\u0000\u0000\u008bpathSegment\u0018\u0000\u0005\u0000\u0000\u0000\u0000\u0000}{one}\u0018\u0000\u0005\u0000o\u0000\u0000\u0000\u0000{two}\u0002\u0000Jhttp{scheme}://{host}example.com/pathSegment/{one}/{two}?query={something}\u0000\u001fcom.example.TestDeepLinkHandler\u0000";
                       }
                     }
 
@@ -1085,7 +1085,7 @@ class DeepLinkProcessorDeepLinkHandlerIncrementalTest : BaseDeepLinkProcessorTes
                       }
                     
                       private static String matchIndex0() {
-                        return "\u0001\u0001\u0000\u0000\u0000\u0000\u0000Ér\u0012\f\u0000\u0000\u0000\u0000\u0000µhttp{scheme}\u0014\u0011\u0000\u0000\u0000\u0000\u0000\u009c{host}example.com\b\u000b\u0000\u0000\u0000\u0000\u0000\u0089pathSegment\u0018\u0005\u0000\u0000\u0000\u0000\u0000|{one}\u0018\u0005\u0000o\u0000\u0000\u0000\u0000{two}\u0002\u0000Jhttp{scheme}://{host}example.com/pathSegment/{one}/{two}?query={something}\u0000\u001fcom.example.TestDeepLinkHandler\u0000";
+                        return "\u0001\u0000\u0001\u0000\u0000\u0000\u0000\u0000Îr\u0012\u0000\f\u0000\u0000\u0000\u0000\u0000¹http{scheme}\u0014\u0000\u0011\u0000\u0000\u0000\u0000\u0000\u009f{host}example.com\b\u0000\u000b\u0000\u0000\u0000\u0000\u0000\u008bpathSegment\u0018\u0000\u0005\u0000\u0000\u0000\u0000\u0000}{one}\u0018\u0000\u0005\u0000o\u0000\u0000\u0000\u0000{two}\u0002\u0000Jhttp{scheme}://{host}example.com/pathSegment/{one}/{two}?query={something}\u0000\u001fcom.example.TestDeepLinkHandler\u0000";
                       }
                     }
 
