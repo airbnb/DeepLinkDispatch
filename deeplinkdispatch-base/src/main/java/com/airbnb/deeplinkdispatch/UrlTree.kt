@@ -2,6 +2,8 @@
 
 package com.airbnb.deeplinkdispatch
 
+import com.airbnb.deeplinkdispatch.base.MatchIndex.ALLOWED_VALUES_DELIMITER
+import com.airbnb.deeplinkdispatch.base.MatchIndex.ALLOWED_VALUES_SEPARATOR
 import com.airbnb.deeplinkdispatch.base.MatchIndex.HEADER_LENGTH
 import com.airbnb.deeplinkdispatch.base.MatchIndex.HEADER_MATCH_LENGTH
 import com.airbnb.deeplinkdispatch.base.MatchIndex.HEADER_NODE_METADATA_LENGTH
@@ -231,10 +233,13 @@ data class Root(override val id: String = "r") :
         }
 }
 
-private val allowedPlaceholderRegex = "(?<=\\()(.*)(?=\\))".toRegex()
+private val allowedPlaceholderRegex =
+    "(?<=${"\\" + ALLOWED_VALUES_DELIMITER[0]})(.*)(?=${"\\" + ALLOWED_VALUES_DELIMITER[1]})".toRegex()
+
 internal fun String.orderPlaceholderValues(): String {
     return allowedPlaceholderRegex.replace(this) { matchResult ->
-        matchResult.value.split("|").sorted().joinToString(separator = "|")
+        matchResult.value.split(ALLOWED_VALUES_SEPARATOR).sorted()
+            .joinToString(separator = ALLOWED_VALUES_SEPARATOR.toString())
     }
 }
 
