@@ -421,7 +421,16 @@ open class BaseDeepLinkDelegate @JvmOverloads constructor(
     ): Any {
         val handlerClazz = matchedDeeplinkEntry.clazz
 
-        val deepLinkArgsClazz = clazz(handlerClazz)
+        val deepLinkArgsClazz = argsClazz(handlerClazz) ?: run {
+            errorHandler?.unableToDetermineHandlerArgsType(
+                uriTemplate = matchedDeeplinkEntry.uriTemplate,
+                className = matchedDeeplinkEntry.className
+            )
+            // We are assuming there is no type argument if we cannot determine one.
+            // This might still crash (if there actually is a type argument other than
+            // Any::class.java
+            Any::class.java
+        }
             ?: error("Unable to determine parameter class type for ${handlerClazz.name}.")
         return getDeepLinkArgs(
             deepLinkArgsClazz,
@@ -430,7 +439,7 @@ open class BaseDeepLinkDelegate @JvmOverloads constructor(
         )
     }
 
-    private fun clazz(handlerClazz: Class<*>): Class<*>? {
+    private fun argsClazz(handlerClazz: Class<*>): Class<*>? {
         // This relies on the fact that the Processor already checked that every annotated class
         // correctly implements the DeepLinkHandler<T> interface.
         //
@@ -444,7 +453,7 @@ open class BaseDeepLinkDelegate @JvmOverloads constructor(
             }?.actualTypeArguments?.getDeepLinkArgClassFromTypeArguments()
             // If we cannot get the type from the interface the handler does not directly implement it
             // need to look at the super class and check its type arguments.
-            ?: if (handlerClazz.genericSuperclass is ParameterizedType) (handlerClazz.genericSuperclass as ParameterizedType).actualTypeArguments.getDeepLinkArgClassFromTypeArguments() else clazz(
+            ?: if (handlerClazz.genericSuperclass is ParameterizedType) (handlerClazz.genericSuperclass as ParameterizedType).actualTypeArguments.getDeepLinkArgClassFromTypeArguments() else argsClazz(
                 handlerClazz.genericSuperclass as Class<*>
             )
     }

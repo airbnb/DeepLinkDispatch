@@ -1,8 +1,16 @@
 # Keep the deep link handler classes (and INSTANCE field if they have it) as they are accessed
 # via reflection from within the app.
--keep class * extends com.airbnb.deeplinkdispatch.handler.DeepLinkHandler {
+-keep class * implements com.airbnb.deeplinkdispatch.handler.DeepLinkHandler {
     public static final ** INSTANCE;
 }
+
+# As per https://r8.googlesource.com/r8/+/refs/heads/main/compatibility-faq.md in full mode
+# R8 will remove the Signature annotation inside the .dex file which is used to keep the generic
+# information. This still works if the generic type is anything other than java.lang.Object
+# but fails if the deep link has no arguments and thus the generic type of the handler is
+# java.lang.Object. To fix this we need to keep the interface even thogh keeping it for any
+# other reason is not required.
+-keep interface com.airbnb.deeplinkdispatch.handler.DeepLinkHandler
 
 # We need to keep the constructors of the argument objects used in the handleDeepLink methods.
 # As we instantiate those constructors at runtime and we rely on the full constructor to
