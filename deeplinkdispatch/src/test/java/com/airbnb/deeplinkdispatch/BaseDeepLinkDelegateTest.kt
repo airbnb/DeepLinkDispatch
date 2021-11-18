@@ -165,7 +165,7 @@ class BaseDeepLinkDelegateTest {
         parameterMap: Map<String, String>
     ) = mapOf(DeepLinkUri.parse(url) to parameterMap)
 
-    private class DuplicatedMatchTestErrorHandler : ErrorHandler {
+    private class DuplicatedMatchTestErrorHandler : ErrorHandler() {
         var className: String = ""
         var duplicatedMatches: List<DeepLinkMatchResult>? = null
         var duplicateMatchCalled: Boolean = false
