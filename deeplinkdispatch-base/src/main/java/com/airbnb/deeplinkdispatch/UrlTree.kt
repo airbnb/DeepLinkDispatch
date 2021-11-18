@@ -2,6 +2,8 @@
 
 package com.airbnb.deeplinkdispatch
 
+import com.airbnb.deeplinkdispatch.base.MatchIndex.ALLOWED_VALUES_DELIMITER
+import com.airbnb.deeplinkdispatch.base.MatchIndex.ALLOWED_VALUES_SEPARATOR
 import com.airbnb.deeplinkdispatch.base.MatchIndex.HEADER_LENGTH
 import com.airbnb.deeplinkdispatch.base.MatchIndex.HEADER_MATCH_LENGTH
 import com.airbnb.deeplinkdispatch.base.MatchIndex.HEADER_NODE_METADATA_LENGTH
@@ -172,19 +174,37 @@ data class Root(override val id: String = "r") :
      */
     fun addToTrie(deepLinkEntry: DeepLinkEntry) {
         val deepLinkUri = DeepLinkUri.parseTemplate(deepLinkEntry.uriTemplate)
-        var node = this.addNode(Scheme(deepLinkUri.scheme().also { validateIfComponentParam(it) }))
+        var node = this.addNode(
+            Scheme(
+                deepLinkUri.scheme()
+                    .orderPlaceholderValues()
+                    .also { validateIfComponentParam(it) }
+            )
+        )
         if (!deepLinkUri.host().isNullOrEmpty()) {
-            validateIfComponentParam(deepLinkUri.host())
-            node = node.addNode(Host(deepLinkUri.host()))
+            node = node.addNode(
+                Host(
+                    deepLinkUri.host()
+                        .orderPlaceholderValues()
+                        .also { validateIfComponentParam(it) }
+                )
+            )
             if (deepLinkUri.pathSegments().isNullOrEmpty()) {
                 node.match = uriMatch(deepLinkEntry)
             }
         }
         if (!deepLinkUri.pathSegments().isNullOrEmpty()) {
             for (pathSegment in deepLinkUri.pathSegments()) {
-                validateIfComponentParam(pathSegment)
-                validateIfConfigurablePathSegment(pathSegment)
-                node = node.addNode(PathSegment(pathSegment))
+                node = node.addNode(
+                    PathSegment(
+                        pathSegment
+                            .orderPlaceholderValues()
+                            .also {
+                                validateIfComponentParam(it)
+                                validateIfConfigurablePathSegment(it)
+                            }
+                    )
+                )
             }
             node.match = uriMatch(deepLinkEntry)
         }
@@ -211,6 +231,16 @@ data class Root(override val id: String = "r") :
                 null
             )
         }
+}
+
+private val allowedPlaceholderRegex =
+    "(?<=${"\\" + ALLOWED_VALUES_DELIMITER[0]})(.*)(?=${"\\" + ALLOWED_VALUES_DELIMITER[1]})".toRegex()
+
+internal fun String.orderPlaceholderValues(): String {
+    return allowedPlaceholderRegex.replace(this) { matchResult ->
+        matchResult.value.split(ALLOWED_VALUES_SEPARATOR).sorted()
+            .joinToString(separator = ALLOWED_VALUES_SEPARATOR.toString())
+    }
 }
 
 data class Scheme(override val id: String) :

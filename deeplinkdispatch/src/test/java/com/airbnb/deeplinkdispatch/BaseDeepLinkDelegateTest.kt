@@ -28,6 +28,16 @@ class BaseDeepLinkDelegateTest {
         assertThat(testDelegate.findEntry("airbnb://bar/1")).isNull()
     }
 
+    @Test
+    fun testAllowedPlaceholderValueOrdering() {
+        val entry = activityDeepLinkEntry("airbn{scheme(c|b|a)}://foo{host(1|3|2)}/{bar(someValue|someOtherValue)}")
+        val testDelegate = getOneRegistryTestDelegate(listOf(entry), null)
+        val matchArrayDump = testDelegate.registries.singleOrNull()?.matchIndex()?.byteArray?.let { String(it) } ?: ""
+        assertThat(matchArrayDump).contains("(a|b|c)")
+        assertThat(matchArrayDump).contains("(1|2|3)")
+        assertThat(matchArrayDump).contains("(someOtherValue|someValue)")
+    }
+
     @Test(expected = NullPointerException::class)
     @Suppress("UNREACHABLE_CODE")
     fun testDispatchNullActivity() {
