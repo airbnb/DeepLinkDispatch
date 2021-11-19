@@ -273,21 +273,14 @@ open class BaseDeepLinkDelegate @JvmOverloads constructor(
         val originalIntentUri = sourceIntent.data
             ?: return DeepLinkResult(
                 isSuccessful = false,
-                uriString = null,
                 error = "No Uri in given activity's intent.",
                 deepLinkMatchResult = deeplinkMatchResult,
-                methodResult = DeepLinkMethodResult(null, null),
-                deepLinkHandlerResult = null
             )
         val deepLinkUri = DeepLinkUri.parse(originalIntentUri.toString())
         if (deeplinkMatchResult == null) {
             return DeepLinkResult(
                 isSuccessful = false,
-                uriString = null,
                 error = "DeepLinkEntry cannot be null",
-                deepLinkMatchResult = null,
-                methodResult = DeepLinkMethodResult(null, null),
-                deepLinkHandlerResult = null
             )
         }
         val queryAndPathParameters = queryAndPathParameters(
@@ -320,7 +313,6 @@ open class BaseDeepLinkDelegate @JvmOverloads constructor(
                 DeepLinkResult(
                     isSuccessful = true,
                     uriString = originalIntentUri.toString(),
-                    error = "",
                     deepLinkMatchResult = deeplinkMatchResult,
                     methodResult = DeepLinkMethodResult(
                         intent,
@@ -345,9 +337,8 @@ open class BaseDeepLinkDelegate @JvmOverloads constructor(
                 isSuccessful = false,
                 uriString = originalIntentUri.toString(),
                 error = deepLinkMethodError.message ?: "",
-                deepLinkMatchResult = deeplinkMatchResult,
-                methodResult = DeepLinkMethodResult(null, null),
-                deepLinkHandlerResult = null
+                errorThrowable = deepLinkMethodError,
+                deepLinkMatchResult = deeplinkMatchResult
             )
         }
     }
@@ -395,11 +386,20 @@ open class BaseDeepLinkDelegate @JvmOverloads constructor(
                         )
                     }
                 } catch (exception: NoSuchMethodException) {
-                    throw DeeplLinkMethodError("Deep link to non-existent method: ${matchedDeeplinkEntry.method}")
+                    throw DeeplLinkMethodError(
+                        message = "Deep link to non-existent method: ${matchedDeeplinkEntry.method}",
+                        cause = exception
+                    )
                 } catch (exception: IllegalAccessException) {
-                    throw DeeplLinkMethodError("Could not deep link to method: ${matchedDeeplinkEntry.method}")
+                    throw DeeplLinkMethodError(
+                        message = "Could not deep link to method: ${matchedDeeplinkEntry.method}",
+                        cause = exception
+                    )
                 } catch (exception: InvocationTargetException) {
-                    throw DeeplLinkMethodError("Could not deep link to method: ${matchedDeeplinkEntry.method}")
+                    throw DeeplLinkMethodError(
+                        message = "Could not deep link to method: ${matchedDeeplinkEntry.method}",
+                        cause = exception
+                    )
                 }
             }
             is DeepLinkEntry.HandlerDeepLinkEntry -> {
@@ -507,7 +507,10 @@ open class BaseDeepLinkDelegate @JvmOverloads constructor(
         }
     }
 
-    class DeeplLinkMethodError(message: String) : IllegalStateException(message)
+    class DeeplLinkMethodError(
+        message: String,
+        override val cause: Throwable? = null
+    ) : IllegalStateException(message, cause)
 
     /**
      * Retruns a bundle that contains all the parameter, either from placeholder (path/{parameterName})

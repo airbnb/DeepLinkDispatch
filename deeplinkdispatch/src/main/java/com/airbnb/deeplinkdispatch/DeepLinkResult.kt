@@ -9,12 +9,13 @@ data class DeepLinkResult(
      * @return whether or not the dispatch was a success.
      */
     val isSuccessful: Boolean,
-    val uriString: String?,
-    val error: String,
-    val deepLinkMatchResult: DeepLinkMatchResult?,
-    val methodResult: DeepLinkMethodResult,
+    val uriString: String? = null,
+    val error: String = "",
+    val errorThrowable: Throwable? = null,
+    val deepLinkMatchResult: DeepLinkMatchResult? = null,
+    val methodResult: DeepLinkMethodResult = DeepLinkMethodResult(null, null),
     val parameters: Map<String, String> = emptyMap(),
-    val deepLinkHandlerResult: DeepLinkHandlerResult<Any>?,
+    val deepLinkHandlerResult: DeepLinkHandlerResult<Any>? = null,
 ) {
     /**
      * This exists so that calls from Kotlin code [error()] are maintained across major version 4.
