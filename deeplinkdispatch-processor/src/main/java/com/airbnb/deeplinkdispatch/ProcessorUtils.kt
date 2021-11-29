@@ -1,6 +1,9 @@
 package com.airbnb.deeplinkdispatch
 
+import androidx.room.compiler.processing.XAnnotation
+import androidx.room.compiler.processing.XAnnotationValue
 import androidx.room.compiler.processing.XTypeElement
+import androidx.room.compiler.processing.get
 
 object ProcessorUtils {
     @JvmStatic
@@ -48,5 +51,21 @@ fun XTypeElement.inheritanceHierarchyDoesNotContain(fqnList: List<String>) =
 fun XTypeElement.directlyImplementsInterfaces(fqnList: List<String>): Boolean {
     return fqnList.all { interfaceFqn ->
         getSuperInterfaceElements().any { typeElement -> typeElement.qualifiedName == interfaceFqn }
+    }
+}
+
+inline fun <reified T> XAnnotation.getAsList(method: String): List<T> {
+    val originalList = get<List<T>>(method)
+    // In new XProcessing versions List values are wrapped in XAnnotationValue but in old versions
+    // they are the raw type.
+    return if (originalList.firstOrNull() is XAnnotationValue) {
+        (originalList as List<XAnnotationValue>).map { xAnnotationValue ->
+            check(xAnnotationValue.value is T) {
+                "Expected type ${T::class} but got ${xAnnotationValue.value?.javaClass}"
+            }
+            xAnnotationValue.value as T
+        }
+    } else {
+        return originalList
     }
 }
