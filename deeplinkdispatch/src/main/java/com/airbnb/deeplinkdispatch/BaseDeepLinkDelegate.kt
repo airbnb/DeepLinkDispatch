@@ -19,6 +19,7 @@ import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
 
 open class BaseDeepLinkDelegate @JvmOverloads constructor(
+        bla
     val registries: List<BaseRegistry>,
     configurablePathSegmentReplacements: Map<String, String> = emptyMap(),
     private val typeConverters: () -> TypeConverters = { TypeConverters() },
