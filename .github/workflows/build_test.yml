@@ -1,0 +1,17 @@
+name: Build/Test
+
+on:
+  # Trigger on every pull request and on push
+  # to the `main` branch.
+  pull_request:
+  push:
+    branches:
+      - master
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout DeepLinkDispatch
+        uses: actions/checkout@v2
+      - name: Build/Test DeepLinkDispatch
+        run: ./gradlew assemble check lintKotlin
