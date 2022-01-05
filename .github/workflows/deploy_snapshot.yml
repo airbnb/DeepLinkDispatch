@@ -1,0 +1,19 @@
+name: Deploy snapshot
+
+on:
+  # Trigger ONLY on push to master branch
+  push:
+    branches:
+      - master
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout DeepLinkDispatch
+        uses: actions/checkout@v2
+      - name: Deploy new snapshot of DeepLinkDispatch
+        shell: bash
+        env:
+          CI_DEPLOY_USERNAME: ${{ secrets.NEXUS_USER }}
+          $CI_DEPLOY_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
+        run: ./gradlew uploadArchives -PNEXUS_USERNAME="$CI_DEPLOY_USERNAME" -PNEXUS_PASSWORD="$CI_DEPLOY_PASSWORD"
