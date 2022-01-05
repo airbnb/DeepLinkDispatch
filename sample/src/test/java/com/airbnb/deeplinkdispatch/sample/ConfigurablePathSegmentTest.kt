@@ -42,7 +42,7 @@ class ConfigurablePathSegmentTest {
     fun testMatchLinkwithNoPathSegmentsButOverlappingEmptyConfigurablePathSegments() {
         val deepLinkDelegate = DeepLinkDelegate(SampleModuleRegistry(), LibraryDeepLinkModuleRegistry(), BenchmarkDeepLinkModuleRegistry(), KaptLibraryDeepLinkModuleRegistry(), configurablePathSegmentReplacementsAllEmpty)
         val oneEmptyReplacementMatches = deepLinkDelegate.supportsUri("https://www.example.com/nothing-special")
-        assertThat(oneEmptyReplacementMatches, equalTo<Boolean>(true))
+        assertThat(oneEmptyReplacementMatches, equalTo<Boolean>(false))
     }
 
     @Test
