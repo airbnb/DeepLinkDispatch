@@ -1,0 +1,22 @@
+name: Deploy snapshot
+
+on:
+  # Trigger ONLY on push to master branch
+  push:
+    branches:
+      - master
+jobs:
+  build-test:
+    uses: airbnb/DeepLinkDispatch/.github/workflows/build_test.yml@master
+  deploy-snapshot:
+    needs: build-test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout DeepLinkDispatch
+        uses: actions/checkout@v2
+      - name: Deploy new snapshot of DeepLinkDispatch
+        shell: bash
+        env:
+          CI_DEPLOY_USERNAME: ${{ secrets.NEXUS_USER }}
+          CI_DEPLOY_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
+        run: ./gradlew uploadArchives -PmavenCentralUsername="$CI_DEPLOY_USERNAME" -PmavenCentralPassword="$CI_DEPLOY_PASSWORD"
