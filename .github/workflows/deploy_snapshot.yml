@@ -15,5 +15,5 @@ jobs:
         shell: bash
         env:
           CI_DEPLOY_USERNAME: ${{ secrets.NEXUS_USER }}
-          $CI_DEPLOY_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
-        run: ./gradlew uploadArchives -PNEXUS_USERNAME="$CI_DEPLOY_USERNAME" -PNEXUS_PASSWORD="$CI_DEPLOY_PASSWORD"
+          CI_DEPLOY_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
+        run: ./gradlew uploadArchives -PmavenCentralUsername="$CI_DEPLOY_USERNAME" -PmavenCentralPassword="$CI_DEPLOY_PASSWORD"
