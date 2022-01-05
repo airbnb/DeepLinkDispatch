@@ -6,7 +6,10 @@ on:
     branches:
       - master
 jobs:
-  build:
+  build-test:
+    uses: airbnb/DeepLinkDispatch/.github/workflows/build_test.yml@master
+  deploy-snapshot:
+    needs: build-test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout DeepLinkDispatch
