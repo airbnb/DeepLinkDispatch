@@ -17,6 +17,6 @@ jobs:
       - name: Deploy new snapshot of DeepLinkDispatch
         shell: bash
         env:
-          mavenCentralRepositoryUsername: ${{ secrets.NEXUS_USER }}
-          mavenCentralRepositoryPassword: ${{ secrets.NEXUS_PASSWORD }}
+          SONATYPE_NEXUS_USERNAME: ${{ secrets.NEXUS_USER }}
+          SONATYPE_NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
         run: ./gradlew uploadArchives
