@@ -283,7 +283,7 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
                   }
 
                   private static String matchIndex0() {
-                    return "\u0001\u0001\u0000\u0000\u0000\u0000\u0000pr\u0002\u0007\u0000\u0000\u0000\u0000\u0000aexample\u0004\u000b\u0000\u0000\u0000\u0000\u0000Nexample.com\b\b\u0000>\u0000\u0000\u0000\u0000deepLink\u0000\u0000\u001eexample://example.com/deepLink\u0000\u001acom.example.SampleActivity\u0000";
+                    return "\u0001\u0000\u0001\u0000\u0000\u0000\u0000\u0000sr\u0002\u0000\u0007\u0000\u0000\u0000\u0000\u0000cexample\u0004\u0000\u000b\u0000\u0000\u0000\u0000\u0000Oexample.com\b\u0000\b\u0000>\u0000\u0000\u0000\u0000deepLink\u0000\u0000\u001eexample://example.com/deepLink\u0000\u001acom.example.SampleActivity\u0000";
                   }
                 }
             
@@ -395,7 +395,7 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
                   }
 
                   private static String matchIndex0() {
-                    return "\u0001\u0001\u0000\u0000\u0000\u0000\u0000\u0086r\u0012\f\u0000\u0000\u0000\u0000\u0000rhttp{scheme}\u0014\u0011\u0000\u0000\u0000\u0000\u0000Y{host}example.com\b\b\u0000I\u0000\u0000\u0000\u0000deepLink\u0000\u0000)http{scheme}://{host}example.com/deepLink\u0000\u001acom.example.SampleActivity\u0000";
+                    return "\u0001\u0000\u0001\u0000\u0000\u0000\u0000\u0000\u0089r\u0012\u0000\f\u0000\u0000\u0000\u0000\u0000thttp{scheme}\u0014\u0000\u0011\u0000\u0000\u0000\u0000\u0000Z{host}example.com\b\u0000\b\u0000I\u0000\u0000\u0000\u0000deepLink\u0000\u0000)http{scheme}://{host}example.com/deepLink\u0000\u001acom.example.SampleActivity\u0000";
                   }
                 }
             
@@ -507,7 +507,7 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
                   }
 
                   private static String matchIndex0() {
-                    return "\u0001\u0001\u0000\u0000\u0000\u0000\u0000\u009cr\u0012\u0010\u0000\u0000\u0000\u0000\u0000\u0084http{scheme(|s)}\u0014\u0018\u0000\u0000\u0000\u0000\u0000d{host(|www.)}example.com\b\b\u0000T\u0000\u0000\u0000\u0000deepLink\u0000\u00004http{scheme(|s)}://{host(|www.)}example.com/deepLink\u0000\u001acom.example.SampleActivity\u0000";
+                    return "\u0001\u0000\u0001\u0000\u0000\u0000\u0000\u0000\u009fr\u0012\u0000\u0010\u0000\u0000\u0000\u0000\u0000\u0086http{scheme(|s)}\u0014\u0000\u0018\u0000\u0000\u0000\u0000\u0000e{host(|www.)}example.com\b\u0000\b\u0000T\u0000\u0000\u0000\u0000deepLink\u0000\u00004http{scheme(|s)}://{host(|www.)}example.com/deepLink\u0000\u001acom.example.SampleActivity\u0000";
                   }
                 }
             
@@ -664,7 +664,7 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
                   }
 
                   private static String matchIndex0() {
-                    return "\u0001\u0001\u0000\u0000\u0000\u0000\u0000\u0000r";
+                    return "\u0001\u0000\u0001\u0000\u0000\u0000\u0000\u0000\u0000r";
                   }
                 }
                 
@@ -800,7 +800,7 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
                       }
                     
                       private static String matchIndex0() {
-                        return "\u0001\u0001\u0000\u0000\u0000\u0000\u0000¤r\u0002\u0006\u0000\u0000\u0000\u0000\u0000\u0096airbnb\u0004\u000b\u0000\u0000\u0000\u0000\u0000\u0083example.com\b\u0012\u0000i\u0000\u0000\u0000\u0000innerClassDeeplink\u0001\u0000'airbnb://example.com/innerClassDeeplink\u0000%com.example.SampleActivity${"\$"}InnerClass\u0017intentForDeepLinkMethod";
+                        return "\u0001\u0000\u0001\u0000\u0000\u0000\u0000\u0000§r\u0002\u0000\u0006\u0000\u0000\u0000\u0000\u0000\u0098airbnb\u0004\u0000\u000b\u0000\u0000\u0000\u0000\u0000\u0084example.com\b\u0000\u0012\u0000i\u0000\u0000\u0000\u0000innerClassDeeplink\u0001\u0000'airbnb://example.com/innerClassDeeplink\u0000%com.example.SampleActivity${"\$"}InnerClass\u0017intentForDeepLinkMethod";
                       }
                     }
 
@@ -911,7 +911,7 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
                       }
                     
                       private static String matchIndex0() {
-                        return "\u0001\u0001\u0000\u0000\u0000\u0000\u0000®r\u0002\u0006\u0000\u0000\u0000\u0000\u0000 airbnb\u0004\u000b\u0000\u0000\u0000\u0000\u0000\u008dexample.com\b\u0012\u0000s\u0000\u0000\u0000\u0000innerClassDeeplink\u0001\u0000'airbnb://example.com/innerClassDeeplink\u0000/com.example.SampleActivity${"\$"}InnerClass${"\$"}DeepLinks\u0017intentForDeepLinkMethod";
+                        return "\u0001\u0000\u0001\u0000\u0000\u0000\u0000\u0000±r\u0002\u0000\u0006\u0000\u0000\u0000\u0000\u0000¢airbnb\u0004\u0000\u000b\u0000\u0000\u0000\u0000\u0000\u008eexample.com\b\u0000\u0012\u0000s\u0000\u0000\u0000\u0000innerClassDeeplink\u0001\u0000'airbnb://example.com/innerClassDeeplink\u0000/com.example.SampleActivity${"\$"}InnerClass${"\$"}DeepLinks\u0017intentForDeepLinkMethod";
                       }
                     }
 

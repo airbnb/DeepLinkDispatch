@@ -26,14 +26,6 @@ class MatchIndexTests {
         entryWithAllowedValueOnlyOneElement
     ).sortedBy { it.uriTemplate }
 
-    private fun testRegistry(entries: List<DeepLinkEntry>): TestRegistry {
-        val root = Root()
-        entries.forEach {
-            root.addToTrie(it)
-        }
-        return TestRegistry(root.toUByteArray().toByteArray())
-    }
-
     @Test
     fun testGetAllEntries() {
         val allEntries = testRegistry(testEntries).getAllEntries().sortedBy { it.uriTemplate }
@@ -81,5 +73,17 @@ class MatchIndexTests {
         assertThat(matchEntry2).isNull()
     }
 
-    class TestRegistry(val matchArray: ByteArray) : BaseRegistry(matchArray, emptyArray())
+    @Test
+    fun testWithLongerThan256CharUrlSegment() {
+        val testRegistry = testRegistry(
+            listOf(
+                DeepLinkEntry.MethodDeeplinkEntry(
+                    uriTemplate = "http{scheme_suffix(|s)}://testing.{url_domain_suffix(com|just|a|very|long|list|of|words|that|are|technically|not|domains|so|that|we|make|it|over|256|characters|to|test|how|this|deals|with|longer|urls|that|would|otherwise|cause|an|array|index|out|of|bounds|exception|within|the|match|index|itself)}/",
+                    className = Object::class.java.name,
+                    method = "someMethod1"
+                ),
+            )
+        )
+        assertThat(testRegistry.supports(DeepLinkUri.parse("https://testing.com/"))).isTrue()
+    }
 }

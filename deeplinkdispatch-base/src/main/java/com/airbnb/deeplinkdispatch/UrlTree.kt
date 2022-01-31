@@ -2,6 +2,8 @@
 
 package com.airbnb.deeplinkdispatch
 
+import com.airbnb.deeplinkdispatch.base.MatchIndex.ALLOWED_VALUES_DELIMITER
+import com.airbnb.deeplinkdispatch.base.MatchIndex.ALLOWED_VALUES_SEPARATOR
 import com.airbnb.deeplinkdispatch.base.MatchIndex.HEADER_LENGTH
 import com.airbnb.deeplinkdispatch.base.MatchIndex.HEADER_MATCH_LENGTH
 import com.airbnb.deeplinkdispatch.base.MatchIndex.HEADER_NODE_METADATA_LENGTH
@@ -63,14 +65,14 @@ open class TreeNode(open val id: String, internal val metadata: NodeMetadata) {
     /**
      * Byte array format is:
      * 0 [NodeMetadata] flags; 1 byte
-     * 1                                                      length of value sub-array
-     * 2..3                                                   length of match sub-array
-     * 4...7                                                  length of node's children sub-array
-     * 8..(8+value length)                                    actual value sub-array
-     * (8+value length)..
-     * ((8+value length)+children length)                     match data (can be 0 length)
-     * (8+value length+match data length)..
-     * ((8+value length+match data length)+children length)   actual children sub-array
+     * 1..2                                                   length of value sub-array
+     * 3..4                                                   length of match sub-array
+     * 5...8                                                  length of node's children sub-array
+     * 9..(9+value length)                                    actual value sub-array
+     * (9+value length)..
+     * ((9+value length)+children length)                     match data (can be 0 length)
+     * (9+value length+match data length)..
+     * ((9+value length+match data length)+children length)   actual children sub-array
      */
     fun toUByteArray(): UByteArray {
         val childrenByteArrays: List<UByteArray> = generateChildrenByteArrays()
@@ -129,7 +131,10 @@ open class TreeNode(open val id: String, internal val metadata: NodeMetadata) {
         val childrenLength: Int = children?.sumOf { it.size } ?: 0
         return UByteArray(HEADER_LENGTH).apply {
             set(0, metadata.metadata.toUByte()) // flag
-            set(HEADER_NODE_METADATA_LENGTH, value.size.toUByte()) // value length
+            writeUShortAt(
+                startIndex = HEADER_NODE_METADATA_LENGTH,
+                value = value.size.toUShort()
+            ) // value length
             writeUShortAt(
                 startIndex = HEADER_NODE_METADATA_LENGTH + HEADER_VALUE_LENGTH,
                 value = matchByteArray.size.toUShort()
@@ -169,19 +174,37 @@ data class Root(override val id: String = "r") :
      */
     fun addToTrie(deepLinkEntry: DeepLinkEntry) {
         val deepLinkUri = DeepLinkUri.parseTemplate(deepLinkEntry.uriTemplate)
-        var node = this.addNode(Scheme(deepLinkUri.scheme().also { validateIfComponentParam(it) }))
+        var node = this.addNode(
+            Scheme(
+                deepLinkUri.scheme()
+                    .orderPlaceholderValues()
+                    .also { validateIfComponentParam(it) }
+            )
+        )
         if (!deepLinkUri.host().isNullOrEmpty()) {
-            validateIfComponentParam(deepLinkUri.host())
-            node = node.addNode(Host(deepLinkUri.host()))
+            node = node.addNode(
+                Host(
+                    deepLinkUri.host()
+                        .orderPlaceholderValues()
+                        .also { validateIfComponentParam(it) }
+                )
+            )
             if (deepLinkUri.pathSegments().isNullOrEmpty()) {
                 node.match = uriMatch(deepLinkEntry)
             }
         }
         if (!deepLinkUri.pathSegments().isNullOrEmpty()) {
             for (pathSegment in deepLinkUri.pathSegments()) {
-                validateIfComponentParam(pathSegment)
-                validateIfConfigurablePathSegment(pathSegment)
-                node = node.addNode(PathSegment(pathSegment))
+                node = node.addNode(
+                    PathSegment(
+                        pathSegment
+                            .orderPlaceholderValues()
+                            .also {
+                                validateIfComponentParam(it)
+                                validateIfConfigurablePathSegment(it)
+                            }
+                    )
+                )
             }
             node.match = uriMatch(deepLinkEntry)
         }
@@ -210,6 +233,16 @@ data class Root(override val id: String = "r") :
         }
 }
 
+private val allowedPlaceholderRegex =
+    "(?<=${"\\" + ALLOWED_VALUES_DELIMITER[0]})(.*)(?=${"\\" + ALLOWED_VALUES_DELIMITER[1]})".toRegex()
+
+internal fun String.orderPlaceholderValues(): String {
+    return allowedPlaceholderRegex.replace(this) { matchResult ->
+        matchResult.value.split(ALLOWED_VALUES_SEPARATOR).sorted()
+            .joinToString(separator = ALLOWED_VALUES_SEPARATOR.toString())
+    }
+}
+
 data class Scheme(override val id: String) :
     TreeNode(id = id, metadata = NodeMetadata(MetadataMasks.ComponentTypeSchemeMask, id))
 
@@ -222,7 +255,7 @@ data class PathSegment(override val id: String) :
 /**
  * Match data byte array format is:
  * 0                                                               match type
- * 1..1 url                                                        url template length
+ * 1..2 url                                                        url template length
  * 3..(2+url template length)                                      url template
  * (3+url template length)..
  * (3+url template length)+2                                       classname length

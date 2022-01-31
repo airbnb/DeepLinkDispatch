@@ -13,6 +13,52 @@ import org.junit.Test
 class BaseDeepLinkDelegateTest {
 
     @Test
+    fun testFindMethodDeepLinkWrongMethod() {
+        val uriTemplate = "airbnb://foo/{bar}"
+        val uriString = "airbnb://foo/1"
+        val uri = mockk<Uri>()
+        every { uri.toString() } returns uriString
+        val entry = methodDeepLinkEntry(
+            uriTemplate,
+            TestDeepLinkClassStatic::class.java.name,
+            "wrongMethod"
+        )
+        val activityMock = mockk<Activity>()
+        val testDelegate = getOneRegistryTestDelegate(listOf(entry), null)
+        val intent = mockk<Intent>(relaxed = true)
+        every { intent.data } returns uri
+        every { activityMock.intent } returns intent
+        val result =
+            testDelegate.createResult(activityMock, intent, testDelegate.findEntry(uriTemplate))
+        assertThat(result.isSuccessful).isFalse
+        assertThat(result.uriString).isEqualTo(uriString)
+        assertThat(result.error).isEqualTo("Deep link to non-existent method: wrongMethod")
+        assertThat(result.errorThrowable).isInstanceOf(BaseDeepLinkDelegate.DeeplLinkMethodError::class.java)
+        assertThat(result.errorThrowable?.cause).isInstanceOf(NoSuchMethodException::class.java)
+    }
+
+    @Test
+    fun testFindMethodDeepLinkethod() {
+        val uriTemplate = "airbnb://foo/{bar}"
+        val uriString = "airbnb://foo/1"
+        val uri = mockk<Uri>()
+        every { uri.toString() } returns uriString
+        val entry =
+            methodDeepLinkEntry(uriTemplate, TestDeepLinkClassStatic::class.java.name, "testMethod")
+        val activityMock = mockk<Activity>(relaxed = true)
+        val testDelegate = getOneRegistryTestDelegate(listOf(entry), null)
+        val intent = mockk<Intent>(relaxed = true)
+        every { intent.data } returns uri
+        every { activityMock.intent } returns intent
+        val result =
+            testDelegate.createResult(activityMock, intent, testDelegate.findEntry(uriTemplate))
+        assertThat(result.isSuccessful).isTrue
+        assertThat(result.uriString).isEqualTo(uriString)
+        assertThat(result.error).isEqualTo("")
+        assertThat(result.errorThrowable).isNull()
+    }
+
+    @Test
     fun testFindEntry() {
         val entry = activityDeepLinkEntry("airbnb://foo/{bar}")
         val testDelegate = getOneRegistryTestDelegate(listOf(entry), null)
@@ -26,6 +72,16 @@ class BaseDeepLinkDelegateTest {
             )
         )
         assertThat(testDelegate.findEntry("airbnb://bar/1")).isNull()
+    }
+
+    @Test
+    fun testAllowedPlaceholderValueOrdering() {
+        val entry = activityDeepLinkEntry("airbn{scheme(c|b|a)}://foo{host(1|3|2)}/{bar(someValue|someOtherValue)}")
+        val testDelegate = getOneRegistryTestDelegate(listOf(entry), null)
+        val matchArrayDump = testDelegate.registries.singleOrNull()?.matchIndex()?.byteArray?.let { String(it) } ?: ""
+        assertThat(matchArrayDump).contains("(a|b|c)")
+        assertThat(matchArrayDump).contains("(1|2|3)")
+        assertThat(matchArrayDump).contains("(someOtherValue|someValue)")
     }
 
     @Test(expected = NullPointerException::class)
@@ -92,11 +148,8 @@ class BaseDeepLinkDelegateTest {
         val result = testDelegate.createResult(activity, intent, null)
         assertThat(result).isEqualTo(
             DeepLinkResult(
-                false, null, "No Uri in given activity's intent.", null,
-                DeepLinkMethodResult(
-                    null,
-                    null
-                ),
+                isSuccessful = false,
+                error = "No Uri in given activity's intent.",
                 deepLinkHandlerResult = null
             )
         )
@@ -118,7 +171,7 @@ class BaseDeepLinkDelegateTest {
         every { activity.applicationContext } returns appContext
         val errorHandler = DuplicatedMatchTestErrorHandler()
         val testDelegate = getTwoRegistriesTestDelegate(listOf(entry), listOf(entry), errorHandler)
-        val (_, _, _, match) = testDelegate.dispatchFrom(activity, intent)
+        val (_, _, _, _, match) = testDelegate.dispatchFrom(activity, intent)
         assertThat(errorHandler.duplicateMatchCalled).isTrue
         assertThat(errorHandler.duplicatedMatches).isNotNull
         assertThat(errorHandler.duplicatedMatches!!.size).isEqualTo(2)
@@ -145,21 +198,9 @@ class BaseDeepLinkDelegateTest {
         every { activity.applicationContext } returns appContext
         val errorHandler = DuplicatedMatchTestErrorHandler()
         val testDelegate = getTwoRegistriesTestDelegate(listOf(entry1), listOf(entry2), errorHandler)
-        val (_, _, _, deepLinkEntry) = testDelegate.dispatchFrom(activity, intent)
+        val (_, _, _, _, deepLinkEntry) = testDelegate.dispatchFrom(activity, intent)
         assertThat(errorHandler.duplicateMatchCalled).isFalse
         assertThat(deepLinkEntry!!.equals(entry2))
-    }
-
-    private class TestDeepLinkRegistry(registry: List<DeepLinkEntry>) : BaseRegistry(getSearchIndex(registry), arrayOf()) {
-        companion object {
-            private fun getSearchIndex(deepLinkEntries: List<DeepLinkEntry>): ByteArray {
-                val trieRoot = Root()
-                for (entry in deepLinkEntries) {
-                    trieRoot.addToTrie(entry)
-                }
-                return trieRoot.toUByteArray().toByteArray()
-            }
-        }
     }
 
     private fun parameterMap(
@@ -167,7 +208,7 @@ class BaseDeepLinkDelegateTest {
         parameterMap: Map<String, String>
     ) = mapOf(DeepLinkUri.parse(url) to parameterMap)
 
-    private class DuplicatedMatchTestErrorHandler : ErrorHandler {
+    private class DuplicatedMatchTestErrorHandler : ErrorHandler() {
         var className: String = ""
         var duplicatedMatches: List<DeepLinkMatchResult>? = null
         var duplicateMatchCalled: Boolean = false
@@ -186,23 +227,36 @@ class BaseDeepLinkDelegateTest {
             return DeepLinkEntry.ActivityDeeplinkEntry(uri, className)
         }
 
-        /**
-         * Helper method to get a class extending [BaseRegistry] acting as the delegate
-         * for the
-         *
-         * @param deepLinkEntries
-         * @return
-         */
-        private fun getTestRegistry(deepLinkEntries: List<DeepLinkEntry>): TestDeepLinkRegistry {
-            return TestDeepLinkRegistry(deepLinkEntries)
+        private fun methodDeepLinkEntry(
+            uri: String,
+            className: String,
+            methodName: String
+        ): DeepLinkEntry.MethodDeeplinkEntry {
+            return DeepLinkEntry.MethodDeeplinkEntry(uri, className, methodName)
+        }
+
+        private fun handlerDeepLinkEntry(
+            uri: String,
+            className: String,
+            methodName: String
+        ): DeepLinkEntry.MethodDeeplinkEntry {
+            return DeepLinkEntry.MethodDeeplinkEntry(uri, className, methodName)
         }
 
         private fun getTwoRegistriesTestDelegate(entriesFirstRegistry: List<DeepLinkEntry>, entriesSecondRegistry: List<DeepLinkEntry>, errorHandler: ErrorHandler): TestDeepLinkDelegate {
-            return TestDeepLinkDelegate(listOf(getTestRegistry(entriesFirstRegistry), getTestRegistry(entriesSecondRegistry)), errorHandler)
+            return TestDeepLinkDelegate(listOf(testRegistry(entriesFirstRegistry), testRegistry(entriesSecondRegistry)), errorHandler)
         }
 
         private fun getOneRegistryTestDelegate(entries: List<DeepLinkEntry>, errorHandler: ErrorHandler?): TestDeepLinkDelegate {
-            return TestDeepLinkDelegate(listOf(getTestRegistry(entries)), errorHandler)
+            return TestDeepLinkDelegate(listOf(testRegistry(entries)), errorHandler)
         }
+    }
+}
+
+object TestDeepLinkClassStatic {
+    @DeepLink("airbnb://foo/{bar}")
+    @JvmStatic
+    fun testMethod(context: Context): Intent {
+        return Intent()
     }
 }

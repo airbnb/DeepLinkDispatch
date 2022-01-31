@@ -298,9 +298,10 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
         val argsType = element.getAllMethods().singleOrNull {
             it.overrides(
                 other = handleDeepLinkInterfaceMethod,
-                owner = deepLinkHandlerInterface
+                owner = element
             )
-        }?.parameters?.last()?.type ?: error("Is not overriding method from interface. This is impossible.")
+        }?.parameters?.last()?.type
+            ?: error("Is not overriding method from interface. This is impossible.")
 
         val argsTypeElement = argsType.typeElement
         if (argsTypeElement?.isPublic() == false) {
@@ -363,7 +364,8 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
             )
         }
         if (element.getAllMethods()
-            .filter { it.name == deepLinkHandlerHandleDeepLinkMethodName && it.parameters.size == 2 }.count() != 1
+            .filter { it.name == deepLinkHandlerHandleDeepLinkMethodName && it.parameters.size == 2 }
+            .count() != 1
         ) {
             throw DeepLinkProcessorException(
                 element = element,
@@ -681,7 +683,11 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
     }
 
     private fun logError(element: XElement?, message: String) {
-        environment.messager.printMessage(Diagnostic.Kind.ERROR, message, element)
+        if (element != null) {
+            environment.messager.printMessage(Diagnostic.Kind.ERROR, message, element)
+        } else {
+            environment.messager.printMessage(Diagnostic.Kind.ERROR, message)
+        }
     }
 
     @Throws(IOException::class)

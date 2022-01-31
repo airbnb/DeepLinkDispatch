@@ -628,6 +628,15 @@ The performance tests can be run from Android Studio or via gradle by running `.
 Snapshots of the development version are available in
 [Sonatype's `snapshots` repository](https://oss.sonatype.org/content/repositories/snapshots/).
 
+To access the snapshots add this to your `build.gradle` file:
+```groovy
+repositories {
+    maven {
+        url "https://oss.sonatype.org/content/repositories/snapshots/"
+    }
+}
+```
+
 
 ### Generated deep links Documentation
 

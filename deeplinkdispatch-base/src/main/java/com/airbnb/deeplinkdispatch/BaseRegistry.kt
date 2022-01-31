@@ -65,4 +65,9 @@ abstract class BaseRegistry(
         deepLinkUri: DeepLinkUri?,
         pathSegmentReplacements: Map<ByteArray, ByteArray> = mapOf()
     ) = idxMatch(deepLinkUri, pathSegmentReplacements) != null
+
+    /**
+     * For testing
+     */
+    fun matchIndex() = matchIndex
 }

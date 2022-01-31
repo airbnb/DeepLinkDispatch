@@ -34,7 +34,7 @@ import java.util.Map;
  * </tr>
  * <tr>
  *   <td>0 (1 byte)</td>
- *   <td>1 (1 byte)</td>
+ *   <td>1 (2 bytes)</td>
  *   <td>2 (2 bytes)</td>
  *   <td>4 (4 bytes)</td>
  *   <td>8 (value length bytes)</td>
@@ -73,7 +73,7 @@ public class MatchIndex {
    * Length of header elements in bytes
    */
   public static final int HEADER_NODE_METADATA_LENGTH = 1;
-  public static final int HEADER_VALUE_LENGTH = 1;
+  public static final int HEADER_VALUE_LENGTH = 2;
   public static final int HEADER_MATCH_LENGTH = 2;
   public static final int HEADER_CHILDREN_LENGTH = 4;
   public static final int MATCH_DATA_URL_TEMPLATE_LENGTH = 2;
@@ -526,7 +526,7 @@ public class MatchIndex {
    * @return The length of the value section of this element.
    */
   private int getValueLength(int elementStartPos) {
-    return readOneByteAsInt(
+    return readTwoBytesAsInt(
       byteArray, elementStartPos
         + HEADER_NODE_METADATA_LENGTH
     );
