@@ -1,6 +1,6 @@
 apply plugin: 'com.android.library'
 
-sourceCompatibility = 1.8
+sourceCompatibility = 11
 
 apply plugin: 'checkstyle'
 
@@ -10,7 +10,6 @@ apply plugin: 'org.jmailen.kotlinter'
 
 dependencies {
   api project(':deeplinkdispatch-base')
-  implementation deps.kotlinStdLib
   implementation deps.okio
   implementation deps.jsr305
   implementation deps.localBroadcastManager
@@ -27,12 +26,12 @@ checkstyle {
 }
 
 android {
-  compileSdkVersion androidConfig.compileSdkVersion
+    compileSdk androidConfig.compileSdkVersion
 
-  defaultConfig {
-    minSdkVersion androidConfig.minSdkVersion
-    targetSdkVersion androidConfig.compileSdkVersion
-    testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    defaultConfig {
+        minSdk androidConfig.minSdkVersion
+        targetSdk androidConfig.compileSdkVersion
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     consumerProguardFiles 'proguard-rules.pro'
   }
   testOptions {

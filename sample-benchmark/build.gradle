@@ -4,11 +4,11 @@ apply plugin: 'kotlin-android'
 apply plugin: 'org.jmailen.kotlinter'
 
 android {
-    compileSdkVersion androidConfig.compileSdkVersion
+    compileSdk androidConfig.compileSdkVersion
 
     defaultConfig {
-        minSdkVersion androidConfig.minSdkVersion
-        targetSdkVersion androidConfig.targetSdkVersion
+        minSdk androidConfig.minSdkVersion
+        targetSdk androidConfig.targetSdkVersion
 
         testInstrumentationRunner 'androidx.benchmark.junit4.AndroidBenchmarkRunner'
     }
@@ -23,7 +23,7 @@ android {
     }
 
     kotlinOptions {
-        jvmTarget = "1.8"
+        jvmTarget = "11"
     }
 }
 
@@ -36,8 +36,6 @@ dependencies {
     // https://developer.android.com/studio/projects/android-library#Convert
     implementation project(':sample-benchmarkable-library')
     implementation project(':deeplinkdispatch')
-
-    implementation deps.kotlinStdLib
 
     implementation 'androidx.appcompat:appcompat:1.1.0'
     implementation 'androidx.constraintlayout:constraintlayout:1.1.3'

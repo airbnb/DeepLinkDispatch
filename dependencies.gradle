@@ -8,12 +8,12 @@ def versions = [
     kspVersion                   : '1.5.31-1.0.0',
     xProcessorVersion            : '2.4.0-beta01',
     mockkVersion                 : '1.12.0',
-    ktlintGradlePluginVersion    : '3.4.5'
+    ktlintGradlePluginVersion    : '3.6.0'
 ]
 
 ext.versions = versions
 ext.androidConfig = [
-    agpVersion                          : '7.0.1',
+    agpVersion                          : '7.1.0',
     compileSdkVersion                   : 30,
     minSdkVersion                       : 16,
     targetSdkVersion                    : 30
@@ -24,7 +24,6 @@ ext.deps = [
     androidPlugin            : "com.android.tools.build:gradle:$androidConfig.agpVersion",
     appCompat                : "androidx.appcompat:appcompat:$versions.appCompatVersion",
     localBroadcastManager    : "androidx.localbroadcastmanager:localbroadcastmanager:$versions.localBroadcastManagerVersion",
-    kotlinStdLib             : "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$versions.kotlinVersion",
     kotlinGradlePlugin       : "org.jetbrains.kotlin:kotlin-gradle-plugin:$versions.kotlinVersion",
     javaPoet                 : 'com.squareup:javapoet:1.13.0',
     jsr305                   : 'com.google.code.findbugs:jsr305:3.0.2',

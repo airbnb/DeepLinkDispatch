@@ -8,13 +8,13 @@ apply plugin: 'org.jmailen.kotlinter'
 // modules.
 
 android {
-  compileSdkVersion androidConfig.compileSdkVersion
+    compileSdk androidConfig.compileSdkVersion
 
-  defaultConfig {
-    minSdkVersion androidConfig.minSdkVersion
-    targetSdkVersion androidConfig.compileSdkVersion
+    defaultConfig {
+        minSdk androidConfig.minSdkVersion
+        targetSdk androidConfig.compileSdkVersion
 
-    javaCompileOptions {
+        javaCompileOptions {
       annotationProcessorOptions {
         arguments = [
           'deepLink.incremental': 'true',
@@ -25,7 +25,7 @@ android {
   }
 
   kotlinOptions {
-    jvmTarget = "1.8"
+    jvmTarget = "11"
   }
 }
 
