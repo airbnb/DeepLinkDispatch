@@ -25,7 +25,6 @@ import androidx.room.compiler.processing.XRoundEnv
 import androidx.room.compiler.processing.XType
 import androidx.room.compiler.processing.XTypeElement
 import androidx.room.compiler.processing.addOriginatingElement
-import androidx.room.compiler.processing.get
 import androidx.room.compiler.processing.writeTo
 import com.airbnb.deeplinkdispatch.ProcessorUtils.decapitalizeIfNotTwoFirstCharsUpperCase
 import com.airbnb.deeplinkdispatch.ProcessorUtils.hasEmptyOrNullString
@@ -53,7 +52,6 @@ import java.util.Arrays
 import javax.lang.model.SourceVersion
 import javax.lang.model.element.Modifier
 import javax.tools.Diagnostic
-import kotlin.collections.HashSet
 import kotlin.reflect.KClass
 
 class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? = null) :
@@ -176,11 +174,20 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
                     methodElementsToProcess = annotatedMethodElements,
                 ),
             )
-        } catch (e: DeepLinkProcessorException) {
-            logError(
-                element = e.element,
-                message = e.message ?: ""
-            )
+        } catch (e: Throwable) {
+            if (e is DeepLinkProcessorException) {
+                logError(
+                    element = e.element,
+                    message = e.errorMessage
+                )
+            } else {
+                // if it is an unexpected crash then the cause can get lost by KAPT unless we manually
+                // catch and print the trace so that it is possible to debug.
+                logError(
+                    element = null,
+                    message = "${e.javaClass.simpleName}: ${e.localizedMessage}\n${e.stackTraceToString()}"
+                )
+            }
         }
     }
 
@@ -255,7 +262,7 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
         if (!validClassElement(classElement)) {
             throw DeepLinkProcessorException(
                 element = classElement,
-                message =
+                errorMessage =
                 "Only classes inheriting from either 'android.app.Activity' or public classes" +
                     " implementing the '$deepLinkHandlerQName' interface can be annotated with" +
                     " @DeepLink or another custom deep link annotation."
@@ -270,7 +277,7 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
         if (!methodElement.isStatic()) {
             throw DeepLinkProcessorException(
                 element = methodElement,
-                message = "Only static methods can be annotated with @${DEEP_LINK_CLASS.simpleName}",
+                errorMessage = "Only static methods can be annotated with @${DEEP_LINK_CLASS.simpleName}",
             )
         } else
         // FIXME This is crashing with an NPE on internal classes when accessing the returnType.
@@ -283,7 +290,7 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
             ) {
                 throw DeepLinkProcessorException(
                     element = methodElement,
-                    message = (
+                    errorMessage = (
                         "Only `Intent`, `androidx.core.app.TaskStackBuilder` or " +
                             "'com.airbnb.deeplinkdispatch.DeepLinkMethodResult' are supported. Please double " +
                             "check your imports and try again."
@@ -307,13 +314,13 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
         if (argsTypeElement?.isPublic() == false) {
             throw DeepLinkProcessorException(
                 element = argsTypeElement,
-                message = "Argument class must be public."
+                errorMessage = "Argument class must be public."
             )
         }
         val argsConstructor = argsTypeElement?.getConstructors()?.singleOrNull() ?: run {
             throw DeepLinkProcessorException(
                 element = argsTypeElement ?: element,
-                message = "Argument class can only have one constructor"
+                errorMessage = "Argument class can only have one constructor"
             )
         }
         val allArgParameters = argsConstructor.parameters
@@ -322,7 +329,7 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
         if (allPathParameters.size + allQueryParameters.size != allArgParameters.size) {
             throw DeepLinkProcessorException(
                 element = argsTypeElement,
-                message = "All elements of the constructor need to be annotated with the @${DeeplinkParam::class.simpleName} annotation.\n" +
+                errorMessage = "All elements of the constructor need to be annotated with the @${DeeplinkParam::class.simpleName} annotation.\n" +
                     "Parameters: ${allArgParameters.joinToString { it.name }} " +
                     "Annotated parameters: ${(allPathParameters + allQueryParameters).joinToString { it.name }}"
             )
@@ -337,7 +344,7 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
         if (annotatedPathParametersThatAreNotInUrlTemplate.isNotEmpty()) {
             throw DeepLinkProcessorException(
                 element = argsTypeElement,
-                message = "The annotated path arguments in the arguments class must be a subset of" +
+                errorMessage = "The annotated path arguments in the arguments class must be a subset of" +
                     " the path placeholders contained in the url. Annotated in args class but not" +
                     " in uri template: ${annotatedPathParametersThatAreNotInUrlTemplate.joinToString()}"
             )
@@ -359,7 +366,7 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
         if (!element.isHandler()) {
             throw DeepLinkProcessorException(
                 element = element,
-                message = "Only public objects implementing $deepLinkHandlerQName can be annotated" +
+                errorMessage = "Only public objects implementing $deepLinkHandlerQName can be annotated" +
                     " with @${DEEP_LINK_CLASS.simpleName} or any custom deep link annotation"
             )
         }
@@ -369,7 +376,7 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
         ) {
             throw DeepLinkProcessorException(
                 element = element,
-                message = "More than one method with two parameters and" +
+                errorMessage = "More than one method with two parameters and" +
                     " $deepLinkHandlerHandleDeepLinkMethodName name found in handler class."
             )
         }
@@ -709,14 +716,16 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
                         urisTrie.addToTrie(
                             DeepLinkEntry.ActivityDeeplinkEntry(
                                 uriTemplate = uriTemplate,
-                                className = element.annotatedClass.className.reflectionName() ?: ""
+                                className = element.annotatedClass.className.reflectionName()
+                                    ?: ""
                             )
                         )
                     is DeepLinkAnnotatedElement.MethodAnnotatedElement ->
                         urisTrie.addToTrie(
                             DeepLinkEntry.MethodDeeplinkEntry(
                                 uriTemplate = uriTemplate,
-                                className = element.annotatedClass.className.reflectionName() ?: "",
+                                className = element.annotatedClass.className.reflectionName()
+                                    ?: "",
                                 method = element.method
                             )
                         )
@@ -724,7 +733,8 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
                         urisTrie.addToTrie(
                             DeepLinkEntry.HandlerDeepLinkEntry(
                                 uriTemplate = uriTemplate,
-                                className = element.annotatedClass.className.reflectionName() ?: "",
+                                className = element.annotatedClass.className.reflectionName()
+                                    ?: "",
                             )
                         )
                 }
@@ -849,7 +859,7 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
             prefixesMap: Map<XType, Array<String>>
         ): List<String> {
             return element.findAnnotatedAnnotation<DeepLinkSpec>().flatMap { customAnnotation ->
-                val suffixes = customAnnotation.get<List<String>>("value")
+                val suffixes = customAnnotation.getAsList<String>("value")
                 val prefixes = prefixesMap[customAnnotation.type]
                     ?: throw DeepLinkProcessorException(
                         "Unable to find annotation '${customAnnotation.qualifiedName}' you must " +

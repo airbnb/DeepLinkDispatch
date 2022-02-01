@@ -3,6 +3,6 @@ package com.airbnb.deeplinkdispatch
 import androidx.room.compiler.processing.XElement
 
 class DeepLinkProcessorException @JvmOverloads constructor(
-    message: String,
+    val errorMessage: String,
     val element: XElement? = null
-) : RuntimeException(message)
+) : RuntimeException(errorMessage)
