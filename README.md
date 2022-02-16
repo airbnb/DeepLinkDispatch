@@ -659,7 +659,7 @@ kapt {
 
 and if you are using KSP
 ```groovy
-kapt {
+ksp {
   arg("deepLinkDoc.output", "${buildDir}/doc/deeplinks.txt")
 }
 ```
