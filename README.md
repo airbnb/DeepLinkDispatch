@@ -641,6 +641,7 @@ repositories {
 ### Generated deep links Documentation
 
 You can tell DeepLinkDispatch to generate text a document with all your deep link annotations, which you can use for further processing and/or reference.
+Note: Passing a fully qualified file path string as an argument to any compilation task will cause the cache key to be non-relocateable from one machine to another.
 In order to do that, add to your `build.gradle` file:
 ```groovy
 tasks.withType(JavaCompile) {
