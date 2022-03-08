@@ -103,6 +103,14 @@ public class MainActivity extends AppCompatActivity {
     return new Intent(context, MainActivity.class).setAction(ACTION_DEEP_LINK_METHOD);
   }
 
+  @DeepLink("dld://methodDeepLinkOverride/{param1}")
+  public static Intent intentForDeepLinkMethodOverrideParam(Context context) {
+    return new Intent(context, MainActivity.class)
+            .setAction(ACTION_DEEP_LINK_INTENT)
+            .putExtra("param1", "set_in_app")
+            .putExtra("queryParam", "set_in_app");
+  }
+
   @DeepLink("dld://host/somePath/{arbitraryNumber}")
   public static Intent intentForParamDeepLinkMethod(Context context) {
     return new Intent(context, MainActivity.class).setAction(ACTION_DEEP_LINK_COMPLEX);
@@ -149,6 +157,13 @@ public class MainActivity extends AppCompatActivity {
   public static DeepLinkMethodResult intentViaDeeplinkMethodResult(Context context) {
     return new DeepLinkMethodResult(new Intent(context, SecondActivity.class)
       .setAction(ACTION_DEEP_LINK_INTENT), null);
+  }
+
+  @DeepLink("dld://host/methodResultFinalParameter/intent")
+  public static DeepLinkMethodResult intentViaDeeplinkMethodResultWithFinalParameter(Context context) {
+    return new DeepLinkMethodResult(new Intent(context, SecondActivity.class)
+            .setAction(ACTION_DEEP_LINK_INTENT)
+            .putExtra("finalExtra", "set in app"), null);
   }
 
   @DeepLink("dld://host/methodResult/intent/{parameter}")
