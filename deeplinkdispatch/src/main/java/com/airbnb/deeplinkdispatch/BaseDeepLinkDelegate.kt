@@ -304,7 +304,7 @@ open class BaseDeepLinkDelegate @JvmOverloads constructor(
                 if (intent.data == null) {
                     intent.data = sourceIntent.data
                 }
-                intent.putExtras(intentBundle.filter { key, _ -> intent.extras?.let { !it.containsKey(key) } ?: true })
+                intent.putExtras(intentBundle.filter { key, _ -> intent.extras?.containsKey(key) != true })
                 intent.putExtra(DeepLink.IS_DEEP_LINK, true)
                 intent.putExtra(DeepLink.REFERRER_URI, originalIntentUri)
                 if (activity.callingActivity != null) {
