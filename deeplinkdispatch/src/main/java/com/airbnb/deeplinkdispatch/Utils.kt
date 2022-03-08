@@ -1,5 +1,7 @@
 package com.airbnb.deeplinkdispatch
 
+import android.os.Bundle
+
 /**
  * Ensure that every key-to-be-replaced declared by all registries have a corresponding key in
  * the user's injected mapping of configurablePathSegmentReplacements. If not, throw an exception
@@ -22,4 +24,18 @@ fun validateConfigurablePathSegmentReplacements(
             "PathVariableReplacementValues. Missing keys are:\n$missingKeys.\nKeys in mapping " +
             "are:\n${configurablePathSegmentReplacements.keys.joinToString(",\n") { String(it) }}."
     }
+}
+
+/**
+ * Returns a shallow copy of this Bundle that is missing the items for which the predicate returned
+ * false
+ */
+fun Bundle.filter(predicate: (key: String, value: Any?) -> Boolean): Bundle {
+    val output = Bundle(this)
+    this.keySet()?.forEach { key ->
+        if (!predicate(key, this.get(key))) {
+            output.remove(key)
+        }
+    }
+    return output
 }

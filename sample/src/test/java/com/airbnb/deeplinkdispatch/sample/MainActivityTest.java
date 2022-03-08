@@ -86,14 +86,46 @@ public class MainActivityTest {
   }
 
   @Test
-  public void testIntentViaMethodResultWithParameter() {
-    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("dld://host/methodResult/intent/someValue"));
+  public void testIntentViaMethodResultWithFinalParameter() {
+    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("dld://host/methodResultFinalParameter/intent"));
+    intent.putExtra("finalExtra", "set by launcher");
     DeepLinkActivity deepLinkActivity = Robolectric.buildActivity(DeepLinkActivity.class, intent)
-      .create().get();
+            .create().get();
     ShadowActivity shadowActivity = shadowOf(deepLinkActivity);
     Intent launchedIntent = shadowActivity.peekNextStartedActivityForResult().intent;
     assertThat(launchedIntent.getComponent(),
-      equalTo(new ComponentName(deepLinkActivity, SecondActivity.class)));
+            equalTo(new ComponentName(deepLinkActivity, SecondActivity.class)));
+
+    assertThat(launchedIntent.getBooleanExtra(DeepLink.IS_DEEP_LINK, false), equalTo(true));
+    assertThat(launchedIntent.getAction(), equalTo(MainActivity.ACTION_DEEP_LINK_INTENT));
+    assertThat(launchedIntent.getStringExtra("finalExtra"), equalTo("set in app"));
+  }
+
+  @Test
+  public void testMethodDeeplinkWithOverrideParamAndQueryParam() {
+    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("dld://methodDeepLinkOverride/set_in_url?queryParam=set_in_url"));
+    DeepLinkActivity deepLinkActivity = Robolectric.buildActivity(DeepLinkActivity.class, intent)
+            .create().get();
+    ShadowActivity shadowActivity = shadowOf(deepLinkActivity);
+    Intent launchedIntent = shadowActivity.peekNextStartedActivityForResult().intent;
+    assertThat(launchedIntent.getComponent(),
+            equalTo(new ComponentName(deepLinkActivity, MainActivity.class)));
+
+    assertThat(launchedIntent.getBooleanExtra(DeepLink.IS_DEEP_LINK, false), equalTo(true));
+    assertThat(launchedIntent.getAction(), equalTo(MainActivity.ACTION_DEEP_LINK_INTENT));
+    assertThat(launchedIntent.getStringExtra("param1"), equalTo("set_in_app"));
+    assertThat(launchedIntent.getStringExtra("queryParam"), equalTo("set_in_app"));
+  }
+
+  @Test
+  public void testIntentViaMethodResultWithParameter() {
+    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("dld://host/methodResult/intent/someValue"));
+    DeepLinkActivity deepLinkActivity = Robolectric.buildActivity(DeepLinkActivity.class, intent)
+            .create().get();
+    ShadowActivity shadowActivity = shadowOf(deepLinkActivity);
+    Intent launchedIntent = shadowActivity.peekNextStartedActivityForResult().intent;
+    assertThat(launchedIntent.getComponent(),
+            equalTo(new ComponentName(deepLinkActivity, SecondActivity.class)));
 
     assertThat(launchedIntent.getBooleanExtra(DeepLink.IS_DEEP_LINK, false), equalTo(true));
     assertThat(launchedIntent.getAction(), equalTo(MainActivity.ACTION_DEEP_LINK_INTENT));
@@ -158,7 +190,7 @@ public class MainActivityTest {
   }
 
   @Test
-  public void testPartialSegmentPlaceholdeEnd() {
+  public void testPartialSegmentPlaceholderEnd() {
     Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://example.com/footest123"));
     DeepLinkActivity deepLinkActivity = Robolectric.buildActivity(DeepLinkActivity.class, intent)
       .create().get();
