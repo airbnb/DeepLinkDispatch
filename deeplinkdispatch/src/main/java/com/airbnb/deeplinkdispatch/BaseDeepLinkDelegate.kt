@@ -527,7 +527,7 @@ open class BaseDeepLinkDelegate @JvmOverloads constructor(
                 if (resultParameterMap.containsKey(queryParameter)) {
                     Log.w(TAG, "Duplicate parameter name in path and query param: $queryParameter")
                 }
-                resultParameterMap[queryParameter] = queryParameterValue
+                resultParameterMap[queryParameter] = queryParameterValue ?: ""
             }
         }
         return resultParameterMap
