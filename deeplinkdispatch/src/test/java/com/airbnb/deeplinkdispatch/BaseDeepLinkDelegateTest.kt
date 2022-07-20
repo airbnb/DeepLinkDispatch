@@ -203,6 +203,21 @@ class BaseDeepLinkDelegateTest {
         assertThat(deepLinkEntry!!.equals(entry2))
     }
 
+    @Test
+    fun testMissingParameterValueReturnsEmptyString() {
+        val uriTemplate = "airbnb://foo"
+        val uri = mockk<Uri>()
+        every { uri.toString() } returns "airbnb://foo?q"
+        val entry = methodDeepLinkEntry(uriTemplate, TestDeepLinkClassStatic::class.java.name, "testMethod")
+        val activityMock = mockk<Activity>(relaxed = true)
+        val testDelegate = getOneRegistryTestDelegate(listOf(entry), null)
+        val intent = mockk<Intent>(relaxed = true)
+        every { intent.data } returns uri
+        every { activityMock.intent } returns intent
+        val result = testDelegate.createResult(activityMock, intent, testDelegate.findEntry(uriTemplate))
+        assertThat(result.parameters).isEqualTo(mapOf("q" to ""))
+    }
+
     private fun parameterMap(
         url: String,
         parameterMap: Map<String, String>
