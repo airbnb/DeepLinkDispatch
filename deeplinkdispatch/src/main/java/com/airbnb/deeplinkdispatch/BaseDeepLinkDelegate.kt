@@ -115,6 +115,9 @@ open class BaseDeepLinkDelegate @JvmOverloads constructor(
                     result.methodResult.intent?.let { activity.startActivity(it) }
                 is DeepLinkEntry.HandlerDeepLinkEntry ->
                     callDeeplinkHandler(activity, result)
+                null -> {
+                    // No - op
+                }
             }
         }
     }

@@ -279,24 +279,21 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
                 element = methodElement,
                 errorMessage = "Only static methods can be annotated with @${DEEP_LINK_CLASS.simpleName}",
             )
-        } else
-        // FIXME This is crashing with an NPE on internal classes when accessing the returnType.
-        // You can jut comment this check out for now if you need this to pass.
-            if (methodElement.returnType.typeElement?.qualifiedName !in listOf(
-                    "android.content.Intent",
-                    "androidx.core.app.TaskStackBuilder",
-                    "com.airbnb.deeplinkdispatch.DeepLinkMethodResult"
-                )
-            ) {
-                throw DeepLinkProcessorException(
-                    element = methodElement,
-                    errorMessage = (
-                        "Only `Intent`, `androidx.core.app.TaskStackBuilder` or " +
-                            "'com.airbnb.deeplinkdispatch.DeepLinkMethodResult' are supported. Please double " +
-                            "check your imports and try again."
-                        )
-                )
-            }
+        } else if (methodElement.returnType.typeElement?.qualifiedName !in listOf(
+                "android.content.Intent",
+                "androidx.core.app.TaskStackBuilder",
+                "com.airbnb.deeplinkdispatch.DeepLinkMethodResult"
+            )
+        ) {
+            throw DeepLinkProcessorException(
+                element = methodElement,
+                errorMessage = (
+                    "Only `Intent`, `androidx.core.app.TaskStackBuilder` or " +
+                        "'com.airbnb.deeplinkdispatch.DeepLinkMethodResult' are supported. Please double " +
+                        "check your imports and try again."
+                    )
+            )
+        }
     }
 
     private fun verifyHandlerMatchArgs(element: XTypeElement, uriTemplate: String) {

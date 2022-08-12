@@ -1,12 +1,12 @@
 def versions = [
-    kotlinVersion                : '1.6.10',
+    kotlinVersion                : '1.7.10',
     appCompatVersion             : '1.4.1',
     localBroadcastManagerVersion : '1.1.0',
     roboelectricVersion          : '4.5.1',
     benchmarkVersion             : '1.0.0',
-    compileTestingVersion        : '1.4.7',
-    kspVersion                   : '1.6.10-1.0.4',
-    xProcessorVersion            : '2.4.2',
+    compileTestingVersion        : '1.4.9',
+    kspVersion                   : '1.7.10-1.0.6',
+    xProcessorVersion            : '2.5.0-alpha02',
     mockkVersion                 : '1.12.3',
     ktlintGradlePluginVersion    : '3.8.0',
     androidXTestingVersion       : '1.4.0'
@@ -14,8 +14,8 @@ def versions = [
 
 ext.versions = versions
 ext.androidConfig = [
-    agpVersion                          : '7.1.1',
-    compileSdkVersion                   : 31,
+    agpVersion                          : '7.2.1',
+    compileSdkVersion                   : 32,
     minSdkVersion                       : 16,
     targetSdkVersion                    : 30
 ]
