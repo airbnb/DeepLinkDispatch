@@ -12,8 +12,6 @@ import android.widget.Toast;
 
 import com.airbnb.deeplinkdispatch.DeepLink;
 
-import kotlin.jvm.JvmStatic;
-
 @DeepLink("http://example.com/library")
 public class LibraryActivity extends AppCompatActivity {
 
