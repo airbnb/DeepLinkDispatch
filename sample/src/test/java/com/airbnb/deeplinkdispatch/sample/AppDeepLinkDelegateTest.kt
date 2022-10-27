@@ -32,7 +32,8 @@ class AppDeepLinkDelegateTest {
             KaptLibraryDeepLinkModuleRegistry(),
             configurablePlaceholdersMap
         )
-        MatcherAssert.assertThat(deepLinkDelegate.duplicatedDeepLinkEntries.size,
+        MatcherAssert.assertThat(
+            deepLinkDelegate.duplicatedDeepLinkEntries.size,
             IsEqual.equalTo(3)
         )
         MatcherAssert.assertThat(deepLinkDelegate.allDeepLinkEntries.any { it.uriTemplate == "dld://host/intent/{abc}" }, Is.`is`(true))

@@ -33,9 +33,9 @@ data class DeepLinkMatchResult(
 
     override fun toString(): String {
         return "uriTemplate: ${deeplinkEntry.uriTemplate} " +
-                "activity: ${deeplinkEntry.clazz.name} " +
-                "${if (deeplinkEntry is DeepLinkEntry.MethodDeeplinkEntry) "method: ${deeplinkEntry.method} " else ""}" +
-                "parameters: $parameterMap"
+            "activity: ${deeplinkEntry.clazz.name} " +
+            "${if (deeplinkEntry is DeepLinkEntry.MethodDeeplinkEntry) "method: ${deeplinkEntry.method} " else ""}" +
+            "parameters: $parameterMap"
     }
 
     /**
@@ -75,7 +75,7 @@ sealed class DeepLinkEntry(open val uriTemplate: String, open val className: Str
         } catch (e: ClassNotFoundException) {
             throw IllegalStateException(
                 "Deeplink class $className not found. If you are using Proguard" +
-                        "/R8/Dexguard please consult README.md for correct configuration.",
+                    "/R8/Dexguard please consult README.md for correct configuration.",
                 e
             )
         }
