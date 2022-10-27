@@ -33,35 +33,9 @@ data class DeepLinkMatchResult(
 
     override fun toString(): String {
         return "uriTemplate: ${deeplinkEntry.uriTemplate} " +
-            "activity: ${deeplinkEntry.clazz.name} " +
-            "${if (deeplinkEntry is DeepLinkEntry.MethodDeeplinkEntry) "method: ${deeplinkEntry.method} " else ""}" +
-            "parameters: $parameterMap"
-    }
-
-    private val firstConfigurablePathSegmentIndex: Int by lazy {
-        deeplinkEntry.uriTemplate.indexOf(
-            configurablePathSegmentPrefixChar
-        )
-    }
-    private val firstPlaceholderIndex: Int by lazy {
-        deeplinkEntry.uriTemplate.indexOf(
-            componentParamPrefixChar
-        )
-    }
-    private val firstNonConcreteIndex: Int by lazy {
-        if (firstPlaceholderIndex == -1 && firstConfigurablePathSegmentIndex == -1) {
-            -1
-        } else {
-            if (firstConfigurablePathSegmentIndex == -1) {
-                firstPlaceholderIndex
-            } else {
-                if (firstPlaceholderIndex == -1) {
-                    firstConfigurablePathSegmentIndex
-                } else {
-                    min(firstConfigurablePathSegmentIndex, firstPlaceholderIndex)
-                }
-            }
-        }
+                "activity: ${deeplinkEntry.clazz.name} " +
+                "${if (deeplinkEntry is DeepLinkEntry.MethodDeeplinkEntry) "method: ${deeplinkEntry.method} " else ""}" +
+                "parameters: $parameterMap"
     }
 
     /**
@@ -72,21 +46,12 @@ data class DeepLinkMatchResult(
      * In this case the one with the more concete element would have won and the same is true here.
      */
     override fun compareTo(other: DeepLinkMatchResult): Int {
-        return when {
-            this.firstNonConcreteIndex < other.firstNonConcreteIndex -> -1
-            this.firstNonConcreteIndex == other.firstNonConcreteIndex -> {
-                if (this.firstNonConcreteIndex == -1 || deeplinkEntry.uriTemplate[firstNonConcreteIndex] == other.deeplinkEntry.uriTemplate[firstNonConcreteIndex]) {
-                    0
-                } else if (deeplinkEntry.uriTemplate[firstNonConcreteIndex] == configurablePathSegmentPrefixChar) {
-                    -1
-                } else 1
-            }
-            else -> 1
-        }
+        return this.deeplinkEntry.compareTo(other.deeplinkEntry)
     }
 }
 
-sealed class DeepLinkEntry(open val uriTemplate: String, open val className: String) {
+sealed class DeepLinkEntry(open val uriTemplate: String, open val className: String) :
+    Comparable<DeepLinkEntry> {
 
     data class ActivityDeeplinkEntry(
         override val uriTemplate: String,
@@ -110,9 +75,66 @@ sealed class DeepLinkEntry(open val uriTemplate: String, open val className: Str
         } catch (e: ClassNotFoundException) {
             throw IllegalStateException(
                 "Deeplink class $className not found. If you are using Proguard" +
-                    "/R8/Dexguard please consult README.md for correct configuration.",
+                        "/R8/Dexguard please consult README.md for correct configuration.",
                 e
             )
+        }
+    }
+
+    companion object {
+        private val placeholderRegex = "\\{.*?\\}".toRegex()
+    }
+
+    private val uriTemplateWithoutPlaceholders: String by lazy {
+        uriTemplate.replace(placeholderRegex, "")
+    }
+
+    private val firstConfigurablePathSegmentIndex: Int by lazy {
+        uriTemplate.indexOf(
+            configurablePathSegmentPrefixChar
+        )
+    }
+    private val firstPlaceholderIndex: Int by lazy {
+        uriTemplate.indexOf(
+            componentParamPrefixChar
+        )
+    }
+    private val firstNonConcreteIndex: Int by lazy {
+        if (firstPlaceholderIndex == -1 && firstConfigurablePathSegmentIndex == -1) {
+            -1
+        } else {
+            if (firstConfigurablePathSegmentIndex == -1) {
+                firstPlaceholderIndex
+            } else {
+                if (firstPlaceholderIndex == -1) {
+                    firstConfigurablePathSegmentIndex
+                } else {
+                    min(firstConfigurablePathSegmentIndex, firstPlaceholderIndex)
+                }
+            }
+        }
+    }
+
+    fun templatesMatchesSameUrls(other: DeepLinkEntry) = uriTemplateWithoutPlaceholders == other.uriTemplateWithoutPlaceholders
+
+    /**
+     * Whatever template has the first placeholder (and then configurable path segment) is the less
+     * concrete one.
+     * Because if they would have been all in the same index those elements would have been on the
+     * same level and in the same "list" of elements we compare in order.
+     * In this case the one with the more concete element would have won and the same is true here.
+     */
+    override fun compareTo(other: DeepLinkEntry): Int {
+        return when {
+            this.firstNonConcreteIndex < other.firstNonConcreteIndex -> -1
+            this.firstNonConcreteIndex == other.firstNonConcreteIndex -> {
+                if (this.firstNonConcreteIndex == -1 || uriTemplate[firstNonConcreteIndex] == other.uriTemplate[firstNonConcreteIndex]) {
+                    0
+                } else if (uriTemplate[firstNonConcreteIndex] == configurablePathSegmentPrefixChar) {
+                    -1
+                } else 1
+            }
+            else -> 1
         }
     }
 }

@@ -12,6 +12,8 @@ import android.widget.Toast;
 
 import com.airbnb.deeplinkdispatch.DeepLink;
 
+import kotlin.jvm.JvmStatic;
+
 @DeepLink("http://example.com/library")
 public class LibraryActivity extends AppCompatActivity {
 
@@ -25,6 +27,15 @@ public class LibraryActivity extends AppCompatActivity {
       Toast.makeText(this, "Got deep link " + intent.getStringExtra(DeepLink.URI),
           Toast.LENGTH_SHORT).show();
     }
+  }
+
+  /**
+   * This will not create an error during index creation but could be found by writing a test
+   * There is another example method in the main sample apps `MainActivity`
+   */
+  @DeepLink("dld://host/intent/{geh}")
+  static Intent sampleDuplicatedUrlWithDifferentPlaceholderNameInLib(Context context) {
+    return null;
   }
 
   /**

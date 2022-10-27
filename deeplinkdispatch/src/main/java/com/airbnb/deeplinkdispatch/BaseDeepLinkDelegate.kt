@@ -583,6 +583,21 @@ open class BaseDeepLinkDelegate @JvmOverloads constructor(
         registries.flatMap { it.getAllEntries() }
     }
 
+    /**
+     * Get a map of all DeepLinkEntries and its duplicates, DeepLinkEntry objects that
+     * might be slightly different but will map to the same URL during app operation.
+     */
+    val duplicatedDeepLinkEntries: Map<DeepLinkEntry, List<DeepLinkEntry>> by lazy {
+        allDeepLinkEntries.mapNotNull { deepLinkEntry ->
+            allDeepLinkEntries.filter { other ->
+                // Map every DeepLinkEntry to a list of the ones that matches the same URLs (minus itself)
+                deepLinkEntry !== other && deepLinkEntry.templatesMatchesSameUrls(
+                    other
+                )
+            }.takeIf { it.isNotEmpty() }?.let { deepLinkEntry to it }
+        }.toMap()
+    }
+
     companion object {
         protected const val TAG = "DeepLinkDelegate"
     }

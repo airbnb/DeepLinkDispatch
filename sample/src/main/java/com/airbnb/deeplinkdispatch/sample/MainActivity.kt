@@ -246,6 +246,24 @@ object MainActivityDeeplinks {
     }
 
     /**
+     * This will not create an error during index creation but could be found by writing a test
+     */
+    @DeepLink("dld://host/intent/{abc}")
+    @JvmStatic
+    fun sampleDuplicatedUrlWithDifferentPlaceholderName1(context: Context?): Intent? {
+        return null
+    }
+
+    /**
+     * This will not create an error during index creation but could be found by writing a test
+     */
+    @DeepLink("dld://host/intent/{def}")
+    @JvmStatic
+    fun sampleDuplicatedUrlWithDifferentPlaceholderName2(context: Context?): Intent? {
+        return null
+    }
+
+    /**
      * This method is a less concrete match for the URI
      * dld://host/somePathOne/somePathTwo/somePathThree to a annotated method in `sample-library`
      * that is annotated with @DeepLink("dld://host/somePathOne/somePathTwo/somePathThree") and thus
