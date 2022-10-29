@@ -580,7 +580,7 @@ open class BaseDeepLinkDelegate @JvmOverloads constructor(
      * DeepLinkDelegate.
      */
     val allDeepLinkEntries by lazy {
-        registries.flatMap { it.getAllEntries() }
+        registries.allDeepLinkEntries()
     }
 
     /**
@@ -588,17 +588,29 @@ open class BaseDeepLinkDelegate @JvmOverloads constructor(
      * might be slightly different but will map to the same URL during app operation.
      */
     val duplicatedDeepLinkEntries: Map<DeepLinkEntry, List<DeepLinkEntry>> by lazy {
-        allDeepLinkEntries.mapNotNull { deepLinkEntry ->
-            allDeepLinkEntries.filter { other ->
-                // Map every DeepLinkEntry to a list of the ones that matches the same URLs (minus itself)
-                deepLinkEntry !== other && deepLinkEntry.templatesMatchesSameUrls(
-                    other
-                )
-            }.takeIf { it.isNotEmpty() }?.let { deepLinkEntry to it }
-        }.toMap()
+        registries.duplicatedDeepLinkEntries()
     }
 
     companion object {
         protected const val TAG = "DeepLinkDelegate"
     }
 }
+
+/**
+ * Get a map of all DeepLinkEntries and its duplicates, DeepLinkEntry objects that
+ * might be slightly different but will map to the same URL during app operation.
+ */
+fun List<BaseRegistry>.duplicatedDeepLinkEntries(): Map<DeepLinkEntry, List<DeepLinkEntry>> {
+    val allDeepLinkEntries = this.allDeepLinkEntries()
+    return allDeepLinkEntries.mapNotNull { deepLinkEntry ->
+        allDeepLinkEntries.filter { other ->
+            // Map every DeepLinkEntry to a list of the ones that matches the same URLs (minus itself)
+            deepLinkEntry !== other && deepLinkEntry.templatesMatchesSameUrls(
+                other
+            )
+        }.takeIf { it.isNotEmpty() }?.let { deepLinkEntry to it }
+    }.toMap()
+}
+
+fun List<BaseRegistry>.allDeepLinkEntries(): List<DeepLinkEntry> =
+    this.flatMap { it.getAllEntries() }
