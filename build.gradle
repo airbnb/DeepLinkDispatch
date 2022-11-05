@@ -11,7 +11,7 @@ buildscript {
         maven { url "https://oss.sonatype.org/service/local/repositories/snapshots/content/" }
     }
     dependencies {
-        classpath "com.android.tools.build:gradle:$androidConfig.agpVersion"
+        classpath deps.androidPlugin
         classpath deps.kotlinGradlePlugin
         classpath deps.gradleMavenPublishPlugin
         classpath deps.benchmarkGradlePlugin
@@ -46,3 +46,4 @@ def getSnapshotRepositoryUrl() {
     return hasProperty('SNAPSHOT_REPOSITORY_URL') ? SNAPSHOT_REPOSITORY_URL
             : "https://oss.sonatype.org/content/repositories/snapshots/"
 }
+

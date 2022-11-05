@@ -31,8 +31,8 @@ ext.deps = [
     okio                     : 'com.squareup.okio:okio:3.0.0',
     androidXAnnotations      : 'androidx.annotation:annotation:1.3.0',
     // Build and upload with:
-    // ./gradlew clean assemble sourcesJar androidSourcesJar javadocsJar androidJavadocsJar uploadArchives --no-daemon --no-parallel
-    gradleMavenPublishPlugin : 'com.vanniktech:gradle-maven-publish-plugin:0.14.2',
+    // ./gradlew publish
+    gradleMavenPublishPlugin : 'com.vanniktech:gradle-maven-publish-plugin:0.22.0',
     dokkaPlugin              : 'org.jetbrains.dokka:dokka-gradle-plugin:1.6.10',
     ksp                      : "com.google.devtools.ksp:symbol-processing-api:$versions.kspVersion",
     kspGradlePlugin          : "com.google.devtools.ksp:com.google.devtools.ksp.gradle.plugin:$versions.kspVersion",

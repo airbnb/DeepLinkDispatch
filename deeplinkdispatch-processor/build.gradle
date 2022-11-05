@@ -5,7 +5,7 @@ apply plugin: 'org.jmailen.kotlinter'
 sourceCompatibility = 11
 
 apply plugin: 'checkstyle'
-apply plugin: 'com.vanniktech.maven.publish'
+apply from: '../publishing.gradle'
 
 dependencies {
   implementation project(':deeplinkdispatch-base')
