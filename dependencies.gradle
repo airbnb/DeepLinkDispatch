@@ -1,12 +1,12 @@
 def versions = [
-    kotlinVersion                : '1.7.10',
+    kotlinVersion                : '1.7.20',
     appCompatVersion             : '1.4.1',
     localBroadcastManagerVersion : '1.1.0',
-    roboelectricVersion          : '4.5.1',
+    roboelectricVersion          : '4.9',
     benchmarkVersion             : '1.0.0',
     compileTestingVersion        : '1.4.9',
-    kspVersion                   : '1.7.10-1.0.6',
-    xProcessorVersion            : '2.5.0-alpha02',
+    kspVersion                   : '1.7.20-1.0.8',
+    xProcessorVersion            : '2.5.0-beta01',
     mockkVersion                 : '1.12.3',
     ktlintGradlePluginVersion    : '3.8.0',
     androidXTestingVersion       : '1.4.0'

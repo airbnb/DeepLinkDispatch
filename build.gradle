@@ -11,7 +11,7 @@ buildscript {
         maven { url "https://oss.sonatype.org/service/local/repositories/snapshots/content/" }
     }
     dependencies {
-        classpath deps.androidPlugin
+        classpath "com.android.tools.build:gradle:$androidConfig.agpVersion"
         classpath deps.kotlinGradlePlugin
         classpath deps.gradleMavenPublishPlugin
         classpath deps.benchmarkGradlePlugin
