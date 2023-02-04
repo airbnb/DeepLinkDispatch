@@ -73,7 +73,7 @@ data class DeepLinkMatchResult(
      */
     override fun compareTo(other: DeepLinkMatchResult): Int {
         return when {
-            this.firstNonConcreteIndex < other.firstNonConcreteIndex -> 1
+            this.firstNonConcreteIndex < other.firstNonConcreteIndex -> -1
             this.firstNonConcreteIndex == other.firstNonConcreteIndex -> {
                 if (this.firstNonConcreteIndex == -1 || deeplinkEntry.uriTemplate[firstNonConcreteIndex] == other.deeplinkEntry.uriTemplate[firstNonConcreteIndex]) {
                     0
@@ -81,7 +81,7 @@ data class DeepLinkMatchResult(
                     -1
                 } else 1
             }
-            else -> -1
+            else -> 1
         }
     }
 }
