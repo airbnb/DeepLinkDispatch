@@ -28,6 +28,15 @@ public class LibraryActivity extends AppCompatActivity {
   }
 
   /**
+   * This will not create an error during index creation but could be found by writing a test
+   * There is another example method in the main sample apps `MainActivity`
+   */
+  @DeepLink("dld://host/intent/{geh}")
+  static Intent sampleDuplicatedUrlWithDifferentPlaceholderNameInLib(Context context) {
+    return null;
+  }
+
+  /**
    * This method is a more concrete match for the URI dld://host/somePathOne/somePathTwo/somePathThree
    * to a annotated method in `sample` that is annotated with
    * @DeepLink("dld://host/somePathOne/{param1}/somePathThree") and thus will never be picked over
