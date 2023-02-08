@@ -391,11 +391,11 @@ public class MainActivityTest {
 
   private void testMatchConcreteness(Intent intent) {
     DeepLinkActivity deepLinkActivity = Robolectric.buildActivity(DeepLinkActivity.class, intent)
-            .create().get();
+          .create().get();
     ShadowActivity shadowActivity = shadowOf(deepLinkActivity);
     Intent launchedIntent = shadowActivity.peekNextStartedActivityForResult().intent;
     assertThat(launchedIntent.getComponent(),
-            equalTo(new ComponentName(deepLinkActivity, LibraryActivity.class)));
+          equalTo(new ComponentName(deepLinkActivity, LibraryActivity.class)));
   }
 
   @Test
