@@ -130,10 +130,6 @@ sealed class DeepLinkEntry(open val uriTemplate: String, open val className: Str
                     this.firstNonConcreteIndex != other.firstNonConcreteIndex -> -1
             other.firstNonConcreteIndex < 0 &&
                     other.firstNonConcreteIndex != this.firstNonConcreteIndex -> 1
-            this.firstNonConcreteIndex < 0 &&
-                    this.firstNonConcreteIndex != other.firstNonConcreteIndex -> -1
-            other.firstNonConcreteIndex < 0 &&
-                    other.firstNonConcreteIndex != this.firstNonConcreteIndex -> 1
             this.firstNonConcreteIndex < other.firstNonConcreteIndex -> 1
             this.firstNonConcreteIndex == other.firstNonConcreteIndex -> {
                 if (this.firstNonConcreteIndex == -1 || uriTemplate[firstNonConcreteIndex] == other.uriTemplate[firstNonConcreteIndex]) {
