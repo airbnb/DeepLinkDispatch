@@ -372,14 +372,30 @@ public class MainActivityTest {
   }
 
   @Test
-  public void testMoreConcreteMach() {
+  public void testMoreConcreteMatch() {
     Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("placeholder://host/somePathOne/somePathTwo/somePathThree"));
+    testMatchConcreteness(intent);
+  }
+
+  @Test
+  public void testMoreConcreteMatchAlt() {
+    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("placeholder://host/somePathOneAlt/somePathTwoAlt/somePathThreeAlt"));
+    testMatchConcreteness(intent);
+  }
+
+  @Test
+  public void testMoreConcreteMatchMany() {
+    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("placeholder://host/somePathOneMany/somePathTwoMany/somePathThreeMany"));
+    testMatchConcreteness(intent);
+  }
+
+  private void testMatchConcreteness(Intent intent) {
     DeepLinkActivity deepLinkActivity = Robolectric.buildActivity(DeepLinkActivity.class, intent)
-      .create().get();
+            .create().get();
     ShadowActivity shadowActivity = shadowOf(deepLinkActivity);
     Intent launchedIntent = shadowActivity.peekNextStartedActivityForResult().intent;
     assertThat(launchedIntent.getComponent(),
-      equalTo(new ComponentName(deepLinkActivity, LibraryActivity.class)));
+            equalTo(new ComponentName(deepLinkActivity, LibraryActivity.class)));
   }
 
   @Test
