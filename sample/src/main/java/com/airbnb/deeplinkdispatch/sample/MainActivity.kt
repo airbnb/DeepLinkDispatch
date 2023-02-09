@@ -276,6 +276,22 @@ object MainActivityDeeplinks {
     @DeepLink("placeholder://host/somePathOne/{param1}/somePathThree")
     @JvmStatic
     fun lessConcreteMatch(context: Context?, bundle: Bundle?): Intent {
+        return handleConcreteMatchLink(context, bundle)
+    }
+
+    @DeepLink("placeholder://host/{param1}/somePathTwoAlt/somePathThreeAlt")
+    @JvmStatic
+    fun lessConcreteMatchAlt(context: Context, bundle: Bundle): Intent {
+        return handleConcreteMatchLink(context, bundle)
+    }
+
+    @DeepLink("placeholder://host/{param1}/{param2}/{param3}")
+    @JvmStatic
+    fun lessConcreteMatchMany(context: Context, bundle: Bundle): Intent {
+        return handleConcreteMatchLink(context, bundle)
+    }
+
+    private fun handleConcreteMatchLink(context: Context?, bundle: Bundle?): Intent {
         if (bundle != null && bundle.containsKey("param1")) {
             Log.d(
                 MainActivity.TAG,

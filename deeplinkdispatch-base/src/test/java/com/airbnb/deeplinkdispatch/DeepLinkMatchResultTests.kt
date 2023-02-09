@@ -52,18 +52,18 @@ class DeepLinkMatchResultTests {
 
     @Test
     fun testEarlierLaterPlaceholder() {
-        assertTrue(parmSecondPathElement.compareTo(parmFirstPathElement) == 1)
-        assertTrue(parmFirstPathElement.compareTo(parmSecondPathElement) == -1)
-        assertTrue(parmSecondPathElement.compareTo(cpsFirstPathSegment) == 1)
-        assertTrue(parmFirstPathElement.compareTo(cpsSecondPathSegment) == -1)
+        assertTrue(parmSecondPathElement.compareTo(parmFirstPathElement) == -1)
+        assertTrue(parmFirstPathElement.compareTo(parmSecondPathElement) == 1)
+        assertTrue(parmSecondPathElement.compareTo(cpsFirstPathSegment) == -1)
+        assertTrue(parmFirstPathElement.compareTo(cpsSecondPathSegment) == 1)
     }
 
     @Test
     fun testEarlierLaterCps() {
-        assertTrue(cpsSecondPathSegment.compareTo(cpsFirstPathSegment) == 1)
-        assertTrue(cpsFirstPathSegment.compareTo(cpsSecondPathSegment) == -1)
-        assertTrue(cpsSecondPathSegment.compareTo(parmFirstPathElement) == 1)
-        assertTrue(cpsFirstPathSegment.compareTo(parmSecondPathElement) == -1)
+        assertTrue(cpsSecondPathSegment.compareTo(cpsFirstPathSegment) == -1)
+        assertTrue(cpsFirstPathSegment.compareTo(cpsSecondPathSegment) == 1)
+        assertTrue(cpsSecondPathSegment.compareTo(parmFirstPathElement) == -1)
+        assertTrue(cpsFirstPathSegment.compareTo(parmSecondPathElement) == 1)
     }
 
     @Test

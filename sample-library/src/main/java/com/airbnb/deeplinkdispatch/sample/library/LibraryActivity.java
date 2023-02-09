@@ -51,4 +51,16 @@ public class LibraryActivity extends AppCompatActivity {
     Log.d(TAG, "matched more concrete url in sample-library project.");
     return new Intent(context, LibraryActivity.class);
   }
+  
+  @DeepLink("placeholder://host/somePathOneAlt/{param1}/somePathThreeAlt")
+  public static Intent moreConcreteMatchAlt(Context context, Bundle bundle) {
+    Log.d(TAG, "matched more concrete url in sample-library project.");
+    return new Intent(context, LibraryActivity.class);
+  }
+
+  @DeepLink("placeholder://host/somePathOneMany/somePathTwoMany/{param1}")
+  public static Intent moreConcreteMatchMany(Context context, Bundle bundle) {
+    Log.d(TAG, "matched more concrete url in sample-library project.");
+    return new Intent(context, LibraryActivity.class);
+  }
 }
