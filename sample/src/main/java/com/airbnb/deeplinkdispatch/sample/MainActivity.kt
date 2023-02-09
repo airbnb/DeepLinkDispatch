@@ -276,6 +276,20 @@ object MainActivityDeeplinks {
     @DeepLink("placeholder://host/somePathOne/{param1}/somePathThree")
     @JvmStatic
     fun lessConcreteMatch(context: Context?, bundle: Bundle?): Intent {
+        return handleConcreteMatchLink(context, bundle)
+    }
+
+    @DeepLink("placeholder://host/{param1}/somePathTwoAlt/somePathThreeAlt")
+    fun lessConcreteMatchAlt(context: Context, bundle: Bundle): Intent {
+        return handleConcreteMatchLink(context, bundle)
+    }
+
+    @DeepLink("placeholder://host/{param1}/{param2}/{param3}")
+    fun lessConcreteMatchMany(context: Context, bundle: Bundle): Intent {
+        return handleConcreteMatchLink(context, bundle)
+    }
+
+    private fun handleConcreteMatchLink(context: Context?, bundle: Bundle?): Intent {
         if (bundle != null && bundle.containsKey("param1")) {
             Log.d(
                 MainActivity.TAG,
@@ -286,21 +300,5 @@ object MainActivityDeeplinks {
             context,
             MainActivity::class.java
         ).setAction(MainActivity.ACTION_DEEP_LINK_METHOD)
-    }
-
-    @DeepLink("placeholder://host/{param1}/somePathTwoAlt/somePathThreeAlt")
-    public static Intent lessConcreteMatchAlt(Context context, Bundle bundle) {
-        if (bundle != null && bundle.containsKey("param1")) {
-          Log.d(TAG, "matched less concrete url in sample project :" + bundle.getString("param1"));
-        }
-        return new Intent(context, MainActivity.class).setAction(ACTION_DEEP_LINK_METHOD);
-    }
-
-    @DeepLink("placeholder://host/{param1}/{param2}/{param3}")
-    public static Intent lessConcreteMatchMany(Context context, Bundle bundle) {
-        if (bundle != null && bundle.containsKey("param1")) {
-          Log.d(TAG, "matched less concrete url in sample project :" + bundle.getString("param1"));
-        }
-        return new Intent(context, MainActivity.class).setAction(ACTION_DEEP_LINK_METHOD);
     }
 }
