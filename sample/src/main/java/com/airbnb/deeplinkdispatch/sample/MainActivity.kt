@@ -280,11 +280,13 @@ object MainActivityDeeplinks {
     }
 
     @DeepLink("placeholder://host/{param1}/somePathTwoAlt/somePathThreeAlt")
+    @JvmStatic
     fun lessConcreteMatchAlt(context: Context, bundle: Bundle): Intent {
         return handleConcreteMatchLink(context, bundle)
     }
 
     @DeepLink("placeholder://host/{param1}/{param2}/{param3}")
+    @JvmStatic
     fun lessConcreteMatchMany(context: Context, bundle: Bundle): Intent {
         return handleConcreteMatchLink(context, bundle)
     }
