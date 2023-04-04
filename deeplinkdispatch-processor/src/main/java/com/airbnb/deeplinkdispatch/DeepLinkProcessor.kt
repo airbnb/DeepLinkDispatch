@@ -299,25 +299,35 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
     private fun verifyHandlerMatchArgs(element: XTypeElement, uriTemplate: String) {
 
         // Find a method on our element that override the DeepLinkHandler interface method
-        val argsType = element.getAllMethods().singleOrNull {
+        val handlerMethod = element.getAllMethods().singleOrNull {
             it.overrides(
                 other = handleDeepLinkInterfaceMethod,
                 owner = element
             )
-        }?.parameters?.last()?.type
+        }
+            // The interface method might be on a superclass, in which case its arguments might be generic.
+            // We want to make sure we're getting the concrete types of the final element.
+            ?.asMemberOf(element.type)
             ?: error("Is not overriding method from interface. This is impossible.")
 
+        val argsType = handlerMethod.parameterTypes.last()
+
         val argsTypeElement = argsType.typeElement
-        if (argsTypeElement?.isPublic() == false) {
+            ?: throw DeepLinkProcessorException(
+                element = element,
+                errorMessage = "Could not extract type element from handler interface type. Found type ${argsType.typeName}"
+            )
+
+        if (!argsTypeElement.isPublic()) {
             throw DeepLinkProcessorException(
                 element = argsTypeElement,
                 errorMessage = "Argument class must be public."
             )
         }
-        val argsConstructor = argsTypeElement?.getConstructors()?.singleOrNull() ?: run {
+        val argsConstructor = argsTypeElement.getConstructors().singleOrNull() ?: run {
             throw DeepLinkProcessorException(
-                element = argsTypeElement ?: element,
-                errorMessage = "Argument class can only have one constructor"
+                element = argsTypeElement,
+                errorMessage = "Argument class for deeplink handler can only have a single constructor"
             )
         }
         val allArgParameters = argsConstructor.parameters

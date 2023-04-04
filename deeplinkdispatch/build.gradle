@@ -5,7 +5,7 @@ sourceCompatibility = 11
 apply plugin: 'checkstyle'
 
 apply plugin: 'kotlin-android'
-apply plugin: 'com.vanniktech.maven.publish'
+apply from: '../publishing.gradle'
 apply plugin: 'org.jmailen.kotlinter'
 
 dependencies {
