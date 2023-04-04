@@ -327,7 +327,7 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
         val argsConstructor = argsTypeElement.getConstructors().singleOrNull() ?: run {
             throw DeepLinkProcessorException(
                 element = argsTypeElement,
-                errorMessage = "Argument class for deeplink handler can only have one constructor"
+                errorMessage = "Argument class for deeplink handler can only have a single constructor"
             )
         }
         val allArgParameters = argsConstructor.parameters

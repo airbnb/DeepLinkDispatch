@@ -926,7 +926,7 @@ class DeepLinkProcessorDeepLinkHandlerIncrementalTest : BaseDeepLinkProcessorTes
         )
         assertCompileError(
             results,
-            "Argument class for deeplink handler can only have one constructor"
+            "Argument class for deeplink handler can only have a single constructor"
         )
     }
 
