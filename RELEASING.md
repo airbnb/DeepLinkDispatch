@@ -2,16 +2,15 @@ Publishing a new Main release to Maven
 ========
 
 1. Change the version in `gradle.properties` to a non-SNAPSHOT version based on Major.Minor.Patch naming scheme
-2. Update `CHANGELOG.md`, adding the new release version and release notes
-4. `git commit -am "Prepare for release X.Y.Z."` (where X.Y.Z is the new version)
-5. `git tag -a X.Y.X -m "Version X.Y.Z"` (where X.Y.Z is the new version)
-6. Add your sonatype login information under gradle properties mavenCentralUsername and mavenCentralPassword in your local user gradle.properties file
-7. Make sure you have a gpg signing key configured (https://vanniktech.github.io/gradle-maven-publish-plugin/central/#secrets)
+2. `git commit -am "Prepare for release X.Y.Z."` (where X.Y.Z is the new version)
+3. `git tag -a X.Y.X -m "Version X.Y.Z"` (where X.Y.Z is the new version)
+4. Add your sonatype login information under gradle properties mavenCentralUsername and mavenCentralPassword in your local user gradle.properties file
+5. Make sure you have a gpg signing key configured (https://vanniktech.github.io/gradle-maven-publish-plugin/central/#secrets)
 6. Run `./gradlew publish` to build the artifacts and publish them to maven
 7. Update the `gradle.properties` to the next SNAPSHOT version.
 8. `git commit -am "Prepare next development version."`
 9. `git push && git push --tags`
-10. Merge to master and create a new release through the Github web UI
+10. Merge to master and create a new release through the Github web UI with release notes
 
 Publishing a release to an internal repository
 ========

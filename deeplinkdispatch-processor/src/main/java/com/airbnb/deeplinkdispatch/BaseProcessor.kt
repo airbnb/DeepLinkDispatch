@@ -48,10 +48,8 @@ abstract class BaseProcessor(val symbolProcessorEnvironment: SymbolProcessorEnvi
     final override fun process(resolver: Resolver): List<KSAnnotated> {
         val symbolProcessorEnvironment = requireNotNull(symbolProcessorEnvironment)
         environment = XProcessingEnv.create(
-            symbolProcessorEnvironment.options,
+            symbolProcessorEnvironment,
             resolver,
-            symbolProcessorEnvironment.codeGenerator,
-            symbolProcessorEnvironment.logger
         )
         process(null, environment, XRoundEnv.create(environment))
         return emptyList()
