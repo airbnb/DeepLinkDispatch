@@ -6,7 +6,7 @@ Publishing a new Main release to Maven
 3. `git tag -a X.Y.X -m "Version X.Y.Z"` (where X.Y.Z is the new version)
 4. Add your sonatype login information under gradle properties mavenCentralUsername and mavenCentralPassword in your local user gradle.properties file
 5. Make sure you have a gpg signing key configured (https://vanniktech.github.io/gradle-maven-publish-plugin/central/#secrets)
-6. Run `./gradlew publish` to build the artifacts and publish them to maven
+6. Run `./gradlew publishAllPublicationsToMavenCentral` to build the artifacts and publish them to maven
 7. Update the `gradle.properties` to the next SNAPSHOT version.
 8. `git commit -am "Prepare next development version."`
 9. `git push && git push --tags`

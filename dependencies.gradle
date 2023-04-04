@@ -30,8 +30,7 @@ ext.deps = [
     jsr305                   : 'com.google.code.findbugs:jsr305:3.0.2',
     okio                     : 'com.squareup.okio:okio:3.0.0',
     androidXAnnotations      : 'androidx.annotation:annotation:1.3.0',
-    // Build and upload with:
-    // ./gradlew publish
+    // https://vanniktech.github.io/gradle-maven-publish-plugin/
     gradleMavenPublishPlugin : 'com.vanniktech:gradle-maven-publish-plugin:0.22.0',
     dokkaPlugin              : 'org.jetbrains.dokka:dokka-gradle-plugin:1.6.10',
     ksp                      : "com.google.devtools.ksp:symbol-processing-api:$versions.kspVersion",
