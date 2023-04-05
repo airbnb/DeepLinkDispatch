@@ -20,6 +20,11 @@ publishing {
 }
 
 mavenPublishing {
+    if (findProperty("enforceSnapshotVersion").toString().toBoolean() && !findProperty("VERSION_NAME").toString().endsWith("-SNAPSHOT")) {
+        throw new org.gradle.api.tasks.TaskInstantiationException(
+                "Cannot publish non snapshot version(${findProperty("VERSION_NAME")}) if 'enforceSnapshotVersion' property is set!"
+        )
+    }
     if (findProperty("doNotSignRelease").toString().toBoolean()) {
         println("Skipping release signing")
     } else {

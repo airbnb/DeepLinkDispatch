@@ -25,4 +25,4 @@ jobs:
         uses: actions/checkout@v2
       - name: Deploy new snapshot of DeepLinkDispatch
         shell: bash
-        run: ./gradlew publishAllPublicationsToMavenCentral
+        run: ./gradlew -PenforceSnapshotVersion=true publishAllPublicationsToMavenCentral
