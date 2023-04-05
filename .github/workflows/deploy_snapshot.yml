@@ -8,6 +8,15 @@ on:
 jobs:
   build-test:
     uses: airbnb/DeepLinkDispatch/.github/workflows/build_test.yml@master
+  update-gradle-properties:
+    uses: DamianReeves/write-file-action@master
+    with:
+      path: gradle.properties
+      contents: |
+        mavenCentralUsername=${{ secrets.NEXUS_USER }}
+        mavenCentralPassword=${{ secrets.NEXUS_PASSWORD }}
+
+      write-mode: append
   deploy-snapshot:
     needs: build-test
     runs-on: ubuntu-latest
@@ -16,7 +25,4 @@ jobs:
         uses: actions/checkout@v2
       - name: Deploy new snapshot of DeepLinkDispatch
         shell: bash
-        env:
-          SONATYPE_NEXUS_USERNAME: ${{ secrets.NEXUS_USER }}
-          SONATYPE_NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
-        run: ./gradlew uploadArchives
+        run: ./gradlew publishAllPublicationsToMavenCentral
