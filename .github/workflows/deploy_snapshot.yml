@@ -16,12 +16,12 @@ jobs:
         uses: actions/checkout@v2
       - name: Update gradle.properties
         uses: DamianReeves/write-file-action@master
-          with:
-            path: gradle.properties
-            write-mode: append
-            contents: |
-              mavenCentralUsername=${{ secrets.NEXUS_USER }}
-              mavenCentralPassword=${{ secrets.NEXUS_PASSWORD }}
+        with:
+          path: gradle.properties
+          write-mode: append
+          contents: |
+            mavenCentralUsername=${{ secrets.NEXUS_USER }}
+            mavenCentralPassword=${{ secrets.NEXUS_PASSWORD }}
 
       - name: Deploy new snapshot of DeepLinkDispatch
         shell: bash
