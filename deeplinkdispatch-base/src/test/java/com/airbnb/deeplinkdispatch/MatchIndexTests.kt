@@ -1,6 +1,5 @@
 package com.airbnb.deeplinkdispatch
 
-import com.airbnb.deeplinkdispatch.base.MatchIndex
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 
@@ -29,9 +28,8 @@ class MatchIndexTests {
         entryWithAllowedValueAndLongerValueThan
     ).sortedBy { it.uriTemplate }
 
-
     @Test
-    fun testMatchWithPlaceholderThatEndsInSegmentWithLongerMatch(){
+    fun testMatchWithPlaceholderThatEndsInSegmentWithLongerMatch() {
         // This is testing a condition where an URL segment (in this case the host) has a placeholder with allowed values
         // in the template and is matching (from the back) to what is in the to be matched URL, where the entry in the template
         // is matching but longer (and thus not matching) before the placeholder starts (from the back).
