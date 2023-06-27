@@ -410,7 +410,12 @@ public class MatchIndex {
                               + new String(placeholderValue), false);
             } else return null;
           }
-          if (byteArray[valueStartPos + j] != valueToMatch[k]) {
+          // We do the comparison from the back. If the value in the index (before the placeholder
+          // starts) is longer than valueToMatch we need to abort.
+          // e.g. template value: "{something}longer" and valueToMatch: "onger". As we compare
+          // from back all the chars match but the template value is longer so as soon as we reach
+          // the end of valueToMatch before we reach the placeholder end char we need to abort.
+          if (k < 0 || byteArray[valueStartPos + j] != valueToMatch[k]) {
             return null;
           }
         }
