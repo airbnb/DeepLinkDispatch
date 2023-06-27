@@ -410,7 +410,9 @@ public class MatchIndex {
                               + new String(placeholderValue), false);
             } else return null;
           }
-          if (byteArray[valueStartPos + j] != valueToMatch[k]) {
+          // We do the comparison from the back if the value in the index (before the placeholder starts
+          // is longer than valueToMatch we need to abort.
+          if (k >= 0 || byteArray[valueStartPos + j] != valueToMatch[k]) {
             return null;
           }
         }

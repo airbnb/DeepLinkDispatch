@@ -1,5 +1,6 @@
 package com.airbnb.deeplinkdispatch
 
+import com.airbnb.deeplinkdispatch.base.MatchIndex
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 
@@ -9,6 +10,7 @@ class MatchIndexTests {
     private val entryWithAllowedValues = DeepLinkEntry.MethodDeeplinkEntry("http{scheme(|s)}://www.example.{tld(de|fr)}/somePath1/differentPath2", MatchIndexTests::class.java.name, "someMethod10")
     private val entryWithAllowedValueOnlyOneElement = DeepLinkEntry.MethodDeeplinkEntry("http{scheme(s)}://www.justtesting.com/somePath", MatchIndexTests::class.java.name, "someMethod10")
     private val entryWithEmptyAllowedValue = DeepLinkEntry.MethodDeeplinkEntry("http{scheme()}://www.anothertest.com/somePath", MatchIndexTests::class.java.name, "someMethod10")
+    private val entryWithAllowedValueAndLongerValueThan = DeepLinkEntry.MethodDeeplinkEntry("scheme://{some_value(allowed|values)}somethinglonger/one/{param}/three", MatchIndexTests::class.java.name, "someMethod10")
 
     private val allowedValuesPlaceholderNames = setOf("scheme", "tld")
 
@@ -23,8 +25,23 @@ class MatchIndexTests {
         DeepLinkEntry.MethodDeeplinkEntry("http://example.com/path1/someOtherPathElement2", MatchIndexTests::class.java.name, "someMethod6"),
         DeepLinkEntry.MethodDeeplinkEntry("http://example.com/", MatchIndexTests::class.java.name, "someMethod8"),
         entryWithAllowedValues,
-        entryWithAllowedValueOnlyOneElement
+        entryWithAllowedValueOnlyOneElement,
+        entryWithAllowedValueAndLongerValueThan
     ).sortedBy { it.uriTemplate }
+
+
+    @Test
+    fun testMatchWithPlaceholderThatEndsInSegmentWithLongerMatch(){
+        // This is testing a condition where an URL segment (in this case the host) has a placeholder with allowed values
+        // in the template and is matching (from the back) to what is in the to be matched URL, where the entry in the template
+        // is matching but longer (and thus not matching) before the placeholder starts (from the back).
+        // In this case the host is it like this:
+        // template host: {some_value(allowed|values)}somethinglonger
+        // to match host:                                      longer
+        val deepLinkUri = DeepLinkUri.parse("scheme://longer/one/param/three")
+        val matchEntry = testRegistry(testEntries).idxMatch(deepLinkUri, emptyMap())
+        assertThat(matchEntry).isNull()
+    }
 
     @Test
     fun testGetAllEntries() {
