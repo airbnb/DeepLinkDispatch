@@ -2,6 +2,7 @@ package com.airbnb.deeplinkdispatch.sample
 
 import com.airbnb.deeplinkdispatch.sample.benchmarkable.BenchmarkDeepLinkModuleRegistry
 import com.airbnb.deeplinkdispatch.sample.kaptlibrary.KaptLibraryDeepLinkModuleRegistry
+import com.airbnb.deeplinkdispatch.sample.ksplibrary.KspLibraryDeepLinkModuleRegistry
 import com.airbnb.deeplinkdispatch.sample.library.LibraryDeepLinkModuleRegistry
 import org.hamcrest.MatcherAssert
 import org.hamcrest.core.Is
@@ -30,6 +31,7 @@ class AppDeepLinkDelegateTest {
             LibraryDeepLinkModuleRegistry(),
             BenchmarkDeepLinkModuleRegistry(),
             KaptLibraryDeepLinkModuleRegistry(),
+            KspLibraryDeepLinkModuleRegistry(),
             configurablePlaceholdersMap
         )
         MatcherAssert.assertThat(

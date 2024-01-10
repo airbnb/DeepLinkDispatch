@@ -2,8 +2,6 @@
 
 package com.airbnb.deeplinkdispatch
 
-import com.airbnb.deeplinkdispatch.base.MatchIndex.ALLOWED_VALUES_DELIMITER
-import com.airbnb.deeplinkdispatch.base.MatchIndex.ALLOWED_VALUES_SEPARATOR
 import com.airbnb.deeplinkdispatch.base.MatchIndex.HEADER_LENGTH
 import com.airbnb.deeplinkdispatch.base.MatchIndex.HEADER_MATCH_LENGTH
 import com.airbnb.deeplinkdispatch.base.MatchIndex.HEADER_NODE_METADATA_LENGTH
@@ -150,6 +148,7 @@ open class TreeNode(open val id: String, internal val metadata: NodeMetadata) {
 private const val MAX_CODE_STRING_BYTE_SIZE =
     65535 // (2^16)-1 as the chunk needs to be 16 bit addressable.
 
+@kotlin.ExperimentalUnsignedTypes
 data class Root(override val id: String = "r") :
     TreeNode(ROOT_VALUE, NodeMetadata(MetadataMasks.ComponentTypeRootMask, id)) {
     fun writeToOutoutStream(openOutputStream: OutputStream) {
@@ -233,22 +232,15 @@ data class Root(override val id: String = "r") :
         }
 }
 
-private val allowedPlaceholderRegex =
-    "(?<=${"\\" + ALLOWED_VALUES_DELIMITER[0]})(.*)(?=${"\\" + ALLOWED_VALUES_DELIMITER[1]})".toRegex()
-
-internal fun String.orderPlaceholderValues(): String {
-    return allowedPlaceholderRegex.replace(this) { matchResult ->
-        matchResult.value.split(ALLOWED_VALUES_SEPARATOR).sorted()
-            .joinToString(separator = ALLOWED_VALUES_SEPARATOR.toString())
-    }
-}
-
+@kotlin.ExperimentalUnsignedTypes
 data class Scheme(override val id: String) :
     TreeNode(id = id, metadata = NodeMetadata(MetadataMasks.ComponentTypeSchemeMask, id))
 
+@kotlin.ExperimentalUnsignedTypes
 data class Host(override val id: String) :
     TreeNode(id = id, metadata = NodeMetadata(MetadataMasks.ComponentTypeHostMask, id))
 
+@kotlin.ExperimentalUnsignedTypes
 data class PathSegment(override val id: String) :
     TreeNode(id = id, metadata = NodeMetadata(MetadataMasks.ComponentTypePathSegmentMask, id))
 
@@ -266,6 +258,7 @@ data class PathSegment(override val id: String) :
  * (3+url template length)+2+classname length+1..
  * (3+url template length)+2+classname length+1+method name length method name
  */
+@kotlin.ExperimentalUnsignedTypes
 fun matchByteArray(match: UriMatch?): UByteArray {
     if (match == null) return UByteArray(0)
 
@@ -306,6 +299,7 @@ fun matchByteArray(match: UriMatch?): UByteArray {
         }
 }
 
+@kotlin.ExperimentalUnsignedTypes
 fun UByteArray.writeUIntAt(startIndex: Int, value: UInt) {
     val ubyte3: UByte = value.and(0x000000FFu).toUByte()
     val ubyte2: UByte = value.shr(8).and(0x0000FFu).toUByte()
@@ -317,6 +311,7 @@ fun UByteArray.writeUIntAt(startIndex: Int, value: UInt) {
     set(startIndex + 3, ubyte3)
 }
 
+@kotlin.ExperimentalUnsignedTypes
 fun UByteArray.writeUShortAt(startIndex: Int, value: UShort) {
     val ubyte1: UByte = value.and(0x000000FFu).toUByte()
     val ubyte0: UByte = value.toUInt().shr(8).and(0x0000FFu).toUByte()

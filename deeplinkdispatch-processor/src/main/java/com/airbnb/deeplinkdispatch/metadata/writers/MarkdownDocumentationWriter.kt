@@ -1,7 +1,8 @@
-package com.airbnb.deeplinkdispatch
+package com.airbnb.deeplinkdispatch.metadata.writers
 
 import androidx.room.compiler.processing.XProcessingEnv
-import com.airbnb.deeplinkdispatch.Documentor.DocumetationWriter
+import com.airbnb.deeplinkdispatch.DeepLinkAnnotatedElement
+import com.airbnb.deeplinkdispatch.metadata.writers.Writer.Companion.formatJavaDoc
 import java.io.PrintWriter
 import java.util.Locale
 
@@ -17,7 +18,7 @@ import java.util.Locale
  *
  * @see [Stack Edit](https://stackedit.io/)
  */
-internal class MarkdownWriter : DocumetationWriter {
+internal class MarkdownDocumentationWriter : Writer {
     override fun write(
         env: XProcessingEnv,
         writer: PrintWriter,
@@ -30,8 +31,7 @@ internal class MarkdownWriter : DocumetationWriter {
 
         // publish lines
         for (element in elements) {
-            val embeddedComments =
-                Documentor.formatJavaDoc(element.element.docComment) ?: ""
+            val embeddedComments = formatJavaDoc(element.element.docComment) ?: ""
             val methodName = when (element) {
                 is DeepLinkAnnotatedElement.MethodAnnotatedElement -> element.method
                 else -> ""
@@ -40,7 +40,7 @@ internal class MarkdownWriter : DocumetationWriter {
             writer.println(
                 String.format(
                     Locale.US, format,
-                    element.uri, embeddedComments, simpleName, methodName
+                    element.uriTemplate, embeddedComments, simpleName, methodName
                 )
             )
         }

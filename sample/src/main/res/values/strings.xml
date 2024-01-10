@@ -4,5 +4,6 @@
     <string name="sample_hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
     <string name="title_second">DLD: Second Activity</string>
+    <string name="title_third">DLD: Third Activity</string>
     <string name="title_custom_prefixes">DLD: Custom Prefixes Activity</string>
 </resources>

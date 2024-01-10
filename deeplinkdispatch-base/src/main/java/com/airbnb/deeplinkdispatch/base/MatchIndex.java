@@ -96,7 +96,6 @@ public class MatchIndex {
   @NonNull
   public static final char[] ALLOWED_VALUES_DELIMITER = {'(', ')'};
 
-  @NonNull
   public static final char ALLOWED_VALUES_SEPARATOR = '|';
 
   private static final String ALLOWED_VALUES_SEPARATOR_REGEX_STRING =
@@ -113,7 +112,6 @@ public class MatchIndex {
    * Match a given {@link com.airbnb.deeplinkdispatch.DeepLinkUri} (given as a List of
    * {@link UrlElement} against this searchh index.
    * Will return an instance of {@link DeepLinkEntry} if a match was found or null if there wasn't.
-   *
    *
    * @param deeplinkUri The uri that should be matched
    * @param elements The {@link UrlElement} list of
@@ -201,7 +199,7 @@ public class MatchIndex {
 
   @NonNull
   public List<DeepLinkEntry> getAllEntries(int elementStartPos, int parentBoundaryPos) {
-    List<DeepLinkEntry> resultList = new ArrayList();
+    List<DeepLinkEntry> resultList = new ArrayList<>();
     int currentElementStartPosition = elementStartPos;
     do {
       int matchLength = getMatchLength(currentElementStartPosition);

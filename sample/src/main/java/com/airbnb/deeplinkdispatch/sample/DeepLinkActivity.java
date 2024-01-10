@@ -8,13 +8,15 @@ import com.airbnb.deeplinkdispatch.sample.benchmarkable.BenchmarkDeepLinkModule;
 import com.airbnb.deeplinkdispatch.sample.benchmarkable.BenchmarkDeepLinkModuleRegistry;
 import com.airbnb.deeplinkdispatch.sample.kaptlibrary.KaptLibraryDeepLinkModule;
 import com.airbnb.deeplinkdispatch.sample.kaptlibrary.KaptLibraryDeepLinkModuleRegistry;
+import com.airbnb.deeplinkdispatch.sample.ksplibrary.KspLibraryDeepLinkModule;
+import com.airbnb.deeplinkdispatch.sample.ksplibrary.KspLibraryDeepLinkModuleRegistry;
 import com.airbnb.deeplinkdispatch.sample.library.LibraryDeepLinkModule;
 import com.airbnb.deeplinkdispatch.sample.library.LibraryDeepLinkModuleRegistry;
 
 import java.util.HashMap;
 import java.util.Map;
 
-@DeepLinkHandler({SampleModule.class, LibraryDeepLinkModule.class, BenchmarkDeepLinkModule.class, KaptLibraryDeepLinkModule.class})
+@DeepLinkHandler({SampleModule.class, LibraryDeepLinkModule.class, BenchmarkDeepLinkModule.class, KaptLibraryDeepLinkModule.class, KspLibraryDeepLinkModule.class})
 public class DeepLinkActivity extends Activity {
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -27,7 +29,13 @@ public class DeepLinkActivity extends Activity {
     configurablePlaceholdersMap.put("configurable-path-segment-two", "");
     configurablePlaceholdersMap.put("configPathOne", "somePathOne");
     DeepLinkDelegate deepLinkDelegate = new DeepLinkDelegate(
-      new SampleModuleRegistry(), new LibraryDeepLinkModuleRegistry(), new BenchmarkDeepLinkModuleRegistry(), new KaptLibraryDeepLinkModuleRegistry(), configurablePlaceholdersMap);
+            new SampleModuleRegistry(),
+            new LibraryDeepLinkModuleRegistry(),
+            new BenchmarkDeepLinkModuleRegistry(),
+            new KaptLibraryDeepLinkModuleRegistry(),
+            new KspLibraryDeepLinkModuleRegistry(),
+            configurablePlaceholdersMap
+    );
     deepLinkDelegate.dispatchFrom(this);
     //    Debug.stopMethodTracing();
     finish();

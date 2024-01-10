@@ -10,6 +10,15 @@ apply plugin: 'org.jmailen.kotlinter'
 android {
     compileSdk androidConfig.compileSdkVersion
 
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
+    }
+
+    kotlinOptions {
+        jvmTarget = '11'
+    }
+
     defaultConfig {
         minSdk androidConfig.minSdkVersion
         targetSdk androidConfig.compileSdkVersion
@@ -22,10 +31,6 @@ android {
         ]
       }
     }
-  }
-
-  kotlinOptions {
-    jvmTarget = "11"
   }
 }
 

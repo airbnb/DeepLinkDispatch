@@ -22,20 +22,59 @@ import androidx.room.compiler.processing.XTypeElement
 import java.net.MalformedURLException
 
 sealed class DeepLinkAnnotatedElement @Throws(MalformedURLException::class) constructor(
-    val uri: String,
+    val uriTemplate: String,
+    val activityClassFqn: String?,
     val element: XElement,
-    val annotatedClass: XMemberContainer
+    val annotatedClass: XMemberContainer,
 ) {
-    class MethodAnnotatedElement(uri: String, element: XMethodElement) : DeepLinkAnnotatedElement(uri, element, element.enclosingElement) {
+
+    val deepLinkUri: DeepLinkUri by lazy {
+        DeepLinkUri.parseTemplate(uriTemplate)
+            ?: throw MalformedURLException("Malformed Uri Template: $uriTemplate")
+    }
+
+    val className: String by lazy { annotatedClass.className.reflectionName() ?: "" }
+
+    class MethodAnnotatedElement(
+        uri: String,
+        activityClassFqn: String?,
+        element: XMethodElement
+    ) :
+        DeepLinkAnnotatedElement(
+            uriTemplate = uri,
+            activityClassFqn = activityClassFqn,
+            element = element,
+            annotatedClass = element.enclosingElement
+        ) {
         val method = element.name
     }
 
-    class ActivityAnnotatedElement(uri: String, element: XTypeElement) : DeepLinkAnnotatedElement(uri, element, element)
+    class ActivityAnnotatedElement(
+        uri: String,
+        activityClassFqn: String?,
+        element: XTypeElement
+    ) :
+        DeepLinkAnnotatedElement(
+            uriTemplate = uri,
+            activityClassFqn = activityClassFqn,
+            element = element,
+            annotatedClass = element
+        )
 
-    class HandlerAnnotatedElement(uri: String, element: XTypeElement) : DeepLinkAnnotatedElement(uri, element, element)
+    class HandlerAnnotatedElement(
+        uri: String,
+        activityClassFqn: String?,
+        element: XTypeElement
+    ) :
+        DeepLinkAnnotatedElement(
+            uriTemplate = uri,
+            activityClassFqn = activityClassFqn,
+            element = element,
+            annotatedClass = element
+        )
 
     init {
-        DeepLinkUri.parseTemplate(uri)
-            ?: throw MalformedURLException("Malformed Uri Template: $uri")
+        DeepLinkUri.parseTemplate(uriTemplate)
+            ?: throw MalformedURLException("Malformed Uri Template: $uriTemplate")
     }
 }

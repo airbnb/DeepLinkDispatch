@@ -1,8 +1,12 @@
-package com.airbnb.deeplinkdispatch
+package com.airbnb.deeplinkdispatch.metadata
 
 import androidx.annotation.VisibleForTesting
 import androidx.room.compiler.processing.XMessager
 import androidx.room.compiler.processing.XProcessingEnv
+import com.airbnb.deeplinkdispatch.DeepLinkAnnotatedElement
+import com.airbnb.deeplinkdispatch.metadata.writers.GenericDocumentationWriter
+import com.airbnb.deeplinkdispatch.metadata.writers.MarkdownDocumentationWriter
+import com.airbnb.deeplinkdispatch.metadata.writers.Writer
 import java.io.File
 import java.io.FileWriter
 import java.io.IOException
@@ -50,14 +54,14 @@ internal class Documentor(private val processingEnv: XProcessingEnv) {
                 val extIndex = fileName.lastIndexOf(".")
 
                 // markdown writer if .md file extension is used
-                val docWriter: DocumetationWriter =
+                val docWriter: Writer =
                     if (extIndex >= 0 && extIndex < fileName.length &&
                         fileName.substring(extIndex + 1).equals("md", ignoreCase = true)
                     ) {
-                        MarkdownWriter()
+                        MarkdownDocumentationWriter()
                     } else {
                         // else default writer
-                        GenericWriter()
+                        GenericDocumentationWriter()
                     }
                 docWriter.write(processingEnv, writer, elements)
             }
@@ -97,44 +101,7 @@ internal class Documentor(private val processingEnv: XProcessingEnv) {
         return file
     }
 
-    /**
-     * Implement this interface if you want to provide own documentation writer.
-     */
-    interface DocumetationWriter {
-        /**
-         * Compose documentation with help of provided environment, writer and collection of
-         * found deeplink elements.
-         */
-        fun write(
-            env: XProcessingEnv,
-            writer: PrintWriter,
-            elements: List<DeepLinkAnnotatedElement>
-        )
-    }
-
     companion object {
-        internal const val PROPERTY_DELIMITER = "\\n|#|\\n"
-        internal const val ELEMENT_DELIMITER = "\\n|##|\\n"
-        internal const val CLASS_METHOD_NAME_DELIMITER = "#"
-        private const val PARAM = "@param"
-        private const val RETURN = "@return"
         const val DOC_OUTPUT_PROPERTY_NAME = "deepLinkDoc.output"
-
-        /* Strips off {@link #PARAM} and {@link #RETURN}. */
-        internal fun formatJavaDoc(str: String?): String? {
-            var result = str
-            if (result != null) {
-                val paramPos = result.indexOf(PARAM)
-                if (paramPos != -1) {
-                    result = result.substring(0, paramPos)
-                }
-                val returnPos = result.indexOf(RETURN)
-                if (returnPos != -1) {
-                    result = result.substring(0, returnPos)
-                }
-                result = result.trim { it <= ' ' }
-            }
-            return result
-        }
     }
 }

@@ -13,28 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.airbnb.deeplinkdispatch;
-
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+package com.airbnb.deeplinkdispatch
 
 /**
- * Register a class or method to handle a deep link.
- * <pre><code>
- * {@literal @}DeepLink(uri);
- * </code></pre>
+ * Declare a specification for a type of DeepLink. For example:
+ * <pre>`
+ * @DeepLinkSpec(
+ * prefix = { "http://example.com", "https://example.com" })
+ * public@interface WebDeepLink {
+ * String[] value();
+ * }
+`</pre> *
+ *
+ *
+ * `@WebDeepLink({ "/foo", "/bar" })` will match any of
+ *
+ *  * http://example.com/foo
+ *  * https://example.com/foo
+ *  * http://example.com/bar
+ *  * https://example.com/bar
+ *
  */
-@Target({ ElementType.TYPE, ElementType.METHOD })
-// When using tools like Dexguard we require these annotations to still be inside the .dex files
+@Target(AnnotationTarget.ANNOTATION_CLASS) // When using tools like Dexguard we require these annotations to still be inside the .dex files
 // produced by D8 but because of this bug https://issuetracker.google.com/issues/168524920 they
 // are not so we need to mark them as RetentionPolicy.RUNTIME.
-@Retention(RetentionPolicy.RUNTIME)
-public @interface DeepLink {
-  String IS_DEEP_LINK = "is_deep_link_flag";
-  String URI = "deep_link_uri";
-  String REFERRER_URI = "android.intent.extra.REFERRER";
-
-  String[] value();
-}
+@Retention(AnnotationRetention.RUNTIME)
+annotation class DeepLinkSpec(val prefix: Array<String>, val activityClasFqn: String = "")

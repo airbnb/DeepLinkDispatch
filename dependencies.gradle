@@ -14,7 +14,7 @@ def versions = [
 
 ext.versions = versions
 ext.androidConfig = [
-    agpVersion                          : '7.4.0',
+    agpVersion                          : '7.4.1',
     compileSdkVersion                   : 32,
     minSdkVersion                       : 16,
     targetSdkVersion                    : 30

@@ -12,7 +12,9 @@ import com.airbnb.deeplinkdispatch.sample.SampleModuleRegistry;
 import com.airbnb.deeplinkdispatch.sample.benchmarkable.BenchmarkDeepLinkModule;
 import com.airbnb.deeplinkdispatch.sample.benchmarkable.BenchmarkDeepLinkModuleRegistry;
 import com.airbnb.deeplinkdispatch.sample.kaptlibrary.KaptLibraryDeepLinkModule;
+import com.airbnb.deeplinkdispatch.sample.ksplibrary.KspLibraryDeepLinkModule;
 import com.airbnb.deeplinkdispatch.sample.kaptlibrary.KaptLibraryDeepLinkModuleRegistry;
+import com.airbnb.deeplinkdispatch.sample.ksplibrary.KspLibraryDeepLinkModuleRegistry;
 import com.airbnb.deeplinkdispatch.sample.library.LibraryDeepLinkModule;
 import com.airbnb.deeplinkdispatch.sample.library.LibraryDeepLinkModuleRegistry;
 
@@ -25,7 +27,7 @@ import java.util.Map;
 import kotlin.jvm.functions.Function0;
 import kotlin.jvm.functions.Function3;
 
-@DeepLinkHandler({SampleModule.class, LibraryDeepLinkModule.class, BenchmarkDeepLinkModule.class, KaptLibraryDeepLinkModule.class})
+@DeepLinkHandler({SampleModule.class, LibraryDeepLinkModule.class, BenchmarkDeepLinkModule.class, KaptLibraryDeepLinkModule.class, KspLibraryDeepLinkModule.class})
 public class TypeConversionErrorHandlerCustomTypeDeepLinkActivity extends Activity {
 
   private static final String TAG = "ErrorHandlerCustomType";
@@ -73,14 +75,15 @@ public class TypeConversionErrorHandlerCustomTypeDeepLinkActivity extends Activi
     configurablePlaceholdersMap.put("configurable-path-segment-two", "");
     configurablePlaceholdersMap.put("configPathOne", "somePathOne");
     DeepLinkDelegate deepLinkDelegate = new DeepLinkDelegate(
-      new SampleModuleRegistry(),
-      new LibraryDeepLinkModuleRegistry(),
-      new BenchmarkDeepLinkModuleRegistry(),
-      new KaptLibraryDeepLinkModuleRegistry(),
-      configurablePlaceholdersMap,
-      typeConvertersLambda,
-      typeConversionErrorNullable,
-      typeConversionErrorNonNullable);
+            new SampleModuleRegistry(),
+            new LibraryDeepLinkModuleRegistry(),
+            new BenchmarkDeepLinkModuleRegistry(),
+            new KaptLibraryDeepLinkModuleRegistry(),
+            new KspLibraryDeepLinkModuleRegistry(),
+            configurablePlaceholdersMap,
+            typeConvertersLambda,
+            typeConversionErrorNullable,
+            typeConversionErrorNonNullable);
     deepLinkDelegate.dispatchFrom(this);
     finish();
   }
