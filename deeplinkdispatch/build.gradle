@@ -37,4 +37,5 @@ android {
   testOptions {
     unitTests.returnDefaultValues = true
   }
+    namespace 'com.airbnb.android.deeplinkdispatch'
 }

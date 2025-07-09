@@ -16,6 +16,8 @@ android {
       }
     }
   }
+
+    namespace 'com.airbnb.deeplinkdispatch.sample.benchmarkable'
 }
 
 dependencies {

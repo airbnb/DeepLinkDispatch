@@ -27,6 +27,8 @@ android {
   kotlinOptions {
     jvmTarget = "11"
   }
+
+    namespace 'com.airbnb.deeplinkdispatch.sample.kaptlibrary'
 }
 
 dependencies {

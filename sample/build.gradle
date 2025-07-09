@@ -44,6 +44,7 @@ android {
     lint {
         disable 'InvalidPackage'
     }
+    namespace 'com.airbnb.deeplinkdispatch.sample'
 }
 
 dependencies {
