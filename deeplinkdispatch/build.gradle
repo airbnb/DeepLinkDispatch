@@ -1,7 +1,5 @@
 apply plugin: 'com.android.library'
 
-sourceCompatibility = 11
-
 apply plugin: 'checkstyle'
 
 apply plugin: 'kotlin-android'
