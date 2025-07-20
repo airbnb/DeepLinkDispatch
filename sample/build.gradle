@@ -38,9 +38,9 @@ android {
         }
     }
 
-    kotlinOptions {
-    jvmTarget = "11"
-  }
+    kotlin {
+        jvmToolchain(21)
+    }
     lint {
         disable 'InvalidPackage'
     }

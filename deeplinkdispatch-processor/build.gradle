@@ -31,8 +31,10 @@ checkstyle {
 }
 
 tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
+  kotlin {
+    jvmToolchain(21)
+  }
   kotlinOptions {
-    jvmTarget = "11"
     freeCompilerArgs += "-Xopt-in=kotlin.RequiresOptIn"
     freeCompilerArgs += "-Xopt-in=androidx.room.compiler.processing.ExperimentalProcessingApi"
   }
