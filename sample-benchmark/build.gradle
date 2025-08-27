@@ -23,7 +23,7 @@ android {
     }
 
     kotlin {
-        jvmToolchain(21)
+        jvmToolchain(17)
     }
 
     namespace 'com.airbnb.deeplinkdispatch.sample.benchmark'

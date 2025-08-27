@@ -18,6 +18,10 @@ android {
       }
     }
   }
+
+    kotlin {
+        jvmToolchain(17)
+    }
     namespace 'com.airbnb.deeplinkdispatch.sample.library'
 }
 
