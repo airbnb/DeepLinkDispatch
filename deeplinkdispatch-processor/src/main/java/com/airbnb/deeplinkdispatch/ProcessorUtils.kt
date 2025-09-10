@@ -55,19 +55,11 @@ fun XTypeElement.directlyImplementsInterfaces(fqnList: List<String>): Boolean {
 }
 
 inline fun <reified T> XAnnotation.getAsList(method: String): List<T> {
-    val originalList = get<List<T>>(method)
-    // In new XProcessing versions List values are wrapped in XAnnotationValue but in old versions
-    // they are the raw type.
-    return if (originalList.firstOrNull() is XAnnotationValue) {
-        // TODO: In the next full release of xprocessing we should be able to safely assume
-        // the list type is always XAnnotationValue and can remove this if/else.
-        (originalList as List<XAnnotationValue>).map { xAnnotationValue ->
-            check(xAnnotationValue.value is T) {
-                "Expected type ${T::class} but got ${xAnnotationValue.value?.javaClass}"
-            }
-            xAnnotationValue.value as T
-        }
+    val annotationValue = get(method)
+    return if (annotationValue != null) {
+        @Suppress("UNCHECKED_CAST")
+        (annotationValue.value as? List<T>) ?: emptyList()
     } else {
-        return originalList
+        emptyList()
     }
 }

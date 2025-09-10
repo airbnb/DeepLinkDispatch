@@ -1,11 +1,8 @@
 apply plugin: 'java'
 apply plugin: 'kotlin'
-apply plugin: 'org.jmailen.kotlinter'
-
-sourceCompatibility = 11
-
+// apply plugin: 'org.jmailen.kotlinter'
 apply plugin: 'checkstyle'
-apply from: '../publishing.gradle'
+// apply from: '../publishing.gradle'
 
 dependencies {
   implementation project(':deeplinkdispatch-base')
@@ -24,7 +21,7 @@ dependencies {
   testImplementation deps.compileTesting
   testImplementation deps.compileTestingKsp
   testImplementation deps.mockk
-  testImplementation deps.kotlinReflect
+  testImplementation deps.kotlin.reflect
 }
 
 checkstyle {
@@ -34,8 +31,10 @@ checkstyle {
 }
 
 tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
+  kotlin {
+    jvmToolchain(17)
+  }
   kotlinOptions {
-    jvmTarget = "11"
     freeCompilerArgs += "-Xopt-in=kotlin.RequiresOptIn"
     freeCompilerArgs += "-Xopt-in=androidx.room.compiler.processing.ExperimentalProcessingApi"
   }

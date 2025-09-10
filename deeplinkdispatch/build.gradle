@@ -1,19 +1,16 @@
 apply plugin: 'com.android.library'
 
-sourceCompatibility = 11
-
 apply plugin: 'checkstyle'
 
 apply plugin: 'kotlin-android'
-apply from: '../publishing.gradle'
-apply plugin: 'org.jmailen.kotlinter'
+// apply plugin: 'org.jmailen.kotlinter'
 
 dependencies {
   api project(':deeplinkdispatch-base')
   implementation deps.okio
   implementation deps.jsr305
-  implementation deps.localBroadcastManager
-  implementation deps.appCompat
+    implementation deps.androidx.localBroadcastManager
+  implementation deps.androidx.appCompat
   testImplementation deps.mockk
   testImplementation deps.junit
   testImplementation deps.assertJ
@@ -26,15 +23,23 @@ checkstyle {
 }
 
 android {
-    compileSdk androidConfig.compileSdkVersion
+    compileSdk 35
 
     defaultConfig {
-        minSdk androidConfig.minSdkVersion
-        targetSdk androidConfig.compileSdkVersion
+        minSdk 24
+        targetSdk 35
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     consumerProguardFiles 'proguard-rules.pro'
   }
   testOptions {
     unitTests.returnDefaultValues = true
   }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    kotlin {
+        jvmToolchain(17)
+    }
+    namespace 'com.airbnb.android.deeplinkdispatch'
 }

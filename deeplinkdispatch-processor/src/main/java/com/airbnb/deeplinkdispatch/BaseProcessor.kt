@@ -58,6 +58,6 @@ abstract class BaseProcessor(val symbolProcessorEnvironment: SymbolProcessorEnvi
     abstract fun process(
         annotations: Set<XTypeElement>?,
         environment: XProcessingEnv,
-        round: XRoundEnv
+        round: XRoundEnv,
     )
 }

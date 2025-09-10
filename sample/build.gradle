@@ -38,12 +38,13 @@ android {
         }
     }
 
-    kotlinOptions {
-    jvmTarget = "11"
-  }
+    kotlin {
+        jvmToolchain(17)
+    }
     lint {
         disable 'InvalidPackage'
     }
+    namespace 'com.airbnb.deeplinkdispatch.sample'
 }
 
 dependencies {

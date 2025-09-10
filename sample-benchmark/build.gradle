@@ -1,7 +1,7 @@
 apply plugin: 'com.android.library'
 apply plugin: 'androidx.benchmark'
 apply plugin: 'kotlin-android'
-apply plugin: 'org.jmailen.kotlinter'
+// apply plugin: 'org.jmailen.kotlinter'
 
 android {
     compileSdk androidConfig.compileSdkVersion
@@ -22,9 +22,11 @@ android {
         }
     }
 
-    kotlinOptions {
-        jvmTarget = "11"
+    kotlin {
+        jvmToolchain(17)
     }
+
+    namespace 'com.airbnb.deeplinkdispatch.sample.benchmark'
 }
 
 dependencies {

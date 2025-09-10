@@ -136,6 +136,7 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
             } else {
                 annotations?.filterAnnotatedAnnotations(DeepLinkSpec::class) ?: emptySet()
             }
+
             val allDeepLinkAnnotatedElements =
                 customAnnotations.flatMap { round.getElementsAnnotatedWith(it.qualifiedName) } +
                     round.getElementsAnnotatedWith(DEEP_LINK_CLASS)
@@ -178,14 +179,14 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
             if (e is DeepLinkProcessorException) {
                 logError(
                     element = e.element,
-                    message = e.errorMessage
+                    message = "DeepLinkProcessorException: ${e.errorMessage}"
                 )
             } else {
                 // if it is an unexpected crash then the cause can get lost by KAPT unless we manually
                 // catch and print the trace so that it is possible to debug.
                 logError(
                     element = null,
-                    message = "${e.javaClass.simpleName}: ${e.localizedMessage}\n${e.stackTraceToString()}"
+                    message = "Unexpected error: ${e.javaClass.simpleName}: ${e.localizedMessage}\n${e.stackTraceToString()}"
                 )
             }
         }
@@ -222,11 +223,13 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
                         uri = uri,
                         element = element
                     )
+
                     element is XTypeElement && element.isActivity() ->
                         DeepLinkAnnotatedElement.ActivityAnnotatedElement(
                             uri = uri,
                             element = element
                         )
+
                     element is XTypeElement && element.isHandler() -> {
                         verifyHandlerMatchArgs(element, uri)
                         DeepLinkAnnotatedElement.HandlerAnnotatedElement(
@@ -234,6 +237,7 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
                             element = element
                         )
                     }
+
                     else -> error(
                         "Internal error: Elements can only be 'MethodAnnotatedElement', " +
                             "'ActivityAnnotatedElement' or 'HandlerAnnotatedElement'"
@@ -252,10 +256,10 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
         element: XElement,
         prefixes: Map<XType, Array<String>>
     ): List<String> {
-        return getAllDeeplinkUrIsFromCustomDeepLinksOnElement(
-            element = element,
-            prefixesMap = prefixes
-        ) + (element.getAnnotation(DEEP_LINK_CLASS)?.value?.value?.toList() ?: emptyList())
+        val stringList = element.getAnnotation(DEEP_LINK_CLASS)?.getAsStringList("value")
+        val customUris = getAllDeeplinkUrIsFromCustomDeepLinksOnElement(element, prefixes)
+
+        return customUris + (stringList ?: emptyList())
     }
 
     private fun verifyCass(classElement: XTypeElement) {
@@ -324,13 +328,17 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
                 errorMessage = "Argument class must be public."
             )
         }
-        val argsConstructor = argsTypeElement.getConstructors().singleOrNull() ?: run {
+
+        val argsConstructors = argsTypeElement.getConstructors()
+
+        val argsConstructor = argsConstructors.singleOrNull() ?: run {
             throw DeepLinkProcessorException(
                 element = argsTypeElement,
                 errorMessage = "Argument class for deeplink handler can only have a single constructor"
             )
         }
         val allArgParameters = argsConstructor.parameters
+
         val allPathParameters = allArgParameters.filterAnnotationType(DeepLinkParamType.Path)
         val allQueryParameters = allArgParameters.filterAnnotationType(DeepLinkParamType.Query)
         if (allPathParameters.size + allQueryParameters.size != allArgParameters.size) {
@@ -344,7 +352,7 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
         val deepLinkUriTemplate = DeepLinkUri.parseTemplate(uriTemplate)
         val templateHostPathSchemePlaceholders = deepLinkUriTemplate.schemeHostPathPlaceholders
         val annotatedPathParameterNames = allPathParameters.mapNotNull {
-            it.getAnnotation(DeeplinkParam::class)?.value?.name
+            it.getAnnotation(DeeplinkParam::class)?.getAsString("name")
         }.toSet()
         val annotatedPathParametersThatAreNotInUrlTemplate =
             annotatedPathParameterNames.filter { !templateHostPathSchemePlaceholders.contains(it) }
@@ -360,14 +368,23 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
 
     private fun List<XExecutableParameterElement>.filterAnnotationType(
         deepLinkParamType: DeepLinkParamType
-    ) =
-        filter { argParameter ->
-            argParameter.getAllAnnotations().find { annotation ->
-                annotation.qualifiedName == DeeplinkParam::class.qualifiedName
-            }?.annotationValues?.any { annotationValue ->
-                annotationValue.value.toString() == deepLinkParamType.toString()
-            } ?: false
-        }
+    ) = filter { param ->
+        val deeplinkAnn = param.getAllAnnotations()
+            .firstOrNull { it.qualifiedName == DeeplinkParam::class.qualifiedName }
+            ?: return@filter false
+
+        val enumArgValue = deeplinkAnn.annotationValues
+            .firstOrNull { it.name == "type" }
+            ?.value
+            ?.let { v ->
+                when (v) {
+                    is Enum<*> -> v.name
+                    else -> v.toString().substringAfterLast('.')
+                }
+            }
+
+        enumArgValue == deepLinkParamType.name
+    }
 
     private fun verifyObjectElement(element: XTypeElement) {
         if (!element.isHandler()) {
@@ -377,10 +394,12 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
                     " with @${DEEP_LINK_CLASS.simpleName} or any custom deep link annotation"
             )
         }
-        if (element.getAllMethods()
+
+        val handlerMethods = element.getAllMethods()
             .filter { it.name == deepLinkHandlerHandleDeepLinkMethodName && it.parameters.size == 2 }
-            .count() != 1
-        ) {
+
+
+        if (handlerMethods.count() != 1) {
             throw DeepLinkProcessorException(
                 element = element,
                 errorMessage = "More than one method with two parameters and" +
@@ -390,7 +409,8 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
     }
 
     private fun customAnnotationPrefixes(customAnnotations: Set<XTypeElement>): Map<XType, Array<String>> {
-        return customAnnotations.map { customAnnotationTypeElement ->
+
+        return customAnnotations.associate { customAnnotationTypeElement ->
             if (!customAnnotationTypeElement.isAnnotationClass()) {
                 logError(
                     element = customAnnotationTypeElement,
@@ -399,7 +419,9 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
             }
             val prefix: Array<String> =
                 customAnnotationTypeElement.getAnnotation(DEEP_LINK_SPEC_CLASS)
-                    ?.let { it.value.prefix } ?: emptyArray()
+                    ?.let { it.getAsStringList("prefix").toTypedArray() } ?: emptyArray()
+
+
             if (prefix.hasEmptyOrNullString()) {
                 logError(
                     element = customAnnotationTypeElement,
@@ -411,7 +433,7 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
                 message = "Prefix property cannot be empty"
             )
             customAnnotationTypeElement.type to prefix
-        }.toMap()
+        }
     }
 
     private fun verifyAnnotatedType(
@@ -443,7 +465,7 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
                 logError(
                     element = it.value.first().enclosingTypeElement,
                     message = "Only one @DeepLinkHandler annotated element allowed per package!" +
-                        " ${it.key} has ${it.value.joinToString { it.qualifiedName }}.",
+                            " ${it.key} has ${it.value.joinToString { it.qualifiedName }}.",
                 )
             }
             return false
@@ -866,11 +888,11 @@ class DeepLinkProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironment? 
             prefixesMap: Map<XType, Array<String>>
         ): List<String> {
             return element.findAnnotatedAnnotation<DeepLinkSpec>().flatMap { customAnnotation ->
-                val suffixes = customAnnotation.getAsList<String>("value")
+                val suffixes = customAnnotation.getAsStringList("value")
                 val prefixes = prefixesMap[customAnnotation.type]
                     ?: throw DeepLinkProcessorException(
                         "Unable to find annotation '${customAnnotation.qualifiedName}' you must " +
-                            "update 'deepLink.customAnnotations' within the build.gradle"
+                                "update 'deepLink.customAnnotations' within the build.gradle"
                     )
                 prefixes.flatMap { prefix -> suffixes.map { suffix -> prefix + suffix } }
             }
