@@ -1,7 +1,7 @@
 apply plugin: 'com.android.library'
 apply plugin: 'androidx.benchmark'
 apply plugin: 'kotlin-android'
-apply plugin: 'org.jmailen.kotlinter'
+// apply plugin: 'org.jmailen.kotlinter'
 
 android {
     compileSdk androidConfig.compileSdkVersion
