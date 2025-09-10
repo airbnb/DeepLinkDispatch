@@ -51,7 +51,7 @@ abstract class BaseProcessor(val symbolProcessorEnvironment: SymbolProcessorEnvi
             symbolProcessorEnvironment,
             resolver,
         )
-        process(null, environment, XRoundEnv.create(environment), resolver)
+        process(null, environment, XRoundEnv.create(environment))
         return emptyList()
     }
 
@@ -59,6 +59,5 @@ abstract class BaseProcessor(val symbolProcessorEnvironment: SymbolProcessorEnvi
         annotations: Set<XTypeElement>?,
         environment: XProcessingEnv,
         round: XRoundEnv,
-        resolver: Resolver? = null,
     )
 }
