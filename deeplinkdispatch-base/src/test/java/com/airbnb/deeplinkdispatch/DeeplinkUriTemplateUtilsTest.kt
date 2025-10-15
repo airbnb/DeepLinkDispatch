@@ -16,7 +16,6 @@ class DeeplinkUriTemplateUtilsTest {
         assertEquals("{scheme(|s)}", placeholders[0])
         assertEquals("{host_prefix(|de.|ro.|www.)}", placeholders[1])
         assertEquals("{num_guests}", placeholders[2])
-
     }
 
     @Test
@@ -36,7 +35,7 @@ class DeeplinkUriTemplateUtilsTest {
     @Test
     fun `placeholderValues returns "something" when no allowed values are present`() {
         val input = "{placeholder_name}"
-        assertEquals(listOf("..*"), input.placeholderValues())
+        assertEquals(listOf(".*"), input.placeholderValues())
     }
 
     @Test
@@ -65,7 +64,6 @@ class DeeplinkUriTemplateUtilsTest {
         val expected = listOf("value")
         assertEquals(expected, input.placeholderValues())
     }
-
 
     @Test
     fun testAllPossibleValuesNoPlaceholder() {
@@ -114,14 +112,14 @@ class DeeplinkUriTemplateUtilsTest {
             "http{scheme(|s)}://{host_prefix(|de.|ro.|www.)}airbnb.com/guests/{number_of_guests}"
         assertEquals(
             listOf(
-                "http://airbnb.com/guests/..*",
-                "http://de.airbnb.com/guests/..*",
-                "http://ro.airbnb.com/guests/..*",
-                "http://www.airbnb.com/guests/..*",
-                "https://airbnb.com/guests/..*",
-                "https://de.airbnb.com/guests/..*",
-                "https://ro.airbnb.com/guests/..*",
-                "https://www.airbnb.com/guests/..*",
+                "http://airbnb.com/guests/.*",
+                "http://de.airbnb.com/guests/.*",
+                "http://ro.airbnb.com/guests/.*",
+                "http://www.airbnb.com/guests/.*",
+                "https://airbnb.com/guests/.*",
+                "https://de.airbnb.com/guests/.*",
+                "https://ro.airbnb.com/guests/.*",
+                "https://www.airbnb.com/guests/.*",
             ),
             input.allPossibleValues()
         )

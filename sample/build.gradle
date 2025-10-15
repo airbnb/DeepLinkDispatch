@@ -15,6 +15,18 @@ checkstyle {
     configProperties = ['checkstyle.cache.file': rootProject.file('build/checkstyle.cache')]
 }
 
+gradle.taskGraph.whenReady { taskGraph ->
+    taskGraph.allTasks.each { task ->
+        task.doLast {
+            if(new File(project.buildDir, "intermediates/packaged_manifests/debug/AndroidManifest.xml").exists()){
+                println "Manifest file exists: Task: ${task.name} ${if(new File(project.buildDir, "intermediates/packaged_manifests/debug/AndroidManifest.xml").exists()) new File(project.buildDir, "intermediates/packaged_manifests/debug/AndroidManifest.xml").length() else ""}"
+            } else {
+                println "Manifest file does not exist: Task: ${task.name}"
+            }
+        }
+    }
+}
+
 android {
     compileSdk androidConfig.compileSdkVersion
 

@@ -2,7 +2,6 @@ package com.airbnb.deeplinkdispatch.metadata.writers
 
 import androidx.room.compiler.processing.XProcessingEnv
 import com.airbnb.deeplinkdispatch.DeepLinkAnnotatedElement
-import com.airbnb.deeplinkdispatch.DeepLinkUri
 import com.airbnb.deeplinkdispatch.SIMPLE_GLOB_PATTERN
 import com.airbnb.deeplinkdispatch.allPossibleValues
 import java.io.PrintWriter
@@ -25,7 +24,7 @@ internal class ManifestWriter : Writer {
                     // Different paths might onbly be valid for different schemes and hosts, so we need to
                     // group by schemes and hosts as well.
                     println("        <activity")
-                    println("            android:name=\"$activityClassFqn\">")
+                    println("            android:name=\"$activityClassFqn\" android:exported=\"true\">")
                     elements.groupBy { it.deepLinkUri.let { Pair(it.scheme(), it.host()) } }.forEach { (schemeHostPair, elements) ->
                         println("            <intent-filter>")
                         println("                <action android:name=\"android.intent.action.VIEW\" />")
@@ -41,7 +40,8 @@ internal class ManifestWriter : Writer {
                                 scheme.allPossibleValues().toSet(),
                                 host.allPossibleValues().toSet(),
                                 path.allPossibleValues().toSet()
-                            )}.reduce { acc, urlValues ->
+                            )
+                        }.reduce { acc, urlValues ->
                             UrlValues(
                                 acc.schemeValues + urlValues.schemeValues,
                                 acc.hostValues + urlValues.hostValues,
@@ -59,11 +59,11 @@ internal class ManifestWriter : Writer {
                             // See: https://developer.android.com/guide/topics/manifest/data-element#path
                             println(
                                 "                <data android:${
-                                    if (pathValue.contains(SIMPLE_GLOB_PATTERN)) {
-                                        "pathPattern"
-                                    } else {
-                                        "path"
-                                    }
+                                if (pathValue.contains(SIMPLE_GLOB_PATTERN)) {
+                                    "pathPattern"
+                                } else {
+                                    "path"
+                                }
                                 }=\"$pathValue\" />"
                             )
                         }

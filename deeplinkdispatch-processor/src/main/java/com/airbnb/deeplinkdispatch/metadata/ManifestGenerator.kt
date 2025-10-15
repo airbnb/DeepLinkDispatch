@@ -10,11 +10,10 @@ import java.io.File
 import java.io.FileWriter
 import java.io.IOException
 import java.io.PrintWriter
-import javax.annotation.processing.ProcessingEnvironment
 import javax.tools.Diagnostic
 
 /**
- * This generates the inpput manifest for the mahifest merger in the Gradle plugin.
+ * This generates the input manifest for the manifest merger in the Gradle plugin.
  *
  * It creates a manifest file that contains all the intent filters from the annotated elements.
  *
@@ -28,15 +27,15 @@ internal class ManifestGenerator(private val processingEnv: XProcessingEnv) {
     fun write(elements: List<DeepLinkAnnotatedElement>) {
         val file = file ?: run {
             messager.printMessage(
-                Diagnostic.Kind.NOTE,
-                "Output file is null, Manifest generation metadata doc not generated."
+                Diagnostic.Kind.WARNING,
+                "Output file is null. Manifest generation: Manifest not generated."
             )
             return
         }
         if (elements.isNullOrEmpty()) {
             messager.printMessage(
-                Diagnostic.Kind.NOTE,
-                "No deep links, Manifest generation metadata doc not generated."
+                Diagnostic.Kind.WARNING,
+                "No deep links. Manifest generation: Manifest not generated."
             )
             file.delete()
             return
@@ -52,22 +51,22 @@ internal class ManifestGenerator(private val processingEnv: XProcessingEnv) {
                 " Manifest generation metadata doc not generated: " + e.message
             )
         }
-        messager.printMessage(Diagnostic.Kind.NOTE, " Manifest generation metadata docc generated at: " + file.path)
+        messager.printMessage(Diagnostic.Kind.WARNING, " Manifest generation: Generated at: " + file.path)
     }
 
     private fun initFile(): File? {
         val path = processingEnv.options[MANIFEST_GEN_METADATA_OUTPUT_FILE]
         if (path == null || path.trim { it <= ' ' }.isEmpty()) {
             messager.printMessage(
-                Diagnostic.Kind.NOTE,
-                "Output path not specified, manifest generation metadata not generated."
+                Diagnostic.Kind.WARNING,
+                "Output path not specified. Manifest generation: Manifest not generated."
             )
             return null
         }
         val file = File(path)
         if (file.isDirectory) {
             messager.printMessage(
-                Diagnostic.Kind.NOTE,
+                Diagnostic.Kind.WARNING,
                 "Specify a file path at $MANIFEST_GEN_METADATA_OUTPUT_FILE to generate manifest generation metadata."
             )
             return null
@@ -75,7 +74,7 @@ internal class ManifestGenerator(private val processingEnv: XProcessingEnv) {
         val parentDir = file.parentFile
         if (!parentDir.exists() && !parentDir.mkdirs()) {
             messager.printMessage(
-                Diagnostic.Kind.NOTE,
+                Diagnostic.Kind.WARNING,
                 "Cannot create file specified at ${file.canonicalPath}."
             )
         }

@@ -3,7 +3,7 @@ apply plugin: 'kotlin-android'
 apply plugin: 'org.jmailen.kotlinter'
 apply plugin: 'com.google.devtools.ksp'
 //apply plugin: 'com.airbnb.deeplinkdispatch.manifest-generation'
-apply plugin: 'com.airbnb.deeplinkdispatch.buildsrc.manifest-generation'
+//apply plugin: 'com.airbnb.deeplinkdispatch.buildsrc.manifest-generation'
 
 
 // This is just here to show an example how DLD works with either `annotationProcessor` (sample-library)
