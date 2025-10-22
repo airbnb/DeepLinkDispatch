@@ -19,7 +19,7 @@ import kotlin.math.min
 
 data class DeepLinkMatchResult(
     val deeplinkEntry: DeepLinkEntry,
-    val parameterMap: Map<DeepLinkUri, Map<String, String>>
+    val parameterMap: Map<DeepLinkUri, Map<String, String>>,
 ) : Comparable<DeepLinkMatchResult> {
     /**
      * Generates a map of parameters and the values from the given deep link.
@@ -27,16 +27,13 @@ data class DeepLinkMatchResult(
      * @param inputUri the intent Uri used to launch the Activity
      * @return the map of parameter values, where all values will be strings.
      */
-    fun getParameters(inputUri: DeepLinkUri): Map<String, String> {
-        return parameterMap[inputUri] ?: emptyMap()
-    }
+    fun getParameters(inputUri: DeepLinkUri): Map<String, String> = parameterMap[inputUri] ?: emptyMap()
 
-    override fun toString(): String {
-        return "uriTemplate: ${deeplinkEntry.uriTemplate} " +
+    override fun toString(): String =
+        "uriTemplate: ${deeplinkEntry.uriTemplate} " +
             "activity: ${deeplinkEntry.clazz.name} " +
             "${if (deeplinkEntry is DeepLinkEntry.MethodDeeplinkEntry) "method: ${deeplinkEntry.method} " else ""}" +
             "parameters: $parameterMap"
-    }
 
     /**
      * Whatever template has the first placeholder (and then configurable path segment) is the less
@@ -45,28 +42,27 @@ data class DeepLinkMatchResult(
      * same level and in the same "list" of elements we compare in order.
      * In this case the one with the more concete element would have won and the same is true here.
      */
-    override fun compareTo(other: DeepLinkMatchResult): Int {
-        return this.deeplinkEntry.compareTo(other.deeplinkEntry)
-    }
+    override fun compareTo(other: DeepLinkMatchResult): Int = this.deeplinkEntry.compareTo(other.deeplinkEntry)
 }
 
-sealed class DeepLinkEntry(open val uriTemplate: String, open val className: String) :
-    Comparable<DeepLinkEntry> {
-
+sealed class DeepLinkEntry(
+    open val uriTemplate: String,
+    open val className: String,
+) : Comparable<DeepLinkEntry> {
     data class ActivityDeeplinkEntry(
         override val uriTemplate: String,
-        override val className: String
+        override val className: String,
     ) : DeepLinkEntry(uriTemplate, className)
 
     data class MethodDeeplinkEntry(
         override val uriTemplate: String,
         override val className: String,
-        val method: String
+        val method: String,
     ) : DeepLinkEntry(uriTemplate, className)
 
     data class HandlerDeepLinkEntry(
         override val uriTemplate: String,
-        override val className: String
+        override val className: String,
     ) : DeepLinkEntry(uriTemplate, className)
 
     val clazz: Class<*> by lazy {
@@ -76,7 +72,7 @@ sealed class DeepLinkEntry(open val uriTemplate: String, open val className: Str
             throw IllegalStateException(
                 "Deeplink class $className not found. If you are using Proguard" +
                     "/R8/Dexguard please consult README.md for correct configuration.",
-                e
+                e,
             )
         }
     }
@@ -91,12 +87,12 @@ sealed class DeepLinkEntry(open val uriTemplate: String, open val className: Str
 
     private val firstConfigurablePathSegmentIndex: Int by lazy {
         uriTemplate.indexOf(
-            configurablePathSegmentPrefixChar
+            CONFIGURABLE_PATH_SEGMENT_PREFIX_CHAR,
         )
     }
     private val firstPlaceholderIndex: Int by lazy {
         uriTemplate.indexOf(
-            componentParamPrefixChar
+            COMPONENT_PARAM_PREFIX_CHAR,
         )
     }
     private val firstNonConcreteIndex: Int by lazy {
@@ -124,8 +120,8 @@ sealed class DeepLinkEntry(open val uriTemplate: String, open val className: Str
      * same level and in the same "list" of elements we compare in order.
      * In this case the one with the more concete element would have won and the same is true here.
      */
-    override fun compareTo(other: DeepLinkEntry): Int {
-        return when {
+    override fun compareTo(other: DeepLinkEntry): Int =
+        when {
             /**
              * Specific conditions added for fully concrete links.
              * Concrete link will always return -1 for firstNonConcreteIndex,
@@ -137,11 +133,12 @@ sealed class DeepLinkEntry(open val uriTemplate: String, open val className: Str
             this.firstNonConcreteIndex == other.firstNonConcreteIndex -> {
                 if (this.firstNonConcreteIndex == -1 || uriTemplate[firstNonConcreteIndex] == other.uriTemplate[firstNonConcreteIndex]) {
                     0
-                } else if (uriTemplate[firstNonConcreteIndex] == configurablePathSegmentPrefixChar) {
+                } else if (uriTemplate[firstNonConcreteIndex] == CONFIGURABLE_PATH_SEGMENT_PREFIX_CHAR) {
                     -1
-                } else 1
+                } else {
+                    1
+                }
             }
             else -> -1
         }
-    }
 }

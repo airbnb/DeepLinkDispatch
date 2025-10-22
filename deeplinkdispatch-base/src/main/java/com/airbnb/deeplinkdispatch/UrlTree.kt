@@ -23,39 +23,48 @@ data class UriMatch(
     val type: MatchType,
     val uriTemplate: String,
     val annotatedClassFullyQualifiedName: String,
-    val annotatedMethod: String?
+    val annotatedMethod: String?,
 )
 
-enum class MatchType(val flagValue: UByte) {
-    Activity(0u), Method(1u), Handler(2u);
+enum class MatchType(
+    val flagValue: UByte,
+) {
+    Activity(0u),
+    Method(1u),
+    Handler(2u),
+    ;
 
     companion object {
         @JvmStatic
-        fun fromInt(readOneByteAsInt: Int): MatchType {
-            return values().firstOrNull { it.flagValue.toInt() == readOneByteAsInt }
+        fun fromInt(readOneByteAsInt: Int): MatchType =
+            values().firstOrNull { it.flagValue.toInt() == readOneByteAsInt }
                 ?: error("Invalid flag value: $readOneByteAsInt")
-        }
     }
 }
 
 @kotlin.ExperimentalUnsignedTypes
-open class TreeNode(open val id: String, internal val metadata: NodeMetadata) {
-
+open class TreeNode(
+    open val id: String,
+    internal val metadata: NodeMetadata,
+) {
     val children = mutableSetOf<TreeNode>()
     var match: UriMatch? = null
         set(value) {
-            if (field != null) error("Ambiguous URI. Same match for two URIs ($field vs $value)") else field =
-                value
+            if (field != null) {
+                error("Ambiguous URI. Same match for two URIs ($field vs $value)")
+            } else {
+                field =
+                    value
+            }
         }
 
-    fun addNode(node: TreeNode): TreeNode {
-        return if (children.add(node)) node else children.first { it == node }
-    }
+    fun addNode(node: TreeNode): TreeNode = if (children.add(node)) node else children.first { it == node }
 
     fun serializedId(): String {
         if (metadata.isConfigurablePathSegment) {
-            return id.substringAfter(configurablePathSegmentPrefix)
-                .substringBefore(configurablePathSegmentSuffix)
+            return id
+                .substringAfter(CONFIGURABLE_PATH_SEGMENT_PREFIX)
+                .substringBefore(CONFIGURABLE_PATH_SEGMENT_SUFFIX)
         }
         return id
     }
@@ -77,14 +86,15 @@ open class TreeNode(open val id: String, internal val metadata: NodeMetadata) {
         val valueByteArray = serializedId().toByteArray(UTF_8).toUByteArray()
         val matchByteArray = matchByteArray(match)
         val header = generateHeader(metadata, valueByteArray, matchByteArray, childrenByteArrays)
-        val resultByteArray = UByteArray(
-            arrayLength(
-                childArrays = childrenByteArrays,
-                valueArray = valueByteArray,
-                matchArray = matchByteArray,
-                headerArray = header
+        val resultByteArray =
+            UByteArray(
+                arrayLength(
+                    childArrays = childrenByteArrays,
+                    valueArray = valueByteArray,
+                    matchArray = matchByteArray,
+                    headerArray = header,
+                ),
             )
-        )
         header.copyInto(resultByteArray)
         var position = header.size
         position = valueByteArray.copyIntoPosition(resultByteArray, position)
@@ -95,51 +105,53 @@ open class TreeNode(open val id: String, internal val metadata: NodeMetadata) {
         return resultByteArray
     }
 
-    private fun UByteArray.copyIntoPosition(targetByteArray: UByteArray, position: Int): Int {
-        return with(targetByteArray) {
+    private fun UByteArray.copyIntoPosition(
+        targetByteArray: UByteArray,
+        position: Int,
+    ): Int =
+        with(targetByteArray) {
             this@copyIntoPosition.copyInto(this, position)
             position + this@copyIntoPosition.size
         }
-    }
 
     private fun arrayLength(
         childArrays: List<UByteArray>,
         valueArray: UByteArray,
         matchArray: UByteArray,
-        headerArray: UByteArray
-    ): Int {
-        return headerArray.size + valueArray.size + matchArray.size + childArrays.sumOf { it.size }
-    }
+        headerArray: UByteArray,
+    ): Int = headerArray.size + valueArray.size + matchArray.size + childArrays.sumOf { it.size }
 
     // Make sure we match concrete matches before placeholders or configurable path segments
-    private fun generateChildrenByteArrays(): List<UByteArray> = children.sortedWith(
-        compareBy(
-            { it.metadata.isConfigurablePathSegment },
-            { it.metadata.isComponentParam },
-            { it.id }
-        )
-    ).map { it.toUByteArray() }
+    private fun generateChildrenByteArrays(): List<UByteArray> =
+        children
+            .sortedWith(
+                compareBy(
+                    { it.metadata.isConfigurablePathSegment },
+                    { it.metadata.isComponentParam },
+                    { it.id },
+                ),
+            ).map { it.toUByteArray() }
 
     private fun generateHeader(
         metadata: NodeMetadata,
         value: UByteArray,
         matchByteArray: UByteArray,
-        children: List<UByteArray>? = null
+        children: List<UByteArray>? = null,
     ): UByteArray {
         val childrenLength: Int = children?.sumOf { it.size } ?: 0
         return UByteArray(HEADER_LENGTH).apply {
             set(0, metadata.metadata.toUByte()) // flag
             writeUShortAt(
                 startIndex = HEADER_NODE_METADATA_LENGTH,
-                value = value.size.toUShort()
+                value = value.size.toUShort(),
             ) // value length
             writeUShortAt(
                 startIndex = HEADER_NODE_METADATA_LENGTH + HEADER_VALUE_LENGTH,
-                value = matchByteArray.size.toUShort()
+                value = matchByteArray.size.toUShort(),
             ) // match length
             writeUIntAt(
                 startIndex = HEADER_NODE_METADATA_LENGTH + HEADER_VALUE_LENGTH + HEADER_MATCH_LENGTH,
-                value = childrenLength.toUInt()
+                value = childrenLength.toUInt(),
             ) // children length
         }
     }
@@ -149,8 +161,9 @@ private const val MAX_CODE_STRING_BYTE_SIZE =
     65535 // (2^16)-1 as the chunk needs to be 16 bit addressable.
 
 @kotlin.ExperimentalUnsignedTypes
-data class Root(override val id: String = "r") :
-    TreeNode(ROOT_VALUE, NodeMetadata(MetadataMasks.ComponentTypeRootMask, id)) {
+data class Root(
+    override val id: String = "r",
+) : TreeNode(ROOT_VALUE, NodeMetadata(MetadataMasks.COMPONENT_TYPE_ROOT_MASK, id)) {
     fun writeToOutoutStream(openOutputStream: OutputStream) {
         openOutputStream.write(this.toUByteArray().toByteArray())
     }
@@ -161,49 +174,53 @@ data class Root(override val id: String = "r") :
      * The Java compiler saves the string constant as Modified UTF-8, with the binary representation
      * of this not allowed to be larger than 65535. So we chunk our string exactly to that size.
      */
-    fun getStrings(): List<CharSequence> {
-        return String(
+    fun getStrings(): List<CharSequence> =
+        String(
             bytes = this.toUByteArray().toByteArray(),
-            charset = Charset.forName(MATCH_INDEX_ENCODING)
+            charset = Charset.forName(MATCH_INDEX_ENCODING),
         ).chunkOnModifiedUtf8ByteSize(MAX_CODE_STRING_BYTE_SIZE)
-    }
 
     /**
      * Add the given DeepLinkUri to the the trie
      */
     fun addToTrie(deepLinkEntry: DeepLinkEntry) {
         val deepLinkUri = DeepLinkUri.parseTemplate(deepLinkEntry.uriTemplate)
-        var node = this.addNode(
-            Scheme(
-                deepLinkUri.scheme()
-                    .orderPlaceholderValues()
-                    .also { validateIfComponentParam(it) }
-            )
-        )
-        if (!deepLinkUri.host().isNullOrEmpty()) {
-            node = node.addNode(
-                Host(
-                    deepLinkUri.host()
+        var node =
+            this.addNode(
+                Scheme(
+                    deepLinkUri
+                        .scheme()
                         .orderPlaceholderValues()
-                        .also { validateIfComponentParam(it) }
-                )
+                        .also { validateIfComponentParam(it) },
+                ),
             )
+        if (!deepLinkUri.host().isNullOrEmpty()) {
+            node =
+                node.addNode(
+                    Host(
+                        deepLinkUri
+                            .host()
+                            .orderPlaceholderValues()
+                            .also { validateIfComponentParam(it) },
+                    ),
+                )
             if (deepLinkUri.pathSegments().isNullOrEmpty()) {
                 node.match = uriMatch(deepLinkEntry)
             }
         }
         if (!deepLinkUri.pathSegments().isNullOrEmpty()) {
             for (pathSegment in deepLinkUri.pathSegments()) {
-                node = node.addNode(
-                    PathSegment(
-                        pathSegment
-                            .orderPlaceholderValues()
-                            .also {
-                                validateIfComponentParam(it)
-                                validateIfConfigurablePathSegment(it)
-                            }
+                node =
+                    node.addNode(
+                        PathSegment(
+                            pathSegment
+                                .orderPlaceholderValues()
+                                .also {
+                                    validateIfComponentParam(it)
+                                    validateIfConfigurablePathSegment(it)
+                                },
+                        ),
                     )
-                )
             }
             node.match = uriMatch(deepLinkEntry)
         }
@@ -211,38 +228,44 @@ data class Root(override val id: String = "r") :
 
     private fun uriMatch(deepLinkEntry: DeepLinkEntry) =
         when (deepLinkEntry) {
-            is DeepLinkEntry.ActivityDeeplinkEntry -> UriMatch(
-                MatchType.Activity,
-                deepLinkEntry.uriTemplate,
-                deepLinkEntry.className,
-                null
-            )
-            is DeepLinkEntry.MethodDeeplinkEntry -> UriMatch(
-                MatchType.Method,
-                deepLinkEntry.uriTemplate,
-                deepLinkEntry.className,
-                deepLinkEntry.method
-            )
-            is DeepLinkEntry.HandlerDeepLinkEntry -> UriMatch(
-                MatchType.Handler,
-                deepLinkEntry.uriTemplate,
-                deepLinkEntry.className,
-                null
-            )
+            is DeepLinkEntry.ActivityDeeplinkEntry ->
+                UriMatch(
+                    MatchType.Activity,
+                    deepLinkEntry.uriTemplate,
+                    deepLinkEntry.className,
+                    null,
+                )
+            is DeepLinkEntry.MethodDeeplinkEntry ->
+                UriMatch(
+                    MatchType.Method,
+                    deepLinkEntry.uriTemplate,
+                    deepLinkEntry.className,
+                    deepLinkEntry.method,
+                )
+            is DeepLinkEntry.HandlerDeepLinkEntry ->
+                UriMatch(
+                    MatchType.Handler,
+                    deepLinkEntry.uriTemplate,
+                    deepLinkEntry.className,
+                    null,
+                )
         }
 }
 
 @kotlin.ExperimentalUnsignedTypes
-data class Scheme(override val id: String) :
-    TreeNode(id = id, metadata = NodeMetadata(MetadataMasks.ComponentTypeSchemeMask, id))
+data class Scheme(
+    override val id: String,
+) : TreeNode(id = id, metadata = NodeMetadata(MetadataMasks.COMPONENT_TYPE_SCHEME_MASK, id))
 
 @kotlin.ExperimentalUnsignedTypes
-data class Host(override val id: String) :
-    TreeNode(id = id, metadata = NodeMetadata(MetadataMasks.ComponentTypeHostMask, id))
+data class Host(
+    override val id: String,
+) : TreeNode(id = id, metadata = NodeMetadata(MetadataMasks.COMPONENT_TYPE_HOST_MASK, id))
 
 @kotlin.ExperimentalUnsignedTypes
-data class PathSegment(override val id: String) :
-    TreeNode(id = id, metadata = NodeMetadata(MetadataMasks.ComponentTypePathSegmentMask, id))
+data class PathSegment(
+    override val id: String,
+) : TreeNode(id = id, metadata = NodeMetadata(MetadataMasks.COMPONENT_TYPE_PATH_SEGMENT_MASK, id))
 
 /**
  * Match data byte array format is:
@@ -265,42 +288,47 @@ fun matchByteArray(match: UriMatch?): UByteArray {
     val uriTemplateByteArray = match.uriTemplate.toByteArray(UTF_8).toUByteArray()
     val classNameByteArray =
         match.annotatedClassFullyQualifiedName.toByteArray(UTF_8).toUByteArray()
-    val methodNameByteArray = match.annotatedMethod?.let { it.toByteArray(UTF_8).toUByteArray() }
-        ?: UByteArray(0)
+    val methodNameByteArray =
+        match.annotatedMethod?.let { it.toByteArray(UTF_8).toUByteArray() }
+            ?: UByteArray(0)
     return UByteArray(
         MATCH_DATA_TYPE_LENGTH + MATCH_DATA_URL_TEMPLATE_LENGTH + uriTemplateByteArray.size +
             MATCH_DATA_CLASS_LENGTH + classNameByteArray.size +
-            MATCH_DATA_METHOD_LENGTH + methodNameByteArray.size
-    )
-        .apply {
-            var position = 0
-            // Type
-            this[position] = match.type.flagValue
-            position += MATCH_DATA_TYPE_LENGTH
-            // Uri template
-            writeUShortAt(startIndex = position, value = uriTemplateByteArray.size.toUShort())
-            position += MATCH_DATA_URL_TEMPLATE_LENGTH
-            uriTemplateByteArray.copyInto(destination = this, destinationOffset = position)
-            position += uriTemplateByteArray.size
+            MATCH_DATA_METHOD_LENGTH + methodNameByteArray.size,
+    ).apply {
+        var position = 0
+        // Type
+        this[position] = match.type.flagValue
+        position += MATCH_DATA_TYPE_LENGTH
+        // Uri template
+        writeUShortAt(startIndex = position, value = uriTemplateByteArray.size.toUShort())
+        position += MATCH_DATA_URL_TEMPLATE_LENGTH
+        uriTemplateByteArray.copyInto(destination = this, destinationOffset = position)
+        position += uriTemplateByteArray.size
 
-            // Class name
-            writeUShortAt(startIndex = position, value = classNameByteArray.size.toUShort())
-            position += MATCH_DATA_CLASS_LENGTH
-            classNameByteArray.copyInto(destination = this, destinationOffset = position)
-            position += classNameByteArray.size
+        // Class name
+        writeUShortAt(startIndex = position, value = classNameByteArray.size.toUShort())
+        position += MATCH_DATA_CLASS_LENGTH
+        classNameByteArray.copyInto(destination = this, destinationOffset = position)
+        position += classNameByteArray.size
 
-            // method
-            this.set(position, methodNameByteArray.size.toUByte())
-            position += MATCH_DATA_METHOD_LENGTH
-            if (methodNameByteArray.isNotEmpty()) methodNameByteArray.copyInto(
+        // method
+        this.set(position, methodNameByteArray.size.toUByte())
+        position += MATCH_DATA_METHOD_LENGTH
+        if (methodNameByteArray.isNotEmpty()) {
+            methodNameByteArray.copyInto(
                 destination = this,
-                destinationOffset = position
+                destinationOffset = position,
             )
         }
+    }
 }
 
 @kotlin.ExperimentalUnsignedTypes
-fun UByteArray.writeUIntAt(startIndex: Int, value: UInt) {
+fun UByteArray.writeUIntAt(
+    startIndex: Int,
+    value: UInt,
+) {
     val ubyte3: UByte = value.and(0x000000FFu).toUByte()
     val ubyte2: UByte = value.shr(8).and(0x0000FFu).toUByte()
     val ubyte1: UByte = value.shr(16).and(0x00FFu).toUByte()
@@ -312,18 +340,26 @@ fun UByteArray.writeUIntAt(startIndex: Int, value: UInt) {
 }
 
 @kotlin.ExperimentalUnsignedTypes
-fun UByteArray.writeUShortAt(startIndex: Int, value: UShort) {
+fun UByteArray.writeUShortAt(
+    startIndex: Int,
+    value: UShort,
+) {
     val ubyte1: UByte = value.and(0x000000FFu).toUByte()
-    val ubyte0: UByte = value.toUInt().shr(8).and(0x0000FFu).toUByte()
+    val ubyte0: UByte =
+        value
+            .toUInt()
+            .shr(8)
+            .and(0x0000FFu)
+            .toUByte()
     set(startIndex, ubyte0)
     set(startIndex + 1, ubyte1)
 }
 
-const val configurablePathSegmentPrefix = "<"
-const val configurablePathSegmentPrefixChar = configurablePathSegmentPrefix.get(0)
-const val configurablePathSegmentSuffix = ">"
-const val configurablePathSegmentSuffixChar = configurablePathSegmentSuffix.get(0)
-const val componentParamPrefix = "{"
-const val componentParamPrefixChar = componentParamPrefix.get(0)
-const val componentParamSuffix = "}"
-const val componentParamSuffixChar = componentParamSuffix.get(0)
+const val CONFIGURABLE_PATH_SEGMENT_PREFIX = "<"
+const val CONFIGURABLE_PATH_SEGMENT_PREFIX_CHAR = CONFIGURABLE_PATH_SEGMENT_PREFIX.get(0)
+const val CONFIGURABLE_PATH_SEGMENT_SUFFIX = ">"
+const val CONFIGURABLE_PATH_SEGMENT_SUFFIX_CHAR = CONFIGURABLE_PATH_SEGMENT_SUFFIX.get(0)
+const val COMPONENT_PARAM_PREFIX = "{"
+const val COMPONENT_PARAM_PREFIX_CHAR = COMPONENT_PARAM_PREFIX.get(0)
+const val COMPONENT_PARAM_SUFFIX = "}"
+const val COMPONENT_PARAM_SUFFIX_CHAR = COMPONENT_PARAM_SUFFIX.get(0)

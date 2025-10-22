@@ -3,7 +3,8 @@ apply plugin: 'kotlin-android'
 apply plugin: 'org.jmailen.kotlinter'
 
 android {
-    compileSdk androidConfig.compileSdkVersion
+    namespace = "com.airbnb.deeplinkdispatch.samplelibrary"
+    compileSdk = androidConfig.compileSdkVersion
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_11
@@ -15,8 +16,8 @@ android {
     }
 
     defaultConfig {
-        minSdk androidConfig.minSdkVersion
-        targetSdk androidConfig.compileSdkVersion
+        minSdk = androidConfig.minSdkVersion
+        targetSdk = androidConfig.compileSdkVersion
 
         javaCompileOptions {
       annotationProcessorOptions {

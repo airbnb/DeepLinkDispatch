@@ -2,8 +2,7 @@ apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 apply plugin: 'org.jmailen.kotlinter'
 apply plugin: 'com.google.devtools.ksp'
-//apply plugin: 'com.airbnb.deeplinkdispatch.manifest-generation'
-//apply plugin: 'com.airbnb.deeplinkdispatch.buildsrc.manifest-generation'
+apply plugin: 'com.airbnb.deeplinkdispatch.manifest-generation'
 
 
 // This is just here to show an example how DLD works with either `annotationProcessor` (sample-library)
@@ -11,7 +10,8 @@ apply plugin: 'com.google.devtools.ksp'
 // modules.
 
 android {
-    compileSdk androidConfig.compileSdkVersion
+    namespace = "com.airbnb.deeplinkdispatch.sampleksplibrary"
+    compileSdk = androidConfig.compileSdkVersion
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_11
@@ -23,8 +23,8 @@ android {
     }
 
     defaultConfig {
-        minSdk androidConfig.minSdkVersion
-        targetSdk androidConfig.compileSdkVersion
+        minSdk = androidConfig.minSdkVersion
+        targetSdk = androidConfig.compileSdkVersion
 
         javaCompileOptions {
             annotationProcessorOptions {

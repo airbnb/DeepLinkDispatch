@@ -22,10 +22,6 @@
             android:label="@string/title_second"
             />
         <activity
-            android:name=".ThirdActivity"
-            android:label="@string/title_third"
-            />
-        <activity
             android:name="com.airbnb.deeplinkdispatch.sample.CustomPrefixesActivity"
             android:label="@string/title_custom_prefixes"
             />

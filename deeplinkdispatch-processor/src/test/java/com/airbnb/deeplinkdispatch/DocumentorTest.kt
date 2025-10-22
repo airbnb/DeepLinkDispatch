@@ -52,7 +52,7 @@ class DocumentorTest {
         val expected = (
             "airbnb://example.com/{foo}/bar\\n|#|\\nSample doc\\n|#|\\nDocClass\\" +
                 "n|##|\\nairbnb://example.com/{foo}/bar\\n|#|\\n\\n|#|\\nDocClass#DocMethod\\n|##|\\n"
-            )
+        )
         Assert.assertEquals(expected, actual)
     }
 
@@ -70,16 +70,18 @@ class DocumentorTest {
 
         every { methodElement.name } returns "DocMethod"
         every { methodElement.enclosingElement } returns element2Enclosed
-        val deepLinkElement1 = DeepLinkAnnotatedElement.ActivityAnnotatedElement(
-            uri = "airbnb://example.com/{foo}/bar",
-            activityClassFqn = null,
-            element = classElement
-        )
-        val deepLinkElement2 = DeepLinkAnnotatedElement.MethodAnnotatedElement(
-            uri = "airbnb://example.com/{foo}/bar",
-            activityClassFqn = null,
-            element = methodElement
-        )
+        val deepLinkElement1 =
+            DeepLinkAnnotatedElement.ActivityAnnotatedElement(
+                uri = "airbnb://example.com/{foo}/bar",
+                activityClassFqn = null,
+                element = classElement,
+            )
+        val deepLinkElement2 =
+            DeepLinkAnnotatedElement.MethodAnnotatedElement(
+                uri = "airbnb://example.com/{foo}/bar",
+                activityClassFqn = null,
+                element = methodElement,
+            )
         return listOf(deepLinkElement1, deepLinkElement2)
     }
 

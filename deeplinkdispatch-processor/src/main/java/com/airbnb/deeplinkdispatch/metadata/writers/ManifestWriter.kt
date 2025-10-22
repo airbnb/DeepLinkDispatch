@@ -13,13 +13,15 @@ internal class ManifestWriter : Writer {
     override fun write(
         env: XProcessingEnv,
         writer: PrintWriter,
-        elements: List<DeepLinkAnnotatedElement>
+        elements: List<DeepLinkAnnotatedElement>,
     ) {
         writer.apply {
             println("<?xml version=\"1.0\" encoding=\"utf-8\"?>")
             println("<manifest xmlns:android=\"http://schemas.android.com/apk/res/android\" >")
             println("    <application>")
-            elements.filter { it.activityClassFqn != null }.groupBy { it.activityClassFqn }
+            elements
+                .filter { it.activityClassFqn != null }
+                .groupBy { it.activityClassFqn }
                 .forEach { activityClassFqn, elements ->
                     // Different paths might onbly be valid for different schemes and hosts, so we need to
                     // group by schemes and hosts as well.
@@ -32,22 +34,24 @@ internal class ManifestWriter : Writer {
                         println("                <category android:name=\"android.intent.category.BROWSABLE\" />")
                         // There might be multiple URIs in a single intent filter, and we want to make sure there
                         // are no duplicates (e.g. http and https for host over and over again)
-                        val allPossibleUrlValues = elements.map { element ->
-                            val scheme = schemeHostPair.first
-                            val host = schemeHostPair.second
-                            val path = element.deepLinkUri.pathSegments().joinToString(prefix = "/", separator = "/")
-                            UrlValues(
-                                scheme.allPossibleValues().toSet(),
-                                host.allPossibleValues().toSet(),
-                                path.allPossibleValues().toSet()
-                            )
-                        }.reduce { acc, urlValues ->
-                            UrlValues(
-                                acc.schemeValues + urlValues.schemeValues,
-                                acc.hostValues + urlValues.hostValues,
-                                acc.pathValues + urlValues.pathValues
-                            )
-                        }
+                        val allPossibleUrlValues =
+                            elements
+                                .map { element ->
+                                    val scheme = schemeHostPair.first
+                                    val host = schemeHostPair.second
+                                    val path = element.deepLinkUri.pathSegments().joinToString(prefix = "/", separator = "/")
+                                    UrlValues(
+                                        scheme.allPossibleValues().toSet(),
+                                        host.allPossibleValues().toSet(),
+                                        path.allPossibleValues().toSet(),
+                                    )
+                                }.reduce { acc, urlValues ->
+                                    UrlValues(
+                                        acc.schemeValues + urlValues.schemeValues,
+                                        acc.hostValues + urlValues.hostValues,
+                                        acc.pathValues + urlValues.pathValues,
+                                    )
+                                }
                         allPossibleUrlValues.schemeValues.forEach { schemeValue ->
                             println("                <data android:scheme=\"$schemeValue\" />")
                         }
@@ -59,12 +63,12 @@ internal class ManifestWriter : Writer {
                             // See: https://developer.android.com/guide/topics/manifest/data-element#path
                             println(
                                 "                <data android:${
-                                if (pathValue.contains(SIMPLE_GLOB_PATTERN)) {
-                                    "pathPattern"
-                                } else {
-                                    "path"
-                                }
-                                }=\"$pathValue\" />"
+                                    if (pathValue.contains(SIMPLE_GLOB_PATTERN)) {
+                                        "pathPattern"
+                                    } else {
+                                        "path"
+                                    }
+                                }=\"$pathValue\" />",
                             )
                         }
                         println("            </intent-filter>")
@@ -78,4 +82,8 @@ internal class ManifestWriter : Writer {
     }
 }
 
-private data class UrlValues(val schemeValues: Set<String>, val hostValues: Set<String>, val pathValues: Set<String>)
+private data class UrlValues(
+    val schemeValues: Set<String>,
+    val hostValues: Set<String>,
+    val pathValues: Set<String>,
+)

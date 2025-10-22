@@ -22,7 +22,7 @@ internal class MarkdownDocumentationWriter : Writer {
     override fun write(
         env: XProcessingEnv,
         writer: PrintWriter,
-        elements: List<DeepLinkAnnotatedElement>
+        elements: List<DeepLinkAnnotatedElement>,
     ) {
         // header
         writer.println("| URI | JavaDoc | Simple Name | Method |")
@@ -32,16 +32,21 @@ internal class MarkdownDocumentationWriter : Writer {
         // publish lines
         for (element in elements) {
             val embeddedComments = formatJavaDoc(element.element.docComment) ?: ""
-            val methodName = when (element) {
-                is DeepLinkAnnotatedElement.MethodAnnotatedElement -> element.method
-                else -> ""
-            }
+            val methodName =
+                when (element) {
+                    is DeepLinkAnnotatedElement.MethodAnnotatedElement -> element.method
+                    else -> ""
+                }
             val simpleName = element.annotatedClass.className.reflectionName()
             writer.println(
                 String.format(
-                    Locale.US, format,
-                    element.uriTemplate, embeddedComments, simpleName, methodName
-                )
+                    Locale.US,
+                    format,
+                    element.uriTemplate,
+                    embeddedComments,
+                    simpleName,
+                    methodName,
+                ),
             )
         }
         writer.flush()

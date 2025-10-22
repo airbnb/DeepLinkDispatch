@@ -342,7 +342,7 @@ class DeepLinkEntryTest {
     private fun testParametrizedUrl(
         testRegistry: TestRegistry,
         urlString: String,
-        parameterMap: Map<String, String>
+        parameterMap: Map<String, String>,
     ) {
         val url = DeepLinkUri.parse(urlString)
         val matchEnHost = testRegistry.idxMatch(url)
@@ -352,8 +352,9 @@ class DeepLinkEntryTest {
     }
 
     companion object {
-        private fun activityDeepLinkEntry(uriTemplate: String, className: String = "java.lang.String"): DeepLinkEntry {
-            return DeepLinkEntry.ActivityDeeplinkEntry(uriTemplate, className)
-        }
+        private fun activityDeepLinkEntry(
+            uriTemplate: String,
+            className: String = "java.lang.String",
+        ): DeepLinkEntry = DeepLinkEntry.ActivityDeeplinkEntry(uriTemplate, className)
     }
 }

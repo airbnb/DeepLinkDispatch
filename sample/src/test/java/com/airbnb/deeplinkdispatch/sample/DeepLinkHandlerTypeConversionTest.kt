@@ -22,14 +22,14 @@ import java.lang.NumberFormatException
 @Config(sdk = [21], manifest = "../sample/src/main/AndroidManifest.xml")
 @RunWith(RobolectricTestRunner::class)
 class DeepLinkHandlerTypeConversionTest {
-
     @Test
     fun testCustomTypeConversion() {
         mockkObject(TypeConversionTestDeepLinkHandler)
-        val intent = Intent(
-            Intent.ACTION_VIEW,
-            Uri.parse("http://testing.com/typeConversion/5/red")
-        )
+        val intent =
+            Intent(
+                Intent.ACTION_VIEW,
+                Uri.parse("http://testing.com/typeConversion/5/red"),
+            )
         val context = Robolectric.buildActivity(TypeConversionErrorHandlerCustomTypeDeepLinkActivity::class.java, intent).create().get()
         shadowOf(getMainLooper()).idle()
         val expectedDeepLinkParams =
@@ -38,7 +38,7 @@ class DeepLinkHandlerTypeConversionTest {
         verify(exactly = 1) {
             TypeConversionTestDeepLinkHandler.handleDeepLink(
                 context,
-                expectedDeepLinkParams
+                expectedDeepLinkParams,
             )
         }
     }
@@ -46,10 +46,11 @@ class DeepLinkHandlerTypeConversionTest {
     @Test
     fun testCustomTypeConversionUnknownColor() {
         mockkObject(TypeConversionTestDeepLinkHandler)
-        val intent = Intent(
-            Intent.ACTION_VIEW,
-            Uri.parse("http://testing.com/typeConversion/5/pink")
-        )
+        val intent =
+            Intent(
+                Intent.ACTION_VIEW,
+                Uri.parse("http://testing.com/typeConversion/5/pink"),
+            )
         val context = Robolectric.buildActivity(TypeConversionErrorHandlerCustomTypeDeepLinkActivity::class.java, intent).create().get()
 
         val expectedDeepLinkParams =
@@ -57,7 +58,7 @@ class DeepLinkHandlerTypeConversionTest {
         verify(exactly = 1) {
             TypeConversionTestDeepLinkHandler.handleDeepLink(
                 context,
-                expectedDeepLinkParams
+                expectedDeepLinkParams,
             )
         }
     }
@@ -65,21 +66,25 @@ class DeepLinkHandlerTypeConversionTest {
     @Test
     fun testCustomTypeConversionParametrizedType() {
         mockkObject(TypeConversionTestWihtParametrizedTypeDeepLinkHandler)
-        val intent = Intent(
-            Intent.ACTION_VIEW,
-            Uri.parse("http://testing.com/typeConversionParameter/5/one,two,three")
-        )
-        val context = Robolectric.buildActivity(
-            TypeConversionErrorHandlerCustomTypeDeepLinkActivity::class.java,
-            intent
-        ).create().get()
+        val intent =
+            Intent(
+                Intent.ACTION_VIEW,
+                Uri.parse("http://testing.com/typeConversionParameter/5/one,two,three"),
+            )
+        val context =
+            Robolectric
+                .buildActivity(
+                    TypeConversionErrorHandlerCustomTypeDeepLinkActivity::class.java,
+                    intent,
+                ).create()
+                .get()
 
         val expectedDeepLinkParams =
             TypeConversionTestParametrizedArgs(5, listOf("one", "two", "three"))
         verify(exactly = 1) {
             TypeConversionTestWihtParametrizedTypeDeepLinkHandler.handleDeepLink(
                 context,
-                expectedDeepLinkParams
+                expectedDeepLinkParams,
             )
         }
     }
@@ -87,10 +92,11 @@ class DeepLinkHandlerTypeConversionTest {
     @Test(expected = NumberFormatException::class)
     fun testCustomThrowingTypeConversionErrorHandler() {
         mockkObject(TypeConversionTestDeepLinkHandler)
-        val intent = Intent(
-            Intent.ACTION_VIEW,
-            Uri.parse("http://testing.com/typeConversion/no_number/red")
-        )
+        val intent =
+            Intent(
+                Intent.ACTION_VIEW,
+                Uri.parse("http://testing.com/typeConversion/no_number/red"),
+            )
         Robolectric.buildActivity(TypeConversionErrorHandlerCustomTypeDeepLinkActivity::class.java, intent).create().get()
     }
 }

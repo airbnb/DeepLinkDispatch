@@ -12,7 +12,7 @@ internal class GenericDocumentationWriter : Writer {
     override fun write(
         env: XProcessingEnv,
         writer: PrintWriter,
-        elements: List<DeepLinkAnnotatedElement>
+        elements: List<DeepLinkAnnotatedElement>,
     ) {
         writer.apply {
             for (element in elements) {
@@ -26,7 +26,7 @@ internal class GenericDocumentationWriter : Writer {
                         print(CLASS_METHOD_NAME_DELIMITER)
                         print(element.method)
                     }
-                    else -> { /* Nothing */
+                    else -> { // Nothing
                     }
                 }
                 print(ELEMENT_DELIMITER)

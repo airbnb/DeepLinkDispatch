@@ -4,14 +4,11 @@ plugins {
     id("kotlin-android")
     id("com.google.devtools.ksp")
     id('org.jmailen.kotlinter')
-//    id('com.airbnb.deeplinkdispatch.manifest-generation')
-    id('com.airbnb.deeplinkdispatch.buildsrc.manifest-generation')
-
 }
 
 checkstyle {
-    configFile rootProject.file('checkstyle.xml')
-    showViolations true
+    configFile = rootProject.file('checkstyle.xml')
+    showViolations = true
     configProperties = ['checkstyle.cache.file': rootProject.file('build/checkstyle.cache')]
 }
 
@@ -28,12 +25,13 @@ gradle.taskGraph.whenReady { taskGraph ->
 }
 
 android {
-    compileSdk androidConfig.compileSdkVersion
+    namespace = "com.airbnb.deeplinkdispatch.sample"
+    compileSdk = androidConfig.compileSdkVersion
 
     defaultConfig {
         applicationId "com.airbnb.deeplinkdispatch.sample"
-        minSdk androidConfig.minSdkVersion
-        targetSdk androidConfig.compileSdkVersion
+        minSdk = androidConfig.minSdkVersion
+        targetSdk = androidConfig.compileSdkVersion
         versionCode 1
         versionName "1.0"
     }

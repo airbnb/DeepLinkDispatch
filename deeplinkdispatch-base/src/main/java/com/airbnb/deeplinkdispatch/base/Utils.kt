@@ -1,9 +1,9 @@
 package com.airbnb.deeplinkdispatch.base
 
-import com.airbnb.deeplinkdispatch.componentParamPrefix
-import com.airbnb.deeplinkdispatch.componentParamSuffix
-import com.airbnb.deeplinkdispatch.configurablePathSegmentPrefix
-import com.airbnb.deeplinkdispatch.configurablePathSegmentSuffix
+import com.airbnb.deeplinkdispatch.COMPONENT_PARAM_PREFIX
+import com.airbnb.deeplinkdispatch.COMPONENT_PARAM_SUFFIX
+import com.airbnb.deeplinkdispatch.CONFIGURABLE_PATH_SEGMENT_PREFIX
+import com.airbnb.deeplinkdispatch.CONFIGURABLE_PATH_SEGMENT_SUFFIX
 import java.io.InputStream
 
 /**
@@ -20,8 +20,10 @@ fun CharSequence.chunkOnModifiedUtf8ByteSize(chunkSize: Int): List<CharSequence>
         // Get the byte array for current chunk and check how many bytes this would take up.
         // U+0000 is encoded as two bytes C080 in modified UTF-8, which is used by Java to
         // store strings in the string table in class files.
-        val charModifiedUtf8ByteArraySize = this.substring(nextChunkStart, i + 1)
-            .let { chunk -> chunk.toByteArray().size + chunk.count { char -> char == '\u0000' } }
+        val charModifiedUtf8ByteArraySize =
+            this
+                .substring(nextChunkStart, i + 1)
+                .let { chunk -> chunk.toByteArray().size + chunk.count { char -> char == '\u0000' } }
 
         // See if this char would still fit into the chunk. If not, create chunk and start next one.
         if (charModifiedUtf8ByteArraySize > chunkSize) {
@@ -37,7 +39,6 @@ fun CharSequence.chunkOnModifiedUtf8ByteSize(chunkSize: Int): List<CharSequence>
 }
 
 object Utils {
-
     @JvmStatic
     fun readMatchIndexFromStrings(strings: Array<String>): ByteArray? {
         if (strings.isEmpty()) {
@@ -52,31 +53,29 @@ object Utils {
     }
 
     @JvmStatic
-    fun toByteArrayMap(input: Map<String, String>): Map<ByteArray, ByteArray> {
-        return input.entries.associate { it.key.toByteArray() to it.value.toByteArray() }
-    }
+    fun toByteArrayMap(input: Map<String, String>): Map<ByteArray, ByteArray> =
+        input.entries.associate { it.key.toByteArray() to it.value.toByteArray() }
 
     @JvmStatic
-    fun toByteArraysList(input: Array<String>): List<ByteArray> {
-        return input.map { it.toByteArray() }.toList()
-    }
+    fun toByteArraysList(input: Array<String>): List<ByteArray> = input.map { it.toByteArray() }.toList()
 
-    private fun getBytes(inputStream: InputStream): ByteArray {
-        return inputStream.readBytes()
-    }
+    private fun getBytes(inputStream: InputStream): ByteArray = inputStream.readBytes()
+
     /**
      * @return true if Component Param, false if not. Throws IllegalArgumentException if contains
-     * [componentParamSuffix] or [componentParamPrefix], but out of order.
+     * [COMPONENT_PARAM_SUFFIX] or [COMPONENT_PARAM_PREFIX], but out of order.
      */
     fun validateIfComponentParam(uriComponent: String): Boolean {
-        val start = uriComponent.indexOf(componentParamPrefix)
-        val end = uriComponent.indexOf(componentParamSuffix)
+        val start = uriComponent.indexOf(COMPONENT_PARAM_PREFIX)
+        val end = uriComponent.indexOf(COMPONENT_PARAM_SUFFIX)
         // -1 is the "not found" result for String#indexOf()
         if (start != -1 || end != -1) {
-            require(start < end) { "Invalid URI component: $uriComponent. $componentParamPrefix must come before $componentParamSuffix." }
+            require(start < end) {
+                "Invalid URI component: $uriComponent. $COMPONENT_PARAM_PREFIX must come before $COMPONENT_PARAM_SUFFIX."
+            }
             require(start != -1 && end != -1) {
                 "Invalid URI component: $uriComponent. If either" +
-                    "$componentParamPrefix or $componentParamSuffix is present, then they must both be present and $componentParamPrefix must occur before $componentParamSuffix."
+                    "$COMPONENT_PARAM_PREFIX or $COMPONENT_PARAM_SUFFIX is present, then they must both be present and $COMPONENT_PARAM_PREFIX must occur before $COMPONENT_PARAM_SUFFIX."
             }
             return true
         }
@@ -84,14 +83,16 @@ object Utils {
     }
 
     /**
-     * If a [pathSegment] contains either [configurablePathSegmentPrefix] or [configurablePathSegmentSuffix] then it must
+     * If a [pathSegment] contains either [CONFIGURABLE_PATH_SEGMENT_PREFIX] or [CONFIGURABLE_PATH_SEGMENT_SUFFIX] then it must
      * start and end with them, respectively.
      * @return true if [pathSegment] looks like a valid configurable path segment, false if it is not a configurable path segment.
      */
     fun validateIfConfigurablePathSegment(pathSegment: String): Boolean {
-        if (pathSegment.contains(Regex("$configurablePathSegmentPrefix|$configurablePathSegmentSuffix"))) {
+        if (pathSegment.contains(Regex("$CONFIGURABLE_PATH_SEGMENT_PREFIX|$CONFIGURABLE_PATH_SEGMENT_SUFFIX"))) {
             require(isConfigurablePathSegment(pathSegment)) {
-                ("Malformed path segment: $pathSegment! If it contains $configurablePathSegmentPrefix or $configurablePathSegmentSuffix, it must start with $configurablePathSegmentPrefix and end with $configurablePathSegmentSuffix.")
+                "Malformed path segment: $pathSegment! " +
+                    "If it contains $CONFIGURABLE_PATH_SEGMENT_PREFIX or $CONFIGURABLE_PATH_SEGMENT_SUFFIX, " +
+                    "it must start with $CONFIGURABLE_PATH_SEGMENT_PREFIX and end with $CONFIGURABLE_PATH_SEGMENT_SUFFIX."
             }
             return true
         }
@@ -100,6 +101,6 @@ object Utils {
 
     @JvmStatic
     fun isConfigurablePathSegment(pathSegment: String) =
-        pathSegment.startsWith(configurablePathSegmentPrefix) &&
-            pathSegment.endsWith(configurablePathSegmentSuffix)
+        pathSegment.startsWith(CONFIGURABLE_PATH_SEGMENT_PREFIX) &&
+            pathSegment.endsWith(CONFIGURABLE_PATH_SEGMENT_SUFFIX)
 }

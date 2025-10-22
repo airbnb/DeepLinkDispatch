@@ -6,7 +6,6 @@ import org.junit.Assert.assertNull
 import org.junit.Test
 
 class DeeplinkUriTemplateUtilsTest {
-
     @Test
     fun testGetPlaceholders() {
         val uriTemplate = "http{scheme(|s)}://{host_prefix(|de.|ro.|www.)}airbnb.com/guests/{num_guests}"
@@ -70,9 +69,9 @@ class DeeplinkUriTemplateUtilsTest {
         val input = "https"
         assertEquals(
             listOf(
-                "https"
+                "https",
             ),
-            input.allPossibleValues()
+            input.allPossibleValues(),
         )
     }
 
@@ -84,7 +83,7 @@ class DeeplinkUriTemplateUtilsTest {
                 "http",
                 "https",
             ),
-            input.allPossibleValues()
+            input.allPossibleValues(),
         )
     }
 
@@ -100,9 +99,9 @@ class DeeplinkUriTemplateUtilsTest {
                 "https://airbnb.com/guests",
                 "https://de.airbnb.com/guests",
                 "https://ro.airbnb.com/guests",
-                "https://www.airbnb.com/guests"
+                "https://www.airbnb.com/guests",
             ),
-            input.allPossibleValues()
+            input.allPossibleValues(),
         )
     }
 
@@ -121,7 +120,7 @@ class DeeplinkUriTemplateUtilsTest {
                 "https://ro.airbnb.com/guests/.*",
                 "https://www.airbnb.com/guests/.*",
             ),
-            input.allPossibleValues()
+            input.allPossibleValues(),
         )
     }
 }

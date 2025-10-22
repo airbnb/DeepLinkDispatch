@@ -26,6 +26,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
 import com.airbnb.deeplinkdispatch.DeepLink;
+import com.airbnb.deeplinkdispatch.samplebenchmarkablelibrary.R;
 
 /**
  * Activity with 2k deeplinks to test DLD performance at scale

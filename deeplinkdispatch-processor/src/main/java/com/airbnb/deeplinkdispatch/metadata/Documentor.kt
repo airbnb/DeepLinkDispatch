@@ -27,24 +27,27 @@ import javax.tools.Diagnostic
  * The output location is specified in the project's gradle file through
  * [ProcessingEnvironment]'s compiler argument options by deepLinkDoc.output.
  */
-internal class Documentor(private val processingEnv: XProcessingEnv) {
+internal class Documentor(
+    private val processingEnv: XProcessingEnv,
+) {
     private val messager: XMessager = processingEnv.messager
 
     @get:VisibleForTesting
     var file: File? = initFile()
 
     fun write(elements: List<DeepLinkAnnotatedElement>) {
-        val file = file ?: run {
-            messager.printMessage(
-                Diagnostic.Kind.NOTE,
-                "Output file is null, DeepLink doc not generated."
-            )
-            return
-        }
+        val file =
+            file ?: run {
+                messager.printMessage(
+                    Diagnostic.Kind.NOTE,
+                    "Output file is null, DeepLink doc not generated.",
+                )
+                return
+            }
         if (elements.isNullOrEmpty()) {
             messager.printMessage(
                 Diagnostic.Kind.NOTE,
-                "No deep link, DeepLink doc not generated."
+                "No deep link, DeepLink doc not generated.",
             )
             return
         }
@@ -55,7 +58,8 @@ internal class Documentor(private val processingEnv: XProcessingEnv) {
 
                 // markdown writer if .md file extension is used
                 val docWriter: Writer =
-                    if (extIndex >= 0 && extIndex < fileName.length &&
+                    if (extIndex >= 0 &&
+                        extIndex < fileName.length &&
                         fileName.substring(extIndex + 1).equals("md", ignoreCase = true)
                     ) {
                         MarkdownDocumentationWriter()
@@ -68,7 +72,7 @@ internal class Documentor(private val processingEnv: XProcessingEnv) {
         } catch (e: IOException) {
             messager.printMessage(
                 Diagnostic.Kind.ERROR,
-                "DeepLink doc not generated: " + e.message
+                "DeepLink doc not generated: " + e.message,
             )
         }
         messager.printMessage(Diagnostic.Kind.NOTE, "DeepLink doc generated at: " + file.path)
@@ -79,7 +83,7 @@ internal class Documentor(private val processingEnv: XProcessingEnv) {
         if (path == null || path.trim { it <= ' ' }.isEmpty()) {
             messager.printMessage(
                 Diagnostic.Kind.NOTE,
-                "Output path not specified, DeepLink doc is not going to be generated."
+                "Output path not specified, DeepLink doc is not going to be generated.",
             )
             return null
         }
@@ -95,7 +99,7 @@ internal class Documentor(private val processingEnv: XProcessingEnv) {
         if (!parentDir.exists() && !parentDir.mkdirs()) {
             messager.printMessage(
                 Diagnostic.Kind.NOTE,
-                "Cannot create file specified at ${file.canonicalPath}."
+                "Cannot create file specified at ${file.canonicalPath}.",
             )
         }
         return file

@@ -1,6 +1,8 @@
+@file:Suppress("ktlint:standard:import-ordering")
+
 package com.airbnb.deeplinkdispatch
 
-import com.airbnb.deeplinkdispatch.handler.TypeConverter // ktlint-disable import-ordering
+import com.airbnb.deeplinkdispatch.handler.TypeConverter
 import com.airbnb.deeplinkdispatch.handler.TypeConverters
 
 import org.assertj.core.api.Assertions.assertThat
@@ -8,18 +10,15 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 
 class TypeConverterTests {
-
-    private val stringTypeConverter = object : TypeConverter<String> {
-        override fun convert(value: String): String {
-            return value
+    private val stringTypeConverter =
+        object : TypeConverter<String> {
+            override fun convert(value: String): String = value
         }
-    }
 
-    private val longTypeConverter = object : TypeConverter<Long> {
-        override fun convert(value: String): Long {
-            return value.toLong()
+    private val longTypeConverter =
+        object : TypeConverter<Long> {
+            override fun convert(value: String): Long = value.toLong()
         }
-    }
 
     @Test
     fun testAddingSameTypeTwice() {

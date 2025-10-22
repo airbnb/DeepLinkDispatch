@@ -15,14 +15,14 @@ interface Writer {
     fun write(
         env: XProcessingEnv,
         writer: PrintWriter,
-        elements: List<DeepLinkAnnotatedElement>
+        elements: List<DeepLinkAnnotatedElement>,
     )
 
     companion object {
         private const val PARAM = "@param"
         private const val RETURN = "@return"
 
-        /* Strips off {@link #PARAM} and {@link #RETURN}. */
+        // Strips off {@link #PARAM} and {@link #RETURN}.
         internal fun formatJavaDoc(str: String?): String? {
             var result = str
             if (result != null) {

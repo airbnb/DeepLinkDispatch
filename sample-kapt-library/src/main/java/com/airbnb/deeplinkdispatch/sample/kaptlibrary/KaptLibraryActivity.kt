@@ -13,10 +13,12 @@ class KaptLibraryActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         val intent = intent
         if (intent.getBooleanExtra(DeepLink.IS_DEEP_LINK, false)) {
-            Toast.makeText(
-                this, "Got deep link " + intent.getStringExtra(DeepLink.URI),
-                Toast.LENGTH_SHORT
-            ).show()
+            Toast
+                .makeText(
+                    this,
+                    "Got deep link " + intent.getStringExtra(DeepLink.URI),
+                    Toast.LENGTH_SHORT,
+                ).show()
         }
     }
 

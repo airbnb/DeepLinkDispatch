@@ -25,12 +25,15 @@ package com.airbnb.deeplinkdispatch
     AnnotationTarget.CLASS,
     AnnotationTarget.FUNCTION,
     AnnotationTarget.PROPERTY_GETTER,
-    AnnotationTarget.PROPERTY_SETTER
+    AnnotationTarget.PROPERTY_SETTER,
 ) // When using tools like Dexguard we require these annotations to still be inside the .dex files
 // produced by D8 but because of this bug https://issuetracker.google.com/issues/168524920 they
 // are not so we need to mark them as RetentionPolicy.RUNTIME.
 @Retention(AnnotationRetention.RUNTIME)
-annotation class DeepLink(vararg val value: String, val activityClasFqn: String = "") {
+annotation class DeepLink(
+    vararg val value: String,
+    val activityClasFqn: String = "",
+) {
     companion object {
         const val IS_DEEP_LINK = "is_deep_link_flag"
         const val URI = "deep_link_uri"

@@ -38,4 +38,7 @@ package com.airbnb.deeplinkdispatch
 // produced by D8 but because of this bug https://issuetracker.google.com/issues/168524920 they
 // are not so we need to mark them as RetentionPolicy.RUNTIME.
 @Retention(AnnotationRetention.RUNTIME)
-annotation class DeepLinkSpec(val prefix: Array<String>, val activityClasFqn: String = "")
+annotation class DeepLinkSpec(
+    val prefix: Array<String>,
+    val activityClasFqn: String = "",
+)
