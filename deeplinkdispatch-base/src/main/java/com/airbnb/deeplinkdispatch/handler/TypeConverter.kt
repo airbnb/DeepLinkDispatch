@@ -9,11 +9,15 @@ interface TypeConverter<T> {
 class TypeConverters {
     private val backedMap = mutableMapOf<Type, TypeConverter<*>>()
 
-    fun <T> put(type: Class<T>, typeConverter: TypeConverter<T>) =
-        backedMap.put(type, typeConverter)
+    fun <T> put(
+        type: Class<T>,
+        typeConverter: TypeConverter<T>,
+    ) = backedMap.put(type, typeConverter)
 
-    fun <T> put(type: Type, typeConverter: TypeConverter<T>) =
-        backedMap.put(type, typeConverter)
+    fun <T> put(
+        type: Type,
+        typeConverter: TypeConverter<T>,
+    ) = backedMap.put(type, typeConverter)
 
     /**
      * Add all TypeConverters from the argument.

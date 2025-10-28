@@ -24,14 +24,14 @@ import org.robolectric.annotation.Config
 @Config(sdk = [21], manifest = "../sample/src/main/AndroidManifest.xml")
 @RunWith(RobolectricTestRunner::class)
 class DeepLinkHandlerTest {
-
     @Test
     fun testKotlinCorrectHandlerCall() {
         mockkObject(SampleKotlinDeepLinkHandler)
-        val intent = Intent(
-            Intent.ACTION_VIEW,
-            Uri.parse("https://airbnb.com/kotlin/1/pathData2/5.1/true?queryParam=17")
-        )
+        val intent =
+            Intent(
+                Intent.ACTION_VIEW,
+                Uri.parse("https://airbnb.com/kotlin/1/pathData2/5.1/true?queryParam=17"),
+            )
         val context = Robolectric.buildActivity(DeepLinkActivity::class.java, intent).create().get()
 
         val expectedDeepLinkParams =
@@ -39,7 +39,7 @@ class DeepLinkHandlerTest {
         verify(exactly = 1) {
             SampleKotlinDeepLinkHandler.handleDeepLink(
                 context,
-                expectedDeepLinkParams
+                expectedDeepLinkParams,
             )
         }
     }
@@ -47,10 +47,11 @@ class DeepLinkHandlerTest {
     @Test
     fun testKotlinHandlerCallWrongTypePath() {
         mockkObject(SampleKotlinDeepLinkHandler)
-        val intent = Intent(
-            Intent.ACTION_VIEW,
-            Uri.parse("https://airbnb.com/kotlin/notAnInt/pathData2/5.1/true?queryParam=17")
-        )
+        val intent =
+            Intent(
+                Intent.ACTION_VIEW,
+                Uri.parse("https://airbnb.com/kotlin/notAnInt/pathData2/5.1/true?queryParam=17"),
+            )
         val context = Robolectric.buildActivity(DeepLinkActivity::class.java, intent).create().get()
 
         val expectedDeepLinkParams =
@@ -58,7 +59,7 @@ class DeepLinkHandlerTest {
         verify(exactly = 1) {
             SampleKotlinDeepLinkHandler.handleDeepLink(
                 context,
-                expectedDeepLinkParams
+                expectedDeepLinkParams,
             )
         }
     }
@@ -66,10 +67,11 @@ class DeepLinkHandlerTest {
     @Test
     fun testKotlinHandlerCallWrongTypeQuery() {
         mockkObject(SampleKotlinDeepLinkHandler)
-        val intent = Intent(
-            Intent.ACTION_VIEW,
-            Uri.parse("https://airbnb.com/kotlin/1/pathData2/5.1/true?queryParam=notAnInt")
-        )
+        val intent =
+            Intent(
+                Intent.ACTION_VIEW,
+                Uri.parse("https://airbnb.com/kotlin/1/pathData2/5.1/true?queryParam=notAnInt"),
+            )
         val context = Robolectric.buildActivity(DeepLinkActivity::class.java, intent).create().get()
 
         val expectedDeepLinkParams =
@@ -77,7 +79,7 @@ class DeepLinkHandlerTest {
         verify(exactly = 1) {
             SampleKotlinDeepLinkHandler.handleDeepLink(
                 context,
-                expectedDeepLinkParams
+                expectedDeepLinkParams,
             )
         }
     }
@@ -85,10 +87,11 @@ class DeepLinkHandlerTest {
     @Test
     fun testKotlinHandlerCallFloatArgumentIntegerValueInUrl() {
         mockkObject(SampleKotlinDeepLinkHandler)
-        val intent = Intent(
-            Intent.ACTION_VIEW,
-            Uri.parse("https://airbnb.com/kotlin/1/pathData2/5/true?queryParam=17")
-        )
+        val intent =
+            Intent(
+                Intent.ACTION_VIEW,
+                Uri.parse("https://airbnb.com/kotlin/1/pathData2/5/true?queryParam=17"),
+            )
         val context = Robolectric.buildActivity(DeepLinkActivity::class.java, intent).create().get()
 
         val expectedDeepLinkParams =
@@ -96,7 +99,7 @@ class DeepLinkHandlerTest {
         verify(exactly = 1) {
             SampleKotlinDeepLinkHandler.handleDeepLink(
                 context,
-                expectedDeepLinkParams
+                expectedDeepLinkParams,
             )
         }
     }
@@ -104,10 +107,11 @@ class DeepLinkHandlerTest {
     @Test
     fun testKotlinHandlerPartialArgumentClass() {
         mockkObject(SamplePartialParamKotlinDeepLinkHandler)
-        val intent = Intent(
-            Intent.ACTION_VIEW,
-            Uri.parse("https://airbnb.com/partial/1/pathData2/5/true?queryParam=17")
-        )
+        val intent =
+            Intent(
+                Intent.ACTION_VIEW,
+                Uri.parse("https://airbnb.com/partial/1/pathData2/5/true?queryParam=17"),
+            )
         val context = Robolectric.buildActivity(DeepLinkActivity::class.java, intent).create().get()
 
         val expectedDeepLinkParams =
@@ -115,7 +119,7 @@ class DeepLinkHandlerTest {
         verify(exactly = 1) {
             SamplePartialParamKotlinDeepLinkHandler.handleDeepLink(
                 context,
-                expectedDeepLinkParams
+                expectedDeepLinkParams,
             )
         }
     }
@@ -123,16 +127,17 @@ class DeepLinkHandlerTest {
     @Test
     fun testKotlinHandlerNoArgumentClass() {
         mockkObject(SampleNoParamsKotlinDeepLinkHandler)
-        val intent = Intent(
-            Intent.ACTION_VIEW,
-            Uri.parse("https://airbnb.com/noparams/1/pathData2/5/true?queryParam=17")
-        )
+        val intent =
+            Intent(
+                Intent.ACTION_VIEW,
+                Uri.parse("https://airbnb.com/noparams/1/pathData2/5/true?queryParam=17"),
+            )
         val context = Robolectric.buildActivity(DeepLinkActivity::class.java, intent).create().get()
         Shadows.shadowOf(Looper.getMainLooper()).idle()
         verify(exactly = 1) {
             SampleNoParamsKotlinDeepLinkHandler.handleDeepLink(
                 context,
-                any()
+                any(),
             )
         }
     }
@@ -140,16 +145,17 @@ class DeepLinkHandlerTest {
     @Test
     fun testKotlinHandlerNoArgumentClassWhenExtendingActualHandler() {
         mockkObject(SomeObjectThatExtendsAClassThatImplementsTheDeepLinkHandler)
-        val intent = Intent(
-            Intent.ACTION_VIEW,
-            Uri.parse("https://airbnb.com/noparamsExtension/1/pathData2/5/true?queryParam=17")
-        )
+        val intent =
+            Intent(
+                Intent.ACTION_VIEW,
+                Uri.parse("https://airbnb.com/noparamsExtension/1/pathData2/5/true?queryParam=17"),
+            )
         val context = Robolectric.buildActivity(DeepLinkActivity::class.java, intent).create().get()
         Shadows.shadowOf(Looper.getMainLooper()).idle()
         verify(exactly = 1) {
             SomeObjectThatExtendsAClassThatImplementsTheDeepLinkHandler.handleDeepLink(
                 context,
-                any()
+                any(),
             )
         }
     }
@@ -157,10 +163,11 @@ class DeepLinkHandlerTest {
     @Test
     fun testJavaHandlerCallFloatArgumentIntegerValueInUrl() {
         mockkStatic(SampleJavaStaticTestHelper::class)
-        val intent = Intent(
-            Intent.ACTION_VIEW,
-            Uri.parse("https://airbnb.com/java/1/pathData2/5/true?queryParam=17")
-        )
+        val intent =
+            Intent(
+                Intent.ACTION_VIEW,
+                Uri.parse("https://airbnb.com/java/1/pathData2/5/true?queryParam=17"),
+            )
         val context = Robolectric.buildActivity(DeepLinkActivity::class.java, intent).create().get()
 
         val expectedDeepLinkParams =
@@ -168,7 +175,7 @@ class DeepLinkHandlerTest {
         verify(exactly = 1) {
             SampleJavaStaticTestHelper.invokedHandler(
                 context,
-                expectedDeepLinkParams
+                expectedDeepLinkParams,
             )
         }
     }

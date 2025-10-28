@@ -23,15 +23,14 @@ data class DeepLinkResult(
      */
     fun error(): String? = error
 
-    override fun toString(): String {
-        return (
+    override fun toString(): String =
+        (
             "DeepLinkResult{" +
                 "successful=" + isSuccessful +
                 ", uriString=" + uriString +
                 ", error='" + error + '\''.toString() +
                 '}'.toString()
-            )
-    }
+        )
 }
 
 /**
@@ -40,10 +39,10 @@ data class DeepLinkResult(
  */
 data class DeepLinkMethodResult(
     val intent: Intent? = null,
-    val taskStackBuilder: TaskStackBuilder? = null
+    val taskStackBuilder: TaskStackBuilder? = null,
 )
 
 data class DeepLinkHandlerResult<T>(
     val deepLinkHandler: DeepLinkHandler<T>,
-    val deepLinkHandlerArgs: T
+    val deepLinkHandlerArgs: T,
 )

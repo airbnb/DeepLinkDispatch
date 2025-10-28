@@ -17,10 +17,10 @@ import javax.lang.model.element.TypeElement
 /**
  * Creates a unified abstraction for processors of both KSP and java annotation processing.
  */
-abstract class BaseProcessor(val symbolProcessorEnvironment: SymbolProcessorEnvironment?) :
-    AbstractProcessor(),
+abstract class BaseProcessor(
+    val symbolProcessorEnvironment: SymbolProcessorEnvironment?,
+) : AbstractProcessor(),
     SymbolProcessor {
-
     lateinit var environment: XProcessingEnv
         private set
 
@@ -31,7 +31,10 @@ abstract class BaseProcessor(val symbolProcessorEnvironment: SymbolProcessorEnvi
         environment = XProcessingEnv.create(processingEnv)
     }
 
-    final override fun process(annotations: Set<TypeElement>, roundEnv: RoundEnvironment): Boolean {
+    final override fun process(
+        annotations: Set<TypeElement>,
+        roundEnv: RoundEnvironment,
+    ): Boolean {
         if (roundEnv.errorRaised()) {
             onError()
         }
@@ -47,10 +50,11 @@ abstract class BaseProcessor(val symbolProcessorEnvironment: SymbolProcessorEnvi
 
     final override fun process(resolver: Resolver): List<KSAnnotated> {
         val symbolProcessorEnvironment = requireNotNull(symbolProcessorEnvironment)
-        environment = XProcessingEnv.create(
-            symbolProcessorEnvironment,
-            resolver,
-        )
+        environment =
+            XProcessingEnv.create(
+                symbolProcessorEnvironment,
+                resolver,
+            )
         process(null, environment, XRoundEnv.create(environment))
         return emptyList()
     }
@@ -58,6 +62,6 @@ abstract class BaseProcessor(val symbolProcessorEnvironment: SymbolProcessorEnvi
     abstract fun process(
         annotations: Set<XTypeElement>?,
         environment: XProcessingEnv,
-        round: XRoundEnv
+        round: XRoundEnv,
     )
 }

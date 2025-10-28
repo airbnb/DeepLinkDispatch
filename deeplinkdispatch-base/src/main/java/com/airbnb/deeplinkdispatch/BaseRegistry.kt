@@ -19,7 +19,7 @@ import com.airbnb.deeplinkdispatch.base.Utils
  */
 abstract class BaseRegistry(
     matchIndexArray: ByteArray,
-    pathSegmentReplacementKeys: Array<String>
+    pathSegmentReplacementKeys: Array<String>,
 ) {
     val pathSegmentReplacementKeysInRegistry = Utils.toByteArraysList(pathSegmentReplacementKeys)
     private val matchIndex: MatchIndex = MatchIndex(matchIndexArray)
@@ -37,7 +37,10 @@ abstract class BaseRegistry(
      * @return A [DeepLinkEntry] if a match was found or null if not.
      */
     @JvmOverloads
-    fun idxMatch(deepLinkUri: DeepLinkUri?, pathSegmentReplacements: Map<ByteArray, ByteArray> = mapOf()): DeepLinkMatchResult? {
+    fun idxMatch(
+        deepLinkUri: DeepLinkUri?,
+        pathSegmentReplacements: Map<ByteArray, ByteArray> = mapOf(),
+    ): DeepLinkMatchResult? {
         if (deepLinkUri == null) {
             return null
         }
@@ -57,13 +60,11 @@ abstract class BaseRegistry(
     /**
      * Get all DeepLinkEntries that can be matched by this registry
      */
-    fun getAllEntries(): List<DeepLinkEntry> {
-        return matchIndex.getAllEntries(0, matchIndex.length())
-    }
+    fun getAllEntries(): List<DeepLinkEntry> = matchIndex.getAllEntries(0, matchIndex.length())
 
     fun supports(
         deepLinkUri: DeepLinkUri?,
-        pathSegmentReplacements: Map<ByteArray, ByteArray> = mapOf()
+        pathSegmentReplacements: Map<ByteArray, ByteArray> = mapOf(),
     ) = idxMatch(deepLinkUri, pathSegmentReplacements) != null
 
     /**

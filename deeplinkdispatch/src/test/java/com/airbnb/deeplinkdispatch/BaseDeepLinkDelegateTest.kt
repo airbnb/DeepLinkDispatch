@@ -11,18 +11,18 @@ import org.junit.Test
 
 @kotlin.ExperimentalUnsignedTypes
 class BaseDeepLinkDelegateTest {
-
     @Test
     fun testFindMethodDeepLinkWrongMethod() {
         val uriTemplate = "airbnb://foo/{bar}"
         val uriString = "airbnb://foo/1"
         val uri = mockk<Uri>()
         every { uri.toString() } returns uriString
-        val entry = methodDeepLinkEntry(
-            uriTemplate,
-            TestDeepLinkClassStatic::class.java.name,
-            "wrongMethod"
-        )
+        val entry =
+            methodDeepLinkEntry(
+                uriTemplate,
+                TestDeepLinkClassStatic::class.java.name,
+                "wrongMethod",
+            )
         val activityMock = mockk<Activity>()
         val testDelegate = getOneRegistryTestDelegate(listOf(entry), null)
         val intent = mockk<Intent>(relaxed = true)
@@ -68,8 +68,8 @@ class BaseDeepLinkDelegateTest {
         assertThat(foundEntry?.parameterMap).isEqualTo(
             parameterMap(
                 "airbnb://foo/1",
-                mapOf("bar" to "1")
-            )
+                mapOf("bar" to "1"),
+            ),
         )
         assertThat(testDelegate.findEntry("airbnb://bar/1")).isNull()
     }
@@ -78,7 +78,12 @@ class BaseDeepLinkDelegateTest {
     fun testAllowedPlaceholderValueOrdering() {
         val entry = activityDeepLinkEntry("airbn{scheme(c|b|a)}://foo{host(1|3|2)}/{bar(someValue|someOtherValue)}")
         val testDelegate = getOneRegistryTestDelegate(listOf(entry), null)
-        val matchArrayDump = testDelegate.registries.singleOrNull()?.matchIndex()?.byteArray?.let { String(it) } ?: ""
+        val matchArrayDump =
+            testDelegate.registries
+                .singleOrNull()
+                ?.matchIndex()
+                ?.byteArray
+                ?.let { String(it) } ?: ""
         assertThat(matchArrayDump).contains("(a|b|c)")
         assertThat(matchArrayDump).contains("(1|2|3)")
         assertThat(matchArrayDump).contains("(someOtherValue|someValue)")
@@ -150,8 +155,8 @@ class BaseDeepLinkDelegateTest {
             DeepLinkResult(
                 isSuccessful = false,
                 error = "No Uri in given activity's intent.",
-                deepLinkHandlerResult = null
-            )
+                deepLinkHandlerResult = null,
+            ),
         )
     }
 
@@ -220,7 +225,7 @@ class BaseDeepLinkDelegateTest {
 
     private fun parameterMap(
         url: String,
-        parameterMap: Map<String, String>
+        parameterMap: Map<String, String>,
     ) = mapOf(DeepLinkUri.parse(url) to parameterMap)
 
     private class DuplicatedMatchTestErrorHandler : ErrorHandler() {
@@ -229,49 +234,55 @@ class BaseDeepLinkDelegateTest {
         var duplicateMatchCalled: Boolean = false
         var uriString: String? = null
 
-        override fun duplicateMatch(uriString: String, duplicatedMatches: List<DeepLinkMatchResult>) {
+        override fun duplicateMatch(
+            uriString: String,
+            duplicatedMatches: List<DeepLinkMatchResult>,
+        ) {
             this.uriString = uriString
             this.duplicatedMatches = duplicatedMatches
             duplicateMatchCalled = true
         }
     }
 
-    private class TestDeepLinkDelegate(registries: List<BaseRegistry>, errorHandler: ErrorHandler?) : BaseDeepLinkDelegate(registries = registries, errorHandler = errorHandler)
+    private class TestDeepLinkDelegate(
+        registries: List<BaseRegistry>,
+        errorHandler: ErrorHandler?,
+    ) : BaseDeepLinkDelegate(registries = registries, errorHandler = errorHandler)
+
     companion object {
-        private fun activityDeepLinkEntry(uri: String, className: String = Any::class.java.name): DeepLinkEntry {
-            return DeepLinkEntry.ActivityDeeplinkEntry(uri, className)
-        }
+        private fun activityDeepLinkEntry(
+            uri: String,
+            className: String = Any::class.java.name,
+        ): DeepLinkEntry = DeepLinkEntry.ActivityDeeplinkEntry(uri, className)
 
         private fun methodDeepLinkEntry(
             uri: String,
             className: String,
-            methodName: String
-        ): DeepLinkEntry.MethodDeeplinkEntry {
-            return DeepLinkEntry.MethodDeeplinkEntry(uri, className, methodName)
-        }
+            methodName: String,
+        ): DeepLinkEntry.MethodDeeplinkEntry = DeepLinkEntry.MethodDeeplinkEntry(uri, className, methodName)
 
         private fun handlerDeepLinkEntry(
             uri: String,
             className: String,
-            methodName: String
-        ): DeepLinkEntry.MethodDeeplinkEntry {
-            return DeepLinkEntry.MethodDeeplinkEntry(uri, className, methodName)
-        }
+            methodName: String,
+        ): DeepLinkEntry.MethodDeeplinkEntry = DeepLinkEntry.MethodDeeplinkEntry(uri, className, methodName)
 
-        private fun getTwoRegistriesTestDelegate(entriesFirstRegistry: List<DeepLinkEntry>, entriesSecondRegistry: List<DeepLinkEntry>, errorHandler: ErrorHandler): TestDeepLinkDelegate {
-            return TestDeepLinkDelegate(listOf(testRegistry(entriesFirstRegistry), testRegistry(entriesSecondRegistry)), errorHandler)
-        }
+        private fun getTwoRegistriesTestDelegate(
+            entriesFirstRegistry: List<DeepLinkEntry>,
+            entriesSecondRegistry: List<DeepLinkEntry>,
+            errorHandler: ErrorHandler,
+        ): TestDeepLinkDelegate =
+            TestDeepLinkDelegate(listOf(testRegistry(entriesFirstRegistry), testRegistry(entriesSecondRegistry)), errorHandler)
 
-        private fun getOneRegistryTestDelegate(entries: List<DeepLinkEntry>, errorHandler: ErrorHandler?): TestDeepLinkDelegate {
-            return TestDeepLinkDelegate(listOf(testRegistry(entries)), errorHandler)
-        }
+        private fun getOneRegistryTestDelegate(
+            entries: List<DeepLinkEntry>,
+            errorHandler: ErrorHandler?,
+        ): TestDeepLinkDelegate = TestDeepLinkDelegate(listOf(testRegistry(entries)), errorHandler)
     }
 }
 
 object TestDeepLinkClassStatic {
     @DeepLink("airbnb://foo/{bar}")
     @JvmStatic
-    fun testMethod(context: Context): Intent {
-        return Intent()
-    }
+    fun testMethod(context: Context): Intent = Intent()
 }

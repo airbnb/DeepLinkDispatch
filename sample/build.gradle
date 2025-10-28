@@ -14,6 +14,7 @@ checkstyle {
 }
 
 android {
+    namespace 'com.airbnb.deeplinkdispatch.sample'
     compileSdk androidConfig.compileSdkVersion
 
     defaultConfig {
@@ -22,6 +23,10 @@ android {
         targetSdk androidConfig.compileSdkVersion
         versionCode 1
     versionName "1.0"
+  }
+  compileOptions {
+    sourceCompatibility JavaVersion.VERSION_11
+    targetCompatibility JavaVersion.VERSION_11
   }
   buildTypes {
     release {

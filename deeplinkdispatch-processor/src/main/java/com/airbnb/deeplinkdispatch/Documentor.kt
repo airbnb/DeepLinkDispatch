@@ -3,6 +3,7 @@ package com.airbnb.deeplinkdispatch
 import androidx.annotation.VisibleForTesting
 import androidx.room.compiler.processing.XMessager
 import androidx.room.compiler.processing.XProcessingEnv
+import com.squareup.kotlinpoet.javapoet.KotlinPoetJavaPoetPreview
 import java.io.File
 import java.io.FileWriter
 import java.io.IOException
@@ -23,24 +24,28 @@ import javax.tools.Diagnostic
  * The output location is specified in the project's gradle file through
  * [ProcessingEnvironment]'s compiler argument options by deepLinkDoc.output.
  */
-internal class Documentor(private val processingEnv: XProcessingEnv) {
+internal class Documentor(
+    private val processingEnv: XProcessingEnv,
+) {
     private val messager: XMessager = processingEnv.messager
 
     @get:VisibleForTesting
     var file: File? = initFile()
 
+    @KotlinPoetJavaPoetPreview
     fun write(elements: List<DeepLinkAnnotatedElement>) {
-        val file = file ?: run {
-            messager.printMessage(
-                Diagnostic.Kind.NOTE,
-                "Output file is null, DeepLink doc not generated."
-            )
-            return
-        }
+        val file =
+            file ?: run {
+                messager.printMessage(
+                    Diagnostic.Kind.NOTE,
+                    "Output file is null, DeepLink doc not generated.",
+                )
+                return
+            }
         if (elements.isNullOrEmpty()) {
             messager.printMessage(
                 Diagnostic.Kind.NOTE,
-                "No deep link, DeepLink doc not generated."
+                "No deep link, DeepLink doc not generated.",
             )
             return
         }
@@ -51,7 +56,8 @@ internal class Documentor(private val processingEnv: XProcessingEnv) {
 
                 // markdown writer if .md file extension is used
                 val docWriter: DocumetationWriter =
-                    if (extIndex >= 0 && extIndex < fileName.length &&
+                    if (extIndex >= 0 &&
+                        extIndex < fileName.length &&
                         fileName.substring(extIndex + 1).equals("md", ignoreCase = true)
                     ) {
                         MarkdownWriter()
@@ -64,7 +70,7 @@ internal class Documentor(private val processingEnv: XProcessingEnv) {
         } catch (e: IOException) {
             messager.printMessage(
                 Diagnostic.Kind.ERROR,
-                "DeepLink doc not generated: " + e.message
+                "DeepLink doc not generated: " + e.message,
             )
         }
         messager.printMessage(Diagnostic.Kind.NOTE, "DeepLink doc generated at: " + file.path)
@@ -75,7 +81,7 @@ internal class Documentor(private val processingEnv: XProcessingEnv) {
         if (path == null || path.trim { it <= ' ' }.isEmpty()) {
             messager.printMessage(
                 Diagnostic.Kind.NOTE,
-                "Output path not specified, DeepLink doc is not going to be generated."
+                "Output path not specified, DeepLink doc is not going to be generated.",
             )
             return null
         }
@@ -91,7 +97,7 @@ internal class Documentor(private val processingEnv: XProcessingEnv) {
         if (!parentDir.exists() && !parentDir.mkdirs()) {
             messager.printMessage(
                 Diagnostic.Kind.NOTE,
-                "Cannot create file specified at ${file.canonicalPath}."
+                "Cannot create file specified at ${file.canonicalPath}.",
             )
         }
         return file
@@ -108,7 +114,7 @@ internal class Documentor(private val processingEnv: XProcessingEnv) {
         fun write(
             env: XProcessingEnv,
             writer: PrintWriter,
-            elements: List<DeepLinkAnnotatedElement>
+            elements: List<DeepLinkAnnotatedElement>,
         )
     }
 
@@ -120,7 +126,7 @@ internal class Documentor(private val processingEnv: XProcessingEnv) {
         private const val RETURN = "@return"
         const val DOC_OUTPUT_PROPERTY_NAME = "deepLinkDoc.output"
 
-        /* Strips off {@link #PARAM} and {@link #RETURN}. */
+        // Strips off {@link #PARAM} and {@link #RETURN}.
         internal fun formatJavaDoc(str: String?): String? {
             var result = str
             if (result != null) {

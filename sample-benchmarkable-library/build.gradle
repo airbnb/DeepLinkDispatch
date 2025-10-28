@@ -1,6 +1,7 @@
 apply plugin: 'com.android.library'
 
 android {
+    namespace 'com.airbnb.deeplinkdispatch.sample.benchmarkable'
     compileSdk androidConfig.compileSdkVersion
 
     defaultConfig {
@@ -15,6 +16,10 @@ android {
         ]
       }
     }
+  }
+  compileOptions {
+    sourceCompatibility JavaVersion.VERSION_11
+    targetCompatibility JavaVersion.VERSION_11
   }
 }
 

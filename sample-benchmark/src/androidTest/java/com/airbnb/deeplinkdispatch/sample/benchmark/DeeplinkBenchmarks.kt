@@ -34,7 +34,6 @@ private const val DEEPLINK_2000 = "dld://methodDeepLink2000/test1234"
  */
 @RunWith(AndroidJUnit4::class)
 class DeeplinkBenchmarks {
-
     @get:Rule
     val benchmarkRule = BenchmarkRule()
 
@@ -104,9 +103,7 @@ class DeeplinkBenchmarks {
         return intent
     }
 
-    fun entry(uri: String): DeepLinkMatchResult? {
-        return registry().idxMatch(DeepLinkUri.parse(uri))
-    }
+    fun entry(uri: String): DeepLinkMatchResult? = registry().idxMatch(DeepLinkUri.parse(uri))
 
     fun testMatch(uri: DeepLinkUri): DeepLinkMatchResult? {
         var result: DeepLinkMatchResult? = null
@@ -118,4 +115,4 @@ class DeeplinkBenchmarks {
     }
 }
 
-class DeepLinkDelegate() : BaseDeepLinkDelegate(listOf<BaseRegistry>(BenchmarkDeepLinkModuleRegistry()))
+class DeepLinkDelegate : BaseDeepLinkDelegate(listOf<BaseRegistry>(BenchmarkDeepLinkModuleRegistry()))

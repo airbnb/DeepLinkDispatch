@@ -5,7 +5,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 
 class ProcessorUtilsTest {
-
     @Test
     fun testDecapitalize() {
         assertThat("test".decapitalizeIfNotTwoFirstCharsUpperCase()).isEqualTo("test")

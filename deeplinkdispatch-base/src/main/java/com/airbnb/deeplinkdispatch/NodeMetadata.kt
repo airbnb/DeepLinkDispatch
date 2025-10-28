@@ -12,16 +12,20 @@ import kotlin.experimental.or
  * combinations/permutations of flags with bitmasks. Each [TreeNode] has a NodeMetadata instance
  * as the first byte of its header.
  */
-class NodeMetadata(var metadata: Byte) {
+class NodeMetadata(
+    var metadata: Byte,
+) {
     constructor(uriComponentType: Byte, uriComponentValue: String) :
         this(metadata = uriComponentType or uriComponentValue.transformationType())
 
-    fun isComponentTypeMismatch(comparisonType: Byte): Boolean = metadata and comparisonType == zero
+    fun isComponentTypeMismatch(comparisonType: Byte): Boolean = metadata and comparisonType == ZERO
 
     @JvmField
-    val isComponentParam = metadata and MetadataMasks.ComponentParamMask != zero
+    val isComponentParam = metadata and MetadataMasks.COMPONENT_PARAM_MASK != ZERO
+
     @JvmField
-    val isConfigurablePathSegment = metadata and MetadataMasks.ConfigurablePathSegmentMask != zero
+    val isConfigurablePathSegment = metadata and MetadataMasks.CONFIGURABLE_PATH_SEGMENT_MASK != ZERO
+
     @JvmField
     val isValueLiteralValue = !(isComponentParam || isConfigurablePathSegment)
 
@@ -30,42 +34,37 @@ class NodeMetadata(var metadata: Byte) {
          * Using a type declaration seems like the only way to declare a literal Byte in Kotlin.
          * We want to be sure to avoid any unnecessary type conversions.
          */
-        private const val zero: Byte = 0
+        private const val ZERO: Byte = 0
 
         /**
          * Transformation types:
          * @return an ASCII encoding as a character for the flag for whichever transformation type
          * applies.
          */
-        fun String.transformationType(): Byte {
-            return when {
+        fun String.transformationType(): Byte =
+            when {
                 validateIfConfigurablePathSegment(this) -> {
-                    MetadataMasks.ConfigurablePathSegmentMask
+                    MetadataMasks.CONFIGURABLE_PATH_SEGMENT_MASK
                 }
                 validateIfComponentParam(this) -> {
-                    MetadataMasks.ComponentParamMask
+                    MetadataMasks.COMPONENT_PARAM_MASK
                 }
                 else -> {
                     0
                 }
             }
-        }
 
         @JvmStatic
-        fun isComponentTypeRoot(metadata: Byte): Boolean =
-            metadata and MetadataMasks.ComponentTypeRootMask != zero
+        fun isComponentTypeRoot(metadata: Byte): Boolean = metadata and MetadataMasks.COMPONENT_TYPE_ROOT_MASK != ZERO
 
         @JvmStatic
-        fun isComponentTypeScheme(metadata: Byte): Boolean =
-            metadata and MetadataMasks.ComponentTypeSchemeMask != zero
+        fun isComponentTypeScheme(metadata: Byte): Boolean = metadata and MetadataMasks.COMPONENT_TYPE_SCHEME_MASK != ZERO
 
         @JvmStatic
-        fun isComponentTypeHost(metadata: Byte): Boolean =
-            metadata and MetadataMasks.ComponentTypeHostMask != zero
+        fun isComponentTypeHost(metadata: Byte): Boolean = metadata and MetadataMasks.COMPONENT_TYPE_HOST_MASK != ZERO
 
         @JvmStatic
-        fun isComponentTypePathSegment(metadata: Byte): Boolean =
-            metadata and MetadataMasks.ComponentTypePathSegmentMask != zero
+        fun isComponentTypePathSegment(metadata: Byte): Boolean = metadata and MetadataMasks.COMPONENT_TYPE_PATH_SEGMENT_MASK != ZERO
 
         /**
          * In DLD, any component of a URI can contain a placeholder that will be substituted.
@@ -78,16 +77,14 @@ class NodeMetadata(var metadata: Byte) {
          * </ul>
          * */
         @JvmStatic
-        fun isComponentParam(nodeMetadata: Byte): Boolean =
-            nodeMetadata and MetadataMasks.ComponentParamMask != zero
+        fun isComponentParam(nodeMetadata: Byte): Boolean = nodeMetadata and MetadataMasks.COMPONENT_PARAM_MASK != ZERO
 
         /**
          * A Configurable Path Segment represents a path segment which will lookup a dynamic (runtime)
          * provided replacement value when it is visited. The entire path segment will be replaced.
          */
         @JvmStatic
-        fun isConfigurablePathSegment(nodeMetadata: Byte): Boolean =
-            nodeMetadata and MetadataMasks.ConfigurablePathSegmentMask != zero
+        fun isConfigurablePathSegment(nodeMetadata: Byte): Boolean = nodeMetadata and MetadataMasks.CONFIGURABLE_PATH_SEGMENT_MASK != ZERO
     }
 }
 
@@ -98,19 +95,21 @@ object MetadataMasks {
     /**
      * Root is just used to start the tree. It does not correspond to a normal URI component.
      */
-    const val ComponentTypeRootMask: Byte = 1
-    const val ComponentTypeSchemeMask: Byte = 2
-    const val ComponentTypeHostMask: Byte = 4
-    const val ComponentTypePathSegmentMask: Byte = 8
+    const val COMPONENT_TYPE_ROOT_MASK: Byte = 1
+    const val COMPONENT_TYPE_SCHEME_MASK: Byte = 2
+    const val COMPONENT_TYPE_HOST_MASK: Byte = 4
+    const val COMPONENT_TYPE_PATH_SEGMENT_MASK: Byte = 8
+
     /**
      * Component params are uri components (host, path segment) that also contain a param. The
      * param both matches a range of values and can record the value from said range.
      */
-    const val ComponentParamMask: Byte = 16
+    const val COMPONENT_PARAM_MASK: Byte = 16
+
     /**
      * ConfigurablePathSegmentMask represents a path segment which will lookup a dynamic (runtime) provided
      * replacement value when it is visited. The replacement value will replace the entire path
      * segment (content between slashes).
      */
-    const val ConfigurablePathSegmentMask: Byte = 32
+    const val CONFIGURABLE_PATH_SEGMENT_MASK: Byte = 32
 }
