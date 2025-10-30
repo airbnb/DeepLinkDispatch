@@ -1027,7 +1027,7 @@ public final class DeepLinkUri {
       if ((c0 < 'a' || c0 > 'z') && (c0 < 'A' || c0 > 'Z')
         && (allowPlaceholderInScheme && c0 != '{')) return -1; // Not a scheme start char.
 
-      boolean inPlaceholder = c0 == '{' ? true : false;
+      boolean inPlaceholder = c0 == '{';
       for (int i = pos + 1; i < limit; i++) {
         char c = input.charAt(i);
         if ((c >= 'a' && c <= 'z')

@@ -1,6 +1,8 @@
 package com.airbnb.deeplinkdispatch
 
-class TestRegistry(matchArray: ByteArray) : BaseRegistry(matchArray, emptyArray())
+class TestRegistry(
+    matchArray: ByteArray,
+) : BaseRegistry(matchArray, emptyArray())
 
 @kotlin.ExperimentalUnsignedTypes
 fun testRegistry(entries: List<DeepLinkEntry>): TestRegistry {

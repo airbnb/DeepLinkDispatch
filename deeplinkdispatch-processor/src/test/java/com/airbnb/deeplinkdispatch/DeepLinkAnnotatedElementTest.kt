@@ -8,24 +8,27 @@ import org.junit.Test
 import java.net.MalformedURLException
 
 class DeepLinkAnnotatedElementTest {
-
     private var element = mockk<XTypeElement>()
 
     @Test
     @Throws(MalformedURLException::class)
     fun testValidUri() {
-        val dlElement = DeepLinkAnnotatedElement.ActivityAnnotatedElement(
-            uri = "airbnb://example.com/{foo}/bar", element = element
-        )
+        val dlElement =
+            DeepLinkAnnotatedElement.ActivityAnnotatedElement(
+                uri = "airbnb://example.com/{foo}/bar",
+                element = element,
+            )
         Assertions.assertThat(dlElement.uri).isEqualTo("airbnb://example.com/{foo}/bar")
     }
 
     @Test
     @Throws(MalformedURLException::class)
     fun testQueryParam() {
-        val dlElement = DeepLinkAnnotatedElement.ActivityAnnotatedElement(
-            uri = "airbnb://classDeepLink?foo=bar", element = element
-        )
+        val dlElement =
+            DeepLinkAnnotatedElement.ActivityAnnotatedElement(
+                uri = "airbnb://classDeepLink?foo=bar",
+                element = element,
+            )
         Assertions.assertThat(dlElement.uri).isEqualTo("airbnb://classDeepLink?foo=bar")
     }
 
@@ -50,18 +53,22 @@ class DeepLinkAnnotatedElementTest {
     @Test
     @Throws(MalformedURLException::class)
     fun testPlaceholderInScheme() {
-        val dlElement = DeepLinkAnnotatedElement.ActivityAnnotatedElement(
-            "http{scheme}://example.com/{foo}/bar", element
-        )
+        val dlElement =
+            DeepLinkAnnotatedElement.ActivityAnnotatedElement(
+                "http{scheme}://example.com/{foo}/bar",
+                element,
+            )
         Assertions.assertThat(dlElement.uri).isEqualTo("http{scheme}://example.com/{foo}/bar")
     }
 
     @Test
     @Throws(MalformedURLException::class)
     fun testPlaceholderInHost() {
-        val dlElement = DeepLinkAnnotatedElement.ActivityAnnotatedElement(
-            "http://{host}example.com/{foo}/bar", element
-        )
+        val dlElement =
+            DeepLinkAnnotatedElement.ActivityAnnotatedElement(
+                "http://{host}example.com/{foo}/bar",
+                element,
+            )
         Assertions.assertThat(dlElement.uri).isEqualTo("http://{host}example.com/{foo}/bar")
     }
 }

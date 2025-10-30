@@ -1,7 +1,10 @@
 package com.airbnb.deeplinkdispatch
 
 abstract class ErrorHandler {
-    open fun duplicateMatch(uriString: String, duplicatedMatches: List<DeepLinkMatchResult>) {}
+    open fun duplicateMatch(
+        uriString: String,
+        duplicatedMatches: List<DeepLinkMatchResult>,
+    ) {}
 
     /**
      * Called if unable to determine the type of an args class for a DeepLinkHandler.
@@ -9,5 +12,8 @@ abstract class ErrorHandler {
      * but this should not happen.
      * This will give youyr pooportunity to log these cases.
      */
-    open fun unableToDetermineHandlerArgsType(uriTemplate: String, className: String) {}
+    open fun unableToDetermineHandlerArgsType(
+        uriTemplate: String,
+        className: String,
+    ) {}
 }

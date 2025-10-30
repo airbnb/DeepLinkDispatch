@@ -14,27 +14,28 @@ import org.robolectric.annotation.Config
 @Config(sdk = [21], manifest = "../sample/src/main/AndroidManifest.xml")
 @RunWith(RobolectricTestRunner::class)
 class AppDeepLinkDelegateTest {
-
     // Demo test to find duplicate URLs across all modules
     @Test
     fun testDuplicatedEntries() {
-        val configurablePlaceholdersMap = mapOf(
-            "configPathOne" to "somePathThree",
-            "configurable-path-segment-one" to "",
-            "configurable-path-segment" to "",
-            "configurable-path-segment-two" to "",
-            "configPathOne" to "somePathOne"
-        )
-        val deepLinkDelegate = DeepLinkDelegate(
-            SampleModuleRegistry(),
-            LibraryDeepLinkModuleRegistry(),
-            BenchmarkDeepLinkModuleRegistry(),
-            KaptLibraryDeepLinkModuleRegistry(),
-            configurablePlaceholdersMap
-        )
+        val configurablePlaceholdersMap =
+            mapOf(
+                "configPathOne" to "somePathThree",
+                "configurable-path-segment-one" to "",
+                "configurable-path-segment" to "",
+                "configurable-path-segment-two" to "",
+                "configPathOne" to "somePathOne",
+            )
+        val deepLinkDelegate =
+            DeepLinkDelegate(
+                SampleModuleRegistry(),
+                LibraryDeepLinkModuleRegistry(),
+                BenchmarkDeepLinkModuleRegistry(),
+                KaptLibraryDeepLinkModuleRegistry(),
+                configurablePlaceholdersMap,
+            )
         MatcherAssert.assertThat(
             deepLinkDelegate.duplicatedDeepLinkEntries.size,
-            IsEqual.equalTo(3)
+            IsEqual.equalTo(3),
         )
         MatcherAssert.assertThat(deepLinkDelegate.allDeepLinkEntries.any { it.uriTemplate == "dld://host/intent/{abc}" }, Is.`is`(true))
         MatcherAssert.assertThat(deepLinkDelegate.allDeepLinkEntries.any { it.uriTemplate == "dld://host/intent/{def}" }, Is.`is`(true))

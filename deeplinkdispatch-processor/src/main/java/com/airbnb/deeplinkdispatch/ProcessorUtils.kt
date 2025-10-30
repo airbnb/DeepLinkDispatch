@@ -7,13 +7,12 @@ import androidx.room.compiler.processing.get
 
 object ProcessorUtils {
     @JvmStatic
-    fun String.decapitalizeIfNotTwoFirstCharsUpperCase(): String {
-        return if (this.length > 1 && this[0].isUpperCase() && this[1].isUpperCase()) {
+    fun String.decapitalizeIfNotTwoFirstCharsUpperCase(): String =
+        if (this.length > 1 && this[0].isUpperCase() && this[1].isUpperCase()) {
             this
         } else {
             this.replaceFirstChar { it.lowercase() }
         }
-    }
 
     @JvmStatic
     fun Array<String>.hasEmptyOrNullString() = this.any { it.isNullOrEmpty() }
@@ -33,10 +32,9 @@ fun XTypeElement.implementsInterfaces(fqnList: List<String>) =
         implementedInterfaces().any { typeElement -> typeElement.qualifiedName == interfaceFqn }
     }
 
-fun XTypeElement.inheritanceHierarchy(): List<XTypeElement> {
-    return this.superType?.typeElement?.let { it.inheritanceHierarchy() + listOf(it) }
+fun XTypeElement.inheritanceHierarchy(): List<XTypeElement> =
+    this.superType?.typeElement?.let { it.inheritanceHierarchy() + listOf(it) }
         ?: emptyList()
-}
 
 fun XTypeElement.inheritanceHierarchyContains(fqnList: List<String>) =
     inheritanceHierarchy().any { typeElement ->
@@ -48,11 +46,10 @@ fun XTypeElement.inheritanceHierarchyDoesNotContain(fqnList: List<String>) =
         typeElement.qualifiedName in fqnList
     }
 
-fun XTypeElement.directlyImplementsInterfaces(fqnList: List<String>): Boolean {
-    return fqnList.all { interfaceFqn ->
+fun XTypeElement.directlyImplementsInterfaces(fqnList: List<String>): Boolean =
+    fqnList.all { interfaceFqn ->
         getSuperInterfaceElements().any { typeElement -> typeElement.qualifiedName == interfaceFqn }
     }
-}
 
 inline fun <reified T> XAnnotation.getAsList(method: String): List<T> {
     val originalList = get<List<T>>(method)

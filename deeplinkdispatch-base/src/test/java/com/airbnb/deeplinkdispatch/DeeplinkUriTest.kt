@@ -6,7 +6,6 @@ import junit.framework.TestCase.assertNull
 import org.junit.Test
 
 class DeeplinkUriTest {
-
     @Test
     fun testParseDeeplinkUri() {
         val deeplink = DeepLinkUri.parse("http://www.example.com/path1/path2")

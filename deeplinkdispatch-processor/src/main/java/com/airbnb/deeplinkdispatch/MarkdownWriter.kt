@@ -1,7 +1,9 @@
 package com.airbnb.deeplinkdispatch
 
+import androidx.room.compiler.codegen.toJavaPoet
 import androidx.room.compiler.processing.XProcessingEnv
 import com.airbnb.deeplinkdispatch.Documentor.DocumetationWriter
+import com.squareup.kotlinpoet.javapoet.KotlinPoetJavaPoetPreview
 import java.io.PrintWriter
 import java.util.Locale
 
@@ -17,11 +19,12 @@ import java.util.Locale
  *
  * @see [Stack Edit](https://stackedit.io/)
  */
+@KotlinPoetJavaPoetPreview
 internal class MarkdownWriter : DocumetationWriter {
     override fun write(
         env: XProcessingEnv,
         writer: PrintWriter,
-        elements: List<DeepLinkAnnotatedElement>
+        elements: List<DeepLinkAnnotatedElement>,
     ) {
         // header
         writer.println("| URI | JavaDoc | Simple Name | Method |")
@@ -32,16 +35,25 @@ internal class MarkdownWriter : DocumetationWriter {
         for (element in elements) {
             val embeddedComments =
                 Documentor.formatJavaDoc(element.element.docComment) ?: ""
-            val methodName = when (element) {
-                is DeepLinkAnnotatedElement.MethodAnnotatedElement -> element.method
-                else -> ""
-            }
-            val simpleName = element.annotatedClass.className.reflectionName()
+            val methodName =
+                when (element) {
+                    is DeepLinkAnnotatedElement.MethodAnnotatedElement -> element.method
+                    else -> ""
+                }
+            val simpleName =
+                element.annotatedClass
+                    .asClassName()
+                    .toJavaPoet()
+                    .reflectionName()
             writer.println(
                 String.format(
-                    Locale.US, format,
-                    element.uri, embeddedComments, simpleName, methodName
-                )
+                    Locale.US,
+                    format,
+                    element.uri,
+                    embeddedComments,
+                    simpleName,
+                    methodName,
+                ),
             )
         }
         writer.flush()

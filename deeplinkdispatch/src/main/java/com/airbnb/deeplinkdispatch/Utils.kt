@@ -11,13 +11,15 @@ import android.os.Bundle
  */
 fun validateConfigurablePathSegmentReplacements(
     registries: List<BaseRegistry>,
-    configurablePathSegmentReplacements: Map<ByteArray, ByteArray>
+    configurablePathSegmentReplacements: Map<ByteArray, ByteArray>,
 ) = DeepLinkDispatch.validationExecutor.run {
     // Collect all path segment keys across all registries
     val keysUnion = registries.flatMap { it.pathSegmentReplacementKeysInRegistry }.toSet()
-    val missingKeys = keysUnion.filter { key ->
-        !configurablePathSegmentReplacements.keys.any { it.contentEquals(key) }
-    }.joinToString(",\n") { String(it) }
+    val missingKeys =
+        keysUnion
+            .filter { key ->
+                !configurablePathSegmentReplacements.keys.any { it.contentEquals(key) }
+            }.joinToString(",\n") { String(it) }
 
     require(missingKeys.isEmpty()) {
         "Keys not found in BaseDeepLinkDelegate's mapping of " +
