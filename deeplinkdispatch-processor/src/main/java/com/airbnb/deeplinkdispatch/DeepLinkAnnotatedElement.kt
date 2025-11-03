@@ -24,55 +24,29 @@ import java.net.MalformedURLException
 sealed class DeepLinkAnnotatedElement
     @Throws(MalformedURLException::class)
     constructor(
-        val uriTemplate: String,
-        val activityClassFqn: String?,
+        val uri: String,
         val element: XElement,
         val annotatedClass: XMemberContainer,
     ) {
-        val deepLinkUri: DeepLinkUri by lazy {
-            DeepLinkUri.parseTemplate(uriTemplate)
-                ?: throw MalformedURLException("Malformed Uri Template: $uriTemplate")
-        }
-
-        val className: String by lazy { annotatedClass.className.reflectionName() ?: "" }
-
         class MethodAnnotatedElement(
             uri: String,
-            activityClassFqn: String?,
             element: XMethodElement,
-        ) : DeepLinkAnnotatedElement(
-                uriTemplate = uri,
-                activityClassFqn = activityClassFqn,
-                element = element,
-                annotatedClass = element.enclosingElement,
-            ) {
+        ) : DeepLinkAnnotatedElement(uri, element, element.enclosingElement) {
             val method = element.name
         }
 
         class ActivityAnnotatedElement(
             uri: String,
-            activityClassFqn: String?,
             element: XTypeElement,
-        ) : DeepLinkAnnotatedElement(
-                uriTemplate = uri,
-                activityClassFqn = activityClassFqn,
-                element = element,
-                annotatedClass = element,
-            )
+        ) : DeepLinkAnnotatedElement(uri, element, element)
 
         class HandlerAnnotatedElement(
             uri: String,
-            activityClassFqn: String?,
             element: XTypeElement,
-        ) : DeepLinkAnnotatedElement(
-                uriTemplate = uri,
-                activityClassFqn = activityClassFqn,
-                element = element,
-                annotatedClass = element,
-            )
+        ) : DeepLinkAnnotatedElement(uri, element, element)
 
         init {
-            DeepLinkUri.parseTemplate(uriTemplate)
-                ?: throw MalformedURLException("Malformed Uri Template: $uriTemplate")
+            DeepLinkUri.parseTemplate(uri)
+                ?: throw MalformedURLException("Malformed Uri Template: $uri")
         }
     }

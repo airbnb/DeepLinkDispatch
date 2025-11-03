@@ -25,24 +25,27 @@ gradle.taskGraph.whenReady { taskGraph ->
 }
 
 android {
-    namespace = "com.airbnb.deeplinkdispatch.sample"
-    compileSdk = androidConfig.compileSdkVersion
+    namespace 'com.airbnb.deeplinkdispatch.sample'
+    compileSdk androidConfig.compileSdkVersion
 
     defaultConfig {
         applicationId "com.airbnb.deeplinkdispatch.sample"
         minSdk = androidConfig.minSdkVersion
         targetSdk = androidConfig.compileSdkVersion
         versionCode 1
-        versionName "1.0"
-    }
-    buildTypes {
-        release {
-            minifyEnabled true
-            shrinkResources true
-            proguardFiles getDefaultProguardFile(
-                    'proguard-android-optimize.txt'),
-                    'proguard-rules.pro'
-        }
+    versionName "1.0"
+  }
+  compileOptions {
+    sourceCompatibility JavaVersion.VERSION_11
+    targetCompatibility JavaVersion.VERSION_11
+  }
+  buildTypes {
+    release {
+      minifyEnabled true
+      shrinkResources true
+      proguardFiles getDefaultProguardFile(
+              'proguard-android-optimize.txt'),
+              'proguard-rules.pro'
     }
     packagingOptions {
         resources {

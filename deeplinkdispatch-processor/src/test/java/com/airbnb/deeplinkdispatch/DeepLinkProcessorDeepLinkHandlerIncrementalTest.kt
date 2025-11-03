@@ -1,8 +1,12 @@
 package com.airbnb.deeplinkdispatch
 
 import com.airbnb.deeplinkdispatch.test.Source
+import com.squareup.kotlinpoet.javapoet.KotlinPoetJavaPoetPreview
+import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 import org.junit.Test
 
+@ExperimentalCompilerApi
+@KotlinPoetJavaPoetPreview
 class DeepLinkProcessorDeepLinkHandlerIncrementalTest : BaseDeepLinkProcessorTest() {
     // Need to define here as the original one is define an in android lib we cannot depend on here.
     private val deeplinkHandlerInterface =
@@ -132,6 +136,9 @@ class DeepLinkProcessorDeepLinkHandlerIncrementalTest : BaseDeepLinkProcessorTes
                         TODO("Not yet implemented")
                     }
                 }
+                data class TestDeepLinkHandlerDeepLinkArgs(
+                    @DeeplinkParam(name = "one", type = DeepLinkParamType.Path ) val one: String,
+                )
             """,
         )
 
@@ -715,11 +722,10 @@ class DeepLinkProcessorDeepLinkHandlerIncrementalTest : BaseDeepLinkProcessorTes
             registryClassName = "com.example.SampleModuleRegistry",
             indexEntries =
                 listOf(
-                    @Suppress("standard:max-line-length")
                     DeepLinkEntry.HandlerDeepLinkEntry(
                         uriTemplate =
-                            "http{scheme}://{host}example.com/pathSegment/{path_segment_variable_1}" +
-                                "/{path_segment_variable_2}/{path_segment_variable_3}/{path_segment_variable_4}/" +
+                            "http{scheme}://{host}example.com/pathSegment/{path_segment_variable_1}/" +
+                                "{path_segment_variable_2}/{path_segment_variable_3}/{path_segment_variable_4}/" +
                                 "{path_segment_variable_5}/{path_segment_variable_6}/{path_segment_variable_7}/" +
                                 "{path_segment_variable_8}?queryParam1={query_param_1}&queryParam2={query_param_2}" +
                                 "&queryParam3={query_param_3}&queryParam4={query_param_4}&queryParam5={query_param_5}" +
@@ -783,12 +789,12 @@ class DeepLinkProcessorDeepLinkHandlerIncrementalTest : BaseDeepLinkProcessorTes
                 listOf(
                     DeepLinkEntry.HandlerDeepLinkEntry(
                         uriTemplate =
-                            "http{scheme}://{host}example.com/pathSegment/{path_segment_variable_1}/{path_segment_variable_2}/" +
-                                "{path_segment_variable_3}/{path_segment_variable_4}/{path_segment_variable_5}/" +
-                                "{path_segment_variable_6}/{path_segment_variable_7}/{path_segment_variable_8}" +
-                                "?queryParam1={query_param_1}&queryParam2={query_param_2}&queryParam3={query_param_3}&" +
-                                "queryParam4={query_param_4}&queryParam5={query_param_5}&queryParam6={query_param_6}&" +
-                                "queryParam7={query_param_7}&queryParam8={query_param_8}",
+                            "http{scheme}://{host}example.com/pathSegment/{path_segment_variable_1}/" +
+                                "{path_segment_variable_2}/{path_segment_variable_3}/{path_segment_variable_4}/" +
+                                "{path_segment_variable_5}/{path_segment_variable_6}/{path_segment_variable_7}/" +
+                                "{path_segment_variable_8}?queryParam1={query_param_1}&queryParam2={query_param_2}" +
+                                "&queryParam3={query_param_3}&queryParam4={query_param_4}&queryParam5={query_param_5}" +
+                                "&queryParam6={query_param_6}&queryParam7={query_param_7}&queryParam8={query_param_8}",
                         className = "com.example.TestDeepLinkHandler",
                     ),
                 ),

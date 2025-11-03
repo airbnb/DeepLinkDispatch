@@ -1,8 +1,12 @@
 package com.airbnb.deeplinkdispatch
 
 import com.airbnb.deeplinkdispatch.test.Source
+import com.squareup.kotlinpoet.javapoet.KotlinPoetJavaPoetPreview
+import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 import org.junit.Test
 
+@ExperimentalCompilerApi
+@KotlinPoetJavaPoetPreview
 class DeepLinkProcessorKspTest : BaseDeepLinkProcessorTest() {
     private val customWebDeepLinkJava =
         Source.JavaSource(
@@ -53,7 +57,7 @@ class DeepLinkProcessorKspTest : BaseDeepLinkProcessorTest() {
             listOf(
                 module,
                 sampleDeeplinkMethod,
-                fakeBaseDeeplinkDelegate,
+                fakeBaseDeeplinkDelegateJava,
             )
         val results =
             listOf(
@@ -203,7 +207,7 @@ class DeepLinkProcessorKspTest : BaseDeepLinkProcessorTest() {
                 customWebDeepLinkJava,
                 module,
                 sampleActivityKotlin,
-                fakeBaseDeeplinkDelegate,
+                fakeBaseDeeplinkDelegateJava,
             )
         val results =
             listOf(
@@ -409,7 +413,7 @@ class DeepLinkProcessorKspTest : BaseDeepLinkProcessorTest() {
                 customWebDeepLinkJava,
                 module,
                 sampleActivityJava,
-                fakeBaseDeeplinkDelegate,
+                fakeBaseDeeplinkDelegateJava,
             )
         val results =
             listOf(

@@ -1,10 +1,14 @@
 package com.airbnb.deeplinkdispatch
 
 import com.airbnb.deeplinkdispatch.test.Source
+import com.squareup.kotlinpoet.javapoet.KotlinPoetJavaPoetPreview
 import com.tschuchort.compiletesting.KotlinCompilation
 import org.assertj.core.api.Assertions
+import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 import org.junit.Test
 
+@ExperimentalCompilerApi
+@KotlinPoetJavaPoetPreview
 class DeepLinkProcessorNonIncrementalTest : BaseDeepLinkProcessorTest() {
     @Test
     fun testProcessor() {
@@ -29,7 +33,7 @@ class DeepLinkProcessorNonIncrementalTest : BaseDeepLinkProcessorTest() {
                         listOf(
                             SAMPLE_DEEPLINK_MODULE,
                             sampleActivity,
-                            fakeBaseDeeplinkDelegate,
+                            fakeBaseDeeplinkDelegateJava,
                         ),
                     useKsp = false,
                 ),
@@ -38,7 +42,7 @@ class DeepLinkProcessorNonIncrementalTest : BaseDeepLinkProcessorTest() {
                         listOf(
                             SAMPLE_DEEPLINK_MODULE,
                             sampleActivity,
-                            fakeBaseDeeplinkDelegate,
+                            fakeBaseDeeplinkDelegateJava,
                         ),
                     useKsp = true,
                 ),
@@ -428,7 +432,7 @@ class DeepLinkProcessorNonIncrementalTest : BaseDeepLinkProcessorTest() {
                     listOf(
                         SIMPLE_DEEPLINK_MODULE_UPPERCASE_PACKAGE,
                         activityWithUppercasePackage,
-                        fakeBaseDeeplinkDelegate,
+                        fakeBaseDeeplinkDelegateJava,
                     ),
                     useKsp = false,
                 ),
@@ -436,7 +440,7 @@ class DeepLinkProcessorNonIncrementalTest : BaseDeepLinkProcessorTest() {
                     listOf(
                         SIMPLE_DEEPLINK_MODULE_UPPERCASE_PACKAGE,
                         activityWithUppercasePackage,
-                        fakeBaseDeeplinkDelegate,
+                        fakeBaseDeeplinkDelegateJava,
                     ),
                     useKsp = true,
                 ),
@@ -695,7 +699,7 @@ class DeepLinkProcessorNonIncrementalTest : BaseDeepLinkProcessorTest() {
                         listOf(
                             SAMPLE_DEEPLINK_MODULE,
                             sampleActivity,
-                            fakeBaseDeeplinkDelegate,
+                            fakeBaseDeeplinkDelegateJava,
                         ),
                     useKsp = false,
                 ),
@@ -704,7 +708,7 @@ class DeepLinkProcessorNonIncrementalTest : BaseDeepLinkProcessorTest() {
                         listOf(
                             SAMPLE_DEEPLINK_MODULE,
                             sampleActivity,
-                            fakeBaseDeeplinkDelegate,
+                            fakeBaseDeeplinkDelegateJava,
                         ),
                     useKsp = true,
                 ),

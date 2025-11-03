@@ -133,10 +133,9 @@ class MatchIndexTests {
                 listOf(
                     DeepLinkEntry.MethodDeeplinkEntry(
                         uriTemplate =
-                            "http{scheme_suffix(|s)}://testing.{url_domain_suffix(com|just|a|very|" +
-                                "long|list|of|words|that|are|technically|not|domains|so|that|we|make|it|over|" +
-                                "256|characters|to|test|how|this|deals|with|longer|urls|that|would|otherwise|" +
-                                "cause|an|array|index|out|of|bounds|exception|within|the|match|index|itself)}/",
+                            "http{scheme_suffix(|s)}://testing.{url_domain_suffix(com|just|a|very|long|list|of|words|that|are|" +
+                                "technically|not|domains|so|that|we|make|it|over|256|characters|to|test|how|this|deals|with|longer|urls|" +
+                                "that|would|otherwise|cause|an|array|index|out|of|bounds|exception|within|the|match|index|itself)}/",
                         className = Object::class.java.name,
                         method = "someMethod1",
                     ),

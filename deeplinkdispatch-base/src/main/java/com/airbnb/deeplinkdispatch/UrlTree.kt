@@ -257,6 +257,14 @@ data class Scheme(
     override val id: String,
 ) : TreeNode(id = id, metadata = NodeMetadata(MetadataMasks.COMPONENT_TYPE_SCHEME_MASK, id))
 
+internal fun String.orderPlaceholderValues(): String =
+    allowedPlaceholderRegex.replace(this) { matchResult ->
+        matchResult.value
+            .split(ALLOWED_VALUES_SEPARATOR)
+            .sorted()
+            .joinToString(separator = ALLOWED_VALUES_SEPARATOR.toString())
+    }
+
 @kotlin.ExperimentalUnsignedTypes
 data class Host(
     override val id: String,

@@ -13,14 +13,9 @@ sealed class Source {
         override val contents: String,
     ) : Source() {
         override fun toKotlinSourceFile(srcRoot: File): SourceFile {
-            val outFile =
-                srcRoot
-                    .resolve(qName.replace(".", "/") + ".java")
-                    .also {
-                        it.parentFile.mkdirs()
-                        it.writeText(contents.trimIndent())
-                    }
-            return SourceFile.fromPath(outFile)
+
+            val fileName = qName.replace(".", "/") + ".java"
+            return SourceFile.java(fileName, contents)
         }
     }
 
@@ -28,13 +23,6 @@ sealed class Source {
         private val relativePath: String,
         override val contents: String,
     ) : Source() {
-        override fun toKotlinSourceFile(srcRoot: File): SourceFile {
-            val outFile =
-                srcRoot.resolve(relativePath).also {
-                    it.parentFile.mkdirs()
-                    it.writeText(contents.trimIndent())
-                }
-            return SourceFile.fromPath(outFile)
-        }
+        override fun toKotlinSourceFile(srcRoot: File): SourceFile = SourceFile.kotlin(relativePath, contents)
     }
 }

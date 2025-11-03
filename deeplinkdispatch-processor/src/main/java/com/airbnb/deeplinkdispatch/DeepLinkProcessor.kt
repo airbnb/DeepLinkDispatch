@@ -15,6 +15,7 @@
  */
 package com.airbnb.deeplinkdispatch
 
+import androidx.room.compiler.codegen.toJavaPoet
 import androidx.room.compiler.processing.XAnnotation
 import androidx.room.compiler.processing.XElement
 import androidx.room.compiler.processing.XExecutableParameterElement
@@ -56,6 +57,8 @@ import javax.lang.model.element.Modifier
 import javax.tools.Diagnostic
 import kotlin.reflect.KClass
 
+@com.squareup.kotlinpoet.javapoet.KotlinPoetJavaPoetPreview
+@kotlin.ExperimentalUnsignedTypes
 class DeepLinkProcessor(
     symbolProcessorEnvironment: SymbolProcessorEnvironment? = null,
 ) : BaseProcessor(symbolProcessorEnvironment) {
@@ -212,21 +215,22 @@ class DeepLinkProcessor(
         classElementsToProcess: Set<XTypeElement>,
         objectElementsToProcess: Set<XTypeElement>,
         methodElementsToProcess: Set<XMethodElement>,
-    ): List<DeepLinkAnnotatedElement> =
-        (
-            classElementsToProcess.flatMap { element ->
-                verifyCass(element)
-                mapUrisToDeepLinkAnnotatedElement(element, prefixesAndFqn)
-            } +
-                objectElementsToProcess.flatMap { element ->
-                    verifyObjectElement(element)
+    ): List<DeepLinkAnnotatedElement> {
+        return (
+                classElementsToProcess.flatMap { element ->
+                    verifyCass(element)
                     mapUrisToDeepLinkAnnotatedElement(element, prefixesAndFqn)
                 } +
-                methodElementsToProcess.flatMap { element ->
-                    verifyMethod(element)
-                    mapUrisToDeepLinkAnnotatedElement(element, prefixesAndFqn)
-                }
-        ).filterNotNull()
+                        objectElementsToProcess.flatMap { element ->
+                            verifyObjectElement(element)
+                            mapUrisToDeepLinkAnnotatedElement(element, prefixesAndFqn)
+                        } +
+                        methodElementsToProcess.flatMap { element ->
+                            verifyMethod(element)
+                            mapUrisToDeepLinkAnnotatedElement(element, prefixesAndFqn)
+                        }
+                ).filterNotNull()
+    }
 
     private fun mapUrisToDeepLinkAnnotatedElement(
         element: XElement,
@@ -553,7 +557,7 @@ class DeepLinkProcessor(
             tryCatchFileWriting {
                 generateDeepLinkRegistry(
                     packageName = deepLinkModuleElement.packageName,
-                    className = deepLinkModuleElement.className.simpleName(),
+                    className = deepLinkModuleElement.asClassName().toJavaPoet().simpleName(),
                     deepLinkElements = deepLinkElements,
                     originatingElements =
                         annotatedClassElements + annotatedMethodElements + annotatedObjectElements + deepLinkModuleElement,

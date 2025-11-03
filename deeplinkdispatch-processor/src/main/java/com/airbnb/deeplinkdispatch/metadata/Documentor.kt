@@ -7,6 +7,7 @@ import com.airbnb.deeplinkdispatch.DeepLinkAnnotatedElement
 import com.airbnb.deeplinkdispatch.metadata.writers.GenericDocumentationWriter
 import com.airbnb.deeplinkdispatch.metadata.writers.MarkdownDocumentationWriter
 import com.airbnb.deeplinkdispatch.metadata.writers.Writer
+import com.squareup.kotlinpoet.javapoet.KotlinPoetJavaPoetPreview
 import java.io.File
 import java.io.FileWriter
 import java.io.IOException
@@ -35,6 +36,7 @@ internal class Documentor(
     @get:VisibleForTesting
     var file: File? = initFile()
 
+    @KotlinPoetJavaPoetPreview
     fun write(elements: List<DeepLinkAnnotatedElement>) {
         val file =
             file ?: run {

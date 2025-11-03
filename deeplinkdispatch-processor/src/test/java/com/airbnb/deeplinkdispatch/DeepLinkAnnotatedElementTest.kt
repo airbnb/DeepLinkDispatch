@@ -43,6 +43,7 @@ class DeepLinkAnnotatedElementTest {
                 element = element,
             )
         Assertions.assertThat(dlElement.uriTemplate).isEqualTo("airbnb://classDeepLink?foo=bar")
+
     }
 
     @Test(expected = MalformedURLException::class)

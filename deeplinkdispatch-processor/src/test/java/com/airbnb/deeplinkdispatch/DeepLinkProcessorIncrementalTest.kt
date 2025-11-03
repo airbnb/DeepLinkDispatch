@@ -1,8 +1,12 @@
 package com.airbnb.deeplinkdispatch
 
 import com.airbnb.deeplinkdispatch.test.Source
+import com.squareup.kotlinpoet.javapoet.KotlinPoetJavaPoetPreview
+import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 import org.junit.Test
 
+@ExperimentalCompilerApi
+@KotlinPoetJavaPoetPreview
 class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
     private val customAnnotationAppLink =
         Source.JavaSource(
@@ -196,7 +200,7 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
                 customAnnotationAppLink,
                 module,
                 sampleActivityWithOnlyCustomDeepLink,
-                fakeBaseDeeplinkDelegate,
+                fakeBaseDeeplinkDelegateJava,
             )
         val results =
             listOf(
@@ -312,7 +316,7 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
                 customAnnotationPlaceholderInSchemeHostAppLink,
                 module,
                 sampleActivityWithOnlyCustomPlaceholderDeepLink,
-                fakeBaseDeeplinkDelegate,
+                fakeBaseDeeplinkDelegateJava,
             )
         val results =
             listOf(
@@ -428,15 +432,15 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
                 customAnnotationPlaceholderWithValidAllowedElementsInSchemeHostAppLink,
                 module,
                 sampleActivityWithOnlyCustomPlaceholderDeepLink,
-                fakeBaseDeeplinkDelegate,
+                fakeBaseDeeplinkDelegateJava,
             )
         val results =
             listOf(
-//            compileIncremental(
-//                sourceFiles = sourceFiles,
-//                customDeepLinks = listOf("com.example.PlaceholderDeepLink"),
-//                useKsp = false,
-//            ),
+                compileIncremental(
+                    sourceFiles = sourceFiles,
+                    customDeepLinks = listOf("com.example.PlaceholderDeepLink"),
+                    useKsp = false,
+                ),
                 compileIncremental(
                     sourceFiles = sourceFiles,
                     customDeepLinks = listOf("com.example.PlaceholderDeepLink"),
@@ -600,7 +604,7 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
                 customAnnotationAppLink,
                 module,
                 sampleActivityWithOnlyCustomDeepLink,
-                fakeBaseDeeplinkDelegate,
+                fakeBaseDeeplinkDelegateJava,
             )
         val results =
             listOf(
@@ -850,7 +854,7 @@ class DeepLinkProcessorIncrementalTest : BaseDeepLinkProcessorTest() {
                 customAnnotationAppLink,
                 sampleActivityWithInnerClassDeeplinkKotlin,
                 module,
-                fakeBaseDeeplinkDelegate,
+                fakeBaseDeeplinkDelegateJava,
             )
         val results =
             listOf(

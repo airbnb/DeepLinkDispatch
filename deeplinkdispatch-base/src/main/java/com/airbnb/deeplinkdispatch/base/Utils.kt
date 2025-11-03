@@ -70,9 +70,9 @@ object Utils {
         val end = uriComponent.indexOf(COMPONENT_PARAM_SUFFIX)
         // -1 is the "not found" result for String#indexOf()
         if (start != -1 || end != -1) {
-            require(start < end) {
-                "Invalid URI component: $uriComponent. $COMPONENT_PARAM_PREFIX must come before $COMPONENT_PARAM_SUFFIX."
-            }
+            require(
+                start < end,
+            ) { "Invalid URI component: $uriComponent. $COMPONENT_PARAM_PREFIX must come before $COMPONENT_PARAM_SUFFIX." }
             require(start != -1 && end != -1) {
                 "Invalid URI component: $uriComponent. If either" +
                     "$COMPONENT_PARAM_PREFIX or $COMPONENT_PARAM_SUFFIX is present, then they must both be present and $COMPONENT_PARAM_PREFIX must occur before $COMPONENT_PARAM_SUFFIX."
@@ -90,9 +90,11 @@ object Utils {
     fun validateIfConfigurablePathSegment(pathSegment: String): Boolean {
         if (pathSegment.contains(Regex("$CONFIGURABLE_PATH_SEGMENT_PREFIX|$CONFIGURABLE_PATH_SEGMENT_SUFFIX"))) {
             require(isConfigurablePathSegment(pathSegment)) {
-                "Malformed path segment: $pathSegment! " +
-                    "If it contains $CONFIGURABLE_PATH_SEGMENT_PREFIX or $CONFIGURABLE_PATH_SEGMENT_SUFFIX, " +
-                    "it must start with $CONFIGURABLE_PATH_SEGMENT_PREFIX and end with $CONFIGURABLE_PATH_SEGMENT_SUFFIX."
+                (
+                    "Malformed path segment: $pathSegment! If it contains $CONFIGURABLE_PATH_SEGMENT_PREFIX" +
+                        " or $CONFIGURABLE_PATH_SEGMENT_SUFFIX, it must start with" +
+                        " $CONFIGURABLE_PATH_SEGMENT_PREFIX and end with $CONFIGURABLE_PATH_SEGMENT_SUFFIX."
+                )
             }
             return true
         }
