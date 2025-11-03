@@ -27,7 +27,14 @@ internal class ManifestWriter : Writer {
                     // group by schemes and hosts as well.
                     println("        <activity")
                     println("            android:name=\"$activityClassFqn\" android:exported=\"true\">")
-                    elements.groupBy { it.deepLinkUri.let { Pair(it.scheme(), it.host()) } }.forEach { (schemeHostPair, elements) ->
+                    elements.groupBy { deepLinkAnnotatedElement ->
+                        deepLinkAnnotatedElement.deepLinkUri.let { deepLinkUri ->
+                            Pair(
+                                deepLinkUri.scheme(),
+                                deepLinkUri.host()
+                            )
+                        }
+                    }.forEach { (schemeHostPair, elements) ->
                         println("            <intent-filter>")
                         println("                <action android:name=\"android.intent.action.VIEW\" />")
                         println("                <category android:name=\"android.intent.category.DEFAULT\" />")
