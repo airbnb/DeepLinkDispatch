@@ -13,7 +13,6 @@ sealed class Source {
         override val contents: String,
     ) : Source() {
         override fun toKotlinSourceFile(srcRoot: File): SourceFile {
-
             val fileName = qName.replace(".", "/") + ".java"
             return SourceFile.java(fileName, contents)
         }

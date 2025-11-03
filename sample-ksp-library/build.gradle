@@ -10,8 +10,8 @@ apply plugin: 'com.airbnb.deeplinkdispatch.manifest-generation'
 // modules.
 
 android {
-    namespace = "com.airbnb.deeplinkdispatch.sampleksplibrary"
-    compileSdk = androidConfig.compileSdkVersion
+    namespace "com.airbnb.deeplinkdispatch.sampleksplibrary"
+    compileSdk androidConfig.compileSdkVersion
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_11

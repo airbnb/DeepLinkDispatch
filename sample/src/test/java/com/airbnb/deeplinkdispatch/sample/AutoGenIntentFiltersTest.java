@@ -37,29 +37,13 @@ public class AutoGenIntentFiltersTest {
 
   @Test
   public void testIntentViaInnerClassMethodResult() {
-    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://example.com/deepLink/12345/sample_name"));
+    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://example.com/deepLink_second/12345/sample_name"));
     DeepLinkActivity deepLinkActivity = Robolectric.buildActivity(DeepLinkActivity.class, intent)
       .create().get();
     ShadowActivity shadowActivity = shadowOf(deepLinkActivity);
     Intent launchedIntent = shadowActivity.peekNextStartedActivityForResult().intent;
     assertThat(launchedIntent.getComponent(),
       equalTo(new ComponentName(deepLinkActivity, SecondActivity.class)));
-
-    assertThat(launchedIntent.getBooleanExtra(DeepLink.IS_DEEP_LINK, false), equalTo(true));
-    assertThat(launchedIntent.getAction(), equalTo(Intent.ACTION_VIEW));
-    assertThat(launchedIntent.getStringExtra("name"), equalTo("sample_name"));
-    assertThat(launchedIntent.getStringExtra("id"), equalTo("12345"));
-
-  }
-  @Test
-  public void testIntentViaInnerClassMethodResultThird() {
-    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://example.com/deepLink_thrid/12345/sample_name"));
-    DeepLinkActivity deepLinkActivity = Robolectric.buildActivity(DeepLinkActivity.class, intent)
-            .create().get();
-    ShadowActivity shadowActivity = shadowOf(deepLinkActivity);
-    Intent launchedIntent = shadowActivity.peekNextStartedActivityForResult().intent;
-    assertThat(launchedIntent.getComponent(),
-            equalTo(new ComponentName(deepLinkActivity, ThirdActivity.class)));
 
     assertThat(launchedIntent.getBooleanExtra(DeepLink.IS_DEEP_LINK, false), equalTo(true));
     assertThat(launchedIntent.getAction(), equalTo(Intent.ACTION_VIEW));

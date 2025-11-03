@@ -215,28 +215,30 @@ class DeepLinkProcessor(
         classElementsToProcess: Set<XTypeElement>,
         objectElementsToProcess: Set<XTypeElement>,
         methodElementsToProcess: Set<XMethodElement>,
-    ): List<DeepLinkAnnotatedElement> {
-        return (
-                classElementsToProcess.flatMap { element ->
-                    verifyCass(element)
+    ): List<DeepLinkAnnotatedElement> =
+        (
+            classElementsToProcess.flatMap { element ->
+                verifyCass(element)
+                mapUrisToDeepLinkAnnotatedElement(element, prefixesAndFqn)
+            } +
+                objectElementsToProcess.flatMap { element ->
+                    verifyObjectElement(element)
                     mapUrisToDeepLinkAnnotatedElement(element, prefixesAndFqn)
                 } +
-                        objectElementsToProcess.flatMap { element ->
-                            verifyObjectElement(element)
-                            mapUrisToDeepLinkAnnotatedElement(element, prefixesAndFqn)
-                        } +
-                        methodElementsToProcess.flatMap { element ->
-                            verifyMethod(element)
-                            mapUrisToDeepLinkAnnotatedElement(element, prefixesAndFqn)
-                        }
-                ).filterNotNull()
-    }
+                methodElementsToProcess.flatMap { element ->
+                    verifyMethod(element)
+                    mapUrisToDeepLinkAnnotatedElement(element, prefixesAndFqn)
+                }
+        ).filterNotNull()
 
     private fun mapUrisToDeepLinkAnnotatedElement(
         element: XElement,
         prefixesAndFqn: Map<XType, Array<PrefixAndActivityFqn>>,
     ): List<DeepLinkAnnotatedElement?> =
-        getAllUrisAndActivityClassesForAnnotatedElement(element, prefixesAndFqn).mapNotNull { uriAndActivityFqn ->
+        getAllUrisAndActivityClassesForAnnotatedElement(
+            element,
+            prefixesAndFqn,
+        ).mapNotNull { uriAndActivityFqn ->
             try {
                 when {
                     element is XMethodElement ->
@@ -245,12 +247,14 @@ class DeepLinkProcessor(
                             activityClassFqn = uriAndActivityFqn.activityClassFqn,
                             element = element,
                         )
+
                     element is XTypeElement && element.isActivity() ->
                         DeepLinkAnnotatedElement.ActivityAnnotatedElement(
                             uri = uriAndActivityFqn.uri,
                             activityClassFqn = uriAndActivityFqn.activityClassFqn,
                             element = element,
                         )
+
                     element is XTypeElement && element.isHandler() -> {
                         verifyHandlerMatchArgs(element, uriAndActivityFqn.uri)
                         DeepLinkAnnotatedElement.HandlerAnnotatedElement(
@@ -259,6 +263,7 @@ class DeepLinkProcessor(
                             element = element,
                         )
                     }
+
                     else ->
                         error(
                             "Internal error: Elements can only be 'MethodAnnotatedElement', " +
@@ -1000,18 +1005,19 @@ class DeepLinkProcessor(
                         .any { it.qualifiedName == klass.qualifiedName }
             }.toSet()
 
-        private fun moduleNameToRegistryName(element: XTypeElement) = element.className.simpleName() + REGISTRY_CLASS_SUFFIX
+        private fun moduleNameToRegistryName(element: XTypeElement) =
+            element.asClassName().toJavaPoet().simpleName() + REGISTRY_CLASS_SUFFIX
 
         private fun moduleElementToRegistryClassName(element: XTypeElement): ClassName =
             ClassName.get(
                 getPackage(element),
-                element.className.simpleName() + REGISTRY_CLASS_SUFFIX,
+                element.asClassName().toJavaPoet().simpleName() + REGISTRY_CLASS_SUFFIX,
             )
 
         private fun moduleElementToRegistryKClassName(element: XTypeElement): com.squareup.kotlinpoet.ClassName =
             com.squareup.kotlinpoet.ClassName(
                 getPackage(element),
-                element.className.simpleName() + REGISTRY_CLASS_SUFFIX,
+                element.asClassName().toJavaPoet().simpleName() + REGISTRY_CLASS_SUFFIX,
             )
 
         private fun getPackage(element: XTypeElement) = element.packageName

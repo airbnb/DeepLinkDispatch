@@ -233,11 +233,15 @@ abstract class GenerateManifestIntentFiltersForDeeplinkDispatchTask: DefaultTask
         }
 
         // Merge the manifests using AGP's manifest merger
+        // Use USES_SDK_IN_MANIFEST_LENIENT_HANDLING feature to allow <uses-sdk> elements
+        // AGP injects <uses-sdk> into MERGED_MANIFEST but AGP 9.0+ validation rejects it
+        // This feature flag makes it a warning instead of an error
         val invoker: ManifestMerger2.Invoker = ManifestMerger2.newMerger(
             inputManifest,
             StdLogger(StdLogger.Level.VERBOSE),
             mergeType
-        )
+        ).withFeatures(ManifestMerger2.Invoker.Feature.USES_SDK_IN_MANIFEST_LENIENT_HANDLING)
+
         // generatedManifestFile is guaranteed to be non-null here due to hasGeneratedManifest check
         invoker.addFlavorAndBuildTypeManifest(generatedManifestFile)
 

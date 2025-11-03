@@ -40,7 +40,11 @@ internal class MarkdownDocumentationWriter : Writer {
                     is DeepLinkAnnotatedElement.MethodAnnotatedElement -> element.method
                     else -> ""
                 }
-            val simpleName = element.annotatedClass.asClassName().toJavaPoet().reflectionName()
+            val simpleName =
+                element.annotatedClass
+                    .asClassName()
+                    .toJavaPoet()
+                    .reflectionName()
             writer.println(
                 String.format(
                     Locale.US,

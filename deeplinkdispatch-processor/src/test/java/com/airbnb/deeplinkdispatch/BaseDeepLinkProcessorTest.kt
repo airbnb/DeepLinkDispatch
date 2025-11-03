@@ -192,6 +192,7 @@ open class BaseDeepLinkProcessorTest {
         }
 
         @KotlinPoetJavaPoetPreview
+        @kotlin.ExperimentalUnsignedTypes
         internal fun compile(
             sourceFiles: List<Source>,
             arguments: MutableMap<OptionName, OptionValue>? = null,
@@ -232,6 +233,7 @@ open class BaseDeepLinkProcessorTest {
         }
 
         @KotlinPoetJavaPoetPreview
+        @kotlin.ExperimentalUnsignedTypes
         internal fun compileIncremental(
             sourceFiles: List<Source>,
             customDeepLinks: List<String> = emptyList(),
