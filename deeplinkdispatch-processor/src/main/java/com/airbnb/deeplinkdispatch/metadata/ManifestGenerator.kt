@@ -62,7 +62,7 @@ internal class ManifestGenerator(
         if (path == null || path.trim { it <= ' ' }.isEmpty()) {
             messager.printMessage(
                 Diagnostic.Kind.WARNING,
-                "Output path not specified. Manifest generation: Manifest not generated.",
+                "Output path not specified. Manifest generation: Manifest not generated. Output path must be specified via $MANIFEST_GEN_METADATA_OUTPUT_FILE ksp option.",
             )
             return null
         }

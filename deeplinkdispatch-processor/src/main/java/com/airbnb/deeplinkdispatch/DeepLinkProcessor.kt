@@ -57,6 +57,8 @@ import javax.lang.model.element.Modifier
 import javax.tools.Diagnostic
 import kotlin.reflect.KClass
 
+private const val CUSTOM_ANNOTATION_URL_PREFIX_DELIMITER = "#"
+
 @com.squareup.kotlinpoet.javapoet.KotlinPoetJavaPoetPreview
 @kotlin.ExperimentalUnsignedTypes
 class DeepLinkProcessor(
@@ -215,21 +217,21 @@ class DeepLinkProcessor(
         classElementsToProcess: Set<XTypeElement>,
         objectElementsToProcess: Set<XTypeElement>,
         methodElementsToProcess: Set<XMethodElement>,
-    ): List<DeepLinkAnnotatedElement> =
-        (
-            classElementsToProcess.flatMap { element ->
-                verifyCass(element)
-                mapUrisToDeepLinkAnnotatedElement(element, prefixesAndFqn)
-            } +
-                objectElementsToProcess.flatMap { element ->
-                    verifyObjectElement(element)
-                    mapUrisToDeepLinkAnnotatedElement(element, prefixesAndFqn)
-                } +
-                methodElementsToProcess.flatMap { element ->
-                    verifyMethod(element)
-                    mapUrisToDeepLinkAnnotatedElement(element, prefixesAndFqn)
-                }
-        ).filterNotNull()
+    ): List<DeepLinkAnnotatedElement> {
+        val callDeeplinkAnnotatedElements = classElementsToProcess.flatMap { classElement ->
+            verifyCass(classElement)
+            mapUrisToDeepLinkAnnotatedElement(classElement, prefixesAndFqn)
+        }
+        val objectDeeplinkAnnotatedElements = objectElementsToProcess.flatMap { objectElement ->
+            verifyObjectElement(objectElement)
+            mapUrisToDeepLinkAnnotatedElement(objectElement, prefixesAndFqn)
+        }
+        val methodDeeplinkAnnotatedElements = methodElementsToProcess.flatMap { methodElement ->
+            verifyMethod(methodElement)
+            mapUrisToDeepLinkAnnotatedElement(methodElement, prefixesAndFqn)
+        }
+        return (callDeeplinkAnnotatedElements + objectDeeplinkAnnotatedElements + methodDeeplinkAnnotatedElements).filterNotNull()
+    }
 
     private fun mapUrisToDeepLinkAnnotatedElement(
         element: XElement,
@@ -291,7 +293,7 @@ class DeepLinkProcessor(
             (deepLinkAnnotation?.value?.toList() ?: emptyList()).map { uri ->
                 UriAndActivityFqn(
                     uri = uri,
-                    activityClassFqn = deepLinkAnnotation?.activityClasFqn?.ifEmpty { null },
+                    activityClassFqn = deepLinkAnnotation?.activityClassFqn?.ifEmpty { null },
                 )
             }
     }
@@ -464,7 +466,18 @@ class DeepLinkProcessor(
                 val prefixes: Array<String> =
                     customAnnotationTypeElement
                         .getAnnotation(DEEP_LINK_SPEC_CLASS)
-                        ?.let { it.value.prefix } ?: emptyArray()
+                        ?.let {
+                            // The value of prefix is an array, however we do allow prefixes also to exist in a single string (within the array)
+                            // these are separated by a `#` char, which is not allowed to exist in the non path part of the URL without being escaped
+                            // and is not otherwise useed in the url template format of DLD.
+                            // Because the values within the array in the anotation definition have to be constant it is otherwise not possible to
+                            // easily configure multiple prefixes that are not hardcoded in the codebase of the app using DLD
+                            it.value.prefix.map { singlePrefix ->
+                                if (singlePrefix.contains(CUSTOM_ANNOTATION_URL_PREFIX_DELIMITER)) singlePrefix.split(
+                                    CUSTOM_ANNOTATION_URL_PREFIX_DELIMITER
+                                ) else listOf(singlePrefix)
+                            }.flatten().toTypedArray()
+                        } ?: emptyArray()
                 val activityClassFqn: String? =
                     customAnnotationTypeElement
                         .getAnnotation(DEEP_LINK_SPEC_CLASS)

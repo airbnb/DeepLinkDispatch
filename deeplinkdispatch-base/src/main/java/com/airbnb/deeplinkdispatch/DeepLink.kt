@@ -32,7 +32,7 @@ package com.airbnb.deeplinkdispatch
 @Retention(AnnotationRetention.RUNTIME)
 annotation class DeepLink(
     vararg val value: String,
-    val activityClasFqn: String = "",
+    val activityClassFqn: String = "",
 ) {
     companion object {
         const val IS_DEEP_LINK = "is_deep_link_flag"

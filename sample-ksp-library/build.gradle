@@ -46,4 +46,5 @@ dependencies {
 
 ksp {
     arg("deepLink.incremental", "true")
+    arg("deepLink.customAnnotations", "com.airbnb.deeplinkdispatch.sample.ksplibrary.ManifestGenWebDeepLink")
 }

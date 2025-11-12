@@ -4,6 +4,7 @@ import com.airbnb.deeplinkdispatch.test.Source
 import com.squareup.kotlinpoet.javapoet.KotlinPoetJavaPoetPreview
 import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 import org.junit.Test
+import java.io.File
 
 @ExperimentalCompilerApi
 @KotlinPoetJavaPoetPreview
@@ -21,6 +22,19 @@ class DeepLinkProcessorKspTest : BaseDeepLinkProcessorTest() {
                 """,
         )
 
+    private val customManifestGenWebDeepLinkJava =
+        Source.JavaSource(
+            "com.example.ManifestGenWebDeepLink",
+            """
+                package com.example;
+                import com.airbnb.deeplinkdispatch.DeepLinkSpec;
+                @DeepLinkSpec(prefix = { "http{scheme_suffix(|s)}://example.com/" }, activityClasFqn = "com.example.SampleActivity")
+                public @interface ManifestGenWebDeepLink {
+                    String[] value();
+                }
+                """,
+        )
+
     private val customAppDeepLinkJava =
         Source.JavaSource(
             "com.example.AppDeepLink",
@@ -32,6 +46,32 @@ class DeepLinkProcessorKspTest : BaseDeepLinkProcessorTest() {
                             String[] value();
                         }
                         """,
+        )
+
+    private val customManifestGenAppDeepLinkJava =
+        Source.JavaSource(
+            "com.example.ManifestGenAppDeepLink",
+            """
+                        package com.example;
+                        import com.airbnb.deeplinkdispatch.DeepLinkSpec;
+                        @DeepLinkSpec(prefix = { "example://" }, activityClasFqn = "com.example.SampleActivity")
+                        public @interface ManifestGenAppDeepLink {
+                            String[] value();
+                        }
+                        """,
+        )
+
+    // Need to define here as the original one is define an in android lib we cannot depend on here.
+    private val deeplinkHandlerInterface =
+        Source.KotlinSource(
+            "DeepLinkHandler.kt",
+            """
+            package com.airbnb.deeplinkdispatch.handler
+            import android.content.Context
+            interface DeepLinkHandler<T> {
+                fun handleDeepLink(context: Context, parameters: T)
+            }
+            """.trimIndent(),
         )
 
     @Test
@@ -82,7 +122,7 @@ class DeepLinkProcessorKspTest : BaseDeepLinkProcessorTest() {
                         method = "intentForInquiryDetailFragment",
                     ),
                 ),
-            generatedFiles =
+            generatedSourceFiles =
                 mapOf(
                     "DeepLinkDelegate.java" to
                         """
@@ -287,7 +327,7 @@ class DeepLinkProcessorKspTest : BaseDeepLinkProcessorTest() {
                         method = "webLinkMethod",
                     ),
                 ),
-            generatedFiles =
+            generatedSourceFiles =
                 mapOf(
                     "DeepLinkDelegate.java" to
                         """
@@ -368,6 +408,453 @@ class DeepLinkProcessorKspTest : BaseDeepLinkProcessorTest() {
                         
                         """.trimIndent(),
                 ),
+        )
+    }
+
+    @Test
+    fun testWithKotlinSourceAndManifestGeneration() {
+        val sampleActivityKotlin =
+            Source.KotlinSource(
+                "SampleActivity.kt",
+                """
+                 package com.example
+                 import com.airbnb.deeplinkdispatch.DeepLink
+                 import com.airbnb.deeplinkdispatch.DeepLinkHandler
+                 import android.content.Context
+                 import androidx.core.app.TaskStackBuilder
+                 import android.content.Intent
+                 import com.example.SampleModule
+                 @ManifestGenAppDeepLink( "host/deepLink","host/another")
+                 @ManifestGenWebDeepLink(value = arrayOf("deepLink","another"))
+                 @DeepLink(value = "http{scheme_suffix(|s)}://example.com/direct", activityClassFqn = "com.example.SampleActivity")
+                 @DeepLinkHandler( SampleModule::class )
+                 class SampleActivity : android.app.Activity() {
+                        object DeepLinks {
+                            @ManifestGenWebDeepLink( "method1/test","method2/test")
+                            @JvmStatic
+                            fun webLinkMethod(context: Context) = TaskStackBuilder.create(context)
+                        }
+                 }
+                 """,
+            )
+        val sourceFiles =
+            listOf(
+                customManifestGenAppDeepLinkJava,
+                customManifestGenWebDeepLinkJava,
+                module,
+                sampleActivityKotlin,
+                fakeBaseDeeplinkDelegateJava,
+            )
+        // This is not great but we do not have access to the path that kotlin compile testing
+        // be using either from here nor inside the compiler.g
+        val generateManifestFile = File(
+            System.getProperty("java.io.tmpdir"),
+            "GeneratedAndroidManifest_${System.currentTimeMillis()}.xml"
+        )
+        val results =
+            // Manifest generation only works with KSP so only test this with KSP
+            listOf(
+                compileIncremental(
+                    sourceFiles = sourceFiles,
+                    customDeepLinks = listOf("com.example.ManifestGenAppDeepLink", "com.example.ManifestGenWebDeepLink"),
+                    useKsp = true,
+                    incrementalFlag = false,
+                    additionalArguments = mutableMapOf("deepLinkManifestGenMetadata.output" to generateManifestFile.canonicalPath
+                    )
+                ),
+            )
+        assertGeneratedCode(
+            results = results,
+            registryClassName = "com.example.SampleModuleRegistry",
+            indexEntries = emptyList(), // Irrelevant for KSP only tets
+            generatedSourceFiles =
+                mapOf(
+                    "DeepLinkDelegate.java" to
+                            """
+                        package com.example;
+
+                        import com.airbnb.deeplinkdispatch.BaseDeepLinkDelegate;
+                        import com.airbnb.deeplinkdispatch.DeepLinkUri;
+                        import com.airbnb.deeplinkdispatch.handler.TypeConverters;
+                        import java.lang.Integer;
+                        import java.lang.String;
+                        import java.lang.reflect.Type;
+                        import java.util.Arrays;
+                        import java.util.Map;
+                        import kotlin.jvm.functions.Function0;
+                        import kotlin.jvm.functions.Function3;
+                        import org.jetbrains.annotations.NotNull;
+                        
+                        public final class DeepLinkDelegate extends BaseDeepLinkDelegate {
+                          public DeepLinkDelegate(@NotNull SampleModuleRegistry sampleModuleRegistry) {
+                            super(Arrays.asList(
+                              sampleModuleRegistry)
+                            );
+                          }
+                        
+                          public DeepLinkDelegate(@NotNull SampleModuleRegistry sampleModuleRegistry,
+                              @NotNull Map<String, String> configurablePathSegmentReplacements) {
+                            super(Arrays.asList(
+                              sampleModuleRegistry),
+                              configurablePathSegmentReplacements
+                            );
+                          }
+                        
+                          public DeepLinkDelegate(@NotNull SampleModuleRegistry sampleModuleRegistry,
+                              @NotNull Map<String, String> configurablePathSegmentReplacements,
+                              @NotNull Function0<TypeConverters> typeConverters) {
+                            super(Arrays.asList(
+                              sampleModuleRegistry),
+                              configurablePathSegmentReplacements,
+                              typeConverters
+                            );
+                          }
+                        
+                          public DeepLinkDelegate(@NotNull SampleModuleRegistry sampleModuleRegistry,
+                              @NotNull Map<String, String> configurablePathSegmentReplacements,
+                              @NotNull Function0<TypeConverters> typeConverters,
+                              @NotNull Function3<DeepLinkUri, Type, ? super String, Integer> typeConversionErrorNullable,
+                              @NotNull Function3<DeepLinkUri, Type, ? super String, Integer> typeConversionErrorNonNullable) {
+                            super(Arrays.asList(
+                              sampleModuleRegistry),
+                              configurablePathSegmentReplacements,
+                              typeConverters,
+                              null,
+                              typeConversionErrorNullable,
+                              typeConversionErrorNonNullable
+                            );
+                          }
+                        }
+
+                        """.trimIndent(),
+                    "SampleModuleRegistry.java" to
+                            """
+                        package com.example;
+                        
+                        import com.airbnb.deeplinkdispatch.BaseRegistry;
+                        import com.airbnb.deeplinkdispatch.base.Utils;
+                        import java.lang.String;
+                        
+                        public final class SampleModuleRegistry extends BaseRegistry {
+                          public SampleModuleRegistry() {
+                            super(Utils.readMatchIndexFromStrings( new String[] {matchIndex0(), }),
+                            new String[]{});
+                          }
+                        
+                          private static String matchIndex0() {
+                            return "\u0001\u0000\u0001\u0000\u0000\u0000\u0000\u0003\u0002r\u0002\u0000\u0007\u0000\u0000\u0000\u0000\u0000\u009bexample\u0004\u0000\u0004\u0000\u0000\u0000\u0000\u0000\u008ehost\b\u0000\u0007\u00006\u0000\u0000\u0000\u0000another\u0000\u0000\u0016example://host/another\u0000\u001acom.example.SampleActivity\u0000\b\u0000\b\u00007\u0000\u0000\u0000\u0000deepLink\u0000\u0000\u0017example://host/deepLink\u0000\u001acom.example.SampleActivity\u0000\u0012\u0000\u0017\u0000\u0000\u0000\u0000\u00027http{scheme_suffix(|s)}\u0004\u0000\u000b\u0000\u0000\u0000\u0000\u0002#example.com\b\u0000\u0007\u0000M\u0000\u0000\u0000\u0000another\u0000\u0000-http{scheme_suffix(|s)}://example.com/another\u0000\u001acom.example.SampleActivity\u0000\b\u0000\b\u0000N\u0000\u0000\u0000\u0000deepLink\u0000\u0000.http{scheme_suffix(|s)}://example.com/deepLink\u0000\u001acom.example.SampleActivity\u0000\b\u0000\u0006\u0000L\u0000\u0000\u0000\u0000direct\u0000\u0000,http{scheme_suffix(|s)}://example.com/direct\u0000\u001acom.example.SampleActivity\u0000\b\u0000\u0007\u0000\u0000\u0000\u0000\u0000vmethod1\b\u0000\u0004\u0000i\u0000\u0000\u0000\u0000test\u0001\u00002http{scheme_suffix(|s)}://example.com/method1/test\u0000${"\$"}com.example.SampleActivity${"\$"}DeepLinks\rwebLinkMethod\b\u0000\u0007\u0000\u0000\u0000\u0000\u0000vmethod2\b\u0000\u0004\u0000i\u0000\u0000\u0000\u0000test\u0001\u00002http{scheme_suffix(|s)}://example.com/method2/test\u0000${"\$"}com.example.SampleActivity${"\$"}DeepLinks\rwebLinkMethod";
+                          }
+                        }
+                        
+                        """.trimIndent(),
+                ),
+            generatedFiles = mapOf(generateManifestFile to """
+                <?xml version="1.0" encoding="utf-8"?>
+                <manifest xmlns:android="http://schemas.android.com/apk/res/android" >
+                    <application>
+                        <activity
+                            android:name="com.example.SampleActivity" android:exported="true">
+                            <intent-filter>
+                                <action android:name="android.intent.action.VIEW" />
+                                <category android:name="android.intent.category.DEFAULT" />
+                                <category android:name="android.intent.category.BROWSABLE" />
+                                <data android:scheme="example" />
+                                <data android:host="host" />
+                                <data android:path="/deepLink" />
+                                <data android:path="/another" />
+                            </intent-filter>
+                            <intent-filter>
+                                <action android:name="android.intent.action.VIEW" />
+                                <category android:name="android.intent.category.DEFAULT" />
+                                <category android:name="android.intent.category.BROWSABLE" />
+                                <data android:scheme="http" />
+                                <data android:scheme="https" />
+                                <data android:host="example.com" />
+                                <data android:path="/deepLink" />
+                                <data android:path="/another" />
+                                <data android:path="/direct" />
+                                <data android:path="/method1/test" />
+                                <data android:path="/method2/test" />
+                            </intent-filter>
+                        </activity>
+                    </application>
+                </manifest>
+
+            """.trimIndent())
+        )
+    }
+
+    @Test
+    fun testWithKotlinSourceMethodAndManifestGeneration() {
+        val sampleActivityKotlin =
+            Source.KotlinSource(
+                "SampleActivity.kt",
+                """
+                 package com.example
+                 import com.airbnb.deeplinkdispatch.DeepLink
+                 import com.airbnb.deeplinkdispatch.DeepLinkHandler
+                 import android.content.Context
+                 import android.content.Intent
+                 import com.example.SampleModule
+                 @DeepLinkHandler( SampleModule::class )
+                 class SampleActivity : android.app.Activity() {
+                        @ManifestGenWebDeepLink( "method1","method2")
+                        @ManifestGenAppDeepLink( "host/method1","host/method2")
+                        @JvmStatic
+                        fun webLinkMethod(context: Context) = Intent()
+                 }
+                 """,
+            )
+        val sourceFiles =
+            listOf(
+                customManifestGenAppDeepLinkJava,
+                customManifestGenWebDeepLinkJava,
+                module,
+                sampleActivityKotlin,
+                fakeBaseDeeplinkDelegateJava,
+            )
+        val generateManifestFile = File(
+            System.getProperty("java.io.tmpdir"),
+            "GeneratedAndroidManifest_${System.currentTimeMillis()}.xml"
+        )
+        val results =
+            listOf(
+                compileIncremental(
+                    sourceFiles = sourceFiles,
+                    customDeepLinks = listOf("com.example.ManifestGenAppDeepLink", "com.example.ManifestGenWebDeepLink"),
+                    useKsp = true,
+                    incrementalFlag = false,
+                    additionalArguments = mutableMapOf("deepLinkManifestGenMetadata.output" to generateManifestFile.canonicalPath
+                    )
+                ),
+            )
+        assertGeneratedCode(
+            results = results,
+            registryClassName = "com.example.SampleModuleRegistry",
+            indexEntries = emptyList(),
+            generatedSourceFiles =
+                mapOf(
+                    "DeepLinkDelegate.java" to
+                            """
+                        package com.example;
+
+                        import com.airbnb.deeplinkdispatch.BaseDeepLinkDelegate;
+                        import com.airbnb.deeplinkdispatch.DeepLinkUri;
+                        import com.airbnb.deeplinkdispatch.handler.TypeConverters;
+                        import java.lang.Integer;
+                        import java.lang.String;
+                        import java.lang.reflect.Type;
+                        import java.util.Arrays;
+                        import java.util.Map;
+                        import kotlin.jvm.functions.Function0;
+                        import kotlin.jvm.functions.Function3;
+                        import org.jetbrains.annotations.NotNull;
+
+                        public final class DeepLinkDelegate extends BaseDeepLinkDelegate {
+                          public DeepLinkDelegate(@NotNull SampleModuleRegistry sampleModuleRegistry) {
+                            super(Arrays.asList(
+                              sampleModuleRegistry)
+                            );
+                          }
+
+                          public DeepLinkDelegate(@NotNull SampleModuleRegistry sampleModuleRegistry,
+                              @NotNull Map<String, String> configurablePathSegmentReplacements) {
+                            super(Arrays.asList(
+                              sampleModuleRegistry),
+                              configurablePathSegmentReplacements
+                            );
+                          }
+
+                          public DeepLinkDelegate(@NotNull SampleModuleRegistry sampleModuleRegistry,
+                              @NotNull Map<String, String> configurablePathSegmentReplacements,
+                              @NotNull Function0<TypeConverters> typeConverters) {
+                            super(Arrays.asList(
+                              sampleModuleRegistry),
+                              configurablePathSegmentReplacements,
+                              typeConverters
+                            );
+                          }
+
+                          public DeepLinkDelegate(@NotNull SampleModuleRegistry sampleModuleRegistry,
+                              @NotNull Map<String, String> configurablePathSegmentReplacements,
+                              @NotNull Function0<TypeConverters> typeConverters,
+                              @NotNull Function3<DeepLinkUri, Type, ? super String, Integer> typeConversionErrorNullable,
+                              @NotNull Function3<DeepLinkUri, Type, ? super String, Integer> typeConversionErrorNonNullable) {
+                            super(Arrays.asList(
+                              sampleModuleRegistry),
+                              configurablePathSegmentReplacements,
+                              typeConverters,
+                              null,
+                              typeConversionErrorNullable,
+                              typeConversionErrorNonNullable
+                            );
+                          }
+                        }
+
+                        """.trimIndent(),
+                    "SampleModuleRegistry.java" to
+                            """
+                        package com.example;
+
+                        import com.airbnb.deeplinkdispatch.BaseRegistry;
+                        import com.airbnb.deeplinkdispatch.base.Utils;
+                        import java.lang.String;
+
+                        public final class SampleModuleRegistry extends BaseRegistry {
+                          public SampleModuleRegistry() {
+                            super(Utils.readMatchIndexFromStrings( new String[] {matchIndex0(), }),
+                            new String[]{});
+                          }
+
+                          private static String matchIndex0() {
+                            return "\u0001\u0000\u0001\u0000\u0000\u0000\u0000\u0001Ër\u0002\u0000\u0007\u0000\u0000\u0000\u0000\u0000³example\u0004\u0000\u0004\u0000\u0000\u0000\u0000\u0000¦host\b\u0000\u0007\u0000C\u0000\u0000\u0000\u0000method1\u0001\u0000\u0016example://host/method1\u0000\u001acom.example.SampleActivity\rwebLinkMethod\b\u0000\u0007\u0000C\u0000\u0000\u0000\u0000method2\u0001\u0000\u0016example://host/method2\u0000\u001acom.example.SampleActivity\rwebLinkMethod\u0012\u0000\u0017\u0000\u0000\u0000\u0000\u0000èhttp{scheme_suffix(|s)}\u0004\u0000\u000b\u0000\u0000\u0000\u0000\u0000Ôexample.com\b\u0000\u0007\u0000Z\u0000\u0000\u0000\u0000method1\u0001\u0000-http{scheme_suffix(|s)}://example.com/method1\u0000\u001acom.example.SampleActivity\rwebLinkMethod\b\u0000\u0007\u0000Z\u0000\u0000\u0000\u0000method2\u0001\u0000-http{scheme_suffix(|s)}://example.com/method2\u0000\u001acom.example.SampleActivity\rwebLinkMethod";
+                          }
+                        }
+
+                        """.trimIndent(),
+                ),
+            generatedFiles = mapOf(generateManifestFile to """
+                <?xml version="1.0" encoding="utf-8"?>
+                <manifest xmlns:android="http://schemas.android.com/apk/res/android" >
+                    <application>
+                        <activity
+                            android:name="com.example.SampleActivity" android:exported="true">
+                            <intent-filter>
+                                <action android:name="android.intent.action.VIEW" />
+                                <category android:name="android.intent.category.DEFAULT" />
+                                <category android:name="android.intent.category.BROWSABLE" />
+                                <data android:scheme="http" />
+                                <data android:scheme="https" />
+                                <data android:host="example.com" />
+                                <data android:path="/method1" />
+                                <data android:path="/method2" />
+                            </intent-filter>
+                            <intent-filter>
+                                <action android:name="android.intent.action.VIEW" />
+                                <category android:name="android.intent.category.DEFAULT" />
+                                <category android:name="android.intent.category.BROWSABLE" />
+                                <data android:scheme="example" />
+                                <data android:host="host" />
+                                <data android:path="/method1" />
+                                <data android:path="/method2" />
+                            </intent-filter>
+                        </activity>
+                    </application>
+                </manifest>
+
+            """.trimIndent())
+        )
+    }
+
+    @Test
+    fun testWithKotlinSourceObjectHandlerAndManifestGeneration() {
+        val sampleDeeplinkHandler =
+            Source.KotlinSource(
+                "SampleDeeplinkHandler.kt",
+                """
+                 package com.example
+                 import com.airbnb.deeplinkdispatch.DeepLink
+                 import com.airbnb.deeplinkdispatch.handler.DeepLinkHandler
+                 import android.content.Context
+                 import com.airbnb.deeplinkdispatch.handler.DeepLinkParamType
+                 import com.airbnb.deeplinkdispatch.handler.DeeplinkParam
+                 import com.example.SampleModule
+                 @ManifestGenWebDeepLink(value = arrayOf("handler1/{value1}/{value2}","handler2/{value1}/{value2}"))
+                 @ManifestGenAppDeepLink( "host/handler1/{value1}/{value2}","host/handler2/{value1}/{value2}")
+                 object TestDeepLinkHandler : DeepLinkHandler<TestDeepLinkHandlerDeepLinkArgs> {
+                     override fun handleDeepLink(context: Context, parameters: TestDeepLinkHandlerDeepLinkArgs) {
+                         TODO("Not yet implemented")
+                     }
+                 }
+                 data class TestDeepLinkHandlerDeepLinkArgs(
+                     @DeeplinkParam(name = "value1", type = DeepLinkParamType.Path ) val value1: String,
+                     @DeeplinkParam(name = "value2", type = DeepLinkParamType.Path ) val value2: String,
+                 )
+                 @DeepLinkHandler( SampleModule::class )
+                 class Activity : android.app.Activity() {}
+                 """,
+            )
+        val sourceFiles =
+            listOf(
+                deeplinkHandlerInterface,
+                customManifestGenAppDeepLinkJava,
+                customManifestGenWebDeepLinkJava,
+                module,
+                sampleDeeplinkHandler,
+                fakeBaseDeeplinkDelegateJava,
+            )
+        val generateManifestFile = File(
+            System.getProperty("java.io.tmpdir"),
+            "GeneratedAndroidManifest_${System.currentTimeMillis()}.xml"
+        )
+        val results =
+            listOf(
+                compileIncremental(
+                    sourceFiles = sourceFiles,
+                    customDeepLinks = listOf("com.example.ManifestGenAppDeepLink", "com.example.ManifestGenWebDeepLink"),
+                    useKsp = true,
+                    incrementalFlag = false,
+                    additionalArguments = mutableMapOf("deepLinkManifestGenMetadata.output" to generateManifestFile.canonicalPath
+                    )
+                ),
+            )
+        assertGeneratedCode(
+            results = results,
+            registryClassName = "com.example.SampleModuleRegistry",
+            indexEntries = emptyList(),
+            generatedSourceFiles =
+                mapOf(
+                    "SampleModuleRegistry.java" to
+                            """
+                        package com.example;
+
+                        import com.airbnb.deeplinkdispatch.BaseRegistry;
+                        import com.airbnb.deeplinkdispatch.base.Utils;
+                        import java.lang.String;
+
+                        public final class SampleModuleRegistry extends BaseRegistry {
+                          public SampleModuleRegistry() {
+                            super(Utils.readMatchIndexFromStrings( new String[] {matchIndex0(), }),
+                            new String[]{});
+                          }
+
+                          private static String matchIndex0() {
+                            return "\u0001\u0000\u0001\u0000\u0000\u0000\u0000\u0002\u0083r\u0002\u0000\u0007\u0000\u0000\u0000\u0000\u0001\u000fexample\u0004\u0000\u0004\u0000\u0000\u0000\u0000\u0001\u0002host\b\u0000\b\u0000\u0000\u0000\u0000\u0000phandler1\u0018\u0000\b\u0000\u0000\u0000\u0000\u0000_{value1}\u0018\u0000\b\u0000N\u0000\u0000\u0000\u0000{value2}\u0002\u0000)example://host/handler1/{value1}/{value2}\u0000\u001fcom.example.TestDeepLinkHandler\u0000\b\u0000\b\u0000\u0000\u0000\u0000\u0000phandler2\u0018\u0000\b\u0000\u0000\u0000\u0000\u0000_{value1}\u0018\u0000\b\u0000N\u0000\u0000\u0000\u0000{value2}\u0002\u0000)example://host/handler2/{value1}/{value2}\u0000\u001fcom.example.TestDeepLinkHandler\u0000\u0012\u0000\u0017\u0000\u0000\u0000\u0000\u0001Dhttp{scheme_suffix(|s)}\u0004\u0000\u000b\u0000\u0000\u0000\u0000\u00010example.com\b\u0000\b\u0000\u0000\u0000\u0000\u0000\u0087handler1\u0018\u0000\b\u0000\u0000\u0000\u0000\u0000v{value1}\u0018\u0000\b\u0000e\u0000\u0000\u0000\u0000{value2}\u0002\u0000@http{scheme_suffix(|s)}://example.com/handler1/{value1}/{value2}\u0000\u001fcom.example.TestDeepLinkHandler\u0000\b\u0000\b\u0000\u0000\u0000\u0000\u0000\u0087handler2\u0018\u0000\b\u0000\u0000\u0000\u0000\u0000v{value1}\u0018\u0000\b\u0000e\u0000\u0000\u0000\u0000{value2}\u0002\u0000@http{scheme_suffix(|s)}://example.com/handler2/{value1}/{value2}\u0000\u001fcom.example.TestDeepLinkHandler\u0000";
+                          }
+                        }
+
+                        """.trimIndent(),
+                ),
+            generatedFiles = mapOf(generateManifestFile to """
+                <?xml version="1.0" encoding="utf-8"?>
+                <manifest xmlns:android="http://schemas.android.com/apk/res/android" >
+                    <application>
+                        <activity
+                            android:name="com.example.SampleActivity" android:exported="true">
+                            <intent-filter>
+                                <action android:name="android.intent.action.VIEW" />
+                                <category android:name="android.intent.category.DEFAULT" />
+                                <category android:name="android.intent.category.BROWSABLE" />
+                                <data android:scheme="http" />
+                                <data android:scheme="https" />
+                                <data android:host="example.com" />
+                                <data android:pathPattern="/handler1/.*/.*" />
+                                <data android:pathPattern="/handler2/.*/.*" />
+                            </intent-filter>
+                            <intent-filter>
+                                <action android:name="android.intent.action.VIEW" />
+                                <category android:name="android.intent.category.DEFAULT" />
+                                <category android:name="android.intent.category.BROWSABLE" />
+                                <data android:scheme="example" />
+                                <data android:host="host" />
+                                <data android:pathPattern="/handler1/.*/.*" />
+                                <data android:pathPattern="/handler2/.*/.*" />
+                            </intent-filter>
+                        </activity>
+                    </application>
+                </manifest>
+
+            """.trimIndent())
         )
     }
 
@@ -493,7 +980,7 @@ class DeepLinkProcessorKspTest : BaseDeepLinkProcessorTest() {
                         method = "webLinkMethod",
                     ),
                 ),
-            generatedFiles =
+            generatedSourceFiles =
                 mapOf(
                     "DeepLinkDelegate.java" to
                         """

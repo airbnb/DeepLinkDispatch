@@ -605,7 +605,7 @@ class DeepLinkProcessorDeepLinkHandlerIncrementalTest : BaseDeepLinkProcessorTes
                         className = "com.example.SampleJavaDeeplinkHandler",
                     ),
                 ),
-            generatedFiles =
+            generatedSourceFiles =
                 mapOf(
                     "SampleModuleRegistry.java" to
                         """
@@ -733,7 +733,7 @@ class DeepLinkProcessorDeepLinkHandlerIncrementalTest : BaseDeepLinkProcessorTes
                         className = "com.example.TestDeepLinkHandler",
                     ),
                 ),
-            generatedFiles =
+            generatedSourceFiles =
                 mapOf(
                     "SampleModuleRegistry.java" to
                         """
@@ -798,7 +798,7 @@ class DeepLinkProcessorDeepLinkHandlerIncrementalTest : BaseDeepLinkProcessorTes
                         className = "com.example.TestDeepLinkHandler",
                     ),
                 ),
-            generatedFiles =
+            generatedSourceFiles =
                 mapOf(
                     "SampleModuleRegistry.java" to
                         """
@@ -886,7 +886,7 @@ class DeepLinkProcessorDeepLinkHandlerIncrementalTest : BaseDeepLinkProcessorTes
                         className = "com.example.TestDeepLinkHandler",
                     ),
                 ),
-            generatedFiles =
+            generatedSourceFiles =
                 mapOf(
                     "SampleModuleRegistry.java" to
                         """
@@ -945,7 +945,7 @@ class DeepLinkProcessorDeepLinkHandlerIncrementalTest : BaseDeepLinkProcessorTes
                         className = "com.example.TestDeepLinkHandler",
                     ),
                 ),
-            generatedFiles =
+            generatedSourceFiles =
                 mapOf(
                     "SampleModuleRegistry.java" to
                         """
@@ -1062,7 +1062,7 @@ class DeepLinkProcessorDeepLinkHandlerIncrementalTest : BaseDeepLinkProcessorTes
                         className = "com.example.TestDeepLinkHandler",
                     ),
                 ),
-            generatedFiles =
+            generatedSourceFiles =
                 mapOf(
                     "SampleModuleRegistry.java" to
                         """
@@ -1150,7 +1150,7 @@ class DeepLinkProcessorDeepLinkHandlerIncrementalTest : BaseDeepLinkProcessorTes
                         className = "com.example.TestDeepLinkHandler",
                     ),
                 ),
-            generatedFiles =
+            generatedSourceFiles =
                 mapOf(
                     "SampleModuleRegistry.java" to
                         """

@@ -57,7 +57,7 @@ class DeepLinkProcessorNonIncrementalTest : BaseDeepLinkProcessorTest() {
                         "com.example.SampleActivity",
                     ),
                 ),
-            generatedFiles =
+            generatedSourceFiles =
                 mapOf(
                     "DeepLinkDelegate.java" to
                         """
@@ -231,7 +231,7 @@ class DeepLinkProcessorNonIncrementalTest : BaseDeepLinkProcessorTest() {
                         className = "com.example.SampleActivity",
                     ),
                 ),
-            generatedFiles =
+            generatedSourceFiles =
                 mapOf(
                     "DeepLinkDelegate.java" to
                         """
@@ -455,7 +455,7 @@ class DeepLinkProcessorNonIncrementalTest : BaseDeepLinkProcessorTest() {
                         className = "com.Example.SampleActivity",
                     ),
                 ),
-            generatedFiles =
+            generatedSourceFiles =
                 mapOf(
                     "DeepLinkDelegate.java" to
                         """
@@ -744,7 +744,7 @@ class DeepLinkProcessorNonIncrementalTest : BaseDeepLinkProcessorTest() {
                         method = "intentFromOnePathWithOneParam",
                     ),
                 ),
-            generatedFiles =
+            generatedSourceFiles =
                 mapOf(
                     "DeepLinkDelegate.java" to
                         """

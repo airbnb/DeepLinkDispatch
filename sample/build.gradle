@@ -87,6 +87,7 @@ ksp {
             "com.airbnb.deeplinkdispatch.sample.AppDeepLink|"
                     + "com.airbnb.deeplinkdispatch.sample.WebDeepLink|"
                     + "com.airbnb.deeplinkdispatch.sample.WebPlaceholderDeepLink|"
-                    + "com.airbnb.deeplinkdispatch.sample.library.LibraryDeepLink"
+                    + "com.airbnb.deeplinkdispatch.sample.library.LibraryDeepLink|"
+                    + "com.airbnb.deeplinkdispatch.sample.ksplibrary.ManifestGenWebDeepLink"
     )
 }

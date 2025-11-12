@@ -6,7 +6,8 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.airbnb.deeplinkdispatch.DeepLink
 
-@DeepLink("http://example.com/ksp-library", activityClasFqn = "com.airbnb.deeplinkdispatch.sample.ksplibrary.KspLibraryActivity")
+@ManifestGenWebDeepLink(value = ["test/path" , "another_test/path"])
+@DeepLink("http://example.com/ksp-library", activityClassFqn = "com.airbnb.deeplinkdispatch.sample.ksplibrary.KspLibraryActivity")
 class KspLibraryActivity : AppCompatActivity() {
     @SuppressLint("RestrictedApi")
     override fun onCreate(savedInstanceState: Bundle?) {

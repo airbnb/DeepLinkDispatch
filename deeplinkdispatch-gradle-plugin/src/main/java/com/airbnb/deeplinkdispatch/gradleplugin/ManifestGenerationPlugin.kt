@@ -177,10 +177,11 @@ abstract class GenerateManifestIntentFiltersForDeeplinkDispatchTask: DefaultTask
 
     /**
      * The path where KSP will generate the manifest file.
-     * We use @Internal instead of @InputFile to avoid Gradle validation errors
-     * when the file doesn't exist yet.
+     * Marked as optional InputFile so Gradle tracks changes to this file for up-to-date checking.
      */
-    @get:org.gradle.api.tasks.Internal
+    @get:InputFile
+    @get:Optional
+    @get:PathSensitive(PathSensitivity.RELATIVE)
     abstract val generatedManifestPath: RegularFileProperty
 
     /**

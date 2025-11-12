@@ -5,6 +5,7 @@ import com.airbnb.deeplinkdispatch.DeepLinkAnnotatedElement
 import com.airbnb.deeplinkdispatch.SIMPLE_GLOB_PATTERN
 import com.airbnb.deeplinkdispatch.allPossibleValues
 import java.io.PrintWriter
+import javax.tools.Diagnostic
 
 /**
  * Old documentation format.
@@ -15,6 +16,21 @@ internal class ManifestWriter : Writer {
         writer: PrintWriter,
         elements: List<DeepLinkAnnotatedElement>,
     ) {
+        // Validate that no elements with activityClassFqn use configurable path segments
+        elements
+            .filter { it.activityClassFqn != null }
+            .forEach { element ->
+                if (element.uriTemplate.contains('<') && element.uriTemplate.contains('>')) {
+                    env.messager.printMessage(
+                        Diagnostic.Kind.ERROR,
+                        "Manifest generation is not supported for deep links using configurable path segments. " +
+                                "Found configurable path segment in: ${element.uriTemplate}. " +
+                                "Please remove the activityClassFqn parameter from @DeepLink annotation.",
+                        element.element
+                    )
+                }
+            }
+
         writer.apply {
             println("<?xml version=\"1.0\" encoding=\"utf-8\"?>")
             println("<manifest xmlns:android=\"http://schemas.android.com/apk/res/android\" >")

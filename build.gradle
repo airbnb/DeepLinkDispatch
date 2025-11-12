@@ -20,7 +20,7 @@ buildscript {
         classpath deps.dokkaPlugin
         classpath deps.kspGradlePlugin
         classpath deps.ktlintGradlePlugin
-        // Note: This means that the gralde plugin used in the sameple app is not built from source
+        // Note: This means that the gralde plugin used in the sample app is not built from source
         // but downloaded form the repository at he version specified in the gradle.properties file.
         // If you are making changes to the gradle plugin, you need to change the version in the
         // gradle.properties file and run ./gradlew publishToMavenLocal in order to see the changes
