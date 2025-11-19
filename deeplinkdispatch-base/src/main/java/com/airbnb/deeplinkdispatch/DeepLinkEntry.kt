@@ -111,14 +111,35 @@ sealed class DeepLinkEntry(
         }
     }
 
+    /**
+     * Count of placeholder parameters in the URI template
+     */
+    private val placeholderCount: Int by lazy {
+        placeholderRegex.findAll(uriTemplate).count()
+    }
+
+    /**
+     * Count of configurable path segments in the URI template
+     */
+    private val configurablePathSegmentCount: Int by lazy {
+        uriTemplate.count { it == CONFIGURABLE_PATH_SEGMENT_PREFIX_CHAR }
+    }
+
+    /**
+     * Total number of non-concrete elements (placeholders + configurable path segments)
+     */
+    private val totalNonConcreteElements: Int by lazy {
+        placeholderCount + configurablePathSegmentCount
+    }
+
     fun templatesMatchesSameUrls(other: DeepLinkEntry) = uriTemplateWithoutPlaceholders == other.uriTemplateWithoutPlaceholders
 
     /**
      * Whatever template has the first placeholder (and then configurable path segment) is the less
      * concrete one.
-     * Because if they would have been all in the same index those elements would have been on the
-     * same level and in the same "list" of elements we compare in order.
-     * In this case the one with the more concete element would have won and the same is true here.
+     * When two templates have the same firstNonConcreteIndex, we compare their total concreteness
+     * by looking at the total number of non-concrete elements and the length of concrete parts.
+     * Configurable path segments are MORE concrete than placeholders.
      */
     override fun compareTo(other: DeepLinkEntry): Int =
         when {
@@ -131,12 +152,25 @@ sealed class DeepLinkEntry(
             other.firstNonConcreteIndex < 0 && other.firstNonConcreteIndex != this.firstNonConcreteIndex -> 1
             this.firstNonConcreteIndex < other.firstNonConcreteIndex -> 1
             this.firstNonConcreteIndex == other.firstNonConcreteIndex -> {
-                if (this.firstNonConcreteIndex == -1 || uriTemplate[firstNonConcreteIndex] == other.uriTemplate[firstNonConcreteIndex]) {
-                    0
-                } else if (uriTemplate[firstNonConcreteIndex] == CONFIGURABLE_PATH_SEGMENT_PREFIX_CHAR) {
-                    -1
-                } else {
-                    1
+                when {
+                    // Both are fully concrete
+                    this.firstNonConcreteIndex == -1 -> 0
+                    // Compare by total number of non-concrete elements (fewer is more concrete)
+                    this.totalNonConcreteElements != other.totalNonConcreteElements ->
+                        this.totalNonConcreteElements.compareTo(other.totalNonConcreteElements)
+                    // Same number of non-concrete elements, compare by type at firstNonConcreteIndex
+                    // Configurable path segment is MORE concrete than placeholder
+                    uriTemplate[firstNonConcreteIndex] != other.uriTemplate[firstNonConcreteIndex] -> {
+                        if (uriTemplate[firstNonConcreteIndex] == CONFIGURABLE_PATH_SEGMENT_PREFIX_CHAR) {
+                            -1
+                        } else {
+                            1
+                        }
+                    }
+                    // Same type and count, compare by length of concrete parts (longer is more concrete)
+                    this.uriTemplateWithoutPlaceholders.length != other.uriTemplateWithoutPlaceholders.length ->
+                        -this.uriTemplateWithoutPlaceholders.length.compareTo(other.uriTemplateWithoutPlaceholders.length)
+                    else -> 0
                 }
             }
             else -> -1
