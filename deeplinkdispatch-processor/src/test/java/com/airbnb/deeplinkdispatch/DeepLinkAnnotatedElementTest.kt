@@ -16,6 +16,9 @@ class DeepLinkAnnotatedElementTest {
             DeepLinkAnnotatedElement.ActivityAnnotatedElement(
                 uri = "airbnb://example.com/{foo}/bar",
                 activityClassFqn = null,
+                intentFilterAttributes = emptySet(),
+                actions = setOf("android.intent.action.VIEW"),
+                categories = setOf("android.intent.category.DEFAULT", "android.intent.category.BROWSABLE"),
                 element = element,
             )
         Assertions.assertThat(dlElement.uriTemplate).isEqualTo("airbnb://example.com/{foo}/bar")
@@ -28,6 +31,9 @@ class DeepLinkAnnotatedElementTest {
             DeepLinkAnnotatedElement.ActivityAnnotatedElement(
                 uri = "airbnb://example.com/{foo}/bar",
                 activityClassFqn = "com.airbnb.SomeDeepLinkActivity",
+                intentFilterAttributes = emptySet(),
+                actions = setOf("android.intent.action.VIEW"),
+                categories = setOf("android.intent.category.DEFAULT", "android.intent.category.BROWSABLE"),
                 element = element,
             )
         Assertions.assertThat(dlElement.uriTemplate).isEqualTo("airbnb://example.com/{foo}/bar")
@@ -40,6 +46,9 @@ class DeepLinkAnnotatedElementTest {
             DeepLinkAnnotatedElement.ActivityAnnotatedElement(
                 uri = "airbnb://classDeepLink?foo=bar",
                 activityClassFqn = null,
+                intentFilterAttributes = emptySet(),
+                actions = setOf("android.intent.action.VIEW"),
+                categories = setOf("android.intent.category.DEFAULT", "android.intent.category.BROWSABLE"),
                 element = element,
             )
         Assertions.assertThat(dlElement.uriTemplate).isEqualTo("airbnb://classDeepLink?foo=bar")
@@ -50,6 +59,9 @@ class DeepLinkAnnotatedElementTest {
         DeepLinkAnnotatedElement.ActivityAnnotatedElement(
             uri = "http",
             activityClassFqn = null,
+            intentFilterAttributes = emptySet(),
+            actions = setOf("android.intent.action.VIEW"),
+            categories = setOf("android.intent.category.DEFAULT", "android.intent.category.BROWSABLE"),
             element = element,
         )
         Assert.fail()
@@ -60,6 +72,9 @@ class DeepLinkAnnotatedElementTest {
         DeepLinkAnnotatedElement.ActivityAnnotatedElement(
             uri = "example.com/something",
             activityClassFqn = null,
+            intentFilterAttributes = emptySet(),
+            actions = setOf("android.intent.action.VIEW"),
+            categories = setOf("android.intent.category.DEFAULT", "android.intent.category.BROWSABLE"),
             element = element,
         )
         Assert.fail()
@@ -71,6 +86,9 @@ class DeepLinkAnnotatedElementTest {
             DeepLinkAnnotatedElement.ActivityAnnotatedElement(
                 uri = "http{scheme}://example.com/{foo}/bar",
                 activityClassFqn = null,
+                intentFilterAttributes = emptySet(),
+                actions = setOf("android.intent.action.VIEW"),
+                categories = setOf("android.intent.category.DEFAULT", "android.intent.category.BROWSABLE"),
                 element = element,
             )
         Assertions.assertThat(dlElement.uriTemplate).isEqualTo("http{scheme}://example.com/{foo}/bar")
@@ -82,6 +100,9 @@ class DeepLinkAnnotatedElementTest {
             DeepLinkAnnotatedElement.ActivityAnnotatedElement(
                 uri = "http://{host}example.com/{foo}/bar",
                 activityClassFqn = null,
+                intentFilterAttributes = emptySet(),
+                actions = setOf("android.intent.action.VIEW"),
+                categories = setOf("android.intent.category.DEFAULT", "android.intent.category.BROWSABLE"),
                 element = element,
             )
         Assertions.assertThat(dlElement.uriTemplate).isEqualTo("http://{host}example.com/{foo}/bar")

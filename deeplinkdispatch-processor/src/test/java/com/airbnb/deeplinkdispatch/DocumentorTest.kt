@@ -78,12 +78,18 @@ class DocumentorTest {
             DeepLinkAnnotatedElement.ActivityAnnotatedElement(
                 uri = "airbnb://example.com/{foo}/bar",
                 activityClassFqn = null,
+                intentFilterAttributes = emptySet(),
+                actions = setOf("android.intent.action.VIEW"),
+                categories = setOf("android.intent.category.DEFAULT", "android.intent.category.BROWSABLE"),
                 element = classElement,
             )
         val deepLinkElement2 =
             DeepLinkAnnotatedElement.MethodAnnotatedElement(
                 uri = "airbnb://example.com/{foo}/bar",
                 activityClassFqn = null,
+                intentFilterAttributes = emptySet(),
+                actions = setOf("android.intent.action.VIEW"),
+                categories = setOf("android.intent.category.DEFAULT", "android.intent.category.BROWSABLE"),
                 element = methodElement,
             )
         return listOf(deepLinkElement1, deepLinkElement2)

@@ -24,7 +24,8 @@ def versions = [
     androidVersion                   : '4.1.1.4',
     testRunnerVersion                : '1.7.0',
     constraintLayoutVersion          : '2.2.1',
-    testExtVersion                   : '1.3.0'
+    testExtVersion                   : '1.3.0',
+    androicCommonToolsVersion        : '30.4.1'
 ]
 ext.androidConfig = [
     agpVersion                          : '8.13.0',
@@ -54,6 +55,7 @@ ext.deps = [
     xProcessor               : "androidx.room:room-compiler-processing:$versions.xProcessorVersion",
     ktlintGradlePlugin       : "org.jmailen.gradle:kotlinter-gradle:$versions.ktlintGradlePluginVersion",
     constraintLayout         : "androidx.constraintlayout:constraintlayout:$versions.constraintLayoutVersion",
+    androidCommonTools       : "com.android.tools:common:$versions.androicCommonToolsVersion",
 
     // Testing
     androidxTestCore         : "androidx.test:core:$versions.androidXTestingVersion",

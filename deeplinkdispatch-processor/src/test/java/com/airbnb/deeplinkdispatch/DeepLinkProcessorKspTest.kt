@@ -2,6 +2,7 @@ package com.airbnb.deeplinkdispatch
 
 import com.airbnb.deeplinkdispatch.test.Source
 import com.squareup.kotlinpoet.javapoet.KotlinPoetJavaPoetPreview
+import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 import org.junit.Test
 import java.io.File
@@ -28,7 +29,7 @@ class DeepLinkProcessorKspTest : BaseDeepLinkProcessorTest() {
             """
                 package com.example;
                 import com.airbnb.deeplinkdispatch.DeepLinkSpec;
-                @DeepLinkSpec(prefix = { "http{scheme_suffix(|s)}://example.com/" }, activityClasFqn = "com.example.SampleActivity")
+                @DeepLinkSpec(prefix = { "http{scheme_suffix(|s)}://example.com/" }, activityClassFqn = "com.example.SampleActivity")
                 public @interface ManifestGenWebDeepLink {
                     String[] value();
                 }
@@ -54,7 +55,7 @@ class DeepLinkProcessorKspTest : BaseDeepLinkProcessorTest() {
             """
                         package com.example;
                         import com.airbnb.deeplinkdispatch.DeepLinkSpec;
-                        @DeepLinkSpec(prefix = { "example://" }, activityClasFqn = "com.example.SampleActivity")
+                        @DeepLinkSpec(prefix = { "example://" }, activityClassFqn = "com.example.SampleActivity")
                         public @interface ManifestGenAppDeepLink {
                             String[] value();
                         }
@@ -447,10 +448,11 @@ class DeepLinkProcessorKspTest : BaseDeepLinkProcessorTest() {
             )
         // This is not great but we do not have access to the path that kotlin compile testing
         // be using either from here nor inside the compiler.g
-        val generateManifestFile = File(
-            System.getProperty("java.io.tmpdir"),
-            "GeneratedAndroidManifest_${System.currentTimeMillis()}.xml"
-        )
+        val generateManifestFile =
+            File(
+                System.getProperty("java.io.tmpdir"),
+                "GeneratedAndroidManifest_${System.currentTimeMillis()}.xml",
+            )
         val results =
             // Manifest generation only works with KSP so only test this with KSP
             listOf(
@@ -459,8 +461,10 @@ class DeepLinkProcessorKspTest : BaseDeepLinkProcessorTest() {
                     customDeepLinks = listOf("com.example.ManifestGenAppDeepLink", "com.example.ManifestGenWebDeepLink"),
                     useKsp = true,
                     incrementalFlag = false,
-                    additionalArguments = mutableMapOf("deepLinkManifestGenMetadata.output" to generateManifestFile.canonicalPath
-                    )
+                    additionalArguments =
+                        mutableMapOf(
+                            "deepLinkManifestGenMetadata.output" to generateManifestFile.canonicalPath,
+                        ),
                 ),
             )
         assertGeneratedCode(
@@ -470,7 +474,7 @@ class DeepLinkProcessorKspTest : BaseDeepLinkProcessorTest() {
             generatedSourceFiles =
                 mapOf(
                     "DeepLinkDelegate.java" to
-                            """
+                        """
                         package com.example;
 
                         import com.airbnb.deeplinkdispatch.BaseDeepLinkDelegate;
@@ -528,7 +532,7 @@ class DeepLinkProcessorKspTest : BaseDeepLinkProcessorTest() {
 
                         """.trimIndent(),
                     "SampleModuleRegistry.java" to
-                            """
+                        """
                         package com.example;
                         
                         import com.airbnb.deeplinkdispatch.BaseRegistry;
@@ -548,39 +552,43 @@ class DeepLinkProcessorKspTest : BaseDeepLinkProcessorTest() {
                         
                         """.trimIndent(),
                 ),
-            generatedFiles = mapOf(generateManifestFile to """
-                <?xml version="1.0" encoding="utf-8"?>
-                <manifest xmlns:android="http://schemas.android.com/apk/res/android" >
-                    <application>
-                        <activity
-                            android:name="com.example.SampleActivity" android:exported="true">
-                            <intent-filter>
-                                <action android:name="android.intent.action.VIEW" />
-                                <category android:name="android.intent.category.DEFAULT" />
-                                <category android:name="android.intent.category.BROWSABLE" />
-                                <data android:scheme="example" />
-                                <data android:host="host" />
-                                <data android:path="/deepLink" />
-                                <data android:path="/another" />
-                            </intent-filter>
-                            <intent-filter>
-                                <action android:name="android.intent.action.VIEW" />
-                                <category android:name="android.intent.category.DEFAULT" />
-                                <category android:name="android.intent.category.BROWSABLE" />
-                                <data android:scheme="http" />
-                                <data android:scheme="https" />
-                                <data android:host="example.com" />
-                                <data android:path="/deepLink" />
-                                <data android:path="/another" />
-                                <data android:path="/direct" />
-                                <data android:path="/method1/test" />
-                                <data android:path="/method2/test" />
-                            </intent-filter>
-                        </activity>
-                    </application>
-                </manifest>
+            generatedFiles =
+                mapOf(
+                    generateManifestFile to
+                        """
+                        <?xml version="1.0" encoding="utf-8"?>
+                        <manifest xmlns:android="http://schemas.android.com/apk/res/android" >
+                            <application>
+                                <activity
+                                    android:name="com.example.SampleActivity" android:exported="true">
+                                    <intent-filter>
+                                        <action android:name="android.intent.action.VIEW" />
+                                        <category android:name="android.intent.category.DEFAULT" />
+                                        <category android:name="android.intent.category.BROWSABLE" />
+                                        <data android:scheme="example" />
+                                        <data android:host="host" />
+                                        <data android:path="/deepLink" />
+                                        <data android:path="/another" />
+                                    </intent-filter>
+                                    <intent-filter>
+                                        <action android:name="android.intent.action.VIEW" />
+                                        <category android:name="android.intent.category.DEFAULT" />
+                                        <category android:name="android.intent.category.BROWSABLE" />
+                                        <data android:scheme="http" />
+                                        <data android:scheme="https" />
+                                        <data android:host="example.com" />
+                                        <data android:path="/deepLink" />
+                                        <data android:path="/another" />
+                                        <data android:path="/direct" />
+                                        <data android:path="/method1/test" />
+                                        <data android:path="/method2/test" />
+                                    </intent-filter>
+                                </activity>
+                            </application>
+                        </manifest>
 
-            """.trimIndent())
+                        """.trimIndent(),
+                ),
         )
     }
 
@@ -613,10 +621,11 @@ class DeepLinkProcessorKspTest : BaseDeepLinkProcessorTest() {
                 sampleActivityKotlin,
                 fakeBaseDeeplinkDelegateJava,
             )
-        val generateManifestFile = File(
-            System.getProperty("java.io.tmpdir"),
-            "GeneratedAndroidManifest_${System.currentTimeMillis()}.xml"
-        )
+        val generateManifestFile =
+            File(
+                System.getProperty("java.io.tmpdir"),
+                "GeneratedAndroidManifest_${System.currentTimeMillis()}.xml",
+            )
         val results =
             listOf(
                 compileIncremental(
@@ -624,8 +633,10 @@ class DeepLinkProcessorKspTest : BaseDeepLinkProcessorTest() {
                     customDeepLinks = listOf("com.example.ManifestGenAppDeepLink", "com.example.ManifestGenWebDeepLink"),
                     useKsp = true,
                     incrementalFlag = false,
-                    additionalArguments = mutableMapOf("deepLinkManifestGenMetadata.output" to generateManifestFile.canonicalPath
-                    )
+                    additionalArguments =
+                        mutableMapOf(
+                            "deepLinkManifestGenMetadata.output" to generateManifestFile.canonicalPath,
+                        ),
                 ),
             )
         assertGeneratedCode(
@@ -635,7 +646,7 @@ class DeepLinkProcessorKspTest : BaseDeepLinkProcessorTest() {
             generatedSourceFiles =
                 mapOf(
                     "DeepLinkDelegate.java" to
-                            """
+                        """
                         package com.example;
 
                         import com.airbnb.deeplinkdispatch.BaseDeepLinkDelegate;
@@ -693,7 +704,7 @@ class DeepLinkProcessorKspTest : BaseDeepLinkProcessorTest() {
 
                         """.trimIndent(),
                     "SampleModuleRegistry.java" to
-                            """
+                        """
                         package com.example;
 
                         import com.airbnb.deeplinkdispatch.BaseRegistry;
@@ -713,36 +724,40 @@ class DeepLinkProcessorKspTest : BaseDeepLinkProcessorTest() {
 
                         """.trimIndent(),
                 ),
-            generatedFiles = mapOf(generateManifestFile to """
-                <?xml version="1.0" encoding="utf-8"?>
-                <manifest xmlns:android="http://schemas.android.com/apk/res/android" >
-                    <application>
-                        <activity
-                            android:name="com.example.SampleActivity" android:exported="true">
-                            <intent-filter>
-                                <action android:name="android.intent.action.VIEW" />
-                                <category android:name="android.intent.category.DEFAULT" />
-                                <category android:name="android.intent.category.BROWSABLE" />
-                                <data android:scheme="http" />
-                                <data android:scheme="https" />
-                                <data android:host="example.com" />
-                                <data android:path="/method1" />
-                                <data android:path="/method2" />
-                            </intent-filter>
-                            <intent-filter>
-                                <action android:name="android.intent.action.VIEW" />
-                                <category android:name="android.intent.category.DEFAULT" />
-                                <category android:name="android.intent.category.BROWSABLE" />
-                                <data android:scheme="example" />
-                                <data android:host="host" />
-                                <data android:path="/method1" />
-                                <data android:path="/method2" />
-                            </intent-filter>
-                        </activity>
-                    </application>
-                </manifest>
+            generatedFiles =
+                mapOf(
+                    generateManifestFile to
+                        """
+                        <?xml version="1.0" encoding="utf-8"?>
+                        <manifest xmlns:android="http://schemas.android.com/apk/res/android" >
+                            <application>
+                                <activity
+                                    android:name="com.example.SampleActivity" android:exported="true">
+                                    <intent-filter>
+                                        <action android:name="android.intent.action.VIEW" />
+                                        <category android:name="android.intent.category.DEFAULT" />
+                                        <category android:name="android.intent.category.BROWSABLE" />
+                                        <data android:scheme="http" />
+                                        <data android:scheme="https" />
+                                        <data android:host="example.com" />
+                                        <data android:path="/method1" />
+                                        <data android:path="/method2" />
+                                    </intent-filter>
+                                    <intent-filter>
+                                        <action android:name="android.intent.action.VIEW" />
+                                        <category android:name="android.intent.category.DEFAULT" />
+                                        <category android:name="android.intent.category.BROWSABLE" />
+                                        <data android:scheme="example" />
+                                        <data android:host="host" />
+                                        <data android:path="/method1" />
+                                        <data android:path="/method2" />
+                                    </intent-filter>
+                                </activity>
+                            </application>
+                        </manifest>
 
-            """.trimIndent())
+                        """.trimIndent(),
+                ),
         )
     }
 
@@ -783,10 +798,11 @@ class DeepLinkProcessorKspTest : BaseDeepLinkProcessorTest() {
                 sampleDeeplinkHandler,
                 fakeBaseDeeplinkDelegateJava,
             )
-        val generateManifestFile = File(
-            System.getProperty("java.io.tmpdir"),
-            "GeneratedAndroidManifest_${System.currentTimeMillis()}.xml"
-        )
+        val generateManifestFile =
+            File(
+                System.getProperty("java.io.tmpdir"),
+                "GeneratedAndroidManifest_${System.currentTimeMillis()}.xml",
+            )
         val results =
             listOf(
                 compileIncremental(
@@ -794,8 +810,10 @@ class DeepLinkProcessorKspTest : BaseDeepLinkProcessorTest() {
                     customDeepLinks = listOf("com.example.ManifestGenAppDeepLink", "com.example.ManifestGenWebDeepLink"),
                     useKsp = true,
                     incrementalFlag = false,
-                    additionalArguments = mutableMapOf("deepLinkManifestGenMetadata.output" to generateManifestFile.canonicalPath
-                    )
+                    additionalArguments =
+                        mutableMapOf(
+                            "deepLinkManifestGenMetadata.output" to generateManifestFile.canonicalPath,
+                        ),
                 ),
             )
         assertGeneratedCode(
@@ -805,7 +823,7 @@ class DeepLinkProcessorKspTest : BaseDeepLinkProcessorTest() {
             generatedSourceFiles =
                 mapOf(
                     "SampleModuleRegistry.java" to
-                            """
+                        """
                         package com.example;
 
                         import com.airbnb.deeplinkdispatch.BaseRegistry;
@@ -825,36 +843,40 @@ class DeepLinkProcessorKspTest : BaseDeepLinkProcessorTest() {
 
                         """.trimIndent(),
                 ),
-            generatedFiles = mapOf(generateManifestFile to """
-                <?xml version="1.0" encoding="utf-8"?>
-                <manifest xmlns:android="http://schemas.android.com/apk/res/android" >
-                    <application>
-                        <activity
-                            android:name="com.example.SampleActivity" android:exported="true">
-                            <intent-filter>
-                                <action android:name="android.intent.action.VIEW" />
-                                <category android:name="android.intent.category.DEFAULT" />
-                                <category android:name="android.intent.category.BROWSABLE" />
-                                <data android:scheme="http" />
-                                <data android:scheme="https" />
-                                <data android:host="example.com" />
-                                <data android:pathPattern="/handler1/.*/.*" />
-                                <data android:pathPattern="/handler2/.*/.*" />
-                            </intent-filter>
-                            <intent-filter>
-                                <action android:name="android.intent.action.VIEW" />
-                                <category android:name="android.intent.category.DEFAULT" />
-                                <category android:name="android.intent.category.BROWSABLE" />
-                                <data android:scheme="example" />
-                                <data android:host="host" />
-                                <data android:pathPattern="/handler1/.*/.*" />
-                                <data android:pathPattern="/handler2/.*/.*" />
-                            </intent-filter>
-                        </activity>
-                    </application>
-                </manifest>
+            generatedFiles =
+                mapOf(
+                    generateManifestFile to
+                        """
+                        <?xml version="1.0" encoding="utf-8"?>
+                        <manifest xmlns:android="http://schemas.android.com/apk/res/android" >
+                            <application>
+                                <activity
+                                    android:name="com.example.SampleActivity" android:exported="true">
+                                    <intent-filter>
+                                        <action android:name="android.intent.action.VIEW" />
+                                        <category android:name="android.intent.category.DEFAULT" />
+                                        <category android:name="android.intent.category.BROWSABLE" />
+                                        <data android:scheme="http" />
+                                        <data android:scheme="https" />
+                                        <data android:host="example.com" />
+                                        <data android:pathPattern="/handler1/.*/.*" />
+                                        <data android:pathPattern="/handler2/.*/.*" />
+                                    </intent-filter>
+                                    <intent-filter>
+                                        <action android:name="android.intent.action.VIEW" />
+                                        <category android:name="android.intent.category.DEFAULT" />
+                                        <category android:name="android.intent.category.BROWSABLE" />
+                                        <data android:scheme="example" />
+                                        <data android:host="host" />
+                                        <data android:pathPattern="/handler1/.*/.*" />
+                                        <data android:pathPattern="/handler2/.*/.*" />
+                                    </intent-filter>
+                                </activity>
+                            </application>
+                        </manifest>
 
-            """.trimIndent())
+                        """.trimIndent(),
+                ),
         )
     }
 
@@ -1061,6 +1083,428 @@ class DeepLinkProcessorKspTest : BaseDeepLinkProcessorTest() {
                         
                         """.trimIndent(),
                 ),
+        )
+    }
+
+    @Test
+    fun testDeepLinkWithCustomIntentFilterAttributes() {
+        val sampleActivityKotlin =
+            Source.KotlinSource(
+                "SampleActivity.kt",
+                """
+                 package com.example
+                 import com.airbnb.deeplinkdispatch.DeepLink
+                 import com.airbnb.deeplinkdispatch.DeepLinkHandler
+                 import com.example.SampleModule
+                 @DeepLink(
+                     value = "https://example.com/verified",
+                     activityClassFqn = "com.example.SampleActivity",
+                     intentFilterAttributes = ["android:autoVerify=\"true\""]
+                 )
+                 @DeepLinkHandler( SampleModule::class )
+                 class SampleActivity : android.app.Activity()
+                 """,
+            )
+        val sourceFiles =
+            listOf(
+                module,
+                sampleActivityKotlin,
+                fakeBaseDeeplinkDelegateJava,
+            )
+        val generateManifestFile =
+            File(
+                System.getProperty("java.io.tmpdir"),
+                "GeneratedAndroidManifest_${System.currentTimeMillis()}.xml",
+            )
+        val results =
+            listOf(
+                compileIncremental(
+                    sourceFiles = sourceFiles,
+                    customDeepLinks = emptyList(),
+                    useKsp = true,
+                    incrementalFlag = false,
+                    additionalArguments = mutableMapOf("deepLinkManifestGenMetadata.output" to generateManifestFile.canonicalPath),
+                ),
+            )
+        // Just verify the manifest was generated correctly - skip source file verification
+        assertThat(generateManifestFile.exists()).isTrue()
+        assertThat(generateManifestFile.readText()).isEqualTo(
+            """
+            <?xml version="1.0" encoding="utf-8"?>
+            <manifest xmlns:android="http://schemas.android.com/apk/res/android" >
+                <application>
+                    <activity
+                        android:name="com.example.SampleActivity" android:exported="true">
+                        <intent-filter android:autoVerify="true">
+                            <action android:name="android.intent.action.VIEW" />
+                            <category android:name="android.intent.category.DEFAULT" />
+                            <category android:name="android.intent.category.BROWSABLE" />
+                            <data android:scheme="https" />
+                            <data android:host="example.com" />
+                            <data android:path="/verified" />
+                        </intent-filter>
+                    </activity>
+                </application>
+            </manifest>
+
+            """.trimIndent(),
+        )
+    }
+
+    @Test
+    fun testDeepLinkWithCustomActionsAndCategories() {
+        val sampleActivityKotlin =
+            Source.KotlinSource(
+                "SampleActivity.kt",
+                """
+                 package com.example
+                 import com.airbnb.deeplinkdispatch.DeepLink
+                 import com.airbnb.deeplinkdispatch.DeepLinkHandler
+                 import com.example.SampleModule
+                 @DeepLink(
+                     value = "https://example.com/send",
+                     activityClassFqn = "com.example.SampleActivity",
+                     actions = ["android.intent.action.SEND"],
+                     categories = ["android.intent.category.DEFAULT"]
+                 )
+                 @DeepLinkHandler( SampleModule::class )
+                 class SampleActivity : android.app.Activity()
+                 """,
+            )
+        val sourceFiles =
+            listOf(
+                module,
+                sampleActivityKotlin,
+                fakeBaseDeeplinkDelegateJava,
+            )
+        val generateManifestFile =
+            File(
+                System.getProperty("java.io.tmpdir"),
+                "GeneratedAndroidManifest_${System.currentTimeMillis()}.xml",
+            )
+        val results =
+            listOf(
+                compileIncremental(
+                    sourceFiles = sourceFiles,
+                    customDeepLinks = emptyList(),
+                    useKsp = true,
+                    incrementalFlag = false,
+                    additionalArguments = mutableMapOf("deepLinkManifestGenMetadata.output" to generateManifestFile.canonicalPath),
+                ),
+            )
+        // Just verify the manifest was generated correctly - skip source file verification
+        assertThat(generateManifestFile.exists()).isTrue()
+        assertThat(generateManifestFile.readText()).isEqualTo(
+            """
+            <?xml version="1.0" encoding="utf-8"?>
+            <manifest xmlns:android="http://schemas.android.com/apk/res/android" >
+                <application>
+                    <activity
+                        android:name="com.example.SampleActivity" android:exported="true">
+                        <intent-filter>
+                            <action android:name="android.intent.action.SEND" />
+                            <category android:name="android.intent.category.DEFAULT" />
+                            <data android:scheme="https" />
+                            <data android:host="example.com" />
+                            <data android:path="/send" />
+                        </intent-filter>
+                    </activity>
+                </application>
+            </manifest>
+
+            """.trimIndent(),
+        )
+    }
+
+    @Test
+    fun testDeepLinkSpecWithCustomIntentFilterAttributesActionsAndCategories() {
+        val customVerifiedWebDeepLinkJava =
+            Source.JavaSource(
+                "com.example.VerifiedWebDeepLink",
+                """
+                package com.example;
+                import com.airbnb.deeplinkdispatch.DeepLinkSpec;
+                @DeepLinkSpec(
+                    prefix = { "https://example.com/" },
+                    activityClassFqn = "com.example.SampleActivity",
+                    intentFilterAttributes = { "android:autoVerify=\"true\"", "android:label=\"@string/app_name\"" },
+                    actions = { "android.intent.action.VIEW", "android.intent.action.SEND" },
+                    categories = { "android.intent.category.DEFAULT" }
+                )
+                public @interface VerifiedWebDeepLink {
+                    String[] value();
+                }
+                """,
+            )
+
+        val sampleActivityKotlin =
+            Source.KotlinSource(
+                "SampleActivity.kt",
+                """
+                 package com.example
+                 import com.airbnb.deeplinkdispatch.DeepLinkHandler
+                 import com.example.SampleModule
+                 @VerifiedWebDeepLink("path1", "path2")
+                 @DeepLinkHandler( SampleModule::class )
+                 class SampleActivity : android.app.Activity()
+                 """,
+            )
+        val sourceFiles =
+            listOf(
+                customVerifiedWebDeepLinkJava,
+                module,
+                sampleActivityKotlin,
+                fakeBaseDeeplinkDelegateJava,
+            )
+        val generateManifestFile =
+            File(
+                System.getProperty("java.io.tmpdir"),
+                "GeneratedAndroidManifest_${System.currentTimeMillis()}.xml",
+            )
+        val results =
+            listOf(
+                compileIncremental(
+                    sourceFiles = sourceFiles,
+                    customDeepLinks = listOf("com.example.VerifiedWebDeepLink"),
+                    useKsp = true,
+                    incrementalFlag = false,
+                    additionalArguments = mutableMapOf("deepLinkManifestGenMetadata.output" to generateManifestFile.canonicalPath),
+                ),
+            )
+        // Just verify the manifest was generated correctly - skip source file verification
+        assertThat(generateManifestFile.exists()).isTrue()
+        assertThat(generateManifestFile.readText()).isEqualTo(
+            """
+            <?xml version="1.0" encoding="utf-8"?>
+            <manifest xmlns:android="http://schemas.android.com/apk/res/android" >
+                <application>
+                    <activity
+                        android:name="com.example.SampleActivity" android:exported="true">
+                        <intent-filter android:autoVerify="true" android:label="@string/app_name">
+                            <action android:name="android.intent.action.VIEW" />
+                            <action android:name="android.intent.action.SEND" />
+                            <category android:name="android.intent.category.DEFAULT" />
+                            <data android:scheme="https" />
+                            <data android:host="example.com" />
+                            <data android:path="/path1" />
+                            <data android:path="/path2" />
+                        </intent-filter>
+                    </activity>
+                </application>
+            </manifest>
+
+            """.trimIndent(),
+        )
+    }
+
+    @Test
+    fun testMultipleDeepLinksWithDifferentIntentFilterGroupings() {
+        val customAutoVerifyDeepLinkJava =
+            Source.JavaSource(
+                "com.example.AutoVerifyDeepLink",
+                """
+                package com.example;
+                import com.airbnb.deeplinkdispatch.DeepLinkSpec;
+                @DeepLinkSpec(
+                    prefix = { "https://example.com/" },
+                    activityClassFqn = "com.example.SampleActivity",
+                    intentFilterAttributes = { "android:autoVerify=\"true\"" }
+                )
+                public @interface AutoVerifyDeepLink {
+                    String[] value();
+                }
+                """,
+            )
+
+        val customSendDeepLinkJava =
+            Source.JavaSource(
+                "com.example.SendDeepLink",
+                """
+                package com.example;
+                import com.airbnb.deeplinkdispatch.DeepLinkSpec;
+                @DeepLinkSpec(
+                    prefix = { "https://example.com/" },
+                    activityClassFqn = "com.example.SampleActivity",
+                    actions = { "android.intent.action.SEND" },
+                    categories = { "android.intent.category.DEFAULT" }
+                )
+                public @interface SendDeepLink {
+                    String[] value();
+                }
+                """,
+            )
+
+        val sampleActivityKotlin =
+            Source.KotlinSource(
+                "SampleActivity.kt",
+                """
+                 package com.example
+                 import com.airbnb.deeplinkdispatch.DeepLink
+                 import com.airbnb.deeplinkdispatch.DeepLinkHandler
+                 import com.example.SampleModule
+                 @AutoVerifyDeepLink("verified1", "verified2")
+                 @DeepLink(
+                     value = "https://example.com/unverified",
+                     activityClassFqn = "com.example.SampleActivity"
+                 )
+                 @SendDeepLink("send")
+                 @DeepLinkHandler( SampleModule::class )
+                 class SampleActivity : android.app.Activity()
+                 """,
+            )
+        val sourceFiles =
+            listOf(
+                customAutoVerifyDeepLinkJava,
+                customSendDeepLinkJava,
+                module,
+                sampleActivityKotlin,
+                fakeBaseDeeplinkDelegateJava,
+            )
+        val generateManifestFile =
+            File(
+                System.getProperty("java.io.tmpdir"),
+                "GeneratedAndroidManifest_${System.currentTimeMillis()}.xml",
+            )
+        val results =
+            listOf(
+                compileIncremental(
+                    sourceFiles = sourceFiles,
+                    customDeepLinks = listOf("com.example.AutoVerifyDeepLink", "com.example.SendDeepLink"),
+                    useKsp = true,
+                    incrementalFlag = false,
+                    additionalArguments = mutableMapOf("deepLinkManifestGenMetadata.output" to generateManifestFile.canonicalPath),
+                ),
+            )
+        // Just verify the manifest was generated correctly - skip source file verification
+        assertThat(generateManifestFile.exists()).isTrue()
+        assertThat(generateManifestFile.readText()).isEqualTo(
+            """
+            <?xml version="1.0" encoding="utf-8"?>
+            <manifest xmlns:android="http://schemas.android.com/apk/res/android" >
+                <application>
+                    <activity
+                        android:name="com.example.SampleActivity" android:exported="true">
+                        <intent-filter android:autoVerify="true">
+                            <action android:name="android.intent.action.VIEW" />
+                            <category android:name="android.intent.category.DEFAULT" />
+                            <category android:name="android.intent.category.BROWSABLE" />
+                            <data android:scheme="https" />
+                            <data android:host="example.com" />
+                            <data android:path="/verified1" />
+                            <data android:path="/verified2" />
+                        </intent-filter>
+                        <intent-filter>
+                            <action android:name="android.intent.action.SEND" />
+                            <category android:name="android.intent.category.DEFAULT" />
+                            <data android:scheme="https" />
+                            <data android:host="example.com" />
+                            <data android:path="/send" />
+                        </intent-filter>
+                        <intent-filter>
+                            <action android:name="android.intent.action.VIEW" />
+                            <category android:name="android.intent.category.DEFAULT" />
+                            <category android:name="android.intent.category.BROWSABLE" />
+                            <data android:scheme="https" />
+                            <data android:host="example.com" />
+                            <data android:path="/unverified" />
+                        </intent-filter>
+                    </activity>
+                </application>
+            </manifest>
+
+            """.trimIndent(),
+        )
+    }
+
+    @Test
+    fun testDeepLinkSpecVsDeepLinkDifferentIntentFilterAttributes() {
+        val customAutoVerifyWebDeepLinkJava =
+            Source.JavaSource(
+                "com.example.AutoVerifyWebDeepLink",
+                """
+                package com.example;
+                import com.airbnb.deeplinkdispatch.DeepLinkSpec;
+                @DeepLinkSpec(
+                    prefix = { "https://example.com/" },
+                    activityClassFqn = "com.example.SampleActivity",
+                    intentFilterAttributes = { "android:autoVerify=\"true\"" }
+                )
+                public @interface AutoVerifyWebDeepLink {
+                    String[] value();
+                }
+                """,
+            )
+
+        val sampleActivityKotlin =
+            Source.KotlinSource(
+                "SampleActivity.kt",
+                """
+                 package com.example
+                 import com.airbnb.deeplinkdispatch.DeepLink
+                 import com.airbnb.deeplinkdispatch.DeepLinkHandler
+                 import com.example.SampleModule
+                 @AutoVerifyWebDeepLink("spec1", "spec2")
+                 @DeepLink(
+                     value = "https://example.com/direct",
+                     activityClassFqn = "com.example.SampleActivity"
+                 )
+                 @DeepLinkHandler( SampleModule::class )
+                 class SampleActivity : android.app.Activity()
+                 """,
+            )
+        val sourceFiles =
+            listOf(
+                customAutoVerifyWebDeepLinkJava,
+                module,
+                sampleActivityKotlin,
+                fakeBaseDeeplinkDelegateJava,
+            )
+        val generateManifestFile =
+            File(
+                System.getProperty("java.io.tmpdir"),
+                "GeneratedAndroidManifest_${System.currentTimeMillis()}.xml",
+            )
+        val results =
+            listOf(
+                compileIncremental(
+                    sourceFiles = sourceFiles,
+                    customDeepLinks = listOf("com.example.AutoVerifyWebDeepLink"),
+                    useKsp = true,
+                    incrementalFlag = false,
+                    additionalArguments = mutableMapOf("deepLinkManifestGenMetadata.output" to generateManifestFile.canonicalPath),
+                ),
+            )
+        // Just verify the manifest was generated correctly - skip source file verification
+        assertThat(generateManifestFile.exists()).isTrue()
+        assertThat(generateManifestFile.readText()).isEqualTo(
+            """
+            <?xml version="1.0" encoding="utf-8"?>
+            <manifest xmlns:android="http://schemas.android.com/apk/res/android" >
+                <application>
+                    <activity
+                        android:name="com.example.SampleActivity" android:exported="true">
+                        <intent-filter android:autoVerify="true">
+                            <action android:name="android.intent.action.VIEW" />
+                            <category android:name="android.intent.category.DEFAULT" />
+                            <category android:name="android.intent.category.BROWSABLE" />
+                            <data android:scheme="https" />
+                            <data android:host="example.com" />
+                            <data android:path="/spec1" />
+                            <data android:path="/spec2" />
+                        </intent-filter>
+                        <intent-filter>
+                            <action android:name="android.intent.action.VIEW" />
+                            <category android:name="android.intent.category.DEFAULT" />
+                            <category android:name="android.intent.category.BROWSABLE" />
+                            <data android:scheme="https" />
+                            <data android:host="example.com" />
+                            <data android:path="/direct" />
+                        </intent-filter>
+                    </activity>
+                </application>
+            </manifest>
+
+            """.trimIndent(),
         )
     }
 }

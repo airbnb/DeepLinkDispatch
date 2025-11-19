@@ -48,6 +48,32 @@ public class MainActivity extends Activity {
 }
 ```
 
+### Manifest generation
+
+If you have multiple and possibly complicated (multiple versions of allowed host and path) URLs it can get complicated to 
+keep the `AndroidManifest.xml` entries up to date. DeepLinkDispatch allows you to (when using `ksp` and the deeplink is in
+a library module) 
+
+```kotlin
+@DeepLink("http{scheme(|s)}://example.{domain(com|de|ro)}/deepLink/{id}", "{scheme(foo|bar)}://{host(example|another-example)}.{domain(com|de|ro)}/anotherDeepLink", activityClassFqn = "com.example.MainActivity")
+class MainActivity : Activity {
+  @Override fun onCreate(savedInstanceState: Bundle) {
+    super.onCreate(savedInstanceState)
+    val intent : Intent = getIntent()
+    if (intent.getBooleanExtra(DeepLink.IS_DEEP_LINK, false)) {
+      val parameters : Bundle = intent.getExtras()
+      val idString : String = parameters.getString("id")
+      // Do something with idString
+    }
+  }
+}
+```
+The requirements for using manifest generation are:
+
+1. Must use `ksp`
+2. Deeplink must be used in a module that is not an application module (does not apply the `com.android.application` gradle plugin)
+3. Must specify `activityClassFqn` in the `@DeepLink` annotation or in the `@DeepLinkSpec` annotation when defining a custom deeplink.
+
 ### DeepLinkHandler Annotations
 
 You can annotate a Kotlin `object` that is extending `com.airbnb.deeplinkdispatch.handler.DeepLinkHandler`

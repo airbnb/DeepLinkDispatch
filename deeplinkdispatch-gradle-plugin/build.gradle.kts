@@ -53,7 +53,7 @@ fun dep(vararg names: String, map: Map<String, Any> = deps): String {
 }
 
 dependencies {
-    implementation("com.android.tools:common:30.4.1")
+    implementation(dep("androidCommonTools"))
     implementation(dep("kspGradlePlugin"))
     implementation(dep("androidPlugin"))
     implementation(dep("kotlinGradlePlugin"))

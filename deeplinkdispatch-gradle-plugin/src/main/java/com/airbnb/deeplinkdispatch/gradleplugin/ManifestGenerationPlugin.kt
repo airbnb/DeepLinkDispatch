@@ -16,6 +16,8 @@ import org.gradle.api.Project
 
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.RegularFileProperty
+import org.gradle.api.provider.Property
+import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.Optional
@@ -28,13 +30,13 @@ import java.io.File
 /**
  * Automatic manifest generation plugin for DeepLinkDispatch.
  *
- * For deep links that have activityClasFqn set, the DeepLinkDispatch annotation processor generates
+ * For deep links that have activityClassFqn set, the DeepLinkDispatch annotation processor generates
  * an AndroidManifest.xml that contains the intent filters for the deeplinks.
  *
  * This plugin uses AGP's Artifacts API to transform the MERGED_MANIFEST artifact,
  * merging in the KSP-generated manifest with intent filters.
  *
- * This means that for any deep links that have activityClasFqn set it is not necessary to add the
+ * This means that for any deep links that have activityClassFqn set it is not necessary to add the
  * intent filters to the AndroidManifest.xml manually.
  *
  * IMPORTANT: This plugin requires AGP 8.0+ and only works with KSP (Kotlin Symbol Processing).
@@ -65,7 +67,7 @@ class ManifestGenerationPlugin: Plugin<Project> {
                 To use automatic manifest generation:
                 1. Remove this plugin from your app module's build.gradle
                 2. Apply the plugin only to library modules that contain deep link activities
-                3. Activities with deep link annotations (with activityClasFqn parameter) must be in library modules
+                3. Activities with deep link annotations (with activityClassFqn parameter) must be in library modules
                 4. Your app module will automatically inherit the intent filters from library AARs through normal manifest merging
 
                 For more details, see the DeepLinkDispatch documentation.
@@ -96,6 +98,15 @@ class ManifestGenerationPlugin: Plugin<Project> {
         androidComponents.onVariants { variant ->
             val generatedManifestFile = generatedManifestFile(project)
 
+            // Determine merge type during configuration phase
+            val mergeType = if (project.plugins.hasPlugin("com.android.application")) {
+                ManifestMerger2.MergeType.APPLICATION
+            } else if (project.plugins.hasPlugin("com.android.library")) {
+                ManifestMerger2.MergeType.LIBRARY
+            } else {
+                error("Unsupported plugin type. You can only apply this plugin to an Android application or library modules")
+            }
+
             val manifestMergeTask = project.tasks.register(
                 GenerateManifestIntentFiltersForDeeplinkDispatchTask.taskName(variant),
                 GenerateManifestIntentFiltersForDeeplinkDispatchTask::class.java
@@ -109,6 +120,8 @@ class ManifestGenerationPlugin: Plugin<Project> {
                 kspOutputDirectory.set(project.layout.buildDirectory.dir(
                     "generated/ksp/${variant.name}/kotlin"
                 ))
+                // Set merge type determined during configuration phase
+                this.mergeType.set(mergeType)
                 group = "deeplinkdispatch"
                 description = "Merges KSP-generated manifest for ${variant.name}"
             }
@@ -152,7 +165,7 @@ class ManifestGenerationPlugin: Plugin<Project> {
      *
      * This tells the DeepLinkDispatch annotation processor (running via KSP) where to write
      * the generated AndroidManifest.xml file containing intent filters for deeplinks with
-     * activityClasFqn set.
+     * activityClassFqn set.
      *
      * Note: This only works with KSP. KAPT does not support this feature.
      */
@@ -177,9 +190,12 @@ abstract class GenerateManifestIntentFiltersForDeeplinkDispatchTask: DefaultTask
 
     /**
      * The path where KSP will generate the manifest file.
-     * Marked as optional InputFile so Gradle tracks changes to this file for up-to-date checking.
+     * Marked as optional InputFiles so Gradle tracks changes to this file for up-to-date checking.
+     * Note: Using InputFiles instead of InputFile because @Optional doesn't work correctly with
+     * @InputFile - Gradle validates file existence even when marked optional, causing failures
+     * on clean builds where the KSP-generated file doesn't exist yet.
      */
-    @get:InputFile
+    @get:InputFiles
     @get:Optional
     @get:PathSensitive(PathSensitivity.RELATIVE)
     abstract val generatedManifestPath: RegularFileProperty
@@ -205,6 +221,13 @@ abstract class GenerateManifestIntentFiltersForDeeplinkDispatchTask: DefaultTask
     @get:OutputFile
     abstract val updatedManifest: RegularFileProperty
 
+    /**
+     * The merge type to use (APPLICATION or LIBRARY).
+     * Determined during configuration phase to support configuration cache.
+     */
+    @get:Input
+    abstract val mergeType: Property<ManifestMerger2.MergeType>
+
     @TaskAction
     fun taskAction() {
         // The input manifest (the merged manifest as created by the Android Gradle Plugin)
@@ -223,15 +246,8 @@ abstract class GenerateManifestIntentFiltersForDeeplinkDispatchTask: DefaultTask
             return
         }
 
-        // Determine merge type based on plugin
-        val mergeType = if (project.plugins.hasPlugin("com.android.application")) {
-            ManifestMerger2.MergeType.APPLICATION
-        } else if (project.plugins.hasPlugin("com.android.library")) {
-            ManifestMerger2.MergeType.LIBRARY
-        } else {
-            error("Unsupported plugin type ${this::class.java}. You can only apply this plugin" +
-                    " to an Android application or library modules")
-        }
+        // Use merge type set during configuration phase
+        val mergeTypeValue = mergeType.get()
 
         // Merge the manifests using AGP's manifest merger
         // Use USES_SDK_IN_MANIFEST_LENIENT_HANDLING feature to allow <uses-sdk> elements
@@ -240,7 +256,7 @@ abstract class GenerateManifestIntentFiltersForDeeplinkDispatchTask: DefaultTask
         val invoker: ManifestMerger2.Invoker = ManifestMerger2.newMerger(
             inputManifest,
             StdLogger(StdLogger.Level.VERBOSE),
-            mergeType
+            mergeTypeValue
         ).withFeatures(ManifestMerger2.Invoker.Feature.USES_SDK_IN_MANIFEST_LENIENT_HANDLING)
 
         // generatedManifestFile is guaranteed to be non-null here due to hasGeneratedManifest check

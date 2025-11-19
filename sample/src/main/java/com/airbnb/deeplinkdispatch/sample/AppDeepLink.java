@@ -4,7 +4,7 @@ import com.airbnb.deeplinkdispatch.DeepLinkSpec;
 
 @DeepLinkSpec(
     prefix = { "app://airbnb" },
-    activityClasFqn = "com.airbnb.deeplinkdispatch.sample.DeepLinkActivity"
+        activityClassFqn = "com.airbnb.deeplinkdispatch.sample.DeepLinkActivity"
 )
 public @interface AppDeepLink {
   String[] value();

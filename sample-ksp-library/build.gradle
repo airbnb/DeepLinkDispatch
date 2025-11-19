@@ -1,3 +1,22 @@
+// NOTE: The gradle plugin is referenced from the root build.gradle buildscript block.
+// When testing changes to the gradle plugin, you must run:
+//   ./gradlew :deeplinkdispatch-gradle-plugin:publishToMavenLocal
+// and update the version in gradle.properties to see the changes.
+//
+// In a real project using this library, add the plugin to your root build.gradle like this:
+//
+//   buildscript {
+//       repositories {
+//           mavenCentral()
+//       }
+//       dependencies {
+//           classpath "com.airbnb:deeplinkdispatch-gradle-plugin:7.0.0"
+//       }
+//   }
+//
+// Then apply it in your module's build.gradle:
+//   apply plugin: 'com.airbnb.deeplinkdispatch.manifest-generation'
+
 apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 apply plugin: 'org.jmailen.kotlinter'

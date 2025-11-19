@@ -6,7 +6,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.airbnb.deeplinkdispatch.DeepLink
 
-@ManifestGenWebDeepLink(value = ["test/path" , "another_test/path"])
+@ManifestGenWebDeepLink(value = ["test/path", "another_test/path"])
 @DeepLink("http://example.com/ksp-library", activityClassFqn = "com.airbnb.deeplinkdispatch.sample.ksplibrary.KspLibraryActivity")
 class KspLibraryActivity : AppCompatActivity() {
     @SuppressLint("RestrictedApi")

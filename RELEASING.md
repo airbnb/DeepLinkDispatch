@@ -19,7 +19,7 @@ To publish an internal release to an Artifactory repository:
 
 1. Set credential values for ARTIFACTORY_USERNAME and ARTIFACTORY_PASSWORD in your local gradle.properties
 2. Set values for ARTIFACTORY_RELEASE_URL (and optionally ARTIFACTORY_SNAPSHOT_URL if you are publishing a snapshot)
-3. /gradlew publishAllPublicationsToAirbnbArtifactoryRepository -PdoNotSignRelease=true
+3. ./gradlew publishAllPublicationsToAirbnbArtifactoryRepository -PdoNotSignRelease=true
 4. "-PdoNotSignRelease=true" is optional, but we don't need to sign artifactory releases and this allows everyone to publish without setting up a gpg key
 
 If you need to publish to a different repository, look at the configuration in 'publishing.gradle'

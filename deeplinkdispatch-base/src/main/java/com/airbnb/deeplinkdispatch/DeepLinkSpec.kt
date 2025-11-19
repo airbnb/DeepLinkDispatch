@@ -40,5 +40,8 @@ package com.airbnb.deeplinkdispatch
 @Retention(AnnotationRetention.RUNTIME)
 annotation class DeepLinkSpec(
     val prefix: Array<String>,
-    val activityClasFqn: String = "",
+    val activityClassFqn: String = "",
+    val intentFilterAttributes: Array<String> = [],
+    val actions: Array<String> = ["android.intent.action.VIEW"],
+    val categories: Array<String> = ["android.intent.category.DEFAULT", "android.intent.category.BROWSABLE"],
 )

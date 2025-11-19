@@ -1,6 +1,8 @@
 package com.airbnb.deeplinkdispatch.metadata.writers
 
 import androidx.room.compiler.processing.XProcessingEnv
+import com.airbnb.deeplinkdispatch.CONFIGURABLE_PATH_SEGMENT_PREFIX
+import com.airbnb.deeplinkdispatch.CONFIGURABLE_PATH_SEGMENT_SUFFIX
 import com.airbnb.deeplinkdispatch.DeepLinkAnnotatedElement
 import com.airbnb.deeplinkdispatch.SIMPLE_GLOB_PATTERN
 import com.airbnb.deeplinkdispatch.allPossibleValues
@@ -16,21 +18,6 @@ internal class ManifestWriter : Writer {
         writer: PrintWriter,
         elements: List<DeepLinkAnnotatedElement>,
     ) {
-        // Validate that no elements with activityClassFqn use configurable path segments
-        elements
-            .filter { it.activityClassFqn != null }
-            .forEach { element ->
-                if (element.uriTemplate.contains('<') && element.uriTemplate.contains('>')) {
-                    env.messager.printMessage(
-                        Diagnostic.Kind.ERROR,
-                        "Manifest generation is not supported for deep links using configurable path segments. " +
-                                "Found configurable path segment in: ${element.uriTemplate}. " +
-                                "Please remove the activityClassFqn parameter from @DeepLink annotation.",
-                        element.element
-                    )
-                }
-            }
-
         writer.apply {
             println("<?xml version=\"1.0\" encoding=\"utf-8\"?>")
             println("<manifest xmlns:android=\"http://schemas.android.com/apk/res/android\" >")
@@ -39,30 +26,42 @@ internal class ManifestWriter : Writer {
                 .filter { it.activityClassFqn != null }
                 .groupBy { it.activityClassFqn }
                 .forEach { activityClassFqn, elements ->
-                    // Different paths might onbly be valid for different schemes and hosts, so we need to
+                    // Different paths might only be valid for different schemes and hosts, so we need to
                     // group by schemes and hosts as well.
                     println("        <activity")
                     println("            android:name=\"$activityClassFqn\" android:exported=\"true\">")
                     elements
                         .groupBy { deepLinkAnnotatedElement ->
                             deepLinkAnnotatedElement.deepLinkUri.let { deepLinkUri ->
-                                Pair(
-                                    deepLinkUri.scheme(),
-                                    deepLinkUri.host(),
+                                IntentFilterGroup(
+                                    activityClassFqn = deepLinkAnnotatedElement.activityClassFqn!!,
+                                    actions = deepLinkAnnotatedElement.actions,
+                                    categories = deepLinkAnnotatedElement.categories,
+                                    intentFilterAttributes = deepLinkAnnotatedElement.intentFilterAttributes,
+                                    scheme = deepLinkUri.scheme(),
                                 )
                             }
-                        }.forEach { (schemeHostPair, elements) ->
-                            println("            <intent-filter>")
-                            println("                <action android:name=\"android.intent.action.VIEW\" />")
-                            println("                <category android:name=\"android.intent.category.DEFAULT\" />")
-                            println("                <category android:name=\"android.intent.category.BROWSABLE\" />")
+                        }.forEach { (intentFilterGroup, elements) ->
+                            val attributesString =
+                                if (intentFilterGroup.intentFilterAttributes.isNotEmpty()) {
+                                    intentFilterGroup.intentFilterAttributes.joinToString(separator = " ", prefix = " ")
+                                } else {
+                                    ""
+                                }
+                            println("            <intent-filter$attributesString>")
+                            intentFilterGroup.actions.forEach { action ->
+                                println("                <action android:name=\"$action\" />")
+                            }
+                            intentFilterGroup.categories.forEach { category ->
+                                println("                <category android:name=\"$category\" />")
+                            }
                             // There might be multiple URIs in a single intent filter, and we want to make sure there
                             // are no duplicates (e.g. http and https for host over and over again)
                             val allPossibleUrlValues =
                                 elements
                                     .map { element ->
-                                        val scheme = schemeHostPair.first
-                                        val host = schemeHostPair.second
+                                        val scheme = intentFilterGroup.scheme
+                                        val host = element.deepLinkUri.host()
                                         val path = element.deepLinkUri.pathSegments().joinToString(prefix = "/", separator = "/")
                                         UrlValues(
                                             scheme.allPossibleValues().toSet(),
@@ -82,7 +81,10 @@ internal class ManifestWriter : Writer {
                             allPossibleUrlValues.hostValues.forEach { hostValue ->
                                 println("                <data android:host=\"$hostValue\" />")
                             }
-                            allPossibleUrlValues.pathValues.forEach { pathValue ->
+                            allPossibleUrlValues.pathValues.map { pathValue ->
+                                // The <name> in the url template becomes ${name} to be replaced as a manifest placeholder
+                                configurablePathSegmentRegex.replace(pathValue, "\\$\\{$1\\}")
+                            }.forEach { pathValue ->
                                 // If there is a simple glob pattern in the path, we need to use pathPattern instead of path
                                 // See: https://developer.android.com/guide/topics/manifest/data-element#path
                                 println(
@@ -104,7 +106,19 @@ internal class ManifestWriter : Writer {
             flush()
         }
     }
+
+    companion object {
+        private val configurablePathSegmentRegex = "$CONFIGURABLE_PATH_SEGMENT_PREFIX([^>]*)$CONFIGURABLE_PATH_SEGMENT_SUFFIX".toRegex()
+    }
 }
+
+private data class IntentFilterGroup(
+    val activityClassFqn: String,
+    val actions: Set<String>,
+    val categories: Set<String>,
+    val intentFilterAttributes: Set<String>,
+    val scheme: String,
+)
 
 private data class UrlValues(
     val schemeValues: Set<String>,

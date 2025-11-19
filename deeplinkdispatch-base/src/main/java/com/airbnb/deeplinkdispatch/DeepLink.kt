@@ -33,6 +33,9 @@ package com.airbnb.deeplinkdispatch
 annotation class DeepLink(
     vararg val value: String,
     val activityClassFqn: String = "",
+    val intentFilterAttributes: Array<String> = [],
+    val actions: Array<String> = ["android.intent.action.VIEW"],
+    val categories: Array<String> = ["android.intent.category.DEFAULT", "android.intent.category.BROWSABLE"],
 ) {
     companion object {
         const val IS_DEEP_LINK = "is_deep_link_flag"

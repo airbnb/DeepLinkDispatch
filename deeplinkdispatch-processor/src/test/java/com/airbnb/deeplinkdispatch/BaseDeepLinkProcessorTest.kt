@@ -245,7 +245,7 @@ open class BaseDeepLinkProcessorTest {
             customDeepLinks: List<String> = emptyList(),
             useKsp: Boolean = false,
             incrementalFlag: Boolean = true,
-            additionalArguments: MutableMap<OptionName, OptionValue> =  mutableMapOf(),
+            additionalArguments: MutableMap<OptionName, OptionValue> = mutableMapOf(),
         ): CompileResult {
             val arguments: MutableMap<OptionName, OptionValue> = additionalArguments
             if (incrementalFlag) {

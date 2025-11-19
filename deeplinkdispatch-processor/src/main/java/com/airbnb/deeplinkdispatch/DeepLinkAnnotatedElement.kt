@@ -26,6 +26,9 @@ sealed class DeepLinkAnnotatedElement
     constructor(
         val uriTemplate: String,
         val activityClassFqn: String?,
+        val intentFilterAttributes: Set<String>,
+        val actions: Set<String>,
+        val categories: Set<String>,
         val element: XElement,
         val annotatedClass: XMemberContainer,
     ) {
@@ -39,10 +42,16 @@ sealed class DeepLinkAnnotatedElement
         class MethodAnnotatedElement(
             uri: String,
             activityClassFqn: String?,
+            intentFilterAttributes: Set<String>,
+            actions: Set<String>,
+            categories: Set<String>,
             element: XMethodElement,
         ) : DeepLinkAnnotatedElement(
                 uriTemplate = uri,
                 activityClassFqn = activityClassFqn,
+                intentFilterAttributes = intentFilterAttributes,
+                actions = actions,
+                categories = categories,
                 element = element,
                 annotatedClass = element.enclosingElement,
             ) {
@@ -52,10 +61,16 @@ sealed class DeepLinkAnnotatedElement
         class ActivityAnnotatedElement(
             uri: String,
             activityClassFqn: String?,
+            intentFilterAttributes: Set<String>,
+            actions: Set<String>,
+            categories: Set<String>,
             element: XTypeElement,
         ) : DeepLinkAnnotatedElement(
                 uriTemplate = uri,
                 activityClassFqn = activityClassFqn,
+                intentFilterAttributes = intentFilterAttributes,
+                actions = actions,
+                categories = categories,
                 element = element,
                 annotatedClass = element,
             )
@@ -63,10 +78,16 @@ sealed class DeepLinkAnnotatedElement
         class HandlerAnnotatedElement(
             uri: String,
             activityClassFqn: String?,
+            intentFilterAttributes: Set<String>,
+            actions: Set<String>,
+            categories: Set<String>,
             element: XTypeElement,
         ) : DeepLinkAnnotatedElement(
                 uriTemplate = uri,
                 activityClassFqn = activityClassFqn,
+                intentFilterAttributes = intentFilterAttributes,
+                actions = actions,
+                categories = categories,
                 element = element,
                 annotatedClass = element,
             )
