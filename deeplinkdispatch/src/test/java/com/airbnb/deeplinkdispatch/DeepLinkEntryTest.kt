@@ -374,13 +374,68 @@ class DeepLinkEntryTest {
 
     @Test
     fun testCompareToSameFirstPlaceholderDifferentLaterPositions() {
-        // Both have placeholder at same position initially, but different second placeholder positions
+        // The first placeholder is at same position for both, but one of them does not have a second placeholder
         val moreConcreteEntry = activityDeepLinkEntry("airbnb://host/{param1}/path2/path3/path4")
         val lessConcreteEntry = activityDeepLinkEntry("airbnb://host/{param1}/path2/{param2}/path4")
 
         // More concrete entry should be "less than" (higher priority)
         assertThat(moreConcreteEntry.compareTo(lessConcreteEntry)).isLessThan(0)
         assertThat(lessConcreteEntry.compareTo(moreConcreteEntry)).isGreaterThan(0)
+    }
+
+    @Test
+    fun testCompareToBothHaveTwoPlaceholdersSecondAtDifferentPositions() {
+        // Both have two placeholders with first at same position, but second placeholder is at different positions
+        val secondPlaceholderLaterEntry = activityDeepLinkEntry("airbnb://host/{param1}/path2/path3/{param2}")
+        val secondPlaceholderEarlierEntry = activityDeepLinkEntry("airbnb://host/{param1}/path2/{param2}/path4")
+
+        // Entry with second placeholder later is more concrete (less than)
+        assertThat(secondPlaceholderLaterEntry.compareTo(secondPlaceholderEarlierEntry)).isLessThan(0)
+        assertThat(secondPlaceholderEarlierEntry.compareTo(secondPlaceholderLaterEntry)).isGreaterThan(0)
+    }
+
+    @Test
+    fun testCompareToBothHaveThreePlaceholdersDifferentThirdPosition() {
+        // Both have three placeholders with first two at same positions, third at different positions
+        val thirdPlaceholderLaterEntry = activityDeepLinkEntry("airbnb://host/{p1}/path2/{p2}/path4/path5/{p3}")
+        val thirdPlaceholderEarlierEntry = activityDeepLinkEntry("airbnb://host/{p1}/path2/{p2}/path4/{p3}/path6")
+
+        // Entry with third placeholder later is more concrete
+        assertThat(thirdPlaceholderLaterEntry.compareTo(thirdPlaceholderEarlierEntry)).isLessThan(0)
+        assertThat(thirdPlaceholderEarlierEntry.compareTo(thirdPlaceholderLaterEntry)).isGreaterThan(0)
+    }
+
+    @Test
+    fun testCompareToBothHaveTwoConfigurablesDifferentSecondPosition() {
+        // Both have two configurables with first at same position, second at different positions
+        val secondConfigLaterEntry = activityDeepLinkEntry("airbnb://host/<config1>/path2/path3/<config2>")
+        val secondConfigEarlierEntry = activityDeepLinkEntry("airbnb://host/<config1>/path2/<config2>/path4")
+
+        // Entry with second configurable later is more concrete
+        assertThat(secondConfigLaterEntry.compareTo(secondConfigEarlierEntry)).isLessThan(0)
+        assertThat(secondConfigEarlierEntry.compareTo(secondConfigLaterEntry)).isGreaterThan(0)
+    }
+
+    @Test
+    fun testCompareToBothHaveMixedNonConcretesDifferentSecondPosition() {
+        // Both have placeholder first, then one has configurable and other has placeholder at different positions
+        val secondNonConcreteLaterEntry = activityDeepLinkEntry("airbnb://host/{param1}/path2/path3/<config>")
+        val secondNonConcreteEarlierEntry = activityDeepLinkEntry("airbnb://host/{param1}/path2/{param2}/path4")
+
+        // Entry with second non-concrete later is more concrete
+        assertThat(secondNonConcreteLaterEntry.compareTo(secondNonConcreteEarlierEntry)).isLessThan(0)
+        assertThat(secondNonConcreteEarlierEntry.compareTo(secondNonConcreteLaterEntry)).isGreaterThan(0)
+    }
+
+    @Test
+    fun testCompareToBothHaveSamePositionsSameTypesButDifferentLengths() {
+        // Both have placeholders at exact same positions and types, but different concrete part lengths
+        val longerConcreteEntry = activityDeepLinkEntry("airbnb://host/{param1}/longerpath/{param2}")
+        val shorterConcreteEntry = activityDeepLinkEntry("airbnb://host/{param1}/path/{param2}")
+
+        // Entry with longer concrete parts is more concrete
+        assertThat(longerConcreteEntry.compareTo(shorterConcreteEntry)).isLessThan(0)
+        assertThat(shorterConcreteEntry.compareTo(longerConcreteEntry)).isGreaterThan(0)
     }
 
     @Test
@@ -401,6 +456,40 @@ class DeepLinkEntryTest {
 
         assertThat(concreteEntry.compareTo(twoPlaceholdersEntry)).isLessThan(0)
         assertThat(twoPlaceholdersEntry.compareTo(concreteEntry)).isGreaterThan(0)
+    }
+
+    @Test
+    fun testCompareToSameFirstDifferentSecondNonConcreteType() {
+        // Both have placeholder at same first position, but second non-concrete element differs in type
+        // Configurable path segment is more concrete than placeholder
+        val configurableSecondEntry = activityDeepLinkEntry("airbnb://host/{param1}/path2/<config>/path4")
+        val placeholderSecondEntry = activityDeepLinkEntry("airbnb://host/{param1}/path2/{param2}/path4")
+
+        // Configurable at second position should be more concrete (less than)
+        assertThat(configurableSecondEntry.compareTo(placeholderSecondEntry)).isLessThan(0)
+        assertThat(placeholderSecondEntry.compareTo(configurableSecondEntry)).isGreaterThan(0)
+    }
+
+    @Test
+    fun testCompareToSameFirstTwoNonConcretesDifferentThirdType() {
+        // Both have same types for first two non-concrete elements, but differ at third
+        val configurableThirdEntry = activityDeepLinkEntry("airbnb://host/{param1}/path2/{param2}/<config>/path5")
+        val placeholderThirdEntry = activityDeepLinkEntry("airbnb://host/{param1}/path2/{param2}/{param3}/path5")
+
+        // Configurable at third position should be more concrete (less than)
+        assertThat(configurableThirdEntry.compareTo(placeholderThirdEntry)).isLessThan(0)
+        assertThat(placeholderThirdEntry.compareTo(configurableThirdEntry)).isGreaterThan(0)
+    }
+
+    @Test
+    fun testCompareToMultipleConfigurableVsPlaceholder() {
+        // First has configurable, second has placeholder at first position
+        val configurableFirstEntry = activityDeepLinkEntry("airbnb://host/<config>/path2/{param2}/path4")
+        val placeholderFirstEntry = activityDeepLinkEntry("airbnb://host/{param1}/path2/<config2>/path4")
+
+        // Configurable at first position should be more concrete (less than)
+        assertThat(configurableFirstEntry.compareTo(placeholderFirstEntry)).isLessThan(0)
+        assertThat(placeholderFirstEntry.compareTo(configurableFirstEntry)).isGreaterThan(0)
     }
 
     companion object {

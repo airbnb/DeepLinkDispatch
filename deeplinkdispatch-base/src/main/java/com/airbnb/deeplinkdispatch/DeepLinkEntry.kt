@@ -132,17 +132,51 @@ sealed class DeepLinkEntry(
         placeholderCount + configurablePathSegmentCount
     }
 
+    /**
+     * List of all non-concrete element indices and their types, in order
+     */
+    private val nonConcreteElementIndicesAndTypes: List<Pair<Int, Char>> by lazy {
+        val result = mutableListOf<Pair<Int, Char>>()
+        var index = 0
+        while (index < uriTemplate.length) {
+            val char = uriTemplate[index]
+            if (char == CONFIGURABLE_PATH_SEGMENT_PREFIX_CHAR || char == COMPONENT_PARAM_PREFIX_CHAR) {
+                result.add(Pair(index, char))
+            }
+            index++
+        }
+        result
+    }
+
     fun templatesMatchesSameUrls(other: DeepLinkEntry) = uriTemplateWithoutPlaceholders == other.uriTemplateWithoutPlaceholders
 
     /**
-     * Whatever template has the first placeholder (and then configurable path segment) is the less
-     * concrete one.
-     * When two templates have the same firstNonConcreteIndex, we compare their total concreteness
-     * by looking at the total number of non-concrete elements and the length of concrete parts.
-     * Configurable path segments are MORE concrete than placeholders.
+     * Compares two DeepLinkEntry instances by their concreteness (specificity).
+     * More concrete (specific) entries are considered "less than" and will be matched first.
+     *
+     * Comparison logic:
+     * 1. Fully concrete URLs (no placeholders/configurable segments) are most concrete
+     * 2. URLs with earlier first non-concrete element position are more concrete
+     * 3. When firstNonConcreteIndex is equal, we compare by:
+     *    a. Total count of non-concrete elements (fewer = more concrete)
+     *    b. Pairwise type and index comparison at each non-concrete position:
+     *       - Iterate through all non-concrete element positions in order
+     *       - At the first position where types differ, configurable path segment (<)
+     *         is more concrete than placeholder ({})
+     *       - If types are the same but indices differ, later index is more concrete
+     *    c. Length of concrete parts (longer = more concrete)
+     *
+     * Examples of concreteness ordering (most to least concrete):
+     * - scheme://host/path1/path2/path3 (fully concrete)
+     * - scheme://host/path1/{param}/path3 (1 placeholder, later position)
+     * - scheme://host/{param}/path2/path3 (1 placeholder, earlier position)
+     * - scheme://host/{p1}/path2/path3/{p2} (2 placeholders, 2nd at later position)
+     * - scheme://host/{p1}/path2/{p2}/path4 (2 placeholders, 2nd at earlier position)
+     * - scheme://host/{param1}/path2/<config> (2 non-concrete, configurable at 2nd position)
+     * - scheme://host/{param1}/path2/{param2} (2 non-concrete, placeholder at 2nd position)
      */
-    override fun compareTo(other: DeepLinkEntry): Int =
-        when {
+    override fun compareTo(other: DeepLinkEntry): Int {
+        return when {
             /**
              * Specific conditions added for fully concrete links.
              * Concrete link will always return -1 for firstNonConcreteIndex,
@@ -158,21 +192,47 @@ sealed class DeepLinkEntry(
                     // Compare by total number of non-concrete elements (fewer is more concrete)
                     this.totalNonConcreteElements != other.totalNonConcreteElements ->
                         this.totalNonConcreteElements.compareTo(other.totalNonConcreteElements)
-                    // Same number of non-concrete elements, compare by type at firstNonConcreteIndex
-                    // Configurable path segment is MORE concrete than placeholder
-                    uriTemplate[firstNonConcreteIndex] != other.uriTemplate[firstNonConcreteIndex] -> {
-                        if (uriTemplate[firstNonConcreteIndex] == CONFIGURABLE_PATH_SEGMENT_PREFIX_CHAR) {
-                            -1
+                    // Same number of non-concrete elements, compare types and positions pairwise
+                    else -> {
+                        val thisElements = this.nonConcreteElementIndicesAndTypes
+                        val otherElements = other.nonConcreteElementIndicesAndTypes
+
+                        // Compare types and indices at each non-concrete position
+                        for (i in 0 until min(thisElements.size, otherElements.size)) {
+                            val thisIndex = thisElements[i].first
+                            val otherIndex = otherElements[i].first
+                            val thisType = thisElements[i].second
+                            val otherType = otherElements[i].second
+
+                            // If types differ, configurable path segment is more concrete than placeholder
+                            if (thisType != otherType) {
+                                return if (thisType == CONFIGURABLE_PATH_SEGMENT_PREFIX_CHAR) {
+                                    -1
+                                } else {
+                                    1
+                                }
+                            }
+
+                            // Same type but different indices - later index is more concrete
+                            if (thisIndex != otherIndex) {
+                                return if (thisIndex > otherIndex) {
+                                    -1
+                                } else {
+                                    1
+                                }
+                            }
+                        }
+
+                        // All types and positions match, compare by length of concrete parts (longer is more concrete)
+                        if (this.uriTemplateWithoutPlaceholders.length != other.uriTemplateWithoutPlaceholders.length) {
+                            -this.uriTemplateWithoutPlaceholders.length.compareTo(other.uriTemplateWithoutPlaceholders.length)
                         } else {
-                            1
+                            0
                         }
                     }
-                    // Same type and count, compare by length of concrete parts (longer is more concrete)
-                    this.uriTemplateWithoutPlaceholders.length != other.uriTemplateWithoutPlaceholders.length ->
-                        -this.uriTemplateWithoutPlaceholders.length.compareTo(other.uriTemplateWithoutPlaceholders.length)
-                    else -> 0
                 }
             }
             else -> -1
         }
+    }
 }
