@@ -21,8 +21,8 @@ import java.util.Map;
 /**
  * This is a wrapper class around the byte array match index.
  * <p>Byte array format is:</p>
- * <hr/>
  * <table border="1">
+ * <caption>Explaining byte array data format.</caption>
  * <tr>
  *   <td>Node's metadata flags</td>
  *   <td>value length</td>
@@ -53,7 +53,6 @@ import java.util.Map;
  *   <td>children data sub array</td>
  * </tr>
  * </table>
- * <hr/>
  * <p>
  * This is implemented in Java for speed reasons. Converting this class to Kotlin made the
  * whole lookup operation multiple times slower.
@@ -114,11 +113,10 @@ public class MatchIndex {
    * {@link UrlElement} against this searchh index.
    * Will return an instance of {@link DeepLinkEntry} if a match was found or null if there wasn't.
    *
-   *
    * @param deeplinkUri The uri that should be matched
    * @param elements The {@link UrlElement} list of
    *                 the {@link DeepLinkUri} to match against. Must be
-   *                 in correct order (scheme -> host -> path elements)
+   *                 in correct order (scheme -&gt; host -&gt; path elements)
    * @param placeholders Placeholders (that are encoded at {name} in the Url inside the index. Used
    *                     to collect the set of placeholders and their values as
    *                     the {@link DeepLinkUri} is recursively

@@ -20,6 +20,9 @@ publishing {
 }
 
 mavenPublishing {
+    // Note: Some config is also in gradle.properties file (e.g. which host to use) it cannot be here
+    // because the deprecation check in om.vanniktech.maven.publish runs before this and thus needs
+    // to be set there.
     if (findProperty("enforceSnapshotVersion").toString().toBoolean() && !findProperty("VERSION_NAME").toString().endsWith("-SNAPSHOT")) {
         throw new org.gradle.api.tasks.TaskInstantiationException(
                 "Cannot publish non snapshot version(${findProperty("VERSION_NAME")}) if 'enforceSnapshotVersion' property is set!"
