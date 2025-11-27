@@ -22,7 +22,7 @@ fun String.placeholders(): List<String>? =
  *
  * See: https://developer.android.com/reference/android/os/PatternMatcher#PATTERN_SIMPLE_GLOB
  */
-const val SIMPLE_GLOB_PATTERN = ".*"
+const val SIMPLE_GLOB_PATTERN_MIN_ONE_CHAR = "..*"
 
 /**
  * Get all the allowed values from a placeholder that follows the format {placeholder_name(allowed|values)} from a [String].
@@ -31,7 +31,7 @@ const val SIMPLE_GLOB_PATTERN = ".*"
 internal fun String.placeholderValues(): List<String> =
     allowedPlaceholderRegex.find(this)?.let { matchResult ->
         matchResult.value.split(MatchIndex.ALLOWED_VALUES_SEPARATOR)
-    } ?: listOf(SIMPLE_GLOB_PATTERN)
+    } ?: listOf(SIMPLE_GLOB_PATTERN_MIN_ONE_CHAR)
 
 /**
  * Rewrite a [String] with all the allowed values from a placeholder that follows the format {placeholder_name(allowed|values)} sorted alphabetically.

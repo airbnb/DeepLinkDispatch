@@ -20,11 +20,11 @@ class AppDeepLinkDelegateTest {
     fun testDuplicatedEntries() {
         val configurablePlaceholdersMap =
             mapOf(
-                "configPathOne" to "somePathThree",
+                "configPathOne" to "/somePathThree",
                 "configurable-path-segment-one" to "",
                 "configurable-path-segment" to "",
                 "configurable-path-segment-two" to "",
-                "configPathOne" to "somePathOne",
+                "configPathOne" to "/somePathOne",
             )
         val deepLinkDelegate =
             DeepLinkDelegate(

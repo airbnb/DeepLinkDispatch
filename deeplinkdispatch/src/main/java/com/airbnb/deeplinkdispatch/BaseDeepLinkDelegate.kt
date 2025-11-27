@@ -37,10 +37,13 @@ open class BaseDeepLinkDelegate
          *
          *  * <xmp>@DeepLink("https://www.example.com/<configurable-path-segment>/users/{param1}")
          *  * </configurable-path-segment></xmp> *
-         *  * mapOf("pathVariableReplacementValue" to "obamaOs")
+         *  * mapOf("pathVariableReplacementValue" to "/obamaOs")
          *
          * Then:
          *  * <xmp>https://www.example.com/obamaOs/users/{param1}</xmp> will match.
+         *
+         *  Note: The non empty string value of a configurable path segment mapping needs to start
+         *  with a '/' as in case it is empty the whole path segment (with the '/') gets removed.
          */
         private val configurablePathSegmentReplacements: Map<ByteArray, ByteArray> =
             toByteArrayMap(configurablePathSegmentReplacements)
@@ -48,7 +51,7 @@ open class BaseDeepLinkDelegate
         init {
             validateConfigurablePathSegmentReplacements(
                 registries,
-                this.configurablePathSegmentReplacements,
+                configurablePathSegmentReplacements,
             )
         }
 

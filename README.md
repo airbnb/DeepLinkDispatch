@@ -270,7 +270,7 @@ public class DeepLinkActivity extends Activity {
     // Configure a map for configurable placeholders if you are using any. If you do a mapping
     // has to be provided for that are used
     Map configurablePlaceholdersMap = new HashMap();
-    configurablePlaceholdersMap.put("type_of_cereal", "obamaos");
+    configurablePlaceholdersMap.put("type_of_cereal", "/obamaos");
     // DeepLinkDelegate, LibraryDeepLinkModuleRegistry and AppDeepLinkModuleRegistry
     // are generated at compile-time.
     DeepLinkDelegate deepLinkDelegate = 
@@ -288,6 +288,9 @@ This app will now match the Url `foo://cereal.com/obamaos/nutritional_info` to t
 If you build another app and set `type_of_cereal` to `captnmaccains` that apps version of the `intentForNutritionalDeepLinkMethod` would be called when when opening `foo://cereal.com/captnmaccains/nutritional_info`
 
 If you are using configurable path segment placeholders, a mapping has to be provided for every placeholder used. If you are missing one the app will crash at runtime.
+
+Note: Because `""` is a valid value for a mapping you need to provide the leading `/` in the mapping as well if it is not empty (as the whole path segment will get removed if the mapping is empty).
+e.g. in this example `type_of_cereal` set to `""` will match `foo://cereal.com/nutritional_info`
 
 #### Empty configurable path segment placeholders mapping
 

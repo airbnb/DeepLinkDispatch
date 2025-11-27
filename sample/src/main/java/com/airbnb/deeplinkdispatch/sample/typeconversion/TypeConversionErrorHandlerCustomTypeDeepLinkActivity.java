@@ -69,11 +69,11 @@ public class TypeConversionErrorHandlerCustomTypeDeepLinkActivity extends Activi
 
     super.onCreate(savedInstanceState);
     Map configurablePlaceholdersMap = new HashMap();
-    configurablePlaceholdersMap.put("configPathOne", "somePathThree");
+    configurablePlaceholdersMap.put("configPathOne", "/somePathThree");
     configurablePlaceholdersMap.put("configurable-path-segment-one", "");
     configurablePlaceholdersMap.put("configurable-path-segment", "");
     configurablePlaceholdersMap.put("configurable-path-segment-two", "");
-    configurablePlaceholdersMap.put("configPathOne", "somePathOne");
+    configurablePlaceholdersMap.put("configPathOne", "/somePathOne");
     DeepLinkDelegate deepLinkDelegate = new DeepLinkDelegate(
             new SampleModuleRegistry(),
             new LibraryDeepLinkModuleRegistry(),

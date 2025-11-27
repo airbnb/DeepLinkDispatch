@@ -9,12 +9,10 @@ import com.squareup.javapoet.ClassName
 import com.squareup.kotlinpoet.javapoet.KotlinPoetJavaPoetPreview
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.verify
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 import java.io.PrintWriter
 import java.io.StringWriter
-import javax.tools.Diagnostic
 
 class ManifestWriterTest {
     private val messager = mockk<XMessager>(relaxed = true)
@@ -193,7 +191,7 @@ class ManifestWriterTest {
                             <category android:name="android.intent.category.BROWSABLE" />
                             <data android:scheme="https" />
                             <data android:host="example.com" />
-                            <data android:pathPattern="/user/.*" />
+                            <data android:pathPattern="/user/..*" />
                         </intent-filter>
                     </activity>
                 </application>
@@ -237,7 +235,7 @@ class ManifestWriterTest {
                             <category android:name="android.intent.category.BROWSABLE" />
                             <data android:scheme="https" />
                             <data android:host="example.com" />
-                            <data android:pathPattern="/user/.*/profile/.*" />
+                            <data android:pathPattern="/user/..*/profile/..*" />
                         </intent-filter>
                     </activity>
                 </application>
@@ -632,7 +630,7 @@ class ManifestWriterTest {
                             <data android:host="myapp.com" />
                             <data android:host="www.myapp.com" />
                             <data android:host="m.myapp.com" />
-                            <data android:pathPattern="/items/.*" />
+                            <data android:pathPattern="/items/..*" />
                         </intent-filter>
                     </activity>
                 </application>
@@ -701,7 +699,7 @@ class ManifestWriterTest {
                             <category android:name="android.intent.category.BROWSABLE" />
                             <data android:scheme="https" />
                             <data android:host="example.com" />
-                            <data android:path="/${'$'}{configurable-path-segment}/bar" />
+                            <data android:path="${'$'}{configurable-path-segment}/bar" />
                         </intent-filter>
                     </activity>
                 </application>
@@ -745,7 +743,7 @@ class ManifestWriterTest {
                             <category android:name="android.intent.category.BROWSABLE" />
                             <data android:scheme="https" />
                             <data android:host="example.com" />
-                            <data android:path="/${'$'}{start}/middle/end" />
+                            <data android:path="${'$'}{start}/middle/end" />
                         </intent-filter>
                     </activity>
                 </application>
@@ -789,7 +787,7 @@ class ManifestWriterTest {
                             <category android:name="android.intent.category.BROWSABLE" />
                             <data android:scheme="https" />
                             <data android:host="example.com" />
-                            <data android:path="/path/${'$'}{end}" />
+                            <data android:path="/path${'$'}{end}" />
                         </intent-filter>
                     </activity>
                 </application>
@@ -833,7 +831,7 @@ class ManifestWriterTest {
                             <category android:name="android.intent.category.BROWSABLE" />
                             <data android:scheme="https" />
                             <data android:host="example.com" />
-                            <data android:path="/${'$'}{first}/${'$'}{second}/bar" />
+                            <data android:path="${'$'}{first}${'$'}{second}/bar" />
                         </intent-filter>
                     </activity>
                 </application>
@@ -877,7 +875,7 @@ class ManifestWriterTest {
                             <category android:name="android.intent.category.BROWSABLE" />
                             <data android:scheme="https" />
                             <data android:host="example.com" />
-                            <data android:pathPattern="/${'$'}{config}/.*/bar" />
+                            <data android:pathPattern="${'$'}{config}/..*/bar" />
                         </intent-filter>
                     </activity>
                 </application>
@@ -921,7 +919,7 @@ class ManifestWriterTest {
                             <category android:name="android.intent.category.BROWSABLE" />
                             <data android:scheme="https" />
                             <data android:host="example.com" />
-                            <data android:path="/${'$'}{my-config_segment}/bar" />
+                            <data android:path="${'$'}{my-config_segment}/bar" />
                         </intent-filter>
                     </activity>
                 </application>

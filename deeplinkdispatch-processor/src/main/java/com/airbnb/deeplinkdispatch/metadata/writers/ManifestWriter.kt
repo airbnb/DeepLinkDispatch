@@ -4,10 +4,9 @@ import androidx.room.compiler.processing.XProcessingEnv
 import com.airbnb.deeplinkdispatch.CONFIGURABLE_PATH_SEGMENT_PREFIX
 import com.airbnb.deeplinkdispatch.CONFIGURABLE_PATH_SEGMENT_SUFFIX
 import com.airbnb.deeplinkdispatch.DeepLinkAnnotatedElement
-import com.airbnb.deeplinkdispatch.SIMPLE_GLOB_PATTERN
+import com.airbnb.deeplinkdispatch.SIMPLE_GLOB_PATTERN_MIN_ONE_CHAR
 import com.airbnb.deeplinkdispatch.allPossibleValues
 import java.io.PrintWriter
-import javax.tools.Diagnostic
 
 /**
  * Old documentation format.
@@ -48,56 +47,7 @@ internal class ManifestWriter : Writer {
                                 } else {
                                     ""
                                 }
-                            println("            <intent-filter$attributesString>")
-                            intentFilterGroup.actions.forEach { action ->
-                                println("                <action android:name=\"$action\" />")
-                            }
-                            intentFilterGroup.categories.forEach { category ->
-                                println("                <category android:name=\"$category\" />")
-                            }
-                            // There might be multiple URIs in a single intent filter, and we want to make sure there
-                            // are no duplicates (e.g. http and https for host over and over again)
-                            val allPossibleUrlValues =
-                                elements
-                                    .map { element ->
-                                        val scheme = intentFilterGroup.scheme
-                                        val host = element.deepLinkUri.host()
-                                        val path = element.deepLinkUri.pathSegments().joinToString(prefix = "/", separator = "/")
-                                        UrlValues(
-                                            scheme.allPossibleValues().toSet(),
-                                            host.allPossibleValues().toSet(),
-                                            path.allPossibleValues().toSet(),
-                                        )
-                                    }.reduce { acc, urlValues ->
-                                        UrlValues(
-                                            acc.schemeValues + urlValues.schemeValues,
-                                            acc.hostValues + urlValues.hostValues,
-                                            acc.pathValues + urlValues.pathValues,
-                                        )
-                                    }
-                            allPossibleUrlValues.schemeValues.forEach { schemeValue ->
-                                println("                <data android:scheme=\"$schemeValue\" />")
-                            }
-                            allPossibleUrlValues.hostValues.forEach { hostValue ->
-                                println("                <data android:host=\"$hostValue\" />")
-                            }
-                            allPossibleUrlValues.pathValues.map { pathValue ->
-                                // The <name> in the url template becomes ${name} to be replaced as a manifest placeholder
-                                configurablePathSegmentRegex.replace(pathValue, "\\$\\{$1\\}")
-                            }.forEach { pathValue ->
-                                // If there is a simple glob pattern in the path, we need to use pathPattern instead of path
-                                // See: https://developer.android.com/guide/topics/manifest/data-element#path
-                                println(
-                                    "                <data android:${
-                                        if (pathValue.contains(SIMPLE_GLOB_PATTERN)) {
-                                            "pathPattern"
-                                        } else {
-                                            "path"
-                                        }
-                                    }=\"$pathValue\" />",
-                                )
-                            }
-                            println("            </intent-filter>")
+                            writeIntentFilter(attributesString, intentFilterGroup, elements)
                         }
                     println("        </activity>")
                 }
@@ -107,8 +57,74 @@ internal class ManifestWriter : Writer {
         }
     }
 
+    private fun PrintWriter.writeIntentFilter(
+        attributesString: String,
+        intentFilterGroup: IntentFilterGroup,
+        elements: List<DeepLinkAnnotatedElement>,
+    ) {
+        println("            <intent-filter$attributesString>")
+        intentFilterGroup.actions.forEach { action ->
+            println("                <action android:name=\"$action\" />")
+        }
+        intentFilterGroup.categories.forEach { category ->
+            println("                <category android:name=\"$category\" />")
+        }
+        // There might be multiple URIs in a single intent filter, and we want to make sure there
+        // are no duplicates (e.g. http and https for host over and over again)
+        val allPossibleUrlValues =
+            elements
+                .map { element ->
+                    val scheme = intentFilterGroup.scheme
+                    val host = element.deepLinkUri.host()
+                    val path =
+                        element.deepLinkUri
+                            .pathSegments()
+                            .joinToString(prefix = "/", separator = "/")
+                    UrlValues(
+                        scheme.allPossibleValues().toSet(),
+                        host.allPossibleValues().toSet(),
+                        path.allPossibleValues().toSet(),
+                    )
+                }.reduce { acc, urlValues ->
+                    UrlValues(
+                        acc.schemeValues + urlValues.schemeValues,
+                        acc.hostValues + urlValues.hostValues,
+                        acc.pathValues + urlValues.pathValues,
+                    )
+                }
+        allPossibleUrlValues.schemeValues.forEach { schemeValue ->
+            println("                <data android:scheme=\"$schemeValue\" />")
+        }
+        allPossibleUrlValues.hostValues.forEach { hostValue ->
+            println("                <data android:host=\"$hostValue\" />")
+        }
+        allPossibleUrlValues.pathValues
+            .map { pathValue ->
+                // The "/<name>" in the url template becomes ${name} to be replaced as a manifest placeholder
+                // Note that we do replace / before the <name> also as we do allow to replace the whole path segment
+                // with nothing and in that case also need to remove the / this means that ${name} will need to contain
+                // the / it not empty.
+                configurablePathSegmentRegex.replace(pathValue, "\\$\\{$1\\}")
+            }.forEach { pathValue ->
+                // If there is a simple glob pattern in the path, we need to use pathPattern instead of path
+                // See: https://developer.android.com/guide/topics/manifest/data-element#path
+                println(
+                    "                <data android:${
+                        if (pathValue.contains(SIMPLE_GLOB_PATTERN_MIN_ONE_CHAR)) {
+                            "pathPattern"
+                        } else {
+                            "path"
+                        }
+                    }=\"$pathValue\" />",
+                )
+            }
+        println("            </intent-filter>")
+    }
+
     companion object {
-        private val configurablePathSegmentRegex = "$CONFIGURABLE_PATH_SEGMENT_PREFIX([^>]*)$CONFIGURABLE_PATH_SEGMENT_SUFFIX".toRegex()
+        private val configurablePathSegmentRegex =
+            "\\/?$CONFIGURABLE_PATH_SEGMENT_PREFIX([^$CONFIGURABLE_PATH_SEGMENT_SUFFIX]*)$CONFIGURABLE_PATH_SEGMENT_SUFFIX"
+                .toRegex()
     }
 }
 

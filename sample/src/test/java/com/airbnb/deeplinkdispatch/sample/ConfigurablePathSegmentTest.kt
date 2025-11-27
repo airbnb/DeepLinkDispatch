@@ -23,7 +23,7 @@ class ConfigurablePathSegmentTest {
 
     private val configurablePathSegmentReplacementFirstSet =
         mapOf(
-            "configurable-path-segment" to "foo",
+            "configurable-path-segment" to "/foo",
             "configurable-path-segment-one" to "",
             "configurable-path-segment-two" to "",
         )
@@ -32,13 +32,13 @@ class ConfigurablePathSegmentTest {
         mapOf(
             "configurable-path-segment" to "",
             "configurable-path-segment-one" to "",
-            "configurable-path-segment-two" to "bar",
+            "configurable-path-segment-two" to "/bar",
         )
 
     private val configurablePathSegmentReplacementsTwoEmpty =
         mapOf(
             "configurable-path-segment" to "",
-            "configurable-path-segment-one" to "bar",
+            "configurable-path-segment-one" to "/bar",
             "configurable-path-segment-two" to "",
         )
 

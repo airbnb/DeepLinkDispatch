@@ -34,7 +34,7 @@ class DeeplinkUriTemplateUtilsTest {
     @Test
     fun `placeholderValues returns "something" when no allowed values are present`() {
         val input = "{placeholder_name}"
-        assertEquals(listOf(".*"), input.placeholderValues())
+        assertEquals(listOf("..*"), input.placeholderValues())
     }
 
     @Test
@@ -111,14 +111,14 @@ class DeeplinkUriTemplateUtilsTest {
             "http{scheme(|s)}://{host_prefix(|de.|ro.|www.)}airbnb.com/guests/{number_of_guests}"
         assertEquals(
             listOf(
-                "http://airbnb.com/guests/.*",
-                "http://de.airbnb.com/guests/.*",
-                "http://ro.airbnb.com/guests/.*",
-                "http://www.airbnb.com/guests/.*",
-                "https://airbnb.com/guests/.*",
-                "https://de.airbnb.com/guests/.*",
-                "https://ro.airbnb.com/guests/.*",
-                "https://www.airbnb.com/guests/.*",
+                "http://airbnb.com/guests/..*",
+                "http://de.airbnb.com/guests/..*",
+                "http://ro.airbnb.com/guests/..*",
+                "http://www.airbnb.com/guests/..*",
+                "https://airbnb.com/guests/..*",
+                "https://de.airbnb.com/guests/..*",
+                "https://ro.airbnb.com/guests/..*",
+                "https://www.airbnb.com/guests/..*",
             ),
             input.allPossibleValues(),
         )
