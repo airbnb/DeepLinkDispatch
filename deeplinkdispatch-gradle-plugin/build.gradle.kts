@@ -53,6 +53,7 @@ fun dep(vararg names: String, map: Map<String, Any> = deps): String {
 }
 
 dependencies {
+    implementation(project(":deeplinkdispatch-base"))
     implementation(dep("androidCommonTools"))
     implementation(dep("kspGradlePlugin"))
     implementation(dep("androidPlugin"))

@@ -1,19 +1,16 @@
 package com.airbnb.deeplinkdispatch.gradleplugin
 
+import com.airbnb.deeplinkdispatch.base.ManifestGeneration
 import com.android.build.api.artifact.SingleArtifact
 import com.android.build.api.variant.AndroidComponentsExtension
+import com.android.build.api.variant.HasHostTests
 import com.android.build.api.variant.Variant
 import com.android.manifmerger.ManifestMerger2
 import com.android.manifmerger.MergingReport
 import com.android.utils.StdLogger
-import com.google.devtools.ksp.gradle.KspExtension
-import com.google.devtools.ksp.gradle.KspGradleSubplugin
-
 import org.gradle.api.DefaultTask
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-
-
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.Property
@@ -25,7 +22,6 @@ import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.TaskAction
-import java.io.File
 
 /**
  * Automatic manifest generation plugin for DeepLinkDispatch.
@@ -75,29 +71,11 @@ class ManifestGenerationPlugin: Plugin<Project> {
             )
         }
 
-        // If the KSP plugin was already applied, we need to update the args for the manifest
-        // generation.
-        if (project.plugins.hasPlugin(KspGradleSubplugin::class.java)) {
-            updateKspArgsForManifestGeneration(project)
-        }
-
-        // Just in case listen to when the KSP plugin is applied and update the args for the
-        // manifest generation. This can happen if the KSP plugin is applied after this plugin.
-        project.plugins.whenPluginAdded {
-            when (this) {
-                is KspGradleSubplugin -> {
-                    updateKspArgsForManifestGeneration(project)
-                }
-            }
-        }
-
         val androidComponents = project.extensions.getByType(
             AndroidComponentsExtension::class.java
         )
 
         androidComponents.onVariants { variant ->
-            val generatedManifestFile = generatedManifestFile(project)
-
             // Determine merge type during configuration phase
             val mergeType = if (project.plugins.hasPlugin("com.android.application")) {
                 ManifestMerger2.MergeType.APPLICATION
@@ -107,15 +85,15 @@ class ManifestGenerationPlugin: Plugin<Project> {
                 error("Unsupported plugin type. You can only apply this plugin to an Android application or library modules")
             }
 
+            // Path where KSP writes the manifest via filer API (this is cached by Gradle)
+            val kspGeneratedManifestPath = "generated/ksp/${variant.name}/resources/${ManifestGeneration.MANIFEST_RESOURCE_PATH}"
+
             val manifestMergeTask = project.tasks.register(
                 GenerateManifestIntentFiltersForDeeplinkDispatchTask.taskName(variant),
                 GenerateManifestIntentFiltersForDeeplinkDispatchTask::class.java
             ) {
-                // Don't set manifestIntentFiltersFile during configuration
-                // Instead, the task will look for it at the expected location during execution
-                generatedManifestPath.set(project.layout.buildDirectory.file(
-                    "intermediates/deeplinkdispatch/AndroidManifest.xml"
-                ))
+                // Read manifest from KSP's resource output directory (properly cached)
+                generatedManifestPath.set(project.layout.buildDirectory.file(kspGeneratedManifestPath))
                 // Set KSP output directory as an input to establish dependency on KSP task
                 kspOutputDirectory.set(project.layout.buildDirectory.dir(
                     "generated/ksp/${variant.name}/kotlin"
@@ -146,35 +124,46 @@ class ManifestGenerationPlugin: Plugin<Project> {
                     manifestMergeTask.configure {
                         dependsOn(kspTask)
                     }
-                    println("Configured ${manifestMergeTask.name} to depend on $kspTaskName")
-                } else {
-                    println("Warning: KSP task $kspTaskName not found")
                 }
             }
 
-            println("Configured manifest generation for ${variant.name} with generated manifest at: ${generatedManifestFile.absolutePath}")
+            // Also transform the manifest for host tests (unit tests) so that
+            // Robolectric tests can access the merged intent filters via PackageManager
+            (variant as? HasHostTests)?.hostTests?.forEach { (testType, hostTest) ->
+                val hostTestManifestMergeTask = project.tasks.register(
+                    "${hostTest.name}GenerateManifestIntentFiltersForDeepLinkDispatch",
+                    GenerateManifestIntentFiltersForDeeplinkDispatchTask::class.java
+                ) {
+                    // Read manifest from KSP's resource output directory (properly cached)
+                    generatedManifestPath.set(project.layout.buildDirectory.file(kspGeneratedManifestPath))
+                    kspOutputDirectory.set(project.layout.buildDirectory.dir(
+                        "generated/ksp/${variant.name}/kotlin"
+                    ))
+                    this.mergeType.set(mergeType)
+                    group = "deeplinkdispatch"
+                    description = "Merges KSP-generated manifest for ${hostTest.name}"
+                }
+
+                hostTest.artifacts.use(hostTestManifestMergeTask)
+                    .wiredWithFiles(
+                        GenerateManifestIntentFiltersForDeeplinkDispatchTask::mergedManifest,
+                        GenerateManifestIntentFiltersForDeeplinkDispatchTask::updatedManifest
+                    )
+                    .toTransform(SingleArtifact.MERGED_MANIFEST)
+
+                // Configure task ordering for host test tasks
+                project.afterEvaluate {
+                    val kspTaskName = "ksp${variant.name.replaceFirstChar { it.uppercase() }}Kotlin"
+                    val kspTask = project.tasks.findByName(kspTaskName)
+
+                    if (kspTask != null) {
+                        hostTestManifestMergeTask.configure {
+                            dependsOn(kspTask)
+                        }
+                    }
+                }
+            }
         }
-
-    }
-
-    private fun generatedManifestFile(project: Project) =
-        File(project.layout.buildDirectory.asFile.get(), "intermediates/deeplinkdispatch/AndroidManifest.xml")
-
-    /**
-     * Configures KSP to generate the manifest file with intent filters.
-     *
-     * This tells the DeepLinkDispatch annotation processor (running via KSP) where to write
-     * the generated AndroidManifest.xml file containing intent filters for deeplinks with
-     * activityClassFqn set.
-     *
-     * Note: This only works with KSP. KAPT does not support this feature.
-     */
-    private fun updateKspArgsForManifestGeneration(project: Project) {
-        val kspExtension = project.extensions.getByType(KspExtension::class.java)
-        kspExtension.arg(
-            "deepLinkManifestGenMetadata.output",
-            generatedManifestFile(project).canonicalPath
-        )
     }
 }
 

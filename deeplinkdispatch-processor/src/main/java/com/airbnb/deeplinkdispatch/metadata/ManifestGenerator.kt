@@ -1,90 +1,79 @@
 package com.airbnb.deeplinkdispatch.metadata
 
-import androidx.annotation.VisibleForTesting
+import androidx.room.compiler.processing.XFiler
 import androidx.room.compiler.processing.XMessager
 import androidx.room.compiler.processing.XProcessingEnv
 import com.airbnb.deeplinkdispatch.DeepLinkAnnotatedElement
+import com.airbnb.deeplinkdispatch.base.ManifestGeneration
 import com.airbnb.deeplinkdispatch.metadata.writers.ManifestWriter
 import com.airbnb.deeplinkdispatch.metadata.writers.Writer
-import java.io.File
-import java.io.FileWriter
-import java.io.IOException
 import java.io.PrintWriter
+import java.io.StringWriter
+import java.nio.file.Path
 import javax.tools.Diagnostic
 
 /**
  * This generates the input manifest for the manifest merger in the Gradle plugin.
  *
  * It creates a manifest file that contains all the intent filters from the annotated elements.
+ * The manifest is written to KSP's resource output directory using the filer API, which ensures
+ * proper caching by Gradle.
  *
+ * The Gradle plugin reads from: build/generated/ksp/<variant>/resources/deeplinkdispatch/AndroidManifest.xml
  */
 internal class ManifestGenerator(
     private val processingEnv: XProcessingEnv,
 ) {
     private val messager: XMessager = processingEnv.messager
 
-    @get:VisibleForTesting
-    var file: File? = initFile()
-
     fun write(elements: List<DeepLinkAnnotatedElement>) {
-        val file =
-            file ?: run {
-                messager.printMessage(
-                    Diagnostic.Kind.WARNING,
-                    "Output file is null. Manifest generation: Manifest not generated.",
-                )
-                return
-            }
         if (elements.isNullOrEmpty()) {
             messager.printMessage(
                 Diagnostic.Kind.WARNING,
                 "No deep links. Manifest generation: Manifest not generated.",
             )
-            file.delete()
             return
         }
-        try {
-            PrintWriter(FileWriter(file), true).use { writer ->
-                val docWriter: Writer = ManifestWriter()
-                docWriter.write(processingEnv, writer, elements)
+
+        // Only generate manifest if at least one element has activityClassFqn set
+        val elementsWithActivity = elements.filter { it.activityClassFqn != null }
+        if (elementsWithActivity.isEmpty()) {
+            messager.printMessage(
+                Diagnostic.Kind.WARNING,
+                "No deep links with activityClassFqn. Manifest generation: Manifest not generated.",
+            )
+            return
+        }
+
+        // Generate manifest content to a string first
+        val manifestContent =
+            StringWriter().use { stringWriter ->
+                PrintWriter(stringWriter, true).use { writer ->
+                    val docWriter: Writer = ManifestWriter()
+                    docWriter.write(processingEnv, writer, elements)
+                }
+                stringWriter.toString()
             }
-        } catch (e: IOException) {
+
+        // Write to KSP's resource output via filer API (this gets cached by Gradle)
+        try {
+            processingEnv.filer
+                .writeResource(
+                    filePath = Path.of(ManifestGeneration.MANIFEST_RESOURCE_PATH),
+                    originatingElements = emptyList(),
+                    mode = XFiler.Mode.Aggregating,
+                ).use { outputStream ->
+                    outputStream.write(manifestContent.toByteArray(Charsets.UTF_8))
+                }
+            messager.printMessage(
+                Diagnostic.Kind.WARNING,
+                " Manifest generation: Generated at KSP resource output: ${ManifestGeneration.MANIFEST_RESOURCE_PATH}",
+            )
+        } catch (e: Exception) {
             messager.printMessage(
                 Diagnostic.Kind.ERROR,
-                " Manifest generation metadata doc not generated: " + e.message,
+                " Manifest generation failed: ${e.message}",
             )
         }
-        messager.printMessage(Diagnostic.Kind.WARNING, " Manifest generation: Generated at: " + file.path)
-    }
-
-    private fun initFile(): File? {
-        val path = processingEnv.options[MANIFEST_GEN_METADATA_OUTPUT_FILE]
-        if (path == null || path.trim { it <= ' ' }.isEmpty()) {
-            messager.printMessage(
-                Diagnostic.Kind.WARNING,
-                "Output path not specified. Manifest generation: Manifest not generated. Output path must be specified via $MANIFEST_GEN_METADATA_OUTPUT_FILE ksp option.",
-            )
-            return null
-        }
-        val file = File(path)
-        if (file.isDirectory) {
-            messager.printMessage(
-                Diagnostic.Kind.WARNING,
-                "Specify a file path at $MANIFEST_GEN_METADATA_OUTPUT_FILE to generate manifest generation metadata.",
-            )
-            return null
-        }
-        val parentDir = file.parentFile
-        if (!parentDir.exists() && !parentDir.mkdirs()) {
-            messager.printMessage(
-                Diagnostic.Kind.WARNING,
-                "Cannot create file specified at ${file.canonicalPath}.",
-            )
-        }
-        return file
-    }
-
-    companion object {
-        const val MANIFEST_GEN_METADATA_OUTPUT_FILE = "deepLinkManifestGenMetadata.output"
     }
 }
