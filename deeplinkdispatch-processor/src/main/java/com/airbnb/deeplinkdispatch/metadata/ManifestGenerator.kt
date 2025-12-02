@@ -26,7 +26,14 @@ internal class ManifestGenerator(
 ) {
     private val messager: XMessager = processingEnv.messager
 
+    // Track if we've already written the manifest to avoid duplicate writes in multi-round processing
+    private var manifestWritten = false
+
     fun write(elements: List<DeepLinkAnnotatedElement>) {
+        // Skip if we've already written the manifest in a previous round
+        if (manifestWritten) {
+            return
+        }
         if (elements.isNullOrEmpty()) {
             messager.printMessage(
                 Diagnostic.Kind.WARNING,
@@ -65,6 +72,7 @@ internal class ManifestGenerator(
                 ).use { outputStream ->
                     outputStream.write(manifestContent.toByteArray(Charsets.UTF_8))
                 }
+            manifestWritten = true
             messager.printMessage(
                 Diagnostic.Kind.WARNING,
                 " Manifest generation: Generated at KSP resource output: ${ManifestGeneration.MANIFEST_RESOURCE_PATH}",
