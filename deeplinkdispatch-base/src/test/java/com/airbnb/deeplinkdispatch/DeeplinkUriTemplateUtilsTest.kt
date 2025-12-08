@@ -123,4 +123,61 @@ class DeeplinkUriTemplateUtilsTest {
             input.allPossibleValues(),
         )
     }
+
+    @Test
+    fun `getAllPossiblePlaceholderValues returns values for placeholder with allowed values`() {
+        val uriTemplate = "http{scheme(|s)}://airbnb.com"
+        val result = uriTemplate.allPossiblePlaceholderValues("scheme")
+        assertEquals(listOf("", "s"), result)
+    }
+
+    @Test
+    fun `getAllPossiblePlaceholderValues returns values for placeholder with multiple allowed values`() {
+        val uriTemplate = "http://{host_prefix(|de.|ro.|www.)}airbnb.com"
+        val result = uriTemplate.allPossiblePlaceholderValues("host_prefix")
+        assertEquals(listOf("", "de.", "ro.", "www."), result)
+    }
+
+    @Test
+    fun `getAllPossiblePlaceholderValues returns empty set for placeholder without allowed values`() {
+        val uriTemplate = "http://airbnb.com/guests/{num_guests}"
+        val result = uriTemplate.allPossiblePlaceholderValues("num_guests")
+        assertEquals(emptyList<String>(), result)
+    }
+
+    @Test
+    fun `getAllPossiblePlaceholderValues returns empty set when placeholder name does not exist`() {
+        val uriTemplate = "http{scheme(|s)}://airbnb.com"
+        val result = uriTemplate.allPossiblePlaceholderValues("nonexistent")
+        assertEquals(emptyList<String>(), result)
+    }
+
+    @Test
+    fun `getAllPossiblePlaceholderValues returns empty set for uri without placeholders`() {
+        val uriTemplate = "https://www.airbnb.com/guests"
+        val result = uriTemplate.allPossiblePlaceholderValues("anything")
+        assertEquals(emptyList<String>(), result)
+    }
+
+    @Test
+    fun `getAllPossiblePlaceholderValues returns correct values from uri with multiple placeholders`() {
+        val uriTemplate = "http{scheme(|s)}://{host_prefix(|de.|www.)}airbnb.com/{path}"
+        assertEquals(listOf("", "s"), uriTemplate.allPossiblePlaceholderValues("scheme"))
+        assertEquals(listOf("", "de.", "www."), uriTemplate.allPossiblePlaceholderValues("host_prefix"))
+        assertEquals(emptyList<String>(), uriTemplate.allPossiblePlaceholderValues("path"))
+    }
+
+    @Test
+    fun `getAllPossiblePlaceholderValues handles single allowed value`() {
+        val uriTemplate = "http://{subdomain(www.)}airbnb.com"
+        val result = uriTemplate.allPossiblePlaceholderValues("subdomain")
+        assertEquals(listOf("www."), result)
+    }
+
+    @Test
+    fun `getAllPossiblePlaceholderValues handles empty allowed values list`() {
+        val uriTemplate = "http://{empty()}airbnb.com"
+        val result = uriTemplate.allPossiblePlaceholderValues("empty")
+        assertEquals(listOf(""), result)
+    }
 }

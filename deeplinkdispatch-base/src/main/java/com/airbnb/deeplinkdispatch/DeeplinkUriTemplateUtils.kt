@@ -1,6 +1,8 @@
 package com.airbnb.deeplinkdispatch
 
 import com.airbnb.deeplinkdispatch.base.MatchIndex
+import com.airbnb.deeplinkdispatch.base.MatchIndex.ALLOWED_VALUES_DELIMITER
+import com.airbnb.deeplinkdispatch.base.MatchIndex.VARIABLE_DELIMITER
 
 private val placeholderRegex = ("\\" + MatchIndex.VARIABLE_DELIMITER[0] + "(.*?)\\" + MatchIndex.VARIABLE_DELIMITER[1]).toRegex()
 
@@ -45,6 +47,16 @@ internal fun String.orderPlaceholderValues(): String =
     }
 
 /**
+ * For the placeholder name given in `placeholderName` retrieve all possible values or an empty set
+ * if there aren't any.
+ */
+fun String.allPossiblePlaceholderValues(placeholderName: String): List<String> =
+    placeholders()
+        ?.filter { it.startsWith("${VARIABLE_DELIMITER[0]}$placeholderName${ALLOWED_VALUES_DELIMITER[0]}") }
+        ?.map { it.placeholderValues() }
+        ?.flatten() ?: emptyList()
+
+/**
  * Get all the possible values from a [String] that contains placeholders that follow the format {placeholder_name(allowed|values)}.
  * e.g. "http{scheme(|s)}://{host_prefix(|de.|ro.|www.)}airbnb.com/guests" will return a list of all possible values for the scheme and host_prefix placeholders.
  */
@@ -55,10 +67,8 @@ fun String.allPossibleValues(): List<String> =
             firstPlaceholder.placeholderValues()?.mapNotNull { placeholderValue ->
                 val placeholderReplacedString = this.replace(firstPlaceholder, placeholderValue)
                 val remainingPlaceholdesReplacedValues = placeholderReplacedString.allPossibleValues()
-                if (remainingPlaceholdesReplacedValues.isEmpty()) {
+                remainingPlaceholdesReplacedValues.ifEmpty {
                     listOf(placeholderReplacedString)
-                } else {
-                    remainingPlaceholdesReplacedValues
                 }
             }
         }?.flatten() ?: listOf(this)

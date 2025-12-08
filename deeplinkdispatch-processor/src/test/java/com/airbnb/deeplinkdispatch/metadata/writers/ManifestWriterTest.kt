@@ -23,6 +23,96 @@ class ManifestWriterTest {
     }
 
     /**
+     * Test simple url without a path
+     */
+    @Test
+    @OptIn(KotlinPoetJavaPoetPreview::class)
+    fun testSimpleUrlWithoutPath() {
+        val writer = ManifestWriter()
+        val stringWriter = StringWriter()
+        val printWriter = PrintWriter(stringWriter)
+
+        val elements =
+            listOf(
+                createActivityElement(
+                    uri = "scheme://host",
+                    activityClassFqn = "com.example.TestActivity",
+                ),
+            )
+
+        writer.write(processingEnv, printWriter, elements)
+
+        val expected =
+            """
+            <?xml version="1.0" encoding="utf-8"?>
+            <manifest xmlns:android="http://schemas.android.com/apk/res/android" >
+                <application>
+                    <activity
+                        android:name="com.example.TestActivity" android:exported="true">
+                        <intent-filter>
+                            <action android:name="android.intent.action.VIEW" />
+                            <category android:name="android.intent.category.DEFAULT" />
+                            <category android:name="android.intent.category.BROWSABLE" />
+                            <data android:scheme="scheme" />
+                            <data android:host="host" />
+                            <data android:path="/" />
+                            <data android:path="" />
+                        </intent-filter>
+                    </activity>
+                </application>
+            </manifest>
+
+            """.trimIndent()
+
+        assertThat(stringWriter.toString()).isEqualTo(expected)
+    }
+
+    /**
+     * Test simple url without a path
+     */
+    @Test
+    @OptIn(KotlinPoetJavaPoetPreview::class)
+    fun testSimpleUrlWithEmptyPath() {
+        val writer = ManifestWriter()
+        val stringWriter = StringWriter()
+        val printWriter = PrintWriter(stringWriter)
+
+        val elements =
+            listOf(
+                createActivityElement(
+                    uri = "scheme://host/",
+                    activityClassFqn = "com.example.TestActivity",
+                ),
+            )
+
+        writer.write(processingEnv, printWriter, elements)
+
+        val expected =
+            """
+            <?xml version="1.0" encoding="utf-8"?>
+            <manifest xmlns:android="http://schemas.android.com/apk/res/android" >
+                <application>
+                    <activity
+                        android:name="com.example.TestActivity" android:exported="true">
+                        <intent-filter>
+                            <action android:name="android.intent.action.VIEW" />
+                            <category android:name="android.intent.category.DEFAULT" />
+                            <category android:name="android.intent.category.BROWSABLE" />
+                            <data android:scheme="scheme" />
+                            <data android:host="host" />
+                            <data android:path="/" />
+                            <data android:path="" />
+                        </intent-filter>
+                    </activity>
+                </application>
+            </manifest>
+
+            """.trimIndent()
+
+        assertThat(stringWriter.toString()).isEqualTo(expected)
+    }
+
+    /**
      * Test simple URL without any placeholders
      */
     @Test
@@ -159,7 +249,7 @@ class ManifestWriterTest {
     }
 
     /**
-     * Test URL with path parameter placeholder that has no allowed values (should become .*)
+     * Test URL with path parameter placeholder that has no allowed values (should become ..*)
      */
     @Test
     @OptIn(KotlinPoetJavaPoetPreview::class)
@@ -396,7 +486,11 @@ class ManifestWriterTest {
     }
 
     /**
-     * Test multiple URLs for same activity with same scheme/host are grouped in one intent filter
+     * Test multiple URLs for same activity with same scheme/host are merged (Cartesian product rule).
+     *
+     * URLs: https://example.com/path1, https://example.com/path2
+     * Cartesian product: {https} × {example.com} × {/path1, /path2} = 2 combinations
+     * We have 2 URLs. They form a complete Cartesian product, so they CAN be merged.
      */
     @Test
     @OptIn(KotlinPoetJavaPoetPreview::class)
@@ -445,7 +539,15 @@ class ManifestWriterTest {
     }
 
     /**
-     * Test multiple URLs with different schemes/hosts for same activity creates separate intent filters
+     * Test that URLs with different schemes AND different hosts CANNOT be merged.
+     *
+     * Merging https://example.com/path and myapp://custom/path would create:
+     * - Cartesian product: {https, myapp} × {example.com, custom} × {/path} = 4 combinations
+     * - But we only have 2 URLs, so it would incorrectly match:
+     *   - https://custom/path (not defined!)
+     *   - myapp://example.com/path (not defined!)
+     *
+     * @see <a href="https://en.wikipedia.org/wiki/Cartesian_product">Cartesian product</a>
      */
     @Test
     @OptIn(KotlinPoetJavaPoetPreview::class)
@@ -1080,63 +1182,6 @@ class ManifestWriterTest {
     }
 
     /**
-     * Test that elements with the same IntentFilterGroup (same actions, categories, and intentFilterAttributes)
-     * but different scheme/host are grouped together in one activity block with multiple intent-filters
-     */
-    @Test
-    @OptIn(KotlinPoetJavaPoetPreview::class)
-    fun testSameIntentFilterGroupDifferentSchemeHostCreatesMultipleIntentFilters() {
-        val writer = ManifestWriter()
-        val stringWriter = StringWriter()
-        val printWriter = PrintWriter(stringWriter)
-
-        val elements =
-            listOf(
-                createActivityElement(
-                    uri = "https://example.com/path",
-                    activityClassFqn = "com.example.TestActivity",
-                ),
-                createActivityElement(
-                    uri = "myapp://custom/path",
-                    activityClassFqn = "com.example.TestActivity",
-                ),
-            )
-
-        writer.write(processingEnv, printWriter, elements)
-
-        val expected =
-            """
-            <?xml version="1.0" encoding="utf-8"?>
-            <manifest xmlns:android="http://schemas.android.com/apk/res/android" >
-                <application>
-                    <activity
-                        android:name="com.example.TestActivity" android:exported="true">
-                        <intent-filter>
-                            <action android:name="android.intent.action.VIEW" />
-                            <category android:name="android.intent.category.DEFAULT" />
-                            <category android:name="android.intent.category.BROWSABLE" />
-                            <data android:scheme="https" />
-                            <data android:host="example.com" />
-                            <data android:path="/path" />
-                        </intent-filter>
-                        <intent-filter>
-                            <action android:name="android.intent.action.VIEW" />
-                            <category android:name="android.intent.category.DEFAULT" />
-                            <category android:name="android.intent.category.BROWSABLE" />
-                            <data android:scheme="myapp" />
-                            <data android:host="custom" />
-                            <data android:path="/path" />
-                        </intent-filter>
-                    </activity>
-                </application>
-            </manifest>
-
-            """.trimIndent()
-
-        assertThat(stringWriter.toString()).isEqualTo(expected)
-    }
-
-    /**
      * Test that elements with different actions create separate activity blocks
      */
     @Test
@@ -1525,6 +1570,618 @@ class ManifestWriterTest {
             """.trimIndent()
 
         assertThat(stringWriter.toString()).isEqualTo(expected)
+    }
+
+    /**
+     * Comprehensive test for URL grouping with different schemes, hosts, and paths.
+     *
+     * This test verifies that URLs are grouped correctly based on the IntentFilterGroup
+     * (activity, path, actions, categories, intentFilterAttributes).
+     *
+     * IMPORTANT: The grouping must be by PATH to avoid incorrect matches.
+     * Android's intent-filter matching works as: scheme matches ANY listed scheme,
+     * host matches ANY listed host, path matches ANY listed path. This means if we
+     * incorrectly merge different paths with different hosts, we'd match unintended URLs.
+     *
+     * For example, if we have:
+     * - deeplink://app/section1
+     * - deeplink://app/section2
+     * - deeplink://nav/page
+     *
+     * And we incorrectly merge them as:
+     *   <data android:host="app" />
+     *   <data android:host="nav" />
+     *   <data android:path="/section1" />
+     *   <data android:path="/section2" />
+     *   <data android:path="/page" />
+     *
+     * This would INCORRECTLY match deeplink://app/page (not defined!)
+     *
+     * Correct grouping rules:
+     * 1. First level grouping: by activity class
+     * 2. Second level grouping: by IntentFilterGroup (path + actions + categories + intentFilterAttributes)
+     * 3. Within each IntentFilterGroup: schemes and hosts are merged/consolidated
+     *
+     * This allows URLs with the same path but different schemes/hosts to be grouped together,
+     * while keeping different paths separate.
+     *
+     * This test covers:
+     * - Multiple activities with different URLs
+     * - Same activity with same path but different schemes/hosts (merged into one intent-filter)
+     * - Same activity with different paths (creates separate intent-filters per path)
+     * - Custom schemes (myapp://, deeplink://)
+     * - Different actions/categories causing separate intent-filters
+     * - intentFilterAttributes causing separate intent-filters
+     */
+    @Test
+    @OptIn(KotlinPoetJavaPoetPreview::class)
+    fun testComprehensiveUrlGroupingWithDifferentSchemesHostsAndPaths() {
+        val writer = ManifestWriter()
+        val stringWriter = StringWriter()
+        val printWriter = PrintWriter(stringWriter)
+
+        val elements =
+            listOf(
+                // ========== Activity 1: com.example.HomeActivity ==========
+                // Each unique path gets its own intent-filter
+                // URLs with the same path but different schemes/hosts are merged together
+                // Path: /home -> schemes: https, http; hosts: example.com, www.example.com
+                createActivityElement(
+                    uri = "https://example.com/home",
+                    activityClassFqn = "com.example.HomeActivity",
+                ),
+                createActivityElement(
+                    uri = "https://www.example.com/home",
+                    activityClassFqn = "com.example.HomeActivity",
+                ),
+                createActivityElement(
+                    uri = "http://example.com/home",
+                    activityClassFqn = "com.example.HomeActivity",
+                ),
+                // Path: /dashboard -> schemes: https, http; hosts: example.com, m.example.com, legacy.example.com
+                createActivityElement(
+                    uri = "https://example.com/dashboard",
+                    activityClassFqn = "com.example.HomeActivity",
+                ),
+                createActivityElement(
+                    uri = "https://m.example.com/dashboard",
+                    activityClassFqn = "com.example.HomeActivity",
+                ),
+                createActivityElement(
+                    uri = "http://legacy.example.com/dashboard",
+                    activityClassFqn = "com.example.HomeActivity",
+                ),
+                // Path: /main -> schemes: https, myapp; hosts: www.example.com, home
+                createActivityElement(
+                    uri = "https://www.example.com/main",
+                    activityClassFqn = "com.example.HomeActivity",
+                ),
+                createActivityElement(
+                    uri = "myapp://home/main",
+                    activityClassFqn = "com.example.HomeActivity",
+                ),
+                // ========== Activity 2: com.example.ProfileActivity ==========
+                // Path: /profile with autoVerify -> hosts: example.com, www.example.com
+                createActivityElement(
+                    uri = "https://example.com/profile",
+                    activityClassFqn = "com.example.ProfileActivity",
+                    intentFilterAttributes = setOf("android:autoVerify=\"true\""),
+                ),
+                createActivityElement(
+                    uri = "https://www.example.com/profile",
+                    activityClassFqn = "com.example.ProfileActivity",
+                    intentFilterAttributes = setOf("android:autoVerify=\"true\""),
+                ),
+                // Path: /user/settings with autoVerify
+                createActivityElement(
+                    uri = "https://example.com/user/settings",
+                    activityClassFqn = "com.example.ProfileActivity",
+                    intentFilterAttributes = setOf("android:autoVerify=\"true\""),
+                ),
+                // Path: /public-profile without autoVerify (different intentFilterAttributes = separate from above)
+                createActivityElement(
+                    uri = "https://example.com/public-profile",
+                    activityClassFqn = "com.example.ProfileActivity",
+                ),
+                // Path: /share-profile with SEND action (different action = separate intent-filter)
+                createActivityElement(
+                    uri = "https://example.com/share-profile",
+                    activityClassFqn = "com.example.ProfileActivity",
+                    actions = setOf("android.intent.action.SEND"),
+                ),
+                // ========== Activity 3: com.example.DeepLinkActivity ==========
+                // Path: /deep -> multiple hosts with same path are merged
+                createActivityElement(
+                    uri = "https://example.com/deep",
+                    activityClassFqn = "com.example.DeepLinkActivity",
+                ),
+                createActivityElement(
+                    uri = "https://example.org/deep",
+                    activityClassFqn = "com.example.DeepLinkActivity",
+                ),
+                createActivityElement(
+                    uri = "https://example.net/deep",
+                    activityClassFqn = "com.example.DeepLinkActivity",
+                ),
+                createActivityElement(
+                    uri = "https://example.co.uk/deep",
+                    activityClassFqn = "com.example.DeepLinkActivity",
+                ),
+                createActivityElement(
+                    uri = "https://other-domain.com/deep",
+                    activityClassFqn = "com.example.DeepLinkActivity",
+                ),
+                // Path: /section1 -> deeplink://app (separate from /section2 and /page)
+                createActivityElement(
+                    uri = "deeplink://app/section1",
+                    activityClassFqn = "com.example.DeepLinkActivity",
+                ),
+                // Path: /section2 -> deeplink://app (separate from /section1 and /page)
+                createActivityElement(
+                    uri = "deeplink://app/section2",
+                    activityClassFqn = "com.example.DeepLinkActivity",
+                ),
+                // Path: /page -> deeplink://nav (separate from /section1 and /section2)
+                createActivityElement(
+                    uri = "deeplink://nav/page",
+                    activityClassFqn = "com.example.DeepLinkActivity",
+                ),
+            )
+
+        writer.write(processingEnv, printWriter, elements)
+
+        // Expected grouping based on Cartesian product rule:
+        // - HomeActivity /home: https can merge 2 hosts, but http://example.com is separate (3 URLs ≠ 2×2×1=4)
+        // - HomeActivity /dashboard: https can merge 2 hosts, but http://legacy is separate (3 URLs ≠ 2×3×1=6)
+        // - HomeActivity /main: https://www.example.com and myapp://home CANNOT merge (2 URLs ≠ 2×2×1=4)
+        // - DeepLinkActivity /deep: all https with same scheme CAN merge (5 URLs = 1×5×1=5)
+        // - deeplink://app/section1 and deeplink://app/section2 CAN merge (same scheme, same host, 2 paths: 1×1×2=2)
+        val expected =
+            """
+            <?xml version="1.0" encoding="utf-8"?>
+            <manifest xmlns:android="http://schemas.android.com/apk/res/android" >
+                <application>
+                    <activity
+                        android:name="com.example.HomeActivity" android:exported="true">
+                        <intent-filter>
+                            <action android:name="android.intent.action.VIEW" />
+                            <category android:name="android.intent.category.DEFAULT" />
+                            <category android:name="android.intent.category.BROWSABLE" />
+                            <data android:scheme="https" />
+                            <data android:host="example.com" />
+                            <data android:host="www.example.com" />
+                            <data android:path="/home" />
+                        </intent-filter>
+                        <intent-filter>
+                            <action android:name="android.intent.action.VIEW" />
+                            <category android:name="android.intent.category.DEFAULT" />
+                            <category android:name="android.intent.category.BROWSABLE" />
+                            <data android:scheme="http" />
+                            <data android:host="example.com" />
+                            <data android:path="/home" />
+                        </intent-filter>
+                        <intent-filter>
+                            <action android:name="android.intent.action.VIEW" />
+                            <category android:name="android.intent.category.DEFAULT" />
+                            <category android:name="android.intent.category.BROWSABLE" />
+                            <data android:scheme="https" />
+                            <data android:host="example.com" />
+                            <data android:host="m.example.com" />
+                            <data android:path="/dashboard" />
+                        </intent-filter>
+                        <intent-filter>
+                            <action android:name="android.intent.action.VIEW" />
+                            <category android:name="android.intent.category.DEFAULT" />
+                            <category android:name="android.intent.category.BROWSABLE" />
+                            <data android:scheme="http" />
+                            <data android:host="legacy.example.com" />
+                            <data android:path="/dashboard" />
+                        </intent-filter>
+                        <intent-filter>
+                            <action android:name="android.intent.action.VIEW" />
+                            <category android:name="android.intent.category.DEFAULT" />
+                            <category android:name="android.intent.category.BROWSABLE" />
+                            <data android:scheme="https" />
+                            <data android:host="www.example.com" />
+                            <data android:path="/main" />
+                        </intent-filter>
+                        <intent-filter>
+                            <action android:name="android.intent.action.VIEW" />
+                            <category android:name="android.intent.category.DEFAULT" />
+                            <category android:name="android.intent.category.BROWSABLE" />
+                            <data android:scheme="myapp" />
+                            <data android:host="home" />
+                            <data android:path="/main" />
+                        </intent-filter>
+                    </activity>
+                    <activity
+                        android:name="com.example.ProfileActivity" android:exported="true">
+                        <intent-filter android:autoVerify="true">
+                            <action android:name="android.intent.action.VIEW" />
+                            <category android:name="android.intent.category.DEFAULT" />
+                            <category android:name="android.intent.category.BROWSABLE" />
+                            <data android:scheme="https" />
+                            <data android:host="example.com" />
+                            <data android:host="www.example.com" />
+                            <data android:path="/profile" />
+                        </intent-filter>
+                        <intent-filter android:autoVerify="true">
+                            <action android:name="android.intent.action.VIEW" />
+                            <category android:name="android.intent.category.DEFAULT" />
+                            <category android:name="android.intent.category.BROWSABLE" />
+                            <data android:scheme="https" />
+                            <data android:host="example.com" />
+                            <data android:path="/user/settings" />
+                        </intent-filter>
+                        <intent-filter>
+                            <action android:name="android.intent.action.VIEW" />
+                            <category android:name="android.intent.category.DEFAULT" />
+                            <category android:name="android.intent.category.BROWSABLE" />
+                            <data android:scheme="https" />
+                            <data android:host="example.com" />
+                            <data android:path="/public-profile" />
+                        </intent-filter>
+                        <intent-filter>
+                            <action android:name="android.intent.action.SEND" />
+                            <category android:name="android.intent.category.DEFAULT" />
+                            <category android:name="android.intent.category.BROWSABLE" />
+                            <data android:scheme="https" />
+                            <data android:host="example.com" />
+                            <data android:path="/share-profile" />
+                        </intent-filter>
+                    </activity>
+                    <activity
+                        android:name="com.example.DeepLinkActivity" android:exported="true">
+                        <intent-filter>
+                            <action android:name="android.intent.action.VIEW" />
+                            <category android:name="android.intent.category.DEFAULT" />
+                            <category android:name="android.intent.category.BROWSABLE" />
+                            <data android:scheme="https" />
+                            <data android:host="example.com" />
+                            <data android:host="example.org" />
+                            <data android:host="example.net" />
+                            <data android:host="example.co.uk" />
+                            <data android:host="other-domain.com" />
+                            <data android:path="/deep" />
+                        </intent-filter>
+                        <intent-filter>
+                            <action android:name="android.intent.action.VIEW" />
+                            <category android:name="android.intent.category.DEFAULT" />
+                            <category android:name="android.intent.category.BROWSABLE" />
+                            <data android:scheme="deeplink" />
+                            <data android:host="app" />
+                            <data android:path="/section1" />
+                            <data android:path="/section2" />
+                        </intent-filter>
+                        <intent-filter>
+                            <action android:name="android.intent.action.VIEW" />
+                            <category android:name="android.intent.category.DEFAULT" />
+                            <category android:name="android.intent.category.BROWSABLE" />
+                            <data android:scheme="deeplink" />
+                            <data android:host="nav" />
+                            <data android:path="/page" />
+                        </intent-filter>
+                    </activity>
+                </application>
+            </manifest>
+
+            """.trimIndent()
+
+        assertThat(stringWriter.toString()).isEqualTo(expected)
+    }
+
+    /**
+     * Test that URLs with scheme and host placeholders are correctly grouped together.
+     *
+     * When using placeholders like http{scheme(|s)}://{prefix(|www.)}example.com/path,
+     * this expands to multiple (scheme, host) combinations but since they share the same
+     * path, they should all be in the same intent-filter.
+     *
+     * URLs with the same path (even with different placeholder patterns) will be grouped,
+     * with all their schemes and hosts merged together.
+     */
+    @Test
+    @OptIn(KotlinPoetJavaPoetPreview::class)
+    fun testUrlWithSchemeAndHostPlaceholdersGroupedCorrectly() {
+        val writer = ManifestWriter()
+        val stringWriter = StringWriter()
+        val printWriter = PrintWriter(stringWriter)
+
+        val elements =
+            listOf(
+                // Both URLs have the same path /home, so they should be grouped
+                // even though they have different placeholder patterns
+                createActivityElement(
+                    uri = "http{scheme(|s)}://{prefix(|www.)}example.com/home",
+                    activityClassFqn = "com.example.TestActivity",
+                ),
+                createActivityElement(
+                    uri = "http{scheme(|s)}://{prefix(|m.)}example.com/home",
+                    activityClassFqn = "com.example.TestActivity",
+                ),
+                // This URL has a different path, so it should be in a separate intent-filter
+                createActivityElement(
+                    uri = "http{scheme(|s)}://{prefix(|www.)}example.com/dashboard",
+                    activityClassFqn = "com.example.TestActivity",
+                ),
+            )
+
+        writer.write(processingEnv, printWriter, elements)
+
+        val expected =
+            """
+            <?xml version="1.0" encoding="utf-8"?>
+            <manifest xmlns:android="http://schemas.android.com/apk/res/android" >
+                <application>
+                    <activity
+                        android:name="com.example.TestActivity" android:exported="true">
+                        <intent-filter>
+                            <action android:name="android.intent.action.VIEW" />
+                            <category android:name="android.intent.category.DEFAULT" />
+                            <category android:name="android.intent.category.BROWSABLE" />
+                            <data android:scheme="http" />
+                            <data android:scheme="https" />
+                            <data android:host="example.com" />
+                            <data android:host="www.example.com" />
+                            <data android:host="m.example.com" />
+                            <data android:path="/home" />
+                        </intent-filter>
+                        <intent-filter>
+                            <action android:name="android.intent.action.VIEW" />
+                            <category android:name="android.intent.category.DEFAULT" />
+                            <category android:name="android.intent.category.BROWSABLE" />
+                            <data android:scheme="http" />
+                            <data android:scheme="https" />
+                            <data android:host="example.com" />
+                            <data android:host="www.example.com" />
+                            <data android:path="/dashboard" />
+                        </intent-filter>
+                    </activity>
+                </application>
+            </manifest>
+
+            """.trimIndent()
+
+        assertThat(stringWriter.toString()).isEqualTo(expected)
+    }
+
+    // ==================== findMergeableGroups Unit Tests ====================
+
+    /**
+     * Test that a single URL returns a single group.
+     */
+    @Test
+    @OptIn(KotlinPoetJavaPoetPreview::class)
+    fun testFindMergeableGroups_singleElement() {
+        val writer = ManifestWriter()
+        val elements =
+            listOf(
+                createActivityElement(uri = "https://example.com/path", activityClassFqn = "Activity"),
+            )
+
+        val groups = writer.findMergeableGroups(elements)
+
+        assertThat(groups).hasSize(1)
+        assertThat(groups[0]).hasSize(1)
+    }
+
+    /**
+     * Test that URLs with same scheme and host but different paths CAN be merged.
+     * Cartesian: 1×1×2 = 2, Actual: 2 ✓
+     */
+    @Test
+    @OptIn(KotlinPoetJavaPoetPreview::class)
+    fun testFindMergeableGroups_sameSchemeHost_differentPaths_canMerge() {
+        val writer = ManifestWriter()
+        val elements =
+            listOf(
+                createActivityElement(uri = "https://example.com/path1", activityClassFqn = "Activity"),
+                createActivityElement(uri = "https://example.com/path2", activityClassFqn = "Activity"),
+            )
+
+        val groups = writer.findMergeableGroups(elements)
+
+        // Should merge into one group
+        assertThat(groups).hasSize(1)
+        assertThat(groups[0]).hasSize(2)
+    }
+
+    /**
+     * Test that URLs with different schemes AND different hosts CANNOT be merged.
+     * Cartesian: 2×2×1 = 4, Actual: 2 ✗
+     * Merging would incorrectly match https://custom/path and myapp://example.com/path
+     *
+     * @see <a href="https://en.wikipedia.org/wiki/Cartesian_product">Cartesian product</a>
+     */
+    @Test
+    @OptIn(KotlinPoetJavaPoetPreview::class)
+    fun testFindMergeableGroups_differentSchemeAndHost_cannotMerge() {
+        val writer = ManifestWriter()
+        val elements =
+            listOf(
+                createActivityElement(uri = "https://example.com/path", activityClassFqn = "Activity"),
+                createActivityElement(uri = "myapp://custom/path", activityClassFqn = "Activity"),
+            )
+
+        val groups = writer.findMergeableGroups(elements)
+
+        // Should NOT merge - need 2 separate groups
+        assertThat(groups).hasSize(2)
+        assertThat(groups[0]).hasSize(1)
+        assertThat(groups[1]).hasSize(1)
+    }
+
+    /**
+     * Test that URLs forming a complete Cartesian product CAN be merged.
+     * {http, https} × {example.com} × {/path} = 2 combinations
+     * We have 2 URLs, so they CAN merge.
+     */
+    @Test
+    @OptIn(KotlinPoetJavaPoetPreview::class)
+    fun testFindMergeableGroups_completeCartesianProduct_canMerge() {
+        val writer = ManifestWriter()
+        val elements =
+            listOf(
+                createActivityElement(uri = "http://example.com/path", activityClassFqn = "Activity"),
+                createActivityElement(uri = "https://example.com/path", activityClassFqn = "Activity"),
+            )
+
+        val groups = writer.findMergeableGroups(elements)
+
+        // Should merge into one group (complete Cartesian product)
+        assertThat(groups).hasSize(1)
+        assertThat(groups[0]).hasSize(2)
+    }
+
+    /**
+     * Test that URLs NOT forming a complete Cartesian product CANNOT be merged.
+     * {http, https} × {example.com, www.example.com} × {/path} = 4 combinations
+     * We have 3 URLs (missing http://www.example.com/path), so they CANNOT all merge.
+     *
+     * Expected behavior: http and https with example.com merge, but we also have
+     * https://www.example.com which can only merge with other same-scheme URLs.
+     */
+    @Test
+    @OptIn(KotlinPoetJavaPoetPreview::class)
+    fun testFindMergeableGroups_incompleteCartesianProduct_partialMerge() {
+        val writer = ManifestWriter()
+        val elements =
+            listOf(
+                createActivityElement(uri = "http://example.com/path", activityClassFqn = "Activity"),
+                createActivityElement(uri = "https://example.com/path", activityClassFqn = "Activity"),
+                createActivityElement(uri = "https://www.example.com/path", activityClassFqn = "Activity"),
+            )
+
+        val groups = writer.findMergeableGroups(elements)
+
+        // The greedy algorithm will:
+        // 1. http://example.com -> group 1
+        // 2. https://example.com can merge with group 1 (2×1×1=2, actual=2) ✓
+        // 3. https://www.example.com cannot merge with group 1 (2×2×1=4, actual=3) ✗
+        // So we expect 2 groups
+        assertThat(groups).hasSize(2)
+    }
+
+    /**
+     * Test that same host with multiple schemes and multiple paths CAN merge.
+     * {http, https} × {example.com} × {/path1, /path2} = 4 combinations
+     * We have 4 URLs, so they CAN merge.
+     */
+    @Test
+    @OptIn(KotlinPoetJavaPoetPreview::class)
+    fun testFindMergeableGroups_fullCartesianProduct_canMerge() {
+        val writer = ManifestWriter()
+        val elements =
+            listOf(
+                createActivityElement(uri = "http://example.com/path1", activityClassFqn = "Activity"),
+                createActivityElement(uri = "http://example.com/path2", activityClassFqn = "Activity"),
+                createActivityElement(uri = "https://example.com/path1", activityClassFqn = "Activity"),
+                createActivityElement(uri = "https://example.com/path2", activityClassFqn = "Activity"),
+            )
+
+        val groups = writer.findMergeableGroups(elements)
+
+        // Should merge into one group (complete 2×1×2 = 4 Cartesian product)
+        assertThat(groups).hasSize(1)
+        assertThat(groups[0]).hasSize(4)
+    }
+
+    // ==================== canMerge Unit Tests ====================
+
+    /**
+     * Test canMerge returns true for complete Cartesian product.
+     */
+    @Test
+    @OptIn(KotlinPoetJavaPoetPreview::class)
+    fun testCanMerge_completeCartesianProduct_returnsTrue() {
+        val writer = ManifestWriter()
+        val urls =
+            listOf(
+                ExpandedUrl(
+                    setOf("http"),
+                    setOf("example.com"),
+                    setOf("/path"),
+                    createActivityElement(uri = "http://example.com/path", activityClassFqn = "Activity"),
+                ),
+                ExpandedUrl(
+                    setOf("https"),
+                    setOf("example.com"),
+                    setOf("/path"),
+                    createActivityElement(uri = "https://example.com/path", activityClassFqn = "Activity"),
+                ),
+            )
+
+        // {http, https} × {example.com} × {/path} = 2, actual = 2
+        assertThat(writer.canMerge(urls)).isTrue()
+    }
+
+    /**
+     * Test canMerge returns false for incomplete Cartesian product.
+     */
+    @Test
+    @OptIn(KotlinPoetJavaPoetPreview::class)
+    fun testCanMerge_incompleteCartesianProduct_returnsFalse() {
+        val writer = ManifestWriter()
+        val urls =
+            listOf(
+                ExpandedUrl(
+                    setOf("https"),
+                    setOf("example.com"),
+                    setOf("/path"),
+                    createActivityElement(uri = "https://example.com/path", activityClassFqn = "Activity"),
+                ),
+                ExpandedUrl(
+                    setOf("myapp"),
+                    setOf("custom"),
+                    setOf("/path"),
+                    createActivityElement(uri = "myapp://custom/path", activityClassFqn = "Activity"),
+                ),
+            )
+
+        // {https, myapp} × {example.com, custom} × {/path} = 4, actual = 2
+        assertThat(writer.canMerge(urls)).isFalse()
+    }
+
+    /**
+     * Test canMerge with single URL returns true.
+     */
+    @Test
+    @OptIn(KotlinPoetJavaPoetPreview::class)
+    fun testCanMerge_singleUrl_returnsTrue() {
+        val writer = ManifestWriter()
+        val urls =
+            listOf(
+                ExpandedUrl(
+                    setOf("https"),
+                    setOf("example.com"),
+                    setOf("/path"),
+                    createActivityElement(uri = "https://example.com/path", activityClassFqn = "Activity"),
+                ),
+            )
+
+        // {https} × {example.com} × {/path} = 1, actual = 1
+        assertThat(writer.canMerge(urls)).isTrue()
+    }
+
+    /**
+     * Test canMerge with URLs that have multiple paths each.
+     */
+    @Test
+    @OptIn(KotlinPoetJavaPoetPreview::class)
+    fun testCanMerge_multiplePaths_complete() {
+        val writer = ManifestWriter()
+        val urls =
+            listOf(
+                ExpandedUrl(
+                    setOf("https"),
+                    setOf("example.com"),
+                    setOf("/path1", "/path2"),
+                    createActivityElement(uri = "https://example.com/path1", activityClassFqn = "Activity"),
+                ),
+            )
+
+        // {https} × {example.com} × {/path1, /path2} = 2, actual = 2 (from expansion)
+        assertThat(writer.canMerge(urls)).isTrue()
     }
 
     @OptIn(KotlinPoetJavaPoetPreview::class)
