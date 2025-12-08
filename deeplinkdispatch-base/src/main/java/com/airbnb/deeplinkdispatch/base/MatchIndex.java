@@ -333,6 +333,26 @@ public class MatchIndex {
     }
   }
 
+  /**
+   * Compares a segment of the source byte array against a segment of the comparison byte array
+   * for equality.
+   *
+   * <p>This method performs a byte-by-byte comparison between:
+   * <ul>
+   *   <li>{@code byteArray[startPos]} through {@code byteArray[startPos + length - 1]}</li>
+   *   <li>{@code compareValue[compareStartPos]} through {@code compareValue[compareStartPos +
+   *   length - 1]}</li>
+   * </ul>
+   *
+   * @param byteArray       the source byte array to compare from
+   * @param startPos        the starting position in {@code byteArray} to begin comparison
+   * @param length          the number of bytes to compare from {@code byteArray}
+   * @param compareStartPos the starting position in {@code compareValue} to begin comparison
+   * @param compareValue    the byte array to compare against (typically the inbound URI component)
+   * @return a {@link CompareResult} with an empty match value and
+   *         {@code isEmptyConfigurablePathSegmentMatch} set to false if the segments are equal;
+   *         {@code null} if the lengths don't match or any byte differs
+   */
   private CompareResult arrayCompare(byte[] byteArray,
                                      int startPos,
                                      int length,
