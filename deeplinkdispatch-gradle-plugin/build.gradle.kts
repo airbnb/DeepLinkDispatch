@@ -1,14 +1,13 @@
 apply(from = "$rootDir/dependencies.gradle")
 apply(from = "$rootDir/publishing.gradle")
 
-
-val deps: Map<String, String> by project
+val deps: Map<String, Any> by project
 
 repositories {
     google()
     mavenCentral()
     gradlePluginPortal()
-    maven( url ="https://oss.sonatype.org/service/local/repositories/snapshots/content/" )
+    maven(url = "https://oss.sonatype.org/service/local/repositories/snapshots/content/")
 }
 
 plugins {
@@ -36,26 +35,22 @@ gradlePlugin {
     }
 }
 
-fun dep(vararg names: String, map: Map<String, Any> = deps): String {
-    val firstName = names.firstOrNull() ?: error("Dependency name is empty")
-
-    return when (val dependency = map[firstName] ?: error("Dependency not found for name $firstName")) {
-        is String -> return dependency
-        is org.codehaus.groovy.runtime.GStringImpl -> return dependency.toString()
-        is Map<*, *> -> {
-            check(names.size > 1) { "Expected nested dependency names for ${names.toList()}" }
-            dep(*names.drop(1).toTypedArray(), map = dependency as Map<String, Any>)
-        }
-        else -> {
-            error("Unknown dependency type ${dependency::class} $dependency for $firstName")
-        }
-    }
-}
-
 dependencies {
     implementation(project(":deeplinkdispatch-base"))
-    implementation(dep("androidCommonTools"))
-    implementation(dep("kspGradlePlugin"))
-    implementation(dep("androidPlugin"))
-    implementation(dep("kotlinGradlePlugin"))
+    implementation(deps["androidCommonTools"].toString())
+    implementation(deps["kspGradlePlugin"].toString())
+    implementation(deps["androidPlugin"].toString())
+    implementation(deps["kotlinGradlePlugin"].toString())
+
+    testImplementation(gradleTestKit())
+    testImplementation(deps["junit"].toString())
+    testImplementation(deps["assertJ"].toString())
+}
+
+tasks.test {
+    useJUnit()
+    testLogging {
+        events("passed", "skipped", "failed")
+        showStandardStreams = true
+    }
 }
