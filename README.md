@@ -50,9 +50,9 @@ public class MainActivity extends Activity {
 
 ### Manifest generation
 
-If you have multiple and possibly complicated (multiple versions of allowed host and path) URLs it can get complicated to 
-keep the `AndroidManifest.xml` entries up to date. DeepLinkDispatch allows you to (when using `ksp` and the deeplink is in
-a library module) 
+If you have any deep links and multiple and possibly complicated (multiple versions of allowed host and path) URLs it can get 
+complicated to keep the `AndroidManifest.xml` entries up to date. DeepLinkDispatch allows you to (when using `ksp` and the
+deeplink is in a library module) automatically generate `AndroidManifest.xml` entries and keep them up to date.
 
 ```kotlin
 @DeepLink("http{scheme(|s)}://example.{domain(com|de|ro)}/deepLink/{id}", "{scheme(foo|bar)}://{host(example|another-example)}.{domain(com|de|ro)}/anotherDeepLink", activityClassFqn = "com.example.MainActivity")
@@ -71,8 +71,47 @@ class MainActivity : Activity {
 The requirements for using manifest generation are:
 
 1. Must use `ksp`
-2. Deeplink must be used in a module that is not an application module (does not apply the `com.android.application` gradle plugin)
-3. Must specify `activityClassFqn` in the `@DeepLink` annotation or in the `@DeepLinkSpec` annotation when defining a custom deeplink.
+2. Deep links must be used in a module that is not an application module (does not apply the `com.android.application` gradle plugin)
+3. Must specify `activityClassFqn` in the `@DeepLink` annotation or in the `@DeepLinkSpec` annotation when defining a custom deeplink. This will reference the Activity that the `intent-filter` should be added.
+
+You can see an example of this in `sample-ksb-library`.
+
+If left to default `intent-filter` entries will be generated with:
+
+```xml
+<action android:name="android.intent.action.VIEW" />
+```
+and
+```xml
+<category android:name="android.intent.category.DEFAULT" />
+<category android:name="android.intent.category.BROWSABLE" />
+```
+
+but you can override that default by providing different values for `actions` and/or `categories` in the `@DeepLink` annotation or in the `@DeepLinkSpec` annotation (for special annotation definition).
+
+The integration of the generated `AndroidManfiest.xml` file into the Android build system is done by a gradle plugin that needs to be applied to every module that is using manifest generation.
+
+To do that you need to first make it known to your projects root gradle file:
+
+```groovy
+buildscript {
+
+    ...
+    
+    dependencies {
+        ...
+        classpath "com.airbnb:deeplinkdispatch-gradle-plugin:$VERSION"
+    }
+}
+```
+
+and then apply it in your module:
+
+```groovy
+apply plugin: 'com.airbnb.deeplinkdispatch.manifest-generation'
+```
+
+**Note**: It must be applied *after* the kotlin and android plugins and cannot be applied to an android application module.
 
 ### DeepLinkHandler Annotations
 
