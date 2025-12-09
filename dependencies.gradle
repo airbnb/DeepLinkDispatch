@@ -3,7 +3,7 @@ def versions = [
     kotlinVersion                    : '2.0.21',
     appCompatVersion                 : '1.6.1',
     localBroadcastManagerVersion     : '1.1.0',
-    roboelectricVersion              : '4.9',
+    roboelectricVersion              : '4.14.1',
     benchmarkVersion                 : '1.4.1',
     kotlinCompileTestingVersion      : '0.6.0',
     kspVersion                       : '2.0.21-1.0.28',

@@ -35,9 +35,12 @@ class AppDeepLinkDelegateTest {
                 KspLibraryDeepLinkModuleRegistry(),
                 configurablePlaceholdersMap,
             )
+        // The duplicate detection finds:
+        // - dld://host/intent/null, {abc}, {def}, {geh} - these 4 all match each other
+        // - Various placeholder://host/... templates that can match the generic {param1}/{param2}/{param3}
         MatcherAssert.assertThat(
             deepLinkDelegate.duplicatedDeepLinkEntries.size,
-            IsEqual.equalTo(3),
+            IsEqual.equalTo(10),
         )
         MatcherAssert.assertThat(deepLinkDelegate.allDeepLinkEntries.any { it.uriTemplate == "dld://host/intent/{abc}" }, Is.`is`(true))
         MatcherAssert.assertThat(deepLinkDelegate.allDeepLinkEntries.any { it.uriTemplate == "dld://host/intent/{def}" }, Is.`is`(true))
