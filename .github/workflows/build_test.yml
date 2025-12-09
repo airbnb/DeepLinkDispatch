@@ -12,4 +12,4 @@ jobs:
       - name: Checkout DeepLinkDispatch
         uses: actions/checkout@v2
       - name: Build/Test DeepLinkDispatch
-        run: ./gradlew assemble check lintKotlin
+        run: ./gradlew assemble check javadoc lintKotlin
