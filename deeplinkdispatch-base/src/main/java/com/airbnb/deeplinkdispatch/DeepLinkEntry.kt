@@ -191,7 +191,10 @@ sealed class DeepLinkEntry(
      * We use "..*" as a regex pattern - it already means "any char followed by zero or more chars"
      * which effectively matches one or more characters.
      */
-    private fun expandedTemplatesCouldMatch(template1: String, template2: String): Boolean {
+    private fun expandedTemplatesCouldMatch(
+        template1: String,
+        template2: String,
+    ): Boolean {
         // If identical (including both having same wildcards), they match
         if (template1 == template2) {
             return true
@@ -213,16 +216,20 @@ sealed class DeepLinkEntry(
     /**
      * Converts a template with "..*" wildcards to a regex and checks if the other template matches.
      */
-    private fun templateMatchesAsRegex(templateWithWildcards: String, templateToMatch: String): Boolean {
+    private fun templateMatchesAsRegex(
+        templateWithWildcards: String,
+        templateToMatch: String,
+    ): Boolean {
         // If no wildcards, simple equality (already checked in caller)
         if (!templateWithWildcards.contains(SIMPLE_GLOB_PATTERN_MIN_ONE_CHAR)) {
             return templateWithWildcards == templateToMatch
         }
 
         // Build regex: escape everything except "..*" which becomes ".+" (one or more chars)
-        val regexPattern = templateWithWildcards
-            .split(SIMPLE_GLOB_PATTERN_MIN_ONE_CHAR)
-            .joinToString(".+") { Regex.escape(it) }
+        val regexPattern =
+            templateWithWildcards
+                .split(SIMPLE_GLOB_PATTERN_MIN_ONE_CHAR)
+                .joinToString(".+") { Regex.escape(it) }
 
         return Regex("^$regexPattern$").matches(templateToMatch)
     }
