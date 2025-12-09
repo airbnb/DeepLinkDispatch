@@ -148,7 +148,84 @@ sealed class DeepLinkEntry(
         result
     }
 
-    fun templatesMatchesSameUrls(other: DeepLinkEntry) = uriTemplateWithoutPlaceholders == other.uriTemplateWithoutPlaceholders
+    /**
+     * Determines if two URI templates could potentially match the same URLs.
+     *
+     * This method checks:
+     * 1. For placeholders with allowed values (e.g., {type(a|b)}): expands all possible values
+     *    and checks if any could create a match with the other template
+     * 2. For regular placeholders (without allowed values): uses regex matching since
+     *    "..*" (the placeholder replacement) can match any non-empty string
+     *
+     * Note: Configurable path segments (<name>) are ignored as they have the same replacement
+     * value within the same app.
+     *
+     * @return true if the templates could potentially match the same URLs
+     */
+    fun templatesMatchesSameUrls(other: DeepLinkEntry): Boolean {
+        // Get all possible expanded values for both templates
+        // This expands placeholders with allowed values to all their possible concrete forms
+        // Regular placeholders (without allowed values) are replaced with "..*"
+        val thisExpanded = uriTemplate.allPossibleValues()
+        val otherExpanded = other.uriTemplate.allPossibleValues()
+
+        // Check if any pair of expanded values could match
+        for (thisValue in thisExpanded) {
+            for (otherValue in otherExpanded) {
+                if (expandedTemplatesCouldMatch(thisValue, otherValue)) {
+                    return true
+                }
+            }
+        }
+
+        return false
+    }
+
+    /**
+     * Checks if two expanded template values could match the same URL.
+     *
+     * After expansion by allPossibleValues():
+     * - Placeholders with allowed values have been replaced with each allowed value
+     * - Regular placeholders have been replaced with "..*" (matches one or more chars)
+     *
+     * We use "..*" as a regex pattern - it already means "any char followed by zero or more chars"
+     * which effectively matches one or more characters.
+     */
+    private fun expandedTemplatesCouldMatch(template1: String, template2: String): Boolean {
+        // If identical (including both having same wildcards), they match
+        if (template1 == template2) {
+            return true
+        }
+
+        // Convert template1 to regex (escape special chars, keep ..*) and check if template2 matches
+        if (templateMatchesAsRegex(template1, template2)) {
+            return true
+        }
+
+        // Also check reverse - template2 as regex against template1
+        if (templateMatchesAsRegex(template2, template1)) {
+            return true
+        }
+
+        return false
+    }
+
+    /**
+     * Converts a template with "..*" wildcards to a regex and checks if the other template matches.
+     */
+    private fun templateMatchesAsRegex(templateWithWildcards: String, templateToMatch: String): Boolean {
+        // If no wildcards, simple equality (already checked in caller)
+        if (!templateWithWildcards.contains(SIMPLE_GLOB_PATTERN_MIN_ONE_CHAR)) {
+            return templateWithWildcards == templateToMatch
+        }
+
+        // Build regex: escape everything except "..*" which becomes ".+" (one or more chars)
+        val regexPattern = templateWithWildcards
+            .split(SIMPLE_GLOB_PATTERN_MIN_ONE_CHAR)
+            .joinToString(".+") { Regex.escape(it) }
+
+        return Regex("^$regexPattern$").matches(templateToMatch)
+    }
 
     /**
      * Compares two DeepLinkEntry instances by their concreteness (specificity).

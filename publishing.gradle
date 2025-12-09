@@ -9,8 +9,11 @@ publishing {
         maven {
             // The "name" value creates a task like `publishAllPublicationsTo[Name]Repository
             // In this case, publishAllPublicationsToAirbnbArtifactoryRepository
+            def versionName = findProperty("VERSION_NAME") ?: version.toString()
             name = 'airbnbArtifactory'
-            url = version.toString().endsWith("SNAPSHOT") ? findProperty("ARTIFACTORY_SNAPSHOT_URL") : findProperty("ARTIFACTORY_RELEASE_URL")
+            // Use VERSION_NAME directly since 'version' may not be set at configuration time
+            // with newer versions of gradle-maven-publish-plugin
+            url = versionName.endsWith("SNAPSHOT") ? findProperty("ARTIFACTORY_SNAPSHOT_URL") : findProperty("ARTIFACTORY_RELEASE_URL")
             credentials {
                 username = findProperty("ARTIFACTORY_USERNAME")
                 password = findProperty("ARTIFACTORY_PASSWORD")
