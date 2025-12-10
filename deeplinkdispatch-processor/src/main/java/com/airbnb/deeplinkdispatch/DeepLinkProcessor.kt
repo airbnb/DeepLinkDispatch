@@ -496,7 +496,7 @@ class DeepLinkProcessor(
                     element = it.value.first().enclosingTypeElement,
                     message =
                         "Only one @DeepLinkHandler annotated element allowed per package!" +
-                            " ${it.key} has ${it.value.joinToString { it.qualifiedName }}.",
+                            " ${it.key} has ${it.value.map(XTypeElement::qualifiedName).sorted().joinToString()}.",
                 )
             }
             return false
