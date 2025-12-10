@@ -276,10 +276,7 @@ class DeepLinkProcessor(
         ) + (
             element
                 .getAnnotation(DEEP_LINK_CLASS)
-                ?.value
-                ?.value
-                ?.toList() ?: emptyList()
-        )
+                ?.getAsList<String>("value") ?: emptyList())
 
     private fun verifyCass(classElement: XTypeElement) {
         if (!validClassElement(classElement)) {
@@ -377,7 +374,7 @@ class DeepLinkProcessor(
         val annotatedPathParameterNames =
             allPathParameters
                 .mapNotNull {
-                    it.getAnnotation(DeeplinkParam::class)?.value?.name
+                    it.getAnnotation(DeeplinkParam::class)?.get("name")?.value as? String
                 }.toSet()
         val annotatedPathParametersThatAreNotInUrlTemplate =
             annotatedPathParameterNames.filter { !templateHostPathSchemePlaceholders.contains(it) }
@@ -439,7 +436,7 @@ class DeepLinkProcessor(
                 val prefix: Array<String> =
                     customAnnotationTypeElement
                         .getAnnotation(DEEP_LINK_SPEC_CLASS)
-                        ?.let { it.value.prefix } ?: emptyArray()
+                        ?.getAsList<String>("prefix")?.toTypedArray() ?: emptyArray()
                 if (prefix.hasEmptyOrNullString()) {
                     logError(
                         element = customAnnotationTypeElement,
