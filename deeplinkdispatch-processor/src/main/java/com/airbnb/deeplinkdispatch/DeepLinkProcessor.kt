@@ -298,18 +298,18 @@ class DeepLinkProcessor(
         element: XElement,
         prefixesAndFqn: Map<XType, Array<PrefixAndActivityFqn>>,
     ): List<UriAndActivityFqn> {
-        val deepLinkAnnotation = element.getAnnotation(DEEP_LINK_CLASS)?.value
+        val deepLinkAnnotation = element.getAnnotation(DEEP_LINK_CLASS)
         return getAllDeeplinkUrIsFromCustomDeepLinksOnElement(
             element = element,
             prefixesAndActivityFqnMap = prefixesAndFqn,
         ) +
-            (deepLinkAnnotation?.value?.toList() ?: emptyList()).map { uri ->
+            (deepLinkAnnotation?.getAsList<String>("value") ?: emptyList()).map { uri ->
                 UriAndActivityFqn(
                     uri = uri,
-                    activityClassFqn = deepLinkAnnotation?.activityClassFqn?.ifEmpty { null },
-                    actions = deepLinkAnnotation?.actions?.toSet() ?: emptySet(),
-                    categories = deepLinkAnnotation?.categories?.toSet() ?: emptySet(),
-                    intentFilterAttributes = deepLinkAnnotation?.intentFilterAttributes?.toSet() ?: emptySet(),
+                    activityClassFqn = (deepLinkAnnotation?.get("activityClassFqn")?.value as? String)?.ifEmpty { null },
+                    actions = deepLinkAnnotation?.getAsList<String>("actions")?.toSet() ?: emptySet(),
+                    categories = deepLinkAnnotation?.getAsList<String>("categories")?.toSet() ?: emptySet(),
+                    intentFilterAttributes = deepLinkAnnotation?.getAsList<String>("intentFilterAttributes")?.toSet() ?: emptySet(),
                 )
             }
     }
@@ -426,7 +426,7 @@ class DeepLinkProcessor(
         val annotatedPathParameterNames =
             allPathParameters
                 .mapNotNull {
-                    it.getAnnotation(DeeplinkParam::class)?.value?.name
+                    it.getAnnotation(DeeplinkParam::class)?.get("name")?.value as? String
                 }.toSet()
         val annotatedPathParametersThatAreNotInUrlTemplate =
             annotatedPathParameterNames.filter { !templateHostPathSchemePlaceholders.contains(it) }
@@ -488,8 +488,8 @@ class DeepLinkProcessor(
                 val activityClassFqn: String? =
                     customAnnotationTypeElement
                         .getAnnotation(DEEP_LINK_SPEC_CLASS)
-                        ?.let { xAnnotationBox ->
-                            xAnnotationBox.value.activityClassFqn
+                        ?.let { xAnnotation ->
+                            xAnnotation.get("activityClassFqn")?.value as? String
                         }?.ifEmpty { null }
                 // The value of prefix is an array, however we do allow prefixes also to exist in a single string (within the array)
                 // these are separated by a `#` char, which is not allowed to exist in the non path part of the URL without being escaped
@@ -498,14 +498,14 @@ class DeepLinkProcessor(
                 // easily configure multiple prefixes that are not hardcoded in the codebase of the app using DLD
                 val prefixes =
                     customAnnotationTypeElement
-                        .getArrayAnnotationParameter { it.prefix }
+                        .getArrayAnnotationParameter("prefix")
                         .map { singlePrefix ->
                             singlePrefix.split(CUSTOM_ANNOTATION_URL_PREFIX_DELIMITER)
                         }.flatten()
                         .toTypedArray()
-                val actions = customAnnotationTypeElement.getArrayAnnotationParameter { it.actions }
-                val categories = customAnnotationTypeElement.getArrayAnnotationParameter { it.categories }
-                val intentFilterAttributes = customAnnotationTypeElement.getArrayAnnotationParameter { it.intentFilterAttributes }
+                val actions = customAnnotationTypeElement.getArrayAnnotationParameter("actions")
+                val categories = customAnnotationTypeElement.getArrayAnnotationParameter("categories")
+                val intentFilterAttributes = customAnnotationTypeElement.getArrayAnnotationParameter("intentFilterAttributes")
 
                 if (prefixes.hasEmptyOrNullString()) {
                     logError(
@@ -532,8 +532,8 @@ class DeepLinkProcessor(
                         }.toTypedArray()
             }.toMap()
 
-    private fun XTypeElement.getArrayAnnotationParameter(actionsExtractor: (DeepLinkSpec) -> Array<String>): Array<String> =
-        getAnnotation(DEEP_LINK_SPEC_CLASS)?.let { actionsExtractor(it.value) }
+    private fun XTypeElement.getArrayAnnotationParameter(propertyName: String): Array<String> =
+        getAnnotation(DEEP_LINK_SPEC_CLASS)?.getAsList<String>(propertyName)?.toTypedArray()
             ?: emptyArray()
 
     private fun verifyAnnotatedType(
