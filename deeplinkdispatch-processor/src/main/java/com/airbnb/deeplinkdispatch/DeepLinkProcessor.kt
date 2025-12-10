@@ -434,7 +434,7 @@ class DeepLinkProcessor(
 
     private fun customAnnotationPrefixes(customAnnotations: Set<XTypeElement>): Map<XType, Array<String>> =
         customAnnotations
-            .map { customAnnotationTypeElement ->
+            .associate { customAnnotationTypeElement ->
                 if (!customAnnotationTypeElement.isAnnotationClass()) {
                     logError(
                         element = customAnnotationTypeElement,
@@ -458,7 +458,7 @@ class DeepLinkProcessor(
                     )
                 }
                 customAnnotationTypeElement.type to prefix
-            }.toMap()
+            }
 
     private fun verifyAnnotatedType(
         allAnnotatedElements: List<XElement>,
