@@ -3,7 +3,6 @@ package com.airbnb.deeplinkdispatch
 import androidx.room.compiler.processing.XAnnotation
 import androidx.room.compiler.processing.XAnnotationValue
 import androidx.room.compiler.processing.XTypeElement
-import androidx.room.compiler.processing.get
 
 object ProcessorUtils {
     @JvmStatic
@@ -53,19 +52,10 @@ fun XTypeElement.directlyImplementsInterfaces(fqnList: List<String>): Boolean =
 
 @Suppress("UNCHECKED_CAST")
 inline fun <reified T> XAnnotation.getAsList(method: String): List<T> {
-    val originalList = get<List<T>>(method)
-    // In new XProcessing versions List values are wrapped in XAnnotationValue but in old versions
-    // they are the raw type.
-    return if (originalList.firstOrNull() is XAnnotationValue) {
-        // TODO: In the next full release of xprocessing we should be able to safely assume
-        // the list type is always XAnnotationValue and can remove this if/else.
-        (originalList as List<XAnnotationValue>).map { xAnnotationValue ->
-            check(xAnnotationValue.value is T) {
-                "Expected type ${T::class} but got ${xAnnotationValue.value?.javaClass}"
-            }
-            xAnnotationValue.value as T
-        }
-    } else {
-        return originalList
+    val annotationValue = get(method) ?: return emptyList()
+    // In XProcessing 2.8+, annotation values are wrapped in XAnnotationValue
+    return when (val value = annotationValue.value) {
+        is List<*> -> value.mapNotNull { (it as XAnnotationValue).value as? T }
+        else -> listOf(value as T)
     }
 }
