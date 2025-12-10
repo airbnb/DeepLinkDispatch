@@ -449,8 +449,16 @@ class DeepLinkProcessor(
                     annotation.qualifiedName == DeeplinkParam::class.qualifiedName
                 }?.annotationValues
                 ?.any { annotationValue ->
-                    annotationValue.value.toString() == deepLinkParamType.toString()
+                    annotationValue.value.toString() == deepLinkParamType.toAnnotationValue()
                 } ?: false
+        }
+
+    private fun <T : Enum<T>> Enum<T>.toAnnotationValue(): String =
+        if (environment.backend == XProcessingEnv.Backend.KSP) {
+            // KSP appends parent class name to annotation value
+            "${declaringJavaClass.simpleName}.$this"
+        } else {
+            this.toString()
         }
 
     private fun verifyObjectElement(element: XTypeElement) {
