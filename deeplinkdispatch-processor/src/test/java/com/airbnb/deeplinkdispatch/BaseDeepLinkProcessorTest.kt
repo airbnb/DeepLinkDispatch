@@ -6,9 +6,8 @@ import com.tschuchort.compiletesting.JvmCompilationResult
 import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.OptionName
 import com.tschuchort.compiletesting.OptionValue
-import com.tschuchort.compiletesting.kspProcessorOptions
+import com.tschuchort.compiletesting.configureKsp
 import com.tschuchort.compiletesting.kspSourcesDir
-import com.tschuchort.compiletesting.symbolProcessorProviders
 import org.assertj.core.api.Assertions
 import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 import java.io.File
@@ -212,14 +211,16 @@ open class BaseDeepLinkProcessorTest {
                             it.toKotlinSourceFile(sourcesDir)
                         }
                     if (useKsp) {
-                        symbolProcessorProviders = mutableListOf(DeepLinkProcessorProvider())
-                        arguments?.let { kspProcessorOptions = arguments }
-                        languageVersion = "1.9"
+                        configureKsp {
+                            symbolProcessorProviders += DeepLinkProcessorProvider()
+                            arguments?.let(processorOptions::putAll)
+                        }
+                        languageVersion = "2.2"
                         useKapt4 = false
                     } else {
                         annotationProcessors = listOf(DeepLinkProcessor())
                         arguments?.let { kaptArgs = arguments }
-                        languageVersion = "1.9"
+                        languageVersion = "2.2"
                         useKapt4 = true
                     }
                     inheritClassPath = true
