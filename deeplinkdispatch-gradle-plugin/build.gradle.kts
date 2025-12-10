@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 apply(from = "$rootDir/dependencies.gradle")
 apply(from = "$rootDir/publishing.gradle")
 
@@ -20,10 +22,8 @@ java {
     targetCompatibility = JavaVersion.VERSION_11
 }
 
-tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
-    compilerOptions {
-        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11)
-    }
+kotlin.compilerOptions {
+    jvmTarget = JvmTarget.JVM_11
 }
 
 gradlePlugin {
