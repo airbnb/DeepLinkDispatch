@@ -486,7 +486,7 @@ class DeepLinkProcessor(
 
     private fun customAnnotationPrefixes(customAnnotations: Set<XTypeElement>): Map<XType, Array<PrefixAndActivityFqn>> =
         customAnnotations
-            .map { customAnnotationTypeElement ->
+            .associate { customAnnotationTypeElement ->
                 if (!customAnnotationTypeElement.isAnnotationClass()) {
                     logError(
                         element = customAnnotationTypeElement,
@@ -538,7 +538,7 @@ class DeepLinkProcessor(
                                 intentFilterAttributes = intentFilterAttributes.toSet(),
                             )
                         }.toTypedArray()
-            }.toMap()
+            }
 
     private fun XTypeElement.getArrayAnnotationParameter(propertyName: String): Array<String> =
         getAnnotation(DEEP_LINK_SPEC_CLASS)?.getAsList<String>(propertyName)?.toTypedArray()
