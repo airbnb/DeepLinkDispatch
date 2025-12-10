@@ -23,7 +23,6 @@ import androidx.room.compiler.processing.XFiler
 import androidx.room.compiler.processing.XMethodElement
 import androidx.room.compiler.processing.XProcessingEnv
 import androidx.room.compiler.processing.XRoundEnv
-import androidx.room.compiler.processing.XType
 import androidx.room.compiler.processing.XTypeElement
 import androidx.room.compiler.processing.addOriginatingElement
 import androidx.room.compiler.processing.writeTo
@@ -86,10 +85,9 @@ class DeepLinkProcessor(
     private val incrementalMetadata: IncrementalMetadata by lazy {
         IncrementalMetadata(
             incremental = environment.options[OPTION_INCREMENTAL].toBoolean(),
-            customAnnotations =
+            customAnnotationNames =
                 environment.options[OPTION_CUSTOM_ANNOTATIONS]
                     ?.split("|")
-                    ?.mapNotNull { environment.findTypeElement(it) }
                     ?.toSet() ?: emptySet(),
         )
     }
@@ -108,9 +106,10 @@ class DeepLinkProcessor(
 
     override fun getSupportedAnnotationTypes(): Set<String> =
         if (incrementalMetadata.incremental) {
-            (supportedBaseAnnotations + incrementalMetadata.customAnnotations)
-                .map { it.qualifiedName }
-                .toSet()
+            (
+                supportedBaseAnnotations.map { it.qualifiedName } +
+                    incrementalMetadata.customAnnotationNames
+            ).toSet()
         } else {
             setOf("*")
         }
@@ -214,7 +213,7 @@ class DeepLinkProcessor(
     }
 
     private fun collectDeepLinkElements(
-        prefixesAndFqn: Map<XType, Array<PrefixAndActivityFqn>>,
+        prefixesAndFqn: Map<String, Array<PrefixAndActivityFqn>>,
         classElementsToProcess: Set<XTypeElement>,
         objectElementsToProcess: Set<XTypeElement>,
         methodElementsToProcess: Set<XMethodElement>,
@@ -239,7 +238,7 @@ class DeepLinkProcessor(
 
     private fun mapUrisToDeepLinkAnnotatedElement(
         element: XElement,
-        prefixesAndFqn: Map<XType, Array<PrefixAndActivityFqn>>,
+        prefixesAndFqn: Map<String, Array<PrefixAndActivityFqn>>,
     ): List<DeepLinkAnnotatedElement?> =
         getAllUrisAndActivityClassesForAnnotatedElement(
             element,
@@ -296,7 +295,7 @@ class DeepLinkProcessor(
 
     private fun getAllUrisAndActivityClassesForAnnotatedElement(
         element: XElement,
-        prefixesAndFqn: Map<XType, Array<PrefixAndActivityFqn>>,
+        prefixesAndFqn: Map<String, Array<PrefixAndActivityFqn>>,
     ): List<UriAndActivityFqn> {
         val deepLinkAnnotation = element.getAnnotation(DEEP_LINK_CLASS)
         return getAllDeeplinkUrIsFromCustomDeepLinksOnElement(
@@ -484,7 +483,7 @@ class DeepLinkProcessor(
         }
     }
 
-    private fun customAnnotationPrefixes(customAnnotations: Set<XTypeElement>): Map<XType, Array<PrefixAndActivityFqn>> =
+    private fun customAnnotationPrefixes(customAnnotations: Set<XTypeElement>): Map<String, Array<PrefixAndActivityFqn>> =
         customAnnotations
             .associate { customAnnotationTypeElement ->
                 if (!customAnnotationTypeElement.isAnnotationClass()) {
@@ -527,7 +526,7 @@ class DeepLinkProcessor(
                         message = "Prefix property cannot be empty",
                     )
                 }
-                customAnnotationTypeElement.type to
+                customAnnotationTypeElement.qualifiedName to
                     prefixes
                         .map {
                             PrefixAndActivityFqn(
@@ -1007,8 +1006,14 @@ class DeepLinkProcessor(
 
     private class IncrementalMetadata(
         val incremental: Boolean,
-        val customAnnotations: Set<XTypeElement>,
+        val customAnnotationNames: Set<String>,
     )
+
+    private val IncrementalMetadata.customAnnotations: Set<XTypeElement>
+        get() =
+            customAnnotationNames
+                .mapNotNull { environment.findTypeElement(it) }
+                .toSet()
 
     companion object {
         private const val PACKAGE_NAME = "com.airbnb.deeplinkdispatch"
@@ -1028,12 +1033,12 @@ class DeepLinkProcessor(
          */
         private fun getAllDeeplinkUrIsFromCustomDeepLinksOnElement(
             element: XElement,
-            prefixesAndActivityFqnMap: Map<XType, Array<PrefixAndActivityFqn>>,
+            prefixesAndActivityFqnMap: Map<String, Array<PrefixAndActivityFqn>>,
         ): List<UriAndActivityFqn> =
             element.findAnnotatedAnnotation<DeepLinkSpec>().flatMap { customAnnotation ->
                 val suffixes = customAnnotation.getAsList<String>("value")
                 val prefixesAndActivityFqns =
-                    prefixesAndActivityFqnMap[customAnnotation.type]
+                    prefixesAndActivityFqnMap[customAnnotation.qualifiedName]
                         ?: throw DeepLinkProcessorException(
                             "Unable to find annotation '${customAnnotation.qualifiedName}' you must" +
                                 " update 'deepLink.customAnnotations' within the build.gradle",
