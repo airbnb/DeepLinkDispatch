@@ -24,10 +24,6 @@ android {
         versionCode 1
     versionName "1.0"
   }
-  compileOptions {
-    sourceCompatibility JavaVersion.VERSION_11
-    targetCompatibility JavaVersion.VERSION_11
-  }
   buildTypes {
     release {
       minifyEnabled true
@@ -42,13 +38,13 @@ android {
             excludes += ['META-INF/services/javax.annotation.processing.Processor']
         }
     }
-
-    kotlinOptions {
-    jvmTarget = "11"
-  }
     lint {
         disable 'InvalidPackage'
     }
+}
+
+kotlin {
+  jvmToolchain(17)
 }
 
 dependencies {

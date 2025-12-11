@@ -1,11 +1,12 @@
 apply plugin: 'java'
 apply plugin: 'kotlin'
 apply plugin: 'org.jmailen.kotlinter'
-
-sourceCompatibility = 11
-
 apply plugin: 'checkstyle'
 apply from: '../publishing.gradle'
+
+kotlin {
+  jvmToolchain(11)
+}
 
 dependencies {
   implementation project(':deeplinkdispatch-base')
@@ -33,11 +34,32 @@ checkstyle {
   configProperties = ['checkstyle.cache.file': rootProject.file('build/checkstyle.cache')]
 }
 
-tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
-  kotlinOptions {
-    jvmTarget = "11"
-    freeCompilerArgs += "-Xopt-in=kotlin.RequiresOptIn"
-    freeCompilerArgs += "-Xopt-in=androidx.room.compiler.processing.ExperimentalProcessingApi"
+kotlin.compilerOptions {
+  optIn.addAll(
+      "kotlin.RequiresOptIn",
+      "androidx.room.compiler.processing.ExperimentalProcessingApi",
+      "org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi"
+  )
+  freeCompilerArgs.add(
+      // Suppress experimental API warnings from kotlin-compile-testing library
+      "-Xallow-unstable-dependencies"
+  )
+}
+
+if (JavaVersion.current() >= JavaVersion.VERSION_16) {
+  test {
+    jvmArgs(
+        "--add-opens=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED",
+        "--add-opens=jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED",
+        "--add-opens=jdk.compiler/com.sun.tools.javac.comp=ALL-UNNAMED",
+        "--add-opens=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED",
+        "--add-opens=jdk.compiler/com.sun.tools.javac.jvm=ALL-UNNAMED",
+        "--add-opens=jdk.compiler/com.sun.tools.javac.main=ALL-UNNAMED",
+        "--add-opens=jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED",
+        "--add-opens=jdk.compiler/com.sun.tools.javac.processing=ALL-UNNAMED",
+        "--add-opens=jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED",
+        "--add-opens=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED",
+    )
   }
 }
 

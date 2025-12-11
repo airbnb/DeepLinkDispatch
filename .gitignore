@@ -20,3 +20,6 @@ local.properties
 
 # deepLinkDispatch
 dld_match_*.idx
+
+# Kotlin
+.kotlin
