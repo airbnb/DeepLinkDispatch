@@ -142,7 +142,8 @@ open class BaseDeepLinkProcessorTest {
             results: List<CompileResult>,
             registryClassName: String,
             indexEntries: List<DeepLinkEntry>,
-            generatedFiles: Map<String, String>,
+            generatedSourceFiles: Map<String, String>,
+            generatedFiles: Map<File, String> = emptyMap(),
         ) {
             results.forEach { result ->
                 Assertions
@@ -150,11 +151,16 @@ open class BaseDeepLinkProcessorTest {
                     .isEqualTo(KotlinCompilation.ExitCode.OK)
                 Assertions
                     .assertThat(result.generatedFiles.keys)
-                    .containsExactlyInAnyOrder(*generatedFiles.keys.toTypedArray())
-                generatedFiles.keys.forEach { filename ->
+                    .containsExactlyInAnyOrder(*generatedSourceFiles.keys.toTypedArray())
+                generatedSourceFiles.keys.forEach { generatedSourceFileName ->
                     Assertions
-                        .assertThat(result.generatedFiles[filename]?.readText())
-                        .isEqualTo(generatedFiles[filename])
+                        .assertThat(result.generatedFiles[generatedSourceFileName]?.readText())
+                        .isEqualTo(generatedSourceFiles[generatedSourceFileName])
+                }
+                generatedFiles.keys.forEach { generatedFile ->
+                    Assertions
+                        .assertThat(generatedFile.readText())
+                        .isEqualTo(generatedFiles[generatedFile])
                 }
                 // Ksp generated files do not compile in tests so do not try to load them.
                 if (!result.useKsp) {
@@ -192,6 +198,7 @@ open class BaseDeepLinkProcessorTest {
         }
 
         @KotlinPoetJavaPoetPreview
+        @kotlin.ExperimentalUnsignedTypes
         internal fun compile(
             sourceFiles: List<Source>,
             arguments: MutableMap<OptionName, OptionValue>? = null,
@@ -232,13 +239,15 @@ open class BaseDeepLinkProcessorTest {
         }
 
         @KotlinPoetJavaPoetPreview
+        @kotlin.ExperimentalUnsignedTypes
         internal fun compileIncremental(
             sourceFiles: List<Source>,
             customDeepLinks: List<String> = emptyList(),
             useKsp: Boolean = false,
             incrementalFlag: Boolean = true,
+            additionalArguments: MutableMap<OptionName, OptionValue> = mutableMapOf(),
         ): CompileResult {
-            val arguments: MutableMap<OptionName, OptionValue> = mutableMapOf()
+            val arguments: MutableMap<OptionName, OptionValue> = additionalArguments
             if (incrementalFlag) {
                 arguments["deepLink.incremental"] = "true"
             }

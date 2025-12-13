@@ -95,7 +95,6 @@ public class MatchIndex {
   @NonNull
   public static final char[] ALLOWED_VALUES_DELIMITER = {'(', ')'};
 
-  @NonNull
   public static final char ALLOWED_VALUES_SEPARATOR = '|';
 
   private static final String ALLOWED_VALUES_SEPARATOR_REGEX_STRING =
@@ -176,6 +175,18 @@ public class MatchIndex {
               compareResult.isEmptyConfigurablePathSegmentMatch() ? elementIndex : elementIndex + 1,
               childrenPos, getElementBoundaryPos(currentElementStartPosition),
               pathSegmentReplacements);
+          } else if (compareResult.isEmptyConfigurablePathSegmentMatch()
+            && elementIndex == elements.size() - 1) {
+            // Special case: empty configurable path segment at the end of the template
+            // with no children. We need to check for match data on this leaf node.
+            int matchLength = getMatchLength(currentElementStartPosition);
+            if (matchLength > 0) {
+              match = getMatchResultFromIndex(
+                matchLength,
+                getMatchDataPos(currentElementStartPosition),
+                deeplinkUri,
+                placeholdersOutput);
+            }
           }
         } else {
           int matchLength = getMatchLength(currentElementStartPosition);
@@ -185,6 +196,19 @@ public class MatchIndex {
               getMatchDataPos(currentElementStartPosition),
               deeplinkUri,
               placeholdersOutput);
+          }
+          // If we're at the last URL element and there's no match data here,
+          // check if there are children that are empty configurable path segments.
+          // Only do this if there are path segment replacements configured, since
+          // empty configurable segments only exist when replacements are provided.
+          if (match == null && !pathSegmentReplacements.isEmpty()) {
+            int childrenPos = getChildrenPos(currentElementStartPosition);
+            if (childrenPos != -1) {
+              match = matchUri(deeplinkUri, elements, placeholdersOutput,
+                elementIndex,
+                childrenPos, getElementBoundaryPos(currentElementStartPosition),
+                pathSegmentReplacements);
+            }
           }
         }
       }
@@ -199,7 +223,7 @@ public class MatchIndex {
 
   @NonNull
   public List<DeepLinkEntry> getAllEntries(int elementStartPos, int parentBoundaryPos) {
-    List<DeepLinkEntry> resultList = new ArrayList();
+    List<DeepLinkEntry> resultList = new ArrayList<>();
     int currentElementStartPosition = elementStartPos;
     do {
       int matchLength = getMatchLength(currentElementStartPosition);
@@ -304,19 +328,40 @@ public class MatchIndex {
       return compareConfigurablePathSegment(inboundValue, pathSegmentReplacements, valueStartPos,
         valueLength);
     } else {
-      return arrayCompare(byteArray, valueStartPos, valueLength, inboundValue);
+      return arrayCompare(byteArray, valueStartPos, valueLength, 0, inboundValue);
     }
   }
 
+  /**
+   * Compares a segment of the source byte array against a segment of the comparison byte array
+   * for equality.
+   *
+   * <p>This method performs a byte-by-byte comparison between:
+   * <ul>
+   *   <li>{@code byteArray[startPos]} through {@code byteArray[startPos + length - 1]}</li>
+   *   <li>{@code compareValue[compareStartPos]} through {@code compareValue[compareStartPos +
+   *   length - 1]}</li>
+   * </ul>
+   *
+   * @param byteArray       the source byte array to compare from
+   * @param startPos        the starting position in {@code byteArray} to begin comparison
+   * @param length          the number of bytes to compare from {@code byteArray}
+   * @param compareStartPos the starting position in {@code compareValue} to begin comparison
+   * @param compareValue    the byte array to compare against (typically the inbound URI component)
+   * @return a {@link CompareResult} with an empty match value and
+   *         {@code isEmptyConfigurablePathSegmentMatch} set to false if the segments are equal;
+   *         {@code null} if the lengths don't match or any byte differs
+   */
   private CompareResult arrayCompare(byte[] byteArray,
                                      int startPos,
                                      int length,
+                                     int compareStartPos,
                                      byte[] compareValue) {
-    if (length != compareValue.length) {
+    if (length != (compareValue.length - compareStartPos)) {
       return null;
     }
     for (int i = 0; i < length; i++) {
-      if (compareValue[i] != byteArray[startPos + i]) return null;
+      if (compareValue[compareStartPos + i] != byteArray[startPos + i]) return null;
     }
     return new CompareResult("", false);
   }
@@ -327,17 +372,21 @@ public class MatchIndex {
                                                        int valueStartPos, int valueLength) {
     byte[] replacementValue = null;
     for (Map.Entry<byte[], byte[]> pathSegmentEntry : pathSegmentReplacements.entrySet()) {
-      if (arrayCompare(byteArray, valueStartPos, valueLength, pathSegmentEntry.getKey()) != null) {
+      if (arrayCompare(byteArray, valueStartPos, valueLength, 0,
+              pathSegmentEntry.getKey()) != null) {
         replacementValue = pathSegmentEntry.getValue();
       }
     }
+
     if (replacementValue == null) {
       return null;
     }
     if (replacementValue.length == 0) {
       return new CompareResult("", true);
     }
-    if (arrayCompare(inboundValue, 0, inboundValue.length, replacementValue) != null) {
+    // compareStartPos is set to 1 as every compare value starts with `/` if it is not emppty.
+    // This is guaranteed by a check in BaseDeeplinkDelegate
+    if (arrayCompare(inboundValue, 0, inboundValue.length, 1, replacementValue) != null) {
       return new CompareResult("", false);
     } else {
       return null;

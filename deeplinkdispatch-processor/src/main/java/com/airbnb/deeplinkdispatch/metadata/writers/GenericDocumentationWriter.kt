@@ -1,8 +1,9 @@
-package com.airbnb.deeplinkdispatch
+package com.airbnb.deeplinkdispatch.metadata.writers
 
 import androidx.room.compiler.codegen.toJavaPoet
 import androidx.room.compiler.processing.XProcessingEnv
-import com.airbnb.deeplinkdispatch.Documentor.DocumetationWriter
+import com.airbnb.deeplinkdispatch.DeepLinkAnnotatedElement
+import com.airbnb.deeplinkdispatch.metadata.writers.Writer.Companion.formatJavaDoc
 import com.squareup.kotlinpoet.javapoet.KotlinPoetJavaPoetPreview
 import java.io.PrintWriter
 
@@ -10,7 +11,7 @@ import java.io.PrintWriter
  * Old documentation format.
  */
 @KotlinPoetJavaPoetPreview
-internal class GenericWriter : DocumetationWriter {
+internal class GenericDocumentationWriter : Writer {
     override fun write(
         env: XProcessingEnv,
         writer: PrintWriter,
@@ -18,11 +19,10 @@ internal class GenericWriter : DocumetationWriter {
     ) {
         writer.apply {
             for (element in elements) {
-                print(element.uri + Documentor.PROPERTY_DELIMITER)
-                Documentor
-                    .formatJavaDoc(element.element.docComment)
+                print(element.uriTemplate + PROPERTY_DELIMITER)
+                formatJavaDoc(element.element.docComment)
                     ?.let { print(it) }
-                print(Documentor.PROPERTY_DELIMITER)
+                print(PROPERTY_DELIMITER)
                 print(
                     element.annotatedClass
                         .asClassName()
@@ -31,15 +31,21 @@ internal class GenericWriter : DocumetationWriter {
                 )
                 when (element) {
                     is DeepLinkAnnotatedElement.MethodAnnotatedElement -> {
-                        print(Documentor.CLASS_METHOD_NAME_DELIMITER)
+                        print(CLASS_METHOD_NAME_DELIMITER)
                         print(element.method)
                     }
                     else -> { // Nothing
                     }
                 }
-                print(Documentor.ELEMENT_DELIMITER)
+                print(ELEMENT_DELIMITER)
             }
             flush()
         }
+    }
+
+    companion object {
+        private const val PROPERTY_DELIMITER = "\\n|#|\\n"
+        private const val ELEMENT_DELIMITER = "\\n|##|\\n"
+        private const val CLASS_METHOD_NAME_DELIMITER = "#"
     }
 }

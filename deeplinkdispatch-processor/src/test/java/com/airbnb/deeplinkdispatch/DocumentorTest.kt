@@ -6,6 +6,7 @@ import androidx.room.compiler.processing.XMessager
 import androidx.room.compiler.processing.XMethodElement
 import androidx.room.compiler.processing.XProcessingEnv
 import androidx.room.compiler.processing.XTypeElement
+import com.airbnb.deeplinkdispatch.metadata.Documentor
 import com.squareup.javapoet.ClassName
 import com.squareup.kotlinpoet.javapoet.KotlinPoetJavaPoetPreview
 import io.mockk.every
@@ -75,13 +76,21 @@ class DocumentorTest {
         every { methodElement.enclosingElement } returns element2Enclosed
         val deepLinkElement1 =
             DeepLinkAnnotatedElement.ActivityAnnotatedElement(
-                "airbnb://example.com/{foo}/bar",
-                classElement,
+                uri = "airbnb://example.com/{foo}/bar",
+                activityClassFqn = null,
+                intentFilterAttributes = emptySet(),
+                actions = setOf("android.intent.action.VIEW"),
+                categories = setOf("android.intent.category.DEFAULT", "android.intent.category.BROWSABLE"),
+                element = classElement,
             )
         val deepLinkElement2 =
             DeepLinkAnnotatedElement.MethodAnnotatedElement(
-                "airbnb://example.com/{foo}/bar",
-                methodElement,
+                uri = "airbnb://example.com/{foo}/bar",
+                activityClassFqn = null,
+                intentFilterAttributes = emptySet(),
+                actions = setOf("android.intent.action.VIEW"),
+                categories = setOf("android.intent.category.DEFAULT", "android.intent.category.BROWSABLE"),
+                element = methodElement,
             )
         return listOf(deepLinkElement1, deepLinkElement2)
     }

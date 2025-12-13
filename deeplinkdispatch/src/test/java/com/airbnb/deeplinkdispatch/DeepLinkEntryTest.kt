@@ -492,6 +492,128 @@ class DeepLinkEntryTest {
         assertThat(placeholderFirstEntry.compareTo(configurableFirstEntry)).isGreaterThan(0)
     }
 
+    // ============== templatesMatchesSameUrls tests ==============
+
+    @Test
+    fun `templatesMatchesSameUrls returns true for identical templates`() {
+        val entry1 = activityDeepLinkEntry("airbnb://host/path")
+        val entry2 = activityDeepLinkEntry("airbnb://host/path")
+        assertThat(entry1.templatesMatchesSameUrls(entry2)).isTrue
+    }
+
+    @Test
+    fun `templatesMatchesSameUrls returns false for completely different templates`() {
+        val entry1 = activityDeepLinkEntry("airbnb://host/path1")
+        val entry2 = activityDeepLinkEntry("airbnb://host/path2")
+        assertThat(entry1.templatesMatchesSameUrls(entry2)).isFalse
+    }
+
+    @Test
+    fun `templatesMatchesSameUrls returns true for templates with same placeholders`() {
+        val entry1 = activityDeepLinkEntry("airbnb://host/{id}")
+        val entry2 = activityDeepLinkEntry("airbnb://host/{param}")
+        assertThat(entry1.templatesMatchesSameUrls(entry2)).isTrue
+    }
+
+    @Test
+    fun `templatesMatchesSameUrls returns true when placeholder matches concrete value`() {
+        // A placeholder can match any value, so it could match "path"
+        val entryWithPlaceholder = activityDeepLinkEntry("airbnb://host/{id}")
+        val entryWithConcrete = activityDeepLinkEntry("airbnb://host/path")
+        assertThat(entryWithPlaceholder.templatesMatchesSameUrls(entryWithConcrete)).isTrue
+        assertThat(entryWithConcrete.templatesMatchesSameUrls(entryWithPlaceholder)).isTrue
+    }
+
+    @Test
+    fun `templatesMatchesSameUrls returns true when allowed value matches concrete value`() {
+        // Placeholder with allowed values (a|b) - "a" matches concrete "a"
+        val entryWithAllowedValues = activityDeepLinkEntry("airbnb://host/{type(a|b)}")
+        val entryWithConcrete = activityDeepLinkEntry("airbnb://host/a")
+        assertThat(entryWithAllowedValues.templatesMatchesSameUrls(entryWithConcrete)).isTrue
+        assertThat(entryWithConcrete.templatesMatchesSameUrls(entryWithAllowedValues)).isTrue
+    }
+
+    @Test
+    fun `templatesMatchesSameUrls returns false when no allowed value matches concrete value`() {
+        // Placeholder with allowed values (a|b) - neither matches concrete "c"
+        val entryWithAllowedValues = activityDeepLinkEntry("airbnb://host/{type(a|b)}")
+        val entryWithConcrete = activityDeepLinkEntry("airbnb://host/c")
+        assertThat(entryWithAllowedValues.templatesMatchesSameUrls(entryWithConcrete)).isFalse
+        assertThat(entryWithConcrete.templatesMatchesSameUrls(entryWithAllowedValues)).isFalse
+    }
+
+    @Test
+    fun `templatesMatchesSameUrls returns true when allowed values overlap`() {
+        // Both have allowed values with "b" in common
+        val entry1 = activityDeepLinkEntry("airbnb://host/{type1(a|b)}")
+        val entry2 = activityDeepLinkEntry("airbnb://host/{type2(b|c)}")
+        assertThat(entry1.templatesMatchesSameUrls(entry2)).isTrue
+    }
+
+    @Test
+    fun `templatesMatchesSameUrls returns false when allowed values dont overlap`() {
+        // No common allowed values
+        val entry1 = activityDeepLinkEntry("airbnb://host/{type1(a|b)}")
+        val entry2 = activityDeepLinkEntry("airbnb://host/{type2(c|d)}")
+        assertThat(entry1.templatesMatchesSameUrls(entry2)).isFalse
+    }
+
+    @Test
+    fun `templatesMatchesSameUrls returns true when placeholder could match allowed value`() {
+        // Regular placeholder can match any value including "a" or "b"
+        val entryWithPlaceholder = activityDeepLinkEntry("airbnb://host/{id}")
+        val entryWithAllowedValues = activityDeepLinkEntry("airbnb://host/{type(a|b)}")
+        assertThat(entryWithPlaceholder.templatesMatchesSameUrls(entryWithAllowedValues)).isTrue
+        assertThat(entryWithAllowedValues.templatesMatchesSameUrls(entryWithPlaceholder)).isTrue
+    }
+
+    @Test
+    fun `templatesMatchesSameUrls handles partial placeholders with same prefix`() {
+        // Both have "pre" prefix, placeholder can match
+        val entry1 = activityDeepLinkEntry("airbnb://host/pre{id}post")
+        val entry2 = activityDeepLinkEntry("airbnb://host/pre{name}post")
+        assertThat(entry1.templatesMatchesSameUrls(entry2)).isTrue
+    }
+
+    @Test
+    fun `templatesMatchesSameUrls returns false for partial placeholders with different prefix`() {
+        val entry1 = activityDeepLinkEntry("airbnb://host/pre{id}post")
+        val entry2 = activityDeepLinkEntry("airbnb://host/other{name}post")
+        assertThat(entry1.templatesMatchesSameUrls(entry2)).isFalse
+    }
+
+    @Test
+    fun `templatesMatchesSameUrls returns false for different number of path segments`() {
+        val entry1 = activityDeepLinkEntry("airbnb://host/path1/path2")
+        val entry2 = activityDeepLinkEntry("airbnb://host/path1")
+        assertThat(entry1.templatesMatchesSameUrls(entry2)).isFalse
+    }
+
+    @Test
+    fun `templatesMatchesSameUrls handles complex scheme placeholders`() {
+        // http{s} scheme placeholder - "http" matches "http", "https" matches "https"
+        val entry1 = activityDeepLinkEntry("http{scheme(|s)}://host/path")
+        val entry2 = activityDeepLinkEntry("http://host/path")
+        assertThat(entry1.templatesMatchesSameUrls(entry2)).isTrue
+
+        val entry3 = activityDeepLinkEntry("https://host/path")
+        assertThat(entry1.templatesMatchesSameUrls(entry3)).isTrue
+    }
+
+    @Test
+    fun `templatesMatchesSameUrls handles host placeholders with allowed values`() {
+        // Host with allowed prefixes
+        val entry1 = activityDeepLinkEntry("http://{prefix(|www.)}airbnb.com/path")
+        val entry2 = activityDeepLinkEntry("http://airbnb.com/path")
+        assertThat(entry1.templatesMatchesSameUrls(entry2)).isTrue
+
+        val entry3 = activityDeepLinkEntry("http://www.airbnb.com/path")
+        assertThat(entry1.templatesMatchesSameUrls(entry3)).isTrue
+
+        val entry4 = activityDeepLinkEntry("http://m.airbnb.com/path")
+        assertThat(entry1.templatesMatchesSameUrls(entry4)).isFalse
+    }
+
     companion object {
         private fun activityDeepLinkEntry(
             uriTemplate: String,

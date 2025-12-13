@@ -143,4 +143,146 @@ class MatchIndexTests {
             )
         assertThat(testRegistry.supports(DeepLinkUri.parse("https://testing.com/"))).isTrue()
     }
+
+    // Tests for configurable path segment with leading slash
+
+    private val entryWithConfigurablePathSegment =
+        DeepLinkEntry.MethodDeeplinkEntry(
+            "https://example.com/<configurable-segment>/resource",
+            MatchIndexTests::class.java.name,
+            "configurableMethod1",
+        )
+
+    private val entryWithConfigurablePathSegmentAtEnd =
+        DeepLinkEntry.MethodDeeplinkEntry(
+            "https://example.com/path/<configurable-segment>",
+            MatchIndexTests::class.java.name,
+            "configurableMethod2",
+        )
+
+    private val entryWithTwoConfigurablePathSegments =
+        DeepLinkEntry.MethodDeeplinkEntry(
+            "https://example.com/<segment-one>/<segment-two>/end",
+            MatchIndexTests::class.java.name,
+            "configurableMethod3",
+        )
+
+    private fun pathSegmentReplacements(vararg pairs: Pair<String, String>): Map<ByteArray, ByteArray> =
+        pairs.associate { it.first.toByteArray() to it.second.toByteArray() }
+
+    @Test
+    fun testConfigurablePathSegmentWithLeadingSlashMatches() {
+        val registry = testRegistry(listOf(entryWithConfigurablePathSegment))
+        val replacements = pathSegmentReplacements("configurable-segment" to "/foo")
+        val matchEntry = registry.idxMatch(DeepLinkUri.parse("https://example.com/foo/resource"), replacements)
+        assertThat(matchEntry).isNotNull
+        assertThat(matchEntry?.deeplinkEntry).isEqualTo(entryWithConfigurablePathSegment)
+    }
+
+    @Test
+    fun testConfigurablePathSegmentWithLeadingSlashNoMatchWhenValueDiffers() {
+        val registry = testRegistry(listOf(entryWithConfigurablePathSegment))
+        val replacements = pathSegmentReplacements("configurable-segment" to "/foo")
+        val matchEntry = registry.idxMatch(DeepLinkUri.parse("https://example.com/bar/resource"), replacements)
+        assertThat(matchEntry).isNull()
+    }
+
+    @Test
+    fun testConfigurablePathSegmentEmptyReplacementRemovesSegment() {
+        val registry = testRegistry(listOf(entryWithConfigurablePathSegment))
+        val replacements = pathSegmentReplacements("configurable-segment" to "")
+        val matchEntry = registry.idxMatch(DeepLinkUri.parse("https://example.com/resource"), replacements)
+        assertThat(matchEntry).isNotNull
+        assertThat(matchEntry?.deeplinkEntry).isEqualTo(entryWithConfigurablePathSegment)
+    }
+
+    @Test
+    fun testConfigurablePathSegmentAtEndWithLeadingSlashMatches() {
+        val registry = testRegistry(listOf(entryWithConfigurablePathSegmentAtEnd))
+        val replacements = pathSegmentReplacements("configurable-segment" to "/final")
+        val matchEntry = registry.idxMatch(DeepLinkUri.parse("https://example.com/path/final"), replacements)
+        assertThat(matchEntry).isNotNull
+        assertThat(matchEntry?.deeplinkEntry).isEqualTo(entryWithConfigurablePathSegmentAtEnd)
+    }
+
+    @Test
+    fun testConfigurablePathSegmentAtEndEmptyReplacementMatches() {
+        // When the configurable segment at the end is empty, it should match
+        // when the inbound URI ends at the preceding path segment
+        val registry = testRegistry(listOf(entryWithConfigurablePathSegmentAtEnd))
+        val replacements = pathSegmentReplacements("configurable-segment" to "")
+        val matchEntry = registry.idxMatch(DeepLinkUri.parse("https://example.com/path"), replacements)
+        assertThat(matchEntry).isNotNull
+        assertThat(matchEntry?.deeplinkEntry).isEqualTo(entryWithConfigurablePathSegmentAtEnd)
+    }
+
+    @Test
+    fun testTwoConfigurablePathSegmentsWithLeadingSlashMatch() {
+        val registry = testRegistry(listOf(entryWithTwoConfigurablePathSegments))
+        val replacements =
+            pathSegmentReplacements(
+                "segment-one" to "/first",
+                "segment-two" to "/second",
+            )
+        val matchEntry = registry.idxMatch(DeepLinkUri.parse("https://example.com/first/second/end"), replacements)
+        assertThat(matchEntry).isNotNull
+        assertThat(matchEntry?.deeplinkEntry).isEqualTo(entryWithTwoConfigurablePathSegments)
+    }
+
+    @Test
+    fun testTwoConfigurablePathSegmentsOneEmptyMatches() {
+        val registry = testRegistry(listOf(entryWithTwoConfigurablePathSegments))
+        val replacements =
+            pathSegmentReplacements(
+                "segment-one" to "/first",
+                "segment-two" to "",
+            )
+        val matchEntry = registry.idxMatch(DeepLinkUri.parse("https://example.com/first/end"), replacements)
+        assertThat(matchEntry).isNotNull
+        assertThat(matchEntry?.deeplinkEntry).isEqualTo(entryWithTwoConfigurablePathSegments)
+    }
+
+    @Test
+    fun testTwoConfigurablePathSegmentsBothEmptyMatches() {
+        val registry = testRegistry(listOf(entryWithTwoConfigurablePathSegments))
+        val replacements =
+            pathSegmentReplacements(
+                "segment-one" to "",
+                "segment-two" to "",
+            )
+        val matchEntry = registry.idxMatch(DeepLinkUri.parse("https://example.com/end"), replacements)
+        assertThat(matchEntry).isNotNull
+        assertThat(matchEntry?.deeplinkEntry).isEqualTo(entryWithTwoConfigurablePathSegments)
+    }
+
+    @Test
+    fun testConfigurablePathSegmentWithMultiplePathPartsInReplacementNoMatch() {
+        // Multi-part replacements don't work as the matching is done per-segment
+        // The replacement value "/foo/bar" would try to match a single path segment,
+        // which doesn't work with multiple path parts in the inbound URI
+        val registry = testRegistry(listOf(entryWithConfigurablePathSegment))
+        val replacements = pathSegmentReplacements("configurable-segment" to "/foo/bar")
+        val matchEntry = registry.idxMatch(DeepLinkUri.parse("https://example.com/foo/bar/resource"), replacements)
+        // This should NOT match because the matching is per path segment
+        assertThat(matchEntry).isNull()
+    }
+
+    @Test
+    fun testConfigurablePathSegmentLeadingSlashStrippedDuringComparison() {
+        // This test verifies that the leading slash in the replacement value is properly
+        // stripped when comparing with the inbound path segment
+        val registry = testRegistry(listOf(entryWithConfigurablePathSegment))
+        // Replacement value "/mypath" should match inbound path segment "mypath"
+        val replacements = pathSegmentReplacements("configurable-segment" to "/mypath")
+        val matchEntry = registry.idxMatch(DeepLinkUri.parse("https://example.com/mypath/resource"), replacements)
+        assertThat(matchEntry).isNotNull
+    }
+
+    @Test
+    fun testConfigurablePathSegmentNoMatchWithoutCorrectReplacement() {
+        val registry = testRegistry(listOf(entryWithConfigurablePathSegment))
+        val replacements = pathSegmentReplacements("wrong-key" to "/foo")
+        val matchEntry = registry.idxMatch(DeepLinkUri.parse("https://example.com/foo/resource"), replacements)
+        assertThat(matchEntry).isNull()
+    }
 }

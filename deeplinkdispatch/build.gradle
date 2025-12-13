@@ -20,8 +20,8 @@ dependencies {
 }
 
 checkstyle {
-  configFile rootProject.file('checkstyle.xml')
-  showViolations true
+  configFile = rootProject.file('checkstyle.xml')
+  showViolations = true
   configProperties = ['checkstyle.cache.file': rootProject.file('build/checkstyle.cache')]
 }
 
@@ -30,8 +30,8 @@ android {
     compileSdk androidConfig.compileSdkVersion
 
     defaultConfig {
-        minSdk androidConfig.minSdkVersion
-        targetSdk androidConfig.compileSdkVersion
+        minSdk = androidConfig.minSdkVersion
+        targetSdk = androidConfig.compileSdkVersion
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     consumerProguardFiles 'proguard-rules.pro'
   }

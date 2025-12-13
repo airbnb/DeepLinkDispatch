@@ -1,0 +1,4 @@
+<resources>
+  <string name="app_name">ksp-sample-library</string>
+  <string name="intent_filter_label">Intent filter</string>
+</resources>

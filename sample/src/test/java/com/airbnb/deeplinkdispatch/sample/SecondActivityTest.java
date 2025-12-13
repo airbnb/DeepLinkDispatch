@@ -22,7 +22,7 @@ import static org.robolectric.Shadows.shadowOf;
 public class SecondActivityTest {
   @Test public void testIntent() {
     Intent intent = new Intent(Intent.ACTION_VIEW,
-        Uri.parse("http://example.com/deepLink/123/myname"));
+        Uri.parse("http://example.com/deepLink_second/123/myname"));
     DeepLinkActivity deepLinkActivity = Robolectric.buildActivity(DeepLinkActivity.class, intent)
         .create().get();
     ShadowActivity shadowActivity = shadowOf(deepLinkActivity);
@@ -33,6 +33,6 @@ public class SecondActivityTest {
 
     assertThat(launchedIntent.getBooleanExtra(DeepLink.IS_DEEP_LINK, false), equalTo(true));
     assertThat(launchedIntent.getStringExtra(DeepLink.URI),
-        equalTo("http://example.com/deepLink/123/myname"));
+        equalTo("http://example.com/deepLink_second/123/myname"));
   }
 }
