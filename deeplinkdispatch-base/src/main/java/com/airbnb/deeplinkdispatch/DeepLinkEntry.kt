@@ -149,6 +149,14 @@ sealed class DeepLinkEntry(
     }
 
     /**
+     * Cached expanded values for this template.
+     * Computing allPossibleValues() is expensive, so we cache it.
+     */
+    private val expandedValues: List<String> by lazy {
+        uriTemplate.allPossibleValues()
+    }
+
+    /**
      * Determines if two URI templates could potentially match the same URLs.
      *
      * This method checks:
@@ -163,11 +171,14 @@ sealed class DeepLinkEntry(
      * @return true if the templates could potentially match the same URLs
      */
     fun templatesMatchesSameUrls(other: DeepLinkEntry): Boolean {
-        // Get all possible expanded values for both templates
-        // This expands placeholders with allowed values to all their possible concrete forms
-        // Regular placeholders (without allowed values) are replaced with "..*"
-        val thisExpanded = uriTemplate.allPossibleValues()
-        val otherExpanded = other.uriTemplate.allPossibleValues()
+        // Quick equality check - if templates are identical, they match
+        if (this.uriTemplate == other.uriTemplate) {
+            return true
+        }
+
+        // Get cached expanded values for both templates
+        val thisExpanded = this.expandedValues
+        val otherExpanded = other.expandedValues
 
         // Check if any pair of expanded values could match
         for (thisValue in thisExpanded) {
