@@ -284,7 +284,7 @@ class DeepLinkProcessor(
                                 "'ActivityAnnotatedElement' or 'HandlerAnnotatedElement'",
                         )
                 }
-            } catch (e: MalformedURLException) {
+            } catch (_: MalformedURLException) {
                 environment.messager.printMessage(
                     kind = Diagnostic.Kind.ERROR,
                     msg = "Malformed Deep Link URL $uriAndActivityFqn.uri",
@@ -574,7 +574,7 @@ class DeepLinkProcessor(
         val packagesWithMoreThanOneDeepLinkHandler =
             deeplinkHandlerAnnotatedElements.groupBy { it.packageName }.filter { it.value.size > 1 }
         if (packagesWithMoreThanOneDeepLinkHandler.isNotEmpty()) {
-            packagesWithMoreThanOneDeepLinkHandler.forEach { it ->
+            packagesWithMoreThanOneDeepLinkHandler.forEach {
                 logError(
                     element = it.value.first().enclosingTypeElement,
                     message =
