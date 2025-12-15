@@ -114,7 +114,7 @@ class DeepLinkProcessor(
 
     override fun getSupportedOptions(): Set<String> {
         val supportedOptions =
-            listOf(
+            listOfNotNull(
                 Documentor.DOC_OUTPUT_PROPERTY_NAME,
                 OPTION_CUSTOM_ANNOTATIONS,
                 OPTION_INCREMENTAL,
@@ -123,7 +123,7 @@ class DeepLinkProcessor(
                 } else {
                     null
                 },
-            ).filterNotNull()
+            )
         return supportedOptions.toSet()
     }
 
