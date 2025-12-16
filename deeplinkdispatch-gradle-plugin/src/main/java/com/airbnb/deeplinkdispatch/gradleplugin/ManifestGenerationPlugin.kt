@@ -141,6 +141,7 @@ class ManifestGenerationPlugin: Plugin<Project> {
                     "process${variantCapitalized}JavaRes",
                     "merge${variantCapitalized}JavaResource",
                     "bundleLibCompileToJar${variantCapitalized}",
+                    "bundleLibRuntimeToJar${variantCapitalized}",
                     "sync${variantCapitalized}LibJars"
                 ).forEach { taskName ->
                     project.tasks.findByName(taskName)?.let { task ->
