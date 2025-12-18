@@ -215,12 +215,12 @@ open class BaseDeepLinkProcessorTest {
                             symbolProcessorProviders += DeepLinkProcessorProvider()
                             arguments?.let(processorOptions::putAll)
                         }
-                        languageVersion = "2.2"
+                        languageVersion = "2.3"
                         useKapt4 = false
                     } else {
                         annotationProcessors = listOf(DeepLinkProcessor())
                         arguments?.let { kaptArgs = arguments }
-                        languageVersion = "2.2"
+                        languageVersion = "2.3"
                         useKapt4 = true
                     }
                     inheritClassPath = true
