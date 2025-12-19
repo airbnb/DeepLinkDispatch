@@ -4,12 +4,13 @@ apply plugin: 'kotlin-android'
 apply plugin: 'org.jmailen.kotlinter'
 
 android {
-    namespace 'com.airbnb.deeplinkdispatch.sample.benchmark'
-    compileSdk androidConfig.compileSdkVersion
+    namespace = "com.airbnb.deeplinkdispatch.samplebenchmark"
+    compileSdk = androidConfig.compileSdkVersion
 
     defaultConfig {
-        minSdk androidConfig.minSdkVersionBenchmark
-        targetSdk androidConfig.targetSdkVersion
+        minSdk = androidConfig.
+
+        targetSdk = androidConfig.targetSdkVersion
 
         testInstrumentationRunner 'androidx.benchmark.junit4.AndroidBenchmarkRunner'
     }
@@ -28,8 +29,13 @@ android {
         }
     }
 
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
+    }
+
     kotlinOptions {
-        jvmTarget = "11"
+        jvmTarget = '11'
     }
 }
 

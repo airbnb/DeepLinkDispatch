@@ -9,7 +9,7 @@ import android.widget.Toast;
 import com.airbnb.deeplinkdispatch.DeepLink;
 
 // You can have multiple path parameters in the URI - both must be present
-@DeepLink("http://example.com/deepLink/{id}/{name}")
+@DeepLink(value = "http://example.com/deepLink_second/{id}/{name}")
 public class SecondActivity extends AppCompatActivity {
 
   private static final String TAG = SecondActivity.class.getSimpleName();

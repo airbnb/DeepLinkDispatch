@@ -1,0 +1,69 @@
+// NOTE: The gradle plugin is referenced from the root build.gradle buildscript block.
+// When testing changes to the gradle plugin, you must run:
+//   ./gradlew :deeplinkdispatch-gradle-plugin:publishToMavenLocal
+// and update the version in gradle.properties to see the changes.
+//
+// In a real project using this library, add the plugin to your root build.gradle like this:
+//
+//   buildscript {
+//       repositories {
+//           mavenCentral()
+//       }
+//       dependencies {
+//           classpath "com.airbnb:deeplinkdispatch-gradle-plugin:7.0.0"
+//       }
+//   }
+//
+// Then apply it in your module's build.gradle:
+//   apply plugin: 'com.airbnb.deeplinkdispatch.manifest-generation'
+
+apply plugin: 'com.android.library'
+apply plugin: 'kotlin-android'
+apply plugin: 'org.jmailen.kotlinter'
+apply plugin: 'com.google.devtools.ksp'
+apply plugin: 'com.airbnb.deeplinkdispatch.manifest-generation'
+
+
+// This is just here to show an example how DLD works with either `annotationProcessor` (sample-library)
+// 'kapt' (sample-kapt-library) or 'ksp' (this) library modules and even can mix and match those between
+// modules.
+
+android {
+    namespace = "com.airbnb.deeplinkdispatch.sampleksplibrary"
+    compileSdk androidConfig.compileSdkVersion
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
+    }
+
+    kotlinOptions {
+        jvmTarget = '11'
+    }
+
+    defaultConfig {
+        minSdk = androidConfig.minSdkVersion
+        targetSdk = androidConfig.compileSdkVersion
+
+        javaCompileOptions {
+            annotationProcessorOptions {
+                arguments = [
+                        'deepLink.incremental'      : 'true',
+                        'deepLink.customAnnotations': 'com.airbnb.deeplinkdispatch.sample.library.LibraryDeepLink'
+                ]
+            }
+        }
+    }
+}
+
+dependencies {
+    implementation project(':deeplinkdispatch')
+    ksp project(':deeplinkdispatch-processor')
+    implementation deps.appCompat
+    testImplementation deps.junit
+}
+
+ksp {
+    arg("deepLink.incremental", "true")
+    arg("deepLink.customAnnotations", "com.airbnb.deeplinkdispatch.sample.ksplibrary.ManifestGenWebDeepLink")
+}

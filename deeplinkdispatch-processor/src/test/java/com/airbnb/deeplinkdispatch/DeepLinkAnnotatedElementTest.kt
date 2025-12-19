@@ -11,64 +11,100 @@ class DeepLinkAnnotatedElementTest {
     private var element = mockk<XTypeElement>()
 
     @Test
-    @Throws(MalformedURLException::class)
     fun testValidUri() {
         val dlElement =
             DeepLinkAnnotatedElement.ActivityAnnotatedElement(
                 uri = "airbnb://example.com/{foo}/bar",
+                activityClassFqn = null,
+                intentFilterAttributes = emptySet(),
+                actions = setOf("android.intent.action.VIEW"),
+                categories = setOf("android.intent.category.DEFAULT", "android.intent.category.BROWSABLE"),
                 element = element,
             )
-        Assertions.assertThat(dlElement.uri).isEqualTo("airbnb://example.com/{foo}/bar")
+        Assertions.assertThat(dlElement.uriTemplate).isEqualTo("airbnb://example.com/{foo}/bar")
+        Assertions.assertThat(dlElement.activityClassFqn).isNull()
     }
 
     @Test
-    @Throws(MalformedURLException::class)
+    fun testValidUriWithActivityFqn() {
+        val dlElement =
+            DeepLinkAnnotatedElement.ActivityAnnotatedElement(
+                uri = "airbnb://example.com/{foo}/bar",
+                activityClassFqn = "com.airbnb.SomeDeepLinkActivity",
+                intentFilterAttributes = emptySet(),
+                actions = setOf("android.intent.action.VIEW"),
+                categories = setOf("android.intent.category.DEFAULT", "android.intent.category.BROWSABLE"),
+                element = element,
+            )
+        Assertions.assertThat(dlElement.uriTemplate).isEqualTo("airbnb://example.com/{foo}/bar")
+        Assertions.assertThat(dlElement.activityClassFqn).isEqualTo("com.airbnb.SomeDeepLinkActivity")
+    }
+
+    @Test
     fun testQueryParam() {
         val dlElement =
             DeepLinkAnnotatedElement.ActivityAnnotatedElement(
                 uri = "airbnb://classDeepLink?foo=bar",
+                activityClassFqn = null,
+                intentFilterAttributes = emptySet(),
+                actions = setOf("android.intent.action.VIEW"),
+                categories = setOf("android.intent.category.DEFAULT", "android.intent.category.BROWSABLE"),
                 element = element,
             )
-        Assertions.assertThat(dlElement.uri).isEqualTo("airbnb://classDeepLink?foo=bar")
+        Assertions.assertThat(dlElement.uriTemplate).isEqualTo("airbnb://classDeepLink?foo=bar")
     }
 
-    @Test
+    @Test(expected = MalformedURLException::class)
     fun testInvalidUri() {
-        try {
-            DeepLinkAnnotatedElement.ActivityAnnotatedElement("http", element)
-            Assert.fail()
-        } catch (ignored: MalformedURLException) {
-        }
+        DeepLinkAnnotatedElement.ActivityAnnotatedElement(
+            uri = "http",
+            activityClassFqn = null,
+            intentFilterAttributes = emptySet(),
+            actions = setOf("android.intent.action.VIEW"),
+            categories = setOf("android.intent.category.DEFAULT", "android.intent.category.BROWSABLE"),
+            element = element,
+        )
+        Assert.fail()
     }
 
-    @Test
+    @Test(expected = MalformedURLException::class)
     fun testMissingScheme() {
-        try {
-            DeepLinkAnnotatedElement.ActivityAnnotatedElement("example.com/something", element)
-            Assert.fail()
-        } catch (ignored: MalformedURLException) {
-        }
+        DeepLinkAnnotatedElement.ActivityAnnotatedElement(
+            uri = "example.com/something",
+            activityClassFqn = null,
+            intentFilterAttributes = emptySet(),
+            actions = setOf("android.intent.action.VIEW"),
+            categories = setOf("android.intent.category.DEFAULT", "android.intent.category.BROWSABLE"),
+            element = element,
+        )
+        Assert.fail()
     }
 
     @Test
-    @Throws(MalformedURLException::class)
     fun testPlaceholderInScheme() {
         val dlElement =
             DeepLinkAnnotatedElement.ActivityAnnotatedElement(
-                "http{scheme}://example.com/{foo}/bar",
-                element,
+                uri = "http{scheme}://example.com/{foo}/bar",
+                activityClassFqn = null,
+                intentFilterAttributes = emptySet(),
+                actions = setOf("android.intent.action.VIEW"),
+                categories = setOf("android.intent.category.DEFAULT", "android.intent.category.BROWSABLE"),
+                element = element,
             )
-        Assertions.assertThat(dlElement.uri).isEqualTo("http{scheme}://example.com/{foo}/bar")
+        Assertions.assertThat(dlElement.uriTemplate).isEqualTo("http{scheme}://example.com/{foo}/bar")
     }
 
     @Test
-    @Throws(MalformedURLException::class)
     fun testPlaceholderInHost() {
         val dlElement =
             DeepLinkAnnotatedElement.ActivityAnnotatedElement(
-                "http://{host}example.com/{foo}/bar",
-                element,
+                uri = "http://{host}example.com/{foo}/bar",
+                activityClassFqn = null,
+                intentFilterAttributes = emptySet(),
+                actions = setOf("android.intent.action.VIEW"),
+                categories = setOf("android.intent.category.DEFAULT", "android.intent.category.BROWSABLE"),
+                element = element,
             )
-        Assertions.assertThat(dlElement.uri).isEqualTo("http://{host}example.com/{foo}/bar")
+        Assertions.assertThat(dlElement.uriTemplate).isEqualTo("http://{host}example.com/{foo}/bar")
     }
 }

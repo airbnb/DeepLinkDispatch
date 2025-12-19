@@ -1,78 +1,81 @@
 plugins {
-  id("com.android.application")
-  id("checkstyle")
-  id("kotlin-android")
-  id("com.google.devtools.ksp")
-  id('org.jmailen.kotlinter')
+    id("com.android.application")
+    id("checkstyle")
+    id("kotlin-android")
+    id("com.google.devtools.ksp")
+    id('org.jmailen.kotlinter')
 }
 
-
 checkstyle {
-  configFile rootProject.file('checkstyle.xml')
-  showViolations true
-  configProperties = ['checkstyle.cache.file': rootProject.file('build/checkstyle.cache')]
+    configFile = rootProject.file('checkstyle.xml')
+    showViolations = true
+    configProperties = ['checkstyle.cache.file': rootProject.file('build/checkstyle.cache')]
 }
 
 android {
-    namespace 'com.airbnb.deeplinkdispatch.sample'
+    namespace = 'com.airbnb.deeplinkdispatch.sample'
     compileSdk androidConfig.compileSdkVersion
 
     defaultConfig {
-    applicationId "com.airbnb.deeplinkdispatch.sample"
-        minSdk androidConfig.minSdkVersion
-        targetSdk androidConfig.compileSdkVersion
+        applicationId "com.airbnb.deeplinkdispatch.sample"
+        minSdk = androidConfig.minSdkVersion
+        targetSdk = androidConfig.compileSdkVersion
         versionCode 1
-    versionName "1.0"
-  }
-  compileOptions {
-    sourceCompatibility JavaVersion.VERSION_11
-    targetCompatibility JavaVersion.VERSION_11
-  }
-  buildTypes {
-    release {
-      minifyEnabled true
-      shrinkResources true
-      proguardFiles getDefaultProguardFile(
-              'proguard-android-optimize.txt'),
-              'proguard-rules.pro'
+        versionName "1.0"
     }
-  }
+    buildTypes {
+        release {
+            minifyEnabled = true
+            shrinkResources = true
+            proguardFiles getDefaultProguardFile(
+                    'proguard-android-optimize.txt'),
+                    'proguard-rules.pro'
+        }
+
+    }
     packagingOptions {
         resources {
             excludes += ['META-INF/services/javax.annotation.processing.Processor']
         }
     }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
+    }
 
     kotlinOptions {
-    jvmTarget = "11"
-  }
+        jvmTarget = '11'
+    }
+
     lint {
         disable 'InvalidPackage'
     }
 }
 
 dependencies {
-  implementation project(':deeplinkdispatch')
-  ksp project(':deeplinkdispatch-processor')
-  implementation project(':sample-library')
-  implementation project(':sample-kapt-library')
-  implementation project(':sample-benchmarkable-library')
-  implementation deps.appCompat
-  implementation deps.localBroadcastManager
+    implementation project(':deeplinkdispatch')
+    ksp project(':deeplinkdispatch-processor')
+    implementation project(':sample-library')
+    implementation project(':sample-kapt-library')
+    implementation project(':sample-ksp-library')
+    implementation project(':sample-benchmarkable-library')
+    implementation deps.appCompat
+    implementation deps.localBroadcastManager
 
-  testImplementation deps.androidxTestCore
-  testImplementation deps.roboelectric
-  testImplementation deps.junit
-  testImplementation deps.mockk
+    testImplementation deps.androidxTestCore
+    testImplementation deps.roboelectric
+    testImplementation deps.junit
+    testImplementation deps.mockk
 }
 
 ksp {
     arg("deepLinkDoc.output", "${buildDir}/doc/deeplinks.txt")
     arg("deepLink.incremental", "true")
     arg("deepLink.customAnnotations",
-        "com.airbnb.deeplinkdispatch.sample.AppDeepLink|"
-            + "com.airbnb.deeplinkdispatch.sample.WebDeepLink|"
-            + "com.airbnb.deeplinkdispatch.sample.WebPlaceholderDeepLink|"
-            + "com.airbnb.deeplinkdispatch.sample.library.LibraryDeepLink"
+            "com.airbnb.deeplinkdispatch.sample.AppDeepLink|"
+                    + "com.airbnb.deeplinkdispatch.sample.WebDeepLink|"
+                    + "com.airbnb.deeplinkdispatch.sample.WebPlaceholderDeepLink|"
+                    + "com.airbnb.deeplinkdispatch.sample.library.LibraryDeepLink|"
+                    + "com.airbnb.deeplinkdispatch.sample.ksplibrary.ManifestGenWebDeepLink"
     )
 }

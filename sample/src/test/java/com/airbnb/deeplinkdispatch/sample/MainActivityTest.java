@@ -7,6 +7,7 @@ import android.net.Uri;
 import com.airbnb.deeplinkdispatch.DeepLink;
 import com.airbnb.deeplinkdispatch.DeepLinkDispatch;
 import com.airbnb.deeplinkdispatch.sample.benchmarkable.BenchmarkDeepLinkModuleRegistry;
+import com.airbnb.deeplinkdispatch.sample.ksplibrary.KspLibraryDeepLinkModuleRegistry;
 import com.airbnb.deeplinkdispatch.sample.library.LibraryActivity;
 import com.airbnb.deeplinkdispatch.sample.library.LibraryDeepLinkModuleRegistry;
 import com.airbnb.deeplinkdispatch.sample.kaptlibrary.KaptLibraryDeepLinkModuleRegistry;
@@ -293,11 +294,11 @@ public class MainActivityTest {
   @Test
   public void testSupportsUri() throws Exception {
     Map<String, String> configurablePathSegmentReplacements = new HashMap<>();
-    configurablePathSegmentReplacements.put("configurable-path-segment", "obamaOs");
-    configurablePathSegmentReplacements.put("configurable-path-segment-one", "belong");
-    configurablePathSegmentReplacements.put("configurable-path-segment-two", "anywhere");
+    configurablePathSegmentReplacements.put("configurable-path-segment", "/obamaOs");
+    configurablePathSegmentReplacements.put("configurable-path-segment-one", "/belong");
+    configurablePathSegmentReplacements.put("configurable-path-segment-two", "/anywhere");
     DeepLinkDelegate deepLinkDelegate = new DeepLinkDelegate(new SampleModuleRegistry(),
-      new LibraryDeepLinkModuleRegistry(), new BenchmarkDeepLinkModuleRegistry(), new KaptLibraryDeepLinkModuleRegistry(), configurablePathSegmentReplacements);
+      new LibraryDeepLinkModuleRegistry(), new BenchmarkDeepLinkModuleRegistry(), new KaptLibraryDeepLinkModuleRegistry(), new KspLibraryDeepLinkModuleRegistry(), configurablePathSegmentReplacements);
     assertThat(deepLinkDelegate.supportsUri("dld://classDeepLink"), equalTo(true));
     assertThat(deepLinkDelegate.supportsUri("some://weirdNonExistentUri"), equalTo(false));
   }
@@ -305,11 +306,11 @@ public class MainActivityTest {
   @Test
   public void testSameLengthComponentsMismatch() throws Exception {
     Map<String, String> configurablePathSegmentReplacements = new HashMap<>();
-    configurablePathSegmentReplacements.put("configurable-path-segment", "obamaOs");
-    configurablePathSegmentReplacements.put("configurable-path-segment-one", "belong");
-    configurablePathSegmentReplacements.put("configurable-path-segment-two", "anywhere");
+    configurablePathSegmentReplacements.put("configurable-path-segment", "/obamaOs");
+    configurablePathSegmentReplacements.put("configurable-path-segment-one", "/belong");
+    configurablePathSegmentReplacements.put("configurable-path-segment-two", "/anywhere");
     DeepLinkDelegate deepLinkDelegate = new DeepLinkDelegate(new SampleModuleRegistry(),
-      new LibraryDeepLinkModuleRegistry(), new BenchmarkDeepLinkModuleRegistry(), new KaptLibraryDeepLinkModuleRegistry(), configurablePathSegmentReplacements);
+      new LibraryDeepLinkModuleRegistry(), new BenchmarkDeepLinkModuleRegistry(), new KaptLibraryDeepLinkModuleRegistry(),  new KspLibraryDeepLinkModuleRegistry(), configurablePathSegmentReplacements);
     assertThat(deepLinkDelegate.supportsUri("dld://classDeepLink"), equalTo(true));
     assertThat(deepLinkDelegate.supportsUri("dld://classDeepLinx"), equalTo(false));
   }
@@ -317,11 +318,11 @@ public class MainActivityTest {
   @Test
   public void testConfigurablePathSegmentMatch() {
     Map<String, String> configurablePathSegmentReplacements = new HashMap<>();
-    configurablePathSegmentReplacements.put("configurable-path-segment", "obamaOs");
-    configurablePathSegmentReplacements.put("configurable-path-segment-one", "belong");
-    configurablePathSegmentReplacements.put("configurable-path-segment-two", "anywhere");
+    configurablePathSegmentReplacements.put("configurable-path-segment", "/obamaOs");
+    configurablePathSegmentReplacements.put("configurable-path-segment-one", "/belong");
+    configurablePathSegmentReplacements.put("configurable-path-segment-two", "/anywhere");
     DeepLinkDelegate deepLinkDelegate = new DeepLinkDelegate(new SampleModuleRegistry(),
-      new LibraryDeepLinkModuleRegistry(), new BenchmarkDeepLinkModuleRegistry(), new KaptLibraryDeepLinkModuleRegistry(), configurablePathSegmentReplacements);
+      new LibraryDeepLinkModuleRegistry(), new BenchmarkDeepLinkModuleRegistry(), new KaptLibraryDeepLinkModuleRegistry(),  new KspLibraryDeepLinkModuleRegistry(), configurablePathSegmentReplacements);
     assertThat(deepLinkDelegate.supportsUri("https://www.example.com/capnMcCains/bar"), equalTo(false));
     assertThat(deepLinkDelegate.supportsUri("https://www.example.com/obamaOs/bar"), equalTo(true));
   }
@@ -332,9 +333,9 @@ public class MainActivityTest {
     String message = "";
     try {
       Map<String, String> configurablePathSegmentReplacements = new HashMap<>();
-      configurablePathSegmentReplacements.put("configurable-path-segment", "obamaOs");
+      configurablePathSegmentReplacements.put("configurable-path-segment", "/obamaOs");
       DeepLinkDelegate deepLinkDelegate = new DeepLinkDelegate(new SampleModuleRegistry(),
-        new LibraryDeepLinkModuleRegistry(), new BenchmarkDeepLinkModuleRegistry(), new KaptLibraryDeepLinkModuleRegistry(), configurablePathSegmentReplacements);
+        new LibraryDeepLinkModuleRegistry(), new BenchmarkDeepLinkModuleRegistry(), new KaptLibraryDeepLinkModuleRegistry(),  new KspLibraryDeepLinkModuleRegistry(), configurablePathSegmentReplacements);
     } catch (IllegalArgumentException e) {
       message = e.getMessage();
     }
@@ -350,11 +351,11 @@ public class MainActivityTest {
   @Test
   public void testPathSegmentUriNoMatch() {
     Map<String, String> configurablePathSegmentReplacements = new HashMap<>();
-    configurablePathSegmentReplacements.put("configurable-path-segment", "obamaOs");
-    configurablePathSegmentReplacements.put("configurable-path-segment-one", "belong");
-    configurablePathSegmentReplacements.put("configurable-path-segment-two", "anywhere");
+    configurablePathSegmentReplacements.put("configurable-path-segment", "/obamaOs");
+    configurablePathSegmentReplacements.put("configurable-path-segment-one", "/belong");
+    configurablePathSegmentReplacements.put("configurable-path-segment-two", "/anywhere");
     DeepLinkDelegate deepLinkDelegate = new DeepLinkDelegate(new SampleModuleRegistry(),
-      new LibraryDeepLinkModuleRegistry(), new BenchmarkDeepLinkModuleRegistry(), new KaptLibraryDeepLinkModuleRegistry(), configurablePathSegmentReplacements);
+      new LibraryDeepLinkModuleRegistry(), new BenchmarkDeepLinkModuleRegistry(), new KaptLibraryDeepLinkModuleRegistry(),  new KspLibraryDeepLinkModuleRegistry(), configurablePathSegmentReplacements);
     assertThat(deepLinkDelegate.supportsUri("https://www.example.com/<capnMccains>/bar"), equalTo(false));
     assertThat(deepLinkDelegate.supportsUri("https://www.example.com/<obamaOs>/bar"), equalTo(false));
   }
@@ -362,11 +363,11 @@ public class MainActivityTest {
   @Test
   public void testTwoConfigurablePathSegmentsMatch() {
     Map<String, String> configurablePathSegmentReplacements = new HashMap<>();
-    configurablePathSegmentReplacements.put("configurable-path-segment", "obamaOs");
-    configurablePathSegmentReplacements.put("configurable-path-segment-one", "belong");
-    configurablePathSegmentReplacements.put("configurable-path-segment-two", "anywhere");
+    configurablePathSegmentReplacements.put("configurable-path-segment", "/obamaOs");
+    configurablePathSegmentReplacements.put("configurable-path-segment-one", "/belong");
+    configurablePathSegmentReplacements.put("configurable-path-segment-two", "/anywhere");
     DeepLinkDelegate deepLinkDelegate = new DeepLinkDelegate(new SampleModuleRegistry(),
-      new LibraryDeepLinkModuleRegistry(), new BenchmarkDeepLinkModuleRegistry(), new KaptLibraryDeepLinkModuleRegistry(), configurablePathSegmentReplacements);
+      new LibraryDeepLinkModuleRegistry(), new BenchmarkDeepLinkModuleRegistry(), new KaptLibraryDeepLinkModuleRegistry(),  new KspLibraryDeepLinkModuleRegistry(), configurablePathSegmentReplacements);
     assertThat(deepLinkDelegate.supportsUri("https://www.example.com/anywhere/belong/foo"), equalTo(false));
     assertThat(deepLinkDelegate.supportsUri("https://www.example.com/belong/anywhere/foo"), equalTo(true));
   }

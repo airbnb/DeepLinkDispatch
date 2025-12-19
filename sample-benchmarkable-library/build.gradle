@@ -1,12 +1,12 @@
 apply plugin: 'com.android.library'
 
 android {
-    namespace 'com.airbnb.deeplinkdispatch.sample.benchmarkable'
+    namespace = 'com.airbnb.deeplinkdispatch.sample.benchmarkable'
     compileSdk androidConfig.compileSdkVersion
 
     defaultConfig {
-        minSdk androidConfig.minSdkVersion
-        targetSdk androidConfig.compileSdkVersion
+        minSdk = androidConfig.minSdkVersion
+        targetSdk = androidConfig.compileSdkVersion
 
         javaCompileOptions {
       annotationProcessorOptions {

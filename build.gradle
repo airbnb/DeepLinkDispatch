@@ -8,7 +8,7 @@ buildscript {
         google()
         mavenCentral()
         gradlePluginPortal()
-        maven { url "https://oss.sonatype.org/service/local/repositories/snapshots/content/" }
+        maven { url = "https://central.sonatype.com/repository/maven-snapshots/" }
     }
     dependencies {
         classpath deps.androidPlugin
@@ -19,6 +19,12 @@ buildscript {
         classpath deps.dokkaPlugin
         classpath deps.kspGradlePlugin
         classpath deps.ktlintGradlePlugin
+        // Note: This means that the gralde plugin used in the sample app is not built from source
+        // but downloaded form the repository at he version specified in the gradle.properties file.
+        // If you are making changes to the gradle plugin, you need to change the version in the
+        // gradle.properties file and run ./gradlew publishToMavenLocal in order to see the changes
+        // in the sample app.
+        classpath "com.airbnb:deeplinkdispatch-gradle-plugin:$VERSION_NAME"
     }
 }
 
@@ -28,6 +34,7 @@ allprojects {
     repositories {
         google()
         mavenCentral()
+        maven { url = "https://central.sonatype.com/repository/maven-snapshots" }
     }
 }
 
@@ -44,6 +51,6 @@ def getReleaseRepositoryUrl() {
 
 def getSnapshotRepositoryUrl() {
     return hasProperty('SNAPSHOT_REPOSITORY_URL') ? SNAPSHOT_REPOSITORY_URL
-            : "https://oss.sonatype.org/content/repositories/snapshots/"
+            : "https://central.sonatype.com/repository/maven-snapshots"
 }
 

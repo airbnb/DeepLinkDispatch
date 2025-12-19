@@ -1,7 +1,4 @@
 apply plugin: 'com.android.library'
-
-sourceCompatibility = 11
-
 apply plugin: 'checkstyle'
 
 apply plugin: 'kotlin-android'
@@ -20,18 +17,18 @@ dependencies {
 }
 
 checkstyle {
-  configFile rootProject.file('checkstyle.xml')
-  showViolations true
+  configFile = rootProject.file('checkstyle.xml')
+  showViolations = true
   configProperties = ['checkstyle.cache.file': rootProject.file('build/checkstyle.cache')]
 }
 
 android {
-    namespace 'com.airbnb.android.deeplinkdispatch'
+    namespace = 'com.airbnb.android.deeplinkdispatch'
     compileSdk androidConfig.compileSdkVersion
 
     defaultConfig {
-        minSdk androidConfig.minSdkVersion
-        targetSdk androidConfig.compileSdkVersion
+        minSdk = androidConfig.minSdkVersion
+        targetSdk = androidConfig.compileSdkVersion
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     consumerProguardFiles 'proguard-rules.pro'
   }

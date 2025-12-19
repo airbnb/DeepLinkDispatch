@@ -2,6 +2,7 @@ package com.airbnb.deeplinkdispatch.sample
 
 import com.airbnb.deeplinkdispatch.sample.benchmarkable.BenchmarkDeepLinkModuleRegistry
 import com.airbnb.deeplinkdispatch.sample.kaptlibrary.KaptLibraryDeepLinkModuleRegistry
+import com.airbnb.deeplinkdispatch.sample.ksplibrary.KspLibraryDeepLinkModuleRegistry
 import com.airbnb.deeplinkdispatch.sample.library.LibraryDeepLinkModuleRegistry
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.core.IsEqual.equalTo
@@ -22,7 +23,7 @@ class ConfigurablePathSegmentTest {
 
     private val configurablePathSegmentReplacementFirstSet =
         mapOf(
-            "configurable-path-segment" to "foo",
+            "configurable-path-segment" to "/foo",
             "configurable-path-segment-one" to "",
             "configurable-path-segment-two" to "",
         )
@@ -31,13 +32,13 @@ class ConfigurablePathSegmentTest {
         mapOf(
             "configurable-path-segment" to "",
             "configurable-path-segment-one" to "",
-            "configurable-path-segment-two" to "bar",
+            "configurable-path-segment-two" to "/bar",
         )
 
     private val configurablePathSegmentReplacementsTwoEmpty =
         mapOf(
             "configurable-path-segment" to "",
-            "configurable-path-segment-one" to "bar",
+            "configurable-path-segment-one" to "/bar",
             "configurable-path-segment-two" to "",
         )
 
@@ -49,6 +50,7 @@ class ConfigurablePathSegmentTest {
                 LibraryDeepLinkModuleRegistry(),
                 BenchmarkDeepLinkModuleRegistry(),
                 KaptLibraryDeepLinkModuleRegistry(),
+                KspLibraryDeepLinkModuleRegistry(),
                 configurablePathSegmentReplacementsAllEmpty,
             )
         val oneEmptyReplacementMatches = deepLinkDelegate.supportsUri("https://www.example.com/nothing-special")
@@ -64,6 +66,7 @@ class ConfigurablePathSegmentTest {
                 LibraryDeepLinkModuleRegistry(),
                 BenchmarkDeepLinkModuleRegistry(),
                 KaptLibraryDeepLinkModuleRegistry(),
+                KspLibraryDeepLinkModuleRegistry(),
                 configurablePathSegmentReplacementFirstSet,
             )
         val oneEmptyReplacementMatches = deepLinkDelegate.supportsUri("https://www.example.com/cereal/foo")
@@ -78,6 +81,7 @@ class ConfigurablePathSegmentTest {
                 LibraryDeepLinkModuleRegistry(),
                 BenchmarkDeepLinkModuleRegistry(),
                 KaptLibraryDeepLinkModuleRegistry(),
+                KspLibraryDeepLinkModuleRegistry(),
                 configurablePathSegmentReplacementsAllEmpty,
             )
         val oneEmptyReplacementMatches = deepLinkDelegate.supportsUri("https://www.example.com/bar?q=e")
@@ -92,6 +96,7 @@ class ConfigurablePathSegmentTest {
                 LibraryDeepLinkModuleRegistry(),
                 BenchmarkDeepLinkModuleRegistry(),
                 KaptLibraryDeepLinkModuleRegistry(),
+                KspLibraryDeepLinkModuleRegistry(),
                 configurablePathSegmentReplacementsAllEmpty,
             )
         val somePathElementBefore = deepLinkDelegate.supportsUri("https://www.example.com/somevalue/bar/?q=e")
@@ -108,6 +113,7 @@ class ConfigurablePathSegmentTest {
                 LibraryDeepLinkModuleRegistry(),
                 BenchmarkDeepLinkModuleRegistry(),
                 KaptLibraryDeepLinkModuleRegistry(),
+                KspLibraryDeepLinkModuleRegistry(),
                 configurablePathSegmentReplacementsAllEmpty,
             )
         val oneEmptyReplacementMatches = deepLinkDelegate.supportsUri("https://www.example.com/foo?q=e")
@@ -122,6 +128,7 @@ class ConfigurablePathSegmentTest {
                 LibraryDeepLinkModuleRegistry(),
                 BenchmarkDeepLinkModuleRegistry(),
                 KaptLibraryDeepLinkModuleRegistry(),
+                KspLibraryDeepLinkModuleRegistry(),
                 configurablePathSegmentReplacementsOneEmpty,
             )
         val oneEmptyReplacementMatches = deepLinkDelegate.supportsUri("https://www.example.com/bar/foo?q=e")
@@ -136,6 +143,7 @@ class ConfigurablePathSegmentTest {
                 LibraryDeepLinkModuleRegistry(),
                 BenchmarkDeepLinkModuleRegistry(),
                 KaptLibraryDeepLinkModuleRegistry(),
+                KspLibraryDeepLinkModuleRegistry(),
                 configurablePathSegmentReplacementsTwoEmpty,
             )
         val oneEmptyReplacementMatches = deepLinkDelegate.supportsUri("https://www.example.com/bar/foo?q=e")

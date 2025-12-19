@@ -144,7 +144,7 @@ public final class DeepLinkUri {
   }
 
   /** Returns either "http" or "https". */
-  String scheme() {
+  public String scheme() {
     return scheme;
   }
 
@@ -187,7 +187,7 @@ public final class DeepLinkUri {
    *   <li>An encoded IDN, like {@code xn--n3h.net}.
    * </ul>
    */
-  String host() {
+  public String host() {
     return host;
   }
 
@@ -252,7 +252,7 @@ public final class DeepLinkUri {
     return result;
   }
 
-  List<String> pathSegments() {
+  public List<String> pathSegments() {
     return pathSegments;
   }
 

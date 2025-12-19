@@ -48,6 +48,71 @@ public class MainActivity extends Activity {
 }
 ```
 
+### Manifest generation
+
+If you have any deep links and multiple and possibly complicated (multiple versions of allowed host and path) URLs it can get 
+complicated to keep the `AndroidManifest.xml` entries up to date. DeepLinkDispatch allows you to (when using `ksp` and the
+deeplink is in a library module) automatically generate `AndroidManifest.xml` entries and keep them up to date.
+
+```kotlin
+@DeepLink("http{scheme(|s)}://example.{domain(com|de|ro)}/deepLink/{id}", "{scheme(foo|bar)}://{host(example|another-example)}.{domain(com|de|ro)}/anotherDeepLink", activityClassFqn = "com.example.MainActivity")
+class MainActivity : Activity {
+  @Override fun onCreate(savedInstanceState: Bundle) {
+    super.onCreate(savedInstanceState)
+    val intent : Intent = getIntent()
+    if (intent.getBooleanExtra(DeepLink.IS_DEEP_LINK, false)) {
+      val parameters : Bundle = intent.getExtras()
+      val idString : String = parameters.getString("id")
+      // Do something with idString
+    }
+  }
+}
+```
+The requirements for using manifest generation are:
+
+1. Must use `ksp`
+2. Deep links must be used in a module that is not an application module (does not apply the `com.android.application` gradle plugin)
+3. Must specify `activityClassFqn` in the `@DeepLink` annotation or in the `@DeepLinkSpec` annotation when defining a custom deeplink. This will reference the Activity that the `intent-filter` should be added.
+
+You can see an example of this in `sample-ksb-library`.
+
+If left to default `intent-filter` entries will be generated with:
+
+```xml
+<action android:name="android.intent.action.VIEW" />
+```
+and
+```xml
+<category android:name="android.intent.category.DEFAULT" />
+<category android:name="android.intent.category.BROWSABLE" />
+```
+
+but you can override that default by providing different values for `actions` and/or `categories` in the `@DeepLink` annotation or in the `@DeepLinkSpec` annotation (for special annotation definition).
+
+The integration of the generated `AndroidManfiest.xml` file into the Android build system is done by a gradle plugin that needs to be applied to every module that is using manifest generation.
+
+To do that you need to first make it known to your projects root gradle file:
+
+```groovy
+buildscript {
+
+    ...
+    
+    dependencies {
+        ...
+        classpath "com.airbnb:deeplinkdispatch-gradle-plugin:$VERSION"
+    }
+}
+```
+
+and then apply it in your module:
+
+```groovy
+apply plugin: 'com.airbnb.deeplinkdispatch.manifest-generation'
+```
+
+**Note**: It must be applied *after* the kotlin and android plugins and cannot be applied to an android application module.
+
 ### DeepLinkHandler Annotations
 
 You can annotate a Kotlin `object` that is extending `com.airbnb.deeplinkdispatch.handler.DeepLinkHandler`
@@ -244,7 +309,7 @@ public class DeepLinkActivity extends Activity {
     // Configure a map for configurable placeholders if you are using any. If you do a mapping
     // has to be provided for that are used
     Map configurablePlaceholdersMap = new HashMap();
-    configurablePlaceholdersMap.put("type_of_cereal", "obamaos");
+    configurablePlaceholdersMap.put("type_of_cereal", "/obamaos");
     // DeepLinkDelegate, LibraryDeepLinkModuleRegistry and AppDeepLinkModuleRegistry
     // are generated at compile-time.
     DeepLinkDelegate deepLinkDelegate = 
@@ -262,6 +327,9 @@ This app will now match the Url `foo://cereal.com/obamaos/nutritional_info` to t
 If you build another app and set `type_of_cereal` to `captnmaccains` that apps version of the `intentForNutritionalDeepLinkMethod` would be called when when opening `foo://cereal.com/captnmaccains/nutritional_info`
 
 If you are using configurable path segment placeholders, a mapping has to be provided for every placeholder used. If you are missing one the app will crash at runtime.
+
+Note: Because `""` is a valid value for a mapping you need to provide the leading `/` in the mapping as well if it is not empty (as the whole path segment will get removed if the mapping is empty).
+e.g. in this example `type_of_cereal` set to `""` will match `foo://cereal.com/nutritional_info`
 
 #### Empty configurable path segment placeholders mapping
 

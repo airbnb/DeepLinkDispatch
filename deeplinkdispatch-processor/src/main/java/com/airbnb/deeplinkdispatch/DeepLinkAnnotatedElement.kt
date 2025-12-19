@@ -15,6 +15,7 @@
  */
 package com.airbnb.deeplinkdispatch
 
+import androidx.room.compiler.codegen.toJavaPoet
 import androidx.room.compiler.processing.XElement
 import androidx.room.compiler.processing.XMemberContainer
 import androidx.room.compiler.processing.XMethodElement
@@ -24,29 +25,76 @@ import java.net.MalformedURLException
 sealed class DeepLinkAnnotatedElement
     @Throws(MalformedURLException::class)
     constructor(
-        val uri: String,
+        val uriTemplate: String,
+        val activityClassFqn: String?,
+        val intentFilterAttributes: Set<String>,
+        val actions: Set<String>,
+        val categories: Set<String>,
         val element: XElement,
         val annotatedClass: XMemberContainer,
     ) {
+        val deepLinkUri: DeepLinkUri by lazy {
+            DeepLinkUri.parseTemplate(uriTemplate)
+                ?: throw MalformedURLException("Malformed Uri Template: $uriTemplate")
+        }
+
+        val className: String by lazy { annotatedClass.asClassName().toJavaPoet().reflectionName() ?: "" }
+
         class MethodAnnotatedElement(
             uri: String,
+            activityClassFqn: String?,
+            intentFilterAttributes: Set<String>,
+            actions: Set<String>,
+            categories: Set<String>,
             element: XMethodElement,
-        ) : DeepLinkAnnotatedElement(uri, element, element.enclosingElement) {
+        ) : DeepLinkAnnotatedElement(
+                uriTemplate = uri,
+                activityClassFqn = activityClassFqn,
+                intentFilterAttributes = intentFilterAttributes,
+                actions = actions,
+                categories = categories,
+                element = element,
+                annotatedClass = element.enclosingElement,
+            ) {
             val method = element.name
         }
 
         class ActivityAnnotatedElement(
             uri: String,
+            activityClassFqn: String?,
+            intentFilterAttributes: Set<String>,
+            actions: Set<String>,
+            categories: Set<String>,
             element: XTypeElement,
-        ) : DeepLinkAnnotatedElement(uri, element, element)
+        ) : DeepLinkAnnotatedElement(
+                uriTemplate = uri,
+                activityClassFqn = activityClassFqn,
+                intentFilterAttributes = intentFilterAttributes,
+                actions = actions,
+                categories = categories,
+                element = element,
+                annotatedClass = element,
+            )
 
         class HandlerAnnotatedElement(
             uri: String,
+            activityClassFqn: String?,
+            intentFilterAttributes: Set<String>,
+            actions: Set<String>,
+            categories: Set<String>,
             element: XTypeElement,
-        ) : DeepLinkAnnotatedElement(uri, element, element)
+        ) : DeepLinkAnnotatedElement(
+                uriTemplate = uri,
+                activityClassFqn = activityClassFqn,
+                intentFilterAttributes = intentFilterAttributes,
+                actions = actions,
+                categories = categories,
+                element = element,
+                annotatedClass = element,
+            )
 
         init {
-            DeepLinkUri.parseTemplate(uri)
-                ?: throw MalformedURLException("Malformed Uri Template: $uri")
+            DeepLinkUri.parseTemplate(uriTemplate)
+                ?: throw MalformedURLException("Malformed Uri Template: $uriTemplate")
         }
     }

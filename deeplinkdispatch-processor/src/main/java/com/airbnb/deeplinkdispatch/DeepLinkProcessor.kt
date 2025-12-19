@@ -35,6 +35,8 @@ import com.airbnb.deeplinkdispatch.base.Utils.isConfigurablePathSegment
 import com.airbnb.deeplinkdispatch.handler.DeepLinkParamType
 import com.airbnb.deeplinkdispatch.handler.DeeplinkParam
 import com.airbnb.deeplinkdispatch.handler.TypeConverters
+import com.airbnb.deeplinkdispatch.metadata.Documentor
+import com.airbnb.deeplinkdispatch.metadata.ManifestGenerator
 import com.google.devtools.ksp.processing.SymbolProcessorEnvironment
 import com.squareup.javapoet.ClassName
 import com.squareup.javapoet.CodeBlock
@@ -45,6 +47,7 @@ import com.squareup.javapoet.ParameterizedTypeName
 import com.squareup.javapoet.TypeName
 import com.squareup.javapoet.TypeSpec
 import com.squareup.javapoet.WildcardTypeName
+import com.squareup.kotlinpoet.javapoet.KotlinPoetJavaPoetPreview
 import org.jetbrains.annotations.NotNull
 import java.io.IOException
 import java.lang.reflect.Type
@@ -55,12 +58,16 @@ import javax.lang.model.element.Modifier
 import javax.tools.Diagnostic
 import kotlin.reflect.KClass
 
-@com.squareup.kotlinpoet.javapoet.KotlinPoetJavaPoetPreview
-@kotlin.ExperimentalUnsignedTypes
+private const val CUSTOM_ANNOTATION_URL_PREFIX_DELIMITER = "#"
+
+@KotlinPoetJavaPoetPreview
+@ExperimentalUnsignedTypes
 class DeepLinkProcessor(
     symbolProcessorEnvironment: SymbolProcessorEnvironment? = null,
 ) : BaseProcessor(symbolProcessorEnvironment) {
     private val documentor by lazy { Documentor(environment) }
+
+    private val manifestGeneration by lazy { ManifestGenerator(environment) }
 
     private val deepLinkHandlerQName = "com.airbnb.deeplinkdispatch.handler.DeepLinkHandler"
     private val deepLinkHandlerHandleDeepLinkMethodName = "handleDeepLink"
@@ -95,10 +102,6 @@ class DeepLinkProcessor(
         ).map { environment.requireTypeElement(it) }.toSet()
     }
 
-    /**
-     * Overrides for AbstractProcessor
-     */
-
     override fun getSupportedAnnotationTypes(): Set<String> =
         if (incrementalMetadata.incremental) {
             (supportedBaseAnnotations + incrementalMetadata.customAnnotations)
@@ -126,8 +129,12 @@ class DeepLinkProcessor(
     }
 
     /**
-     * End overrides for AbstractProcessor
+     * Called when all processing rounds are complete.
+     * Writes the accumulated manifest containing deep links from all rounds.
      */
+    override fun onProcessingFinished() {
+        manifestGeneration.writeAccumulatedManifest()
+    }
 
     override fun process(
         annotations: Set<XTypeElement>?,
@@ -183,7 +190,7 @@ class DeepLinkProcessor(
                 annotatedObjectElements = annotatedObjectElements,
                 deepLinkElements =
                     collectDeepLinkElements(
-                        prefixes = customAnnotationPrefixes(customAnnotations),
+                        prefixesAndFqn = customAnnotationPrefixes(customAnnotations),
                         classElementsToProcess = annotatedClassElements,
                         objectElementsToProcess = annotatedObjectElements,
                         methodElementsToProcess = annotatedMethodElements,
@@ -207,50 +214,71 @@ class DeepLinkProcessor(
     }
 
     private fun collectDeepLinkElements(
-        prefixes: Map<XType, Array<String>>,
+        prefixesAndFqn: Map<XType, Array<PrefixAndActivityFqn>>,
         classElementsToProcess: Set<XTypeElement>,
         objectElementsToProcess: Set<XTypeElement>,
         methodElementsToProcess: Set<XMethodElement>,
-    ): List<DeepLinkAnnotatedElement> =
-        (
-            classElementsToProcess.flatMap { element ->
-                verifyCass(element)
-                mapUrisToDeepLinkAnnotatedElement(element, prefixes)
-            } +
-                objectElementsToProcess.flatMap { element ->
-                    verifyObjectElement(element)
-                    mapUrisToDeepLinkAnnotatedElement(element, prefixes)
-                } +
-                methodElementsToProcess.flatMap { element ->
-                    verifyMethod(element)
-                    mapUrisToDeepLinkAnnotatedElement(element, prefixes)
-                }
-        ).filterNotNull()
+    ): List<DeepLinkAnnotatedElement> {
+        val callDeeplinkAnnotatedElements =
+            classElementsToProcess.flatMap { classElement ->
+                verifyCass(classElement)
+                mapUrisToDeepLinkAnnotatedElement(classElement, prefixesAndFqn)
+            }
+        val objectDeeplinkAnnotatedElements =
+            objectElementsToProcess.flatMap { objectElement ->
+                verifyObjectElement(objectElement)
+                mapUrisToDeepLinkAnnotatedElement(objectElement, prefixesAndFqn)
+            }
+        val methodDeeplinkAnnotatedElements =
+            methodElementsToProcess.flatMap { methodElement ->
+                verifyMethod(methodElement)
+                mapUrisToDeepLinkAnnotatedElement(methodElement, prefixesAndFqn)
+            }
+        return (callDeeplinkAnnotatedElements + objectDeeplinkAnnotatedElements + methodDeeplinkAnnotatedElements).filterNotNull()
+    }
 
     private fun mapUrisToDeepLinkAnnotatedElement(
         element: XElement,
-        prefixes: Map<XType, Array<String>>,
+        prefixesAndFqn: Map<XType, Array<PrefixAndActivityFqn>>,
     ): List<DeepLinkAnnotatedElement?> =
-        getAllUrisForAnnotatedElement(element, prefixes).mapNotNull { uri ->
+        getAllUrisAndActivityClassesForAnnotatedElement(
+            element,
+            prefixesAndFqn,
+        ).mapNotNull { uriAndActivityFqn ->
             try {
                 when {
                     element is XMethodElement ->
                         DeepLinkAnnotatedElement.MethodAnnotatedElement(
-                            uri = uri,
+                            uri = uriAndActivityFqn.uri,
+                            activityClassFqn = uriAndActivityFqn.activityClassFqn,
+                            intentFilterAttributes = uriAndActivityFqn.intentFilterAttributes,
+                            actions = uriAndActivityFqn.actions,
+                            categories = uriAndActivityFqn.categories,
                             element = element,
                         )
+
                     element is XTypeElement && element.isActivity() ->
                         DeepLinkAnnotatedElement.ActivityAnnotatedElement(
-                            uri = uri,
+                            uri = uriAndActivityFqn.uri,
+                            activityClassFqn = uriAndActivityFqn.activityClassFqn,
+                            intentFilterAttributes = uriAndActivityFqn.intentFilterAttributes,
+                            actions = uriAndActivityFqn.actions,
+                            categories = uriAndActivityFqn.categories,
                             element = element,
                         )
+
                     element is XTypeElement && element.isHandler() -> {
-                        verifyHandlerMatchArgs(element, uri)
+                        verifyHandlerMatchArgs(element, uriAndActivityFqn.uri)
                         DeepLinkAnnotatedElement.HandlerAnnotatedElement(
-                            uri = uri,
+                            uri = uriAndActivityFqn.uri,
+                            activityClassFqn = uriAndActivityFqn.activityClassFqn,
+                            intentFilterAttributes = uriAndActivityFqn.intentFilterAttributes,
+                            actions = uriAndActivityFqn.actions,
+                            categories = uriAndActivityFqn.categories,
                             element = element,
                         )
                     }
+
                     else ->
                         error(
                             "Internal error: Elements can only be 'MethodAnnotatedElement', " +
@@ -260,26 +288,47 @@ class DeepLinkProcessor(
             } catch (e: MalformedURLException) {
                 environment.messager.printMessage(
                     kind = Diagnostic.Kind.ERROR,
-                    msg = "Malformed Deep Link URL $uri",
+                    msg = "Malformed Deep Link URL $uriAndActivityFqn.uri",
                 )
                 null
             }
         }
 
-    private fun getAllUrisForAnnotatedElement(
+    private fun getAllUrisAndActivityClassesForAnnotatedElement(
         element: XElement,
-        prefixes: Map<XType, Array<String>>,
-    ): List<String> =
-        getAllDeeplinkUrIsFromCustomDeepLinksOnElement(
+        prefixesAndFqn: Map<XType, Array<PrefixAndActivityFqn>>,
+    ): List<UriAndActivityFqn> {
+        val deepLinkAnnotation = element.getAnnotation(DEEP_LINK_CLASS)?.value
+        return getAllDeeplinkUrIsFromCustomDeepLinksOnElement(
             element = element,
-            prefixesMap = prefixes,
-        ) + (
-            element
-                .getAnnotation(DEEP_LINK_CLASS)
-                ?.value
-                ?.value
-                ?.toList() ?: emptyList()
-        )
+            prefixesAndActivityFqnMap = prefixesAndFqn,
+        ) +
+            (deepLinkAnnotation?.value?.toList() ?: emptyList()).map { uri ->
+                UriAndActivityFqn(
+                    uri = uri,
+                    activityClassFqn = deepLinkAnnotation?.activityClassFqn?.ifEmpty { null },
+                    actions = deepLinkAnnotation?.actions?.toSet() ?: emptySet(),
+                    categories = deepLinkAnnotation?.categories?.toSet() ?: emptySet(),
+                    intentFilterAttributes = deepLinkAnnotation?.intentFilterAttributes?.toSet() ?: emptySet(),
+                )
+            }
+    }
+
+    private class UriAndActivityFqn(
+        val uri: String,
+        val activityClassFqn: String?,
+        val actions: Set<String>,
+        val categories: Set<String>,
+        val intentFilterAttributes: Set<String>,
+    )
+
+    private class PrefixAndActivityFqn(
+        val prefix: String,
+        val activityClassFqn: String?,
+        val actions: Set<String>,
+        val categories: Set<String>,
+        val intentFilterAttributes: Set<String>,
+    )
 
     private fun verifyCass(classElement: XTypeElement) {
         if (!validClassElement(classElement)) {
@@ -427,7 +476,7 @@ class DeepLinkProcessor(
         }
     }
 
-    private fun customAnnotationPrefixes(customAnnotations: Set<XTypeElement>): Map<XType, Array<String>> =
+    private fun customAnnotationPrefixes(customAnnotations: Set<XTypeElement>): Map<XType, Array<PrefixAndActivityFqn>> =
         customAnnotations
             .map { customAnnotationTypeElement ->
                 if (!customAnnotationTypeElement.isAnnotationClass()) {
@@ -436,24 +485,56 @@ class DeepLinkProcessor(
                         message = "Only annotation types can be annotated with @${DEEP_LINK_SPEC_CLASS.simpleName}",
                     )
                 }
-                val prefix: Array<String> =
+                val activityClassFqn: String? =
                     customAnnotationTypeElement
                         .getAnnotation(DEEP_LINK_SPEC_CLASS)
-                        ?.let { it.value.prefix } ?: emptyArray()
-                if (prefix.hasEmptyOrNullString()) {
+                        ?.let { xAnnotationBox ->
+                            xAnnotationBox.value.activityClassFqn
+                        }?.ifEmpty { null }
+                // The value of prefix is an array, however we do allow prefixes also to exist in a single string (within the array)
+                // these are separated by a `#` char, which is not allowed to exist in the non path part of the URL without being escaped
+                // and is not otherwise useed in the url template format of DLD.
+                // Because the values within the array in the anotation definition have to be constant it is otherwise not possible to
+                // easily configure multiple prefixes that are not hardcoded in the codebase of the app using DLD
+                val prefixes =
+                    customAnnotationTypeElement
+                        .getArrayAnnotationParameter { it.prefix }
+                        .map { singlePrefix ->
+                            singlePrefix.split(CUSTOM_ANNOTATION_URL_PREFIX_DELIMITER)
+                        }.flatten()
+                        .toTypedArray()
+                val actions = customAnnotationTypeElement.getArrayAnnotationParameter { it.actions }
+                val categories = customAnnotationTypeElement.getArrayAnnotationParameter { it.categories }
+                val intentFilterAttributes = customAnnotationTypeElement.getArrayAnnotationParameter { it.intentFilterAttributes }
+
+                if (prefixes.hasEmptyOrNullString()) {
                     logError(
                         element = customAnnotationTypeElement,
                         message = "Prefix property cannot have null or empty strings",
                     )
                 }
-                if (prefix.isEmpty()) {
+                if (prefixes.isEmpty()) {
                     logError(
                         element = customAnnotationTypeElement,
                         message = "Prefix property cannot be empty",
                     )
                 }
-                customAnnotationTypeElement.type to prefix
+                customAnnotationTypeElement.type to
+                    prefixes
+                        .map {
+                            PrefixAndActivityFqn(
+                                prefix = it,
+                                activityClassFqn = activityClassFqn,
+                                actions = actions.toSet(),
+                                categories = categories.toSet(),
+                                intentFilterAttributes = intentFilterAttributes.toSet(),
+                            )
+                        }.toTypedArray()
             }.toMap()
+
+    private fun XTypeElement.getArrayAnnotationParameter(actionsExtractor: (DeepLinkSpec) -> Array<String>): Array<String> =
+        getAnnotation(DEEP_LINK_SPEC_CLASS)?.let { actionsExtractor(it.value) }
+            ?: emptyArray()
 
     private fun verifyAnnotatedType(
         allAnnotatedElements: List<XElement>,
@@ -472,8 +553,8 @@ class DeepLinkProcessor(
                 logError(
                     element = annotatedElementThatIsNeitherClassNorMethod,
                     message =
-                        "Only classes, objects and methods can be annotated with " +
-                            "@${DEEP_LINK_CLASS.simpleName} or custom deep link annotation",
+                        "Only classes, objects and methods can be annotated with @" +
+                            "${DEEP_LINK_CLASS.simpleName} or custom deep link annotation",
                 )
             }
     }
@@ -534,8 +615,7 @@ class DeepLinkProcessor(
                     className = deepLinkModuleElement.asClassName().toJavaPoet().simpleName(),
                     deepLinkElements = deepLinkElements,
                     originatingElements =
-                        annotatedClassElements + annotatedMethodElements +
-                            annotatedObjectElements + deepLinkModuleElement,
+                        annotatedClassElements + annotatedMethodElements + annotatedObjectElements + deepLinkModuleElement,
                 )
             }
         }
@@ -547,7 +627,7 @@ class DeepLinkProcessor(
 
     private fun validateAllowedPlaceholderValues(annotatedElements: List<DeepLinkAnnotatedElement>) {
         annotatedElements.forEach { annotatedElement ->
-            val placeholderStrings = placeholderRegex.findAll(annotatedElement.uri).map { it.value }
+            val placeholderStrings = placeholderRegex.findAll(annotatedElement.uriTemplate).map { it.value }
             placeholderStrings.forEach { placeholderString ->
                 val placeholderMatches = allowedValuesRegex.findAll(placeholderString)
                 if (placeholderMatches.count() > 1) {
@@ -712,7 +792,7 @@ class DeepLinkProcessor(
             }.build()
 
     private fun initCodeblock(
-        parameters: List<DeepLinkProcessor.ConstructorParameters>,
+        parameters: List<ConstructorParameters>,
         registryClasses: List<XTypeElement>,
     ): CodeBlock? =
         CodeBlock
@@ -774,6 +854,7 @@ class DeepLinkProcessor(
     }
 
     @Throws(IOException::class)
+    @ExperimentalUnsignedTypes
     private fun generateDeepLinkRegistry(
         packageName: String,
         className: String,
@@ -782,34 +863,26 @@ class DeepLinkProcessor(
     ) {
         deepLinkElements.sortedWith(::deeplinkAnnotatedElementCompare)
         documentor.write(deepLinkElements)
+        // Accumulate elements for manifest generation (written in onProcessingFinished)
+        manifestGeneration.addElements(deepLinkElements, originatingElements.toList())
         val urisTrie = Root()
         val pathVariableKeys: MutableSet<String> = HashSet()
         for (element: DeepLinkAnnotatedElement in deepLinkElements) {
-            val uriTemplate = element.uri
+            val uriTemplate = element.uriTemplate
             try {
                 when (element) {
                     is DeepLinkAnnotatedElement.ActivityAnnotatedElement ->
                         urisTrie.addToTrie(
                             DeepLinkEntry.ActivityDeeplinkEntry(
                                 uriTemplate = uriTemplate,
-                                className =
-                                    element.annotatedClass
-                                        .asClassName()
-                                        .toJavaPoet()
-                                        .reflectionName()
-                                        ?: "",
+                                className = element.className,
                             ),
                         )
                     is DeepLinkAnnotatedElement.MethodAnnotatedElement ->
                         urisTrie.addToTrie(
                             DeepLinkEntry.MethodDeeplinkEntry(
                                 uriTemplate = uriTemplate,
-                                className =
-                                    element.annotatedClass
-                                        .asClassName()
-                                        .toJavaPoet()
-                                        .reflectionName()
-                                        ?: "",
+                                className = element.className,
                                 method = element.method,
                             ),
                         )
@@ -817,12 +890,7 @@ class DeepLinkProcessor(
                         urisTrie.addToTrie(
                             DeepLinkEntry.HandlerDeepLinkEntry(
                                 uriTemplate = uriTemplate,
-                                className =
-                                    element.annotatedClass
-                                        .asClassName()
-                                        .toJavaPoet()
-                                        .reflectionName()
-                                        ?: "",
+                                className = element.className,
                             ),
                         )
                 }
@@ -948,21 +1016,32 @@ class DeepLinkProcessor(
 
         /**
          * For the given element find all custom deeplink elements on it and build all possible
-         * URIs that are supported by the set custom deeplinks.
+         * URIs -- and (if defined) the activity fqns used to dispatch this deep link via the Manifest
+         * -- that are supported by the set custom deeplinks.
          */
         private fun getAllDeeplinkUrIsFromCustomDeepLinksOnElement(
             element: XElement,
-            prefixesMap: Map<XType, Array<String>>,
-        ): List<String> =
+            prefixesAndActivityFqnMap: Map<XType, Array<PrefixAndActivityFqn>>,
+        ): List<UriAndActivityFqn> =
             element.findAnnotatedAnnotation<DeepLinkSpec>().flatMap { customAnnotation ->
                 val suffixes = customAnnotation.getAsList<String>("value")
-                val prefixes =
-                    prefixesMap[customAnnotation.type]
+                val prefixesAndActivityFqns =
+                    prefixesAndActivityFqnMap[customAnnotation.type]
                         ?: throw DeepLinkProcessorException(
-                            "Unable to find annotation '${customAnnotation.qualifiedName}' you must " +
-                                "update 'deepLink.customAnnotations' within the build.gradle",
+                            "Unable to find annotation '${customAnnotation.qualifiedName}' you must" +
+                                " update 'deepLink.customAnnotations' within the build.gradle",
                         )
-                prefixes.flatMap { prefix -> suffixes.map { suffix -> prefix + suffix } }
+                prefixesAndActivityFqns.flatMap { prefixesAndActivityFqn ->
+                    suffixes.map { suffix ->
+                        UriAndActivityFqn(
+                            uri = prefixesAndActivityFqn.prefix + suffix,
+                            activityClassFqn = prefixesAndActivityFqn.activityClassFqn,
+                            actions = prefixesAndActivityFqn.actions,
+                            categories = prefixesAndActivityFqn.categories,
+                            intentFilterAttributes = prefixesAndActivityFqn.intentFilterAttributes,
+                        )
+                    }
+                }
             }
 
         internal inline fun <reified T : Annotation> XElement.findAnnotatedAnnotation(): List<XAnnotation> =
@@ -1001,8 +1080,8 @@ class DeepLinkProcessor(
             element1: DeepLinkAnnotatedElement,
             element2: DeepLinkAnnotatedElement,
         ): Int {
-            val uri1 = DeepLinkUri.parseTemplate(element1.uri)
-            val uri2 = DeepLinkUri.parseTemplate(element2.uri)
+            val uri1 = DeepLinkUri.parseTemplate(element1.uriTemplate)
+            val uri2 = DeepLinkUri.parseTemplate(element2.uriTemplate)
             var comparisonResult = uri2.pathSegments().size - uri1.pathSegments().size
             if (comparisonResult == 0) {
                 comparisonResult = uri2.queryParameterNames().size - uri1.queryParameterNames().size
@@ -1023,25 +1102,25 @@ class DeepLinkProcessor(
                 val element1Representation =
                     when (element1) {
                         is DeepLinkAnnotatedElement.ActivityAnnotatedElement ->
-                            element1.uri +
+                            element1.uriTemplate +
                                 DeepLinkAnnotatedElement.ActivityAnnotatedElement::class.simpleName
                         is DeepLinkAnnotatedElement.HandlerAnnotatedElement ->
-                            "handler_" + element1.uri +
+                            "handler_" + element1.uriTemplate +
                                 DeepLinkAnnotatedElement.ActivityAnnotatedElement::class.simpleName
                         is DeepLinkAnnotatedElement.MethodAnnotatedElement ->
-                            element1.uri + element1.method +
+                            element1.uriTemplate + element1.method +
                                 DeepLinkAnnotatedElement.MethodAnnotatedElement::class.simpleName
                     }
                 val element2Representation =
                     when (element2) {
                         is DeepLinkAnnotatedElement.ActivityAnnotatedElement ->
-                            element2.uri +
+                            element2.uriTemplate +
                                 DeepLinkAnnotatedElement.ActivityAnnotatedElement::class.simpleName
                         is DeepLinkAnnotatedElement.HandlerAnnotatedElement ->
-                            "handler_" + element2.uri +
+                            "handler_" + element2.uriTemplate +
                                 DeepLinkAnnotatedElement.ActivityAnnotatedElement::class.simpleName
                         is DeepLinkAnnotatedElement.MethodAnnotatedElement ->
-                            element2.uri + element2.method +
+                            element2.uriTemplate + element2.method +
                                 DeepLinkAnnotatedElement.MethodAnnotatedElement::class.simpleName
                     }
                 comparisonResult = element1Representation.compareTo(element2Representation)
