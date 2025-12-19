@@ -102,10 +102,6 @@ class DeepLinkProcessor(
         ).map { environment.requireTypeElement(it) }.toSet()
     }
 
-    /**
-     * Overrides for AbstractProcessor
-     */
-
     override fun getSupportedAnnotationTypes(): Set<String> =
         if (incrementalMetadata.incremental) {
             (supportedBaseAnnotations + incrementalMetadata.customAnnotations)
@@ -133,8 +129,12 @@ class DeepLinkProcessor(
     }
 
     /**
-     * End overrides for AbstractProcessor
+     * Called when all processing rounds are complete.
+     * Writes the accumulated manifest containing deep links from all rounds.
      */
+    override fun onProcessingFinished() {
+        manifestGeneration.writeAccumulatedManifest()
+    }
 
     override fun process(
         annotations: Set<XTypeElement>?,
@@ -863,7 +863,8 @@ class DeepLinkProcessor(
     ) {
         deepLinkElements.sortedWith(::deeplinkAnnotatedElementCompare)
         documentor.write(deepLinkElements)
-        manifestGeneration.write(deepLinkElements)
+        // Accumulate elements for manifest generation (written in onProcessingFinished)
+        manifestGeneration.addElements(deepLinkElements, originatingElements.toList())
         val urisTrie = Root()
         val pathVariableKeys: MutableSet<String> = HashSet()
         for (element: DeepLinkAnnotatedElement in deepLinkElements) {

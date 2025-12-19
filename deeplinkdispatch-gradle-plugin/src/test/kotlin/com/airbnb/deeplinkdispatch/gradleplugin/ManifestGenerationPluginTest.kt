@@ -266,4 +266,85 @@ class ManifestGenerationPluginTest {
         assertThat(result.output).contains("relocateDeepLinkManifestProdDebug")
         assertThat(result.output).contains("relocateDeepLinkManifestProdRelease")
     }
+
+    @Test
+    fun `manifest merge task is up-to-date on second run`() {
+        buildFile.writeText("""
+            plugins {
+                id 'com.android.library' version '8.2.0'
+                id 'org.jetbrains.kotlin.android' version '1.9.22'
+                id 'com.airbnb.deeplinkdispatch.manifest-generation'
+            }
+
+            android {
+                namespace 'com.test.library'
+                compileSdk 34
+
+                defaultConfig {
+                    minSdk 21
+                }
+            }
+        """.trimIndent())
+
+        // First run
+        val result1 = GradleRunner.create()
+            .withProjectDir(testProjectDir.root)
+            .withArguments("assembleDebug", "--stacktrace")
+            .withPluginClasspath()
+            .build()
+
+        assertThat(result1.task(":debugGenerateManifestIntentFiltersForDeepLinkDispatch")?.outcome)
+            .isEqualTo(TaskOutcome.SUCCESS)
+
+        // Second run without changes - should be up-to-date
+        val result2 = GradleRunner.create()
+            .withProjectDir(testProjectDir.root)
+            .withArguments("assembleDebug", "--stacktrace")
+            .withPluginClasspath()
+            .build()
+
+        assertThat(result2.task(":debugGenerateManifestIntentFiltersForDeepLinkDispatch")?.outcome)
+            .isEqualTo(TaskOutcome.UP_TO_DATE)
+    }
+
+    @Test
+    fun `manifest merge task is cacheable`() {
+        // Enable build cache via gradle.properties
+        val gradleProperties = testProjectDir.newFile("gradle.properties")
+        gradleProperties.writeText("org.gradle.caching=true\n")
+
+        buildFile.writeText("""
+            plugins {
+                id 'com.android.library' version '8.2.0'
+                id 'org.jetbrains.kotlin.android' version '1.9.22'
+                id 'com.airbnb.deeplinkdispatch.manifest-generation'
+            }
+
+            android {
+                namespace 'com.test.library'
+                compileSdk 34
+
+                defaultConfig {
+                    minSdk 21
+                }
+            }
+        """.trimIndent())
+
+        // First run - populates cache
+        GradleRunner.create()
+            .withProjectDir(testProjectDir.root)
+            .withArguments("assembleDebug", "--build-cache", "--stacktrace")
+            .withPluginClasspath()
+            .build()
+
+        // Clean and rebuild - should hit cache
+        val result = GradleRunner.create()
+            .withProjectDir(testProjectDir.root)
+            .withArguments("clean", "assembleDebug", "--build-cache", "--stacktrace")
+            .withPluginClasspath()
+            .build()
+
+        assertThat(result.task(":debugGenerateManifestIntentFiltersForDeepLinkDispatch")?.outcome)
+            .isEqualTo(TaskOutcome.FROM_CACHE)
+    }
 }

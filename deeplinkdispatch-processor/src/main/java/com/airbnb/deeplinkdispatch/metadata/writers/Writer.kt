@@ -9,8 +9,7 @@ import java.io.PrintWriter
  */
 interface Writer {
     /**
-     * Compose metadata with help of provided environment, writer and collection of
-     * found deeplink elements.
+     * Writer for non source code text generation. Use a PrintWriter to write text files.
      */
     fun write(
         env: XProcessingEnv,

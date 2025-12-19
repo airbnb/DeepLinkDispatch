@@ -1,5 +1,6 @@
 package com.airbnb.deeplinkdispatch.metadata
 
+import androidx.room.compiler.processing.XElement
 import androidx.room.compiler.processing.XFiler
 import androidx.room.compiler.processing.XMessager
 import androidx.room.compiler.processing.XProcessingEnv
@@ -19,6 +20,10 @@ import javax.tools.Diagnostic
  * The manifest is written to KSP's resource output directory using the filer API, which ensures
  * proper caching by Gradle.
  *
+ * This generator supports multi-round processing by accumulating elements across rounds and
+ * writing the final manifest only when [writeAccumulatedManifest] is called (typically in the
+ * processor's finish callback).
+ *
  * The Gradle plugin reads from: build/generated/ksp/<variant>/resources/deeplinkdispatch/AndroidManifest.xml
  */
 internal class ManifestGenerator(
@@ -26,15 +31,39 @@ internal class ManifestGenerator(
 ) {
     private val messager: XMessager = processingEnv.messager
 
-    // Track if we've already written the manifest to avoid duplicate writes in multi-round processing
+    // Accumulate elements across processing rounds
+    private val accumulatedElements = mutableListOf<DeepLinkAnnotatedElement>()
+    private val accumulatedOriginatingElements = mutableSetOf<XElement>()
+
+    // Track if we've already written the manifest to avoid duplicate writes
     private var manifestWritten = false
 
-    fun write(elements: List<DeepLinkAnnotatedElement>) {
-        // Skip if we've already written the manifest in a previous round
+    /**
+     * Accumulates deep link elements from the current processing round.
+     * Call this during each processing round, then call [writeAccumulatedManifest]
+     * when processing is complete.
+     */
+    fun addElements(
+        elements: List<DeepLinkAnnotatedElement>,
+        originatingElements: List<XElement>,
+    ) {
+        if (elements.isNotEmpty()) {
+            accumulatedElements.addAll(elements)
+            accumulatedOriginatingElements.addAll(originatingElements)
+        }
+    }
+
+    /**
+     * Writes the accumulated manifest from all processing rounds.
+     * Should be called once when all processing rounds are complete (in the finish callback).
+     */
+    fun writeAccumulatedManifest() {
+        // Skip if we've already written the manifest
         if (manifestWritten) {
             return
         }
-        if (elements.isNullOrEmpty()) {
+
+        if (accumulatedElements.isEmpty()) {
             messager.printMessage(
                 Diagnostic.Kind.WARNING,
                 "No deep links. Manifest generation: Manifest not generated.",
@@ -43,11 +72,13 @@ internal class ManifestGenerator(
         }
 
         // Only generate manifest if at least one element has activityClassFqn set
-        val elementsWithActivity = elements.filter { it.activityClassFqn != null }
+        val elementsWithActivity = accumulatedElements.filter { it.activityClassFqn != null }
         if (elementsWithActivity.isEmpty()) {
             messager.printMessage(
                 Diagnostic.Kind.WARNING,
-                "No deep links with activityClassFqn. Manifest generation: Manifest not generated.",
+                "No deep links have activityClassFqn set. By setting activityClassFqn" +
+                    " and applying the deep link dispatch gradle plugin you can enable" +
+                    " `AndroidManifest.xml` generation for your deeplinks.",
             )
             return
         }
@@ -57,7 +88,7 @@ internal class ManifestGenerator(
             StringWriter().use { stringWriter ->
                 PrintWriter(stringWriter, true).use { writer ->
                     val docWriter: Writer = ManifestWriter()
-                    docWriter.write(processingEnv, writer, elements)
+                    docWriter.write(processingEnv, writer, accumulatedElements)
                 }
                 stringWriter.toString()
             }
@@ -67,7 +98,7 @@ internal class ManifestGenerator(
             processingEnv.filer
                 .writeResource(
                     filePath = Path.of(ManifestGeneration.MANIFEST_RESOURCE_PATH),
-                    originatingElements = emptyList(),
+                    originatingElements = accumulatedOriginatingElements.toList(),
                     mode = XFiler.Mode.Aggregating,
                 ).use { outputStream ->
                     outputStream.write(manifestContent.toByteArray(Charsets.UTF_8))

@@ -15,6 +15,7 @@ import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity
+import org.gradle.api.tasks.CacheableTask
 import org.gradle.api.tasks.TaskAction
 
 /**
@@ -23,8 +24,9 @@ import org.gradle.api.tasks.TaskAction
  * This task is wired into AGP's Artifacts API as a MERGED_MANIFEST transformer.
  *
  * IMPORTANT: Due to circular dependencies in the build graph, this approach
- * may not work for app modules but might work for library modules.
+ * will not work for app modules but does work for library modules.
  */
+@CacheableTask
 abstract class GenerateManifestIntentFiltersForDeeplinkDispatchTask : DefaultTask() {
 
     /**
@@ -52,6 +54,7 @@ abstract class GenerateManifestIntentFiltersForDeeplinkDispatchTask : DefaultTas
      * The merged manifest file created by AGP.
      */
     @get:InputFile
+    @get:PathSensitive(PathSensitivity.RELATIVE)
     abstract val mergedManifest: RegularFileProperty
 
     /**
@@ -80,8 +83,11 @@ abstract class GenerateManifestIntentFiltersForDeeplinkDispatchTask : DefaultTas
 
         if (!hasGeneratedManifest) {
             println(
-                "No DeepLinkDispatch generated manifest found or manifest is empty. " +
-                    "Copying input manifest to output without modifications."
+                "No DeepLinkDispatch generated manifest found or manifest is empty. Copying input" +
+                        " manifest to output without modifications. You might have applied the" +
+                        " deep link dispatch gradle plugin to a module that does not have deep" +
+                        " links defined or you forgot the set the `activityClassFqn` on your deep" +
+                        " links."
             )
             inputManifest.copyTo(outputManifest, overwrite = true)
             return
@@ -108,7 +114,6 @@ abstract class GenerateManifestIntentFiltersForDeeplinkDispatchTask : DefaultTas
             val mergedDocument = merge.getMergedDocument(MergingReport.MergedManifestKind.MERGED)
                 ?: error("Failed to get merged document")
             outputManifest.writeText(mergedDocument)
-            println("Successfully merged DeepLinkDispatch manifest. Output written to: ${outputManifest.absolutePath}")
         } else {
             val errorMessage = buildString {
                 appendLine("Manifest merge for DeepLinkDispatch failed with error: ${merge.result}")

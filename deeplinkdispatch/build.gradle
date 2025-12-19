@@ -1,7 +1,4 @@
 apply plugin: 'com.android.library'
-
-sourceCompatibility = 11
-
 apply plugin: 'checkstyle'
 
 apply plugin: 'kotlin-android'
@@ -26,7 +23,7 @@ checkstyle {
 }
 
 android {
-    namespace 'com.airbnb.android.deeplinkdispatch'
+    namespace = 'com.airbnb.android.deeplinkdispatch'
     compileSdk androidConfig.compileSdkVersion
 
     defaultConfig {

@@ -15,6 +15,7 @@
  */
 package com.airbnb.deeplinkdispatch
 
+import androidx.room.compiler.codegen.toJavaPoet
 import androidx.room.compiler.processing.XElement
 import androidx.room.compiler.processing.XMemberContainer
 import androidx.room.compiler.processing.XMethodElement
@@ -37,7 +38,7 @@ sealed class DeepLinkAnnotatedElement
                 ?: throw MalformedURLException("Malformed Uri Template: $uriTemplate")
         }
 
-        val className: String by lazy { annotatedClass.className.reflectionName() ?: "" }
+        val className: String by lazy { annotatedClass.asClassName().toJavaPoet().reflectionName() ?: "" }
 
         class MethodAnnotatedElement(
             uri: String,

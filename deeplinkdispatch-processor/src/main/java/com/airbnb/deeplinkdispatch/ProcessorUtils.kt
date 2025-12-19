@@ -20,7 +20,7 @@ object ProcessorUtils {
 
 fun XTypeElement.implementedInterfaces(): List<XTypeElement> {
     // Implemented interfaces of supertype (recursively)
-    return (superType?.typeElement?.implementedInterfaces() ?: emptyList()) +
+    return (superClass?.typeElement?.implementedInterfaces() ?: emptyList()) +
         // Implemented interface by this element
         getSuperInterfaceElements() +
         // Implemented interfaces the interfaces implemented by this type (recursively)
@@ -33,7 +33,7 @@ fun XTypeElement.implementsInterfaces(fqnList: List<String>) =
     }
 
 fun XTypeElement.inheritanceHierarchy(): List<XTypeElement> =
-    this.superType?.typeElement?.let { it.inheritanceHierarchy() + listOf(it) }
+    this.superClass?.typeElement?.let { it.inheritanceHierarchy() + listOf(it) }
         ?: emptyList()
 
 fun XTypeElement.inheritanceHierarchyContains(fqnList: List<String>) =
@@ -51,6 +51,7 @@ fun XTypeElement.directlyImplementsInterfaces(fqnList: List<String>): Boolean =
         getSuperInterfaceElements().any { typeElement -> typeElement.qualifiedName == interfaceFqn }
     }
 
+@Suppress("UNCHECKED_CAST")
 inline fun <reified T> XAnnotation.getAsList(method: String): List<T> {
     val originalList = get<List<T>>(method)
     // In new XProcessing versions List values are wrapped in XAnnotationValue but in old versions

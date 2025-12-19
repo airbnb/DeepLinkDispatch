@@ -29,7 +29,7 @@ apply plugin: 'com.airbnb.deeplinkdispatch.manifest-generation'
 // modules.
 
 android {
-    namespace "com.airbnb.deeplinkdispatch.sampleksplibrary"
+    namespace = "com.airbnb.deeplinkdispatch.sampleksplibrary"
     compileSdk androidConfig.compileSdkVersion
 
     compileOptions {

@@ -96,6 +96,7 @@ fun validateConfigurablePathSegmentReplacements(
  * Returns a shallow copy of this Bundle that is missing the items for which the predicate returned
  * false
  */
+@Suppress("DEPRECATION")
 fun Bundle.filter(predicate: (key: String, value: Any?) -> Boolean): Bundle {
     val output = Bundle(this)
     this.keySet()?.forEach { key ->

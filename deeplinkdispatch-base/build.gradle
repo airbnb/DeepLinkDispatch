@@ -24,8 +24,8 @@ tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
 }
 
 checkstyle {
-  configFile rootProject.file('checkstyle.xml')
-  showViolations true
+  configFile = rootProject.file('checkstyle.xml')
+  showViolations = true
   configProperties = ['checkstyle.cache.file': rootProject.file('build/checkstyle.cache')]
 }
 

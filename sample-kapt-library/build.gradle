@@ -8,7 +8,7 @@ apply plugin: 'org.jmailen.kotlinter'
 // modules.
 
 android {
-    namespace 'com.airbnb.deeplinkdispatch.sample.kaptlibrary'
+    namespace = 'com.airbnb.deeplinkdispatch.sample.kaptlibrary'
     compileSdk androidConfig.compileSdkVersion
 
     defaultConfig {

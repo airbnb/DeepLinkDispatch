@@ -61,14 +61,8 @@ class ManifestGenerationPlugin: Plugin<Project> {
         )
 
         androidComponents.onVariants { variant ->
-            // Determine merge type during configuration phase
-            val mergeType = if (project.plugins.hasPlugin("com.android.application")) {
-                ManifestMerger2.MergeType.APPLICATION
-            } else if (project.plugins.hasPlugin("com.android.library")) {
-                ManifestMerger2.MergeType.LIBRARY
-            } else {
-                error("Unsupported plugin type. You can only apply this plugin to an Android application or library modules")
-            }
+            // Merge type is always library as this does not support application modules
+            val mergeType = ManifestMerger2.MergeType.LIBRARY
 
             // Path where KSP writes the manifest via filer API (this is cached by Gradle)
             val kspGeneratedManifestPath = "generated/ksp/${variant.name}/resources/${ManifestGeneration.MANIFEST_RESOURCE_PATH}"
@@ -152,7 +146,7 @@ class ManifestGenerationPlugin: Plugin<Project> {
 
             // Also transform the manifest for host tests (unit tests) so that
             // Robolectric tests can access the merged intent filters via PackageManager
-            (variant as? HasHostTests)?.hostTests?.forEach { (testType, hostTest) ->
+            (variant as? HasHostTests)?.hostTests?.forEach { (_, hostTest) ->
                 val hostTestManifestMergeTask = project.tasks.register(
                     "${hostTest.name}GenerateManifestIntentFiltersForDeepLinkDispatch",
                     GenerateManifestIntentFiltersForDeeplinkDispatchTask::class.java

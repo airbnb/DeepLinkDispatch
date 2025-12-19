@@ -17,9 +17,21 @@ package com.airbnb.deeplinkdispatch
 
 /**
  * Register a class or method to handle a deep link.
- * <pre>`
- * @DeepLink(uri);
-`</pre> *
+ *
+ * Mandatorily you only need to provide a URL. But by providing an activity class fqn you can
+ * enable manifest generation. In that case an AndroidManifest.xml entry will be automatically
+ * generated (requires applying the gradle plugin in the projects gradle file).
+ *
+ * @property value The URL you want to deep link to
+ * @property activityClassFqn The fqn of an activity class that is going to handle the deep link.
+ * If this is present and the Gradle plugin is applied DLD will automatically generate a manifest
+ * entry for the deep link.
+ * @property intentFilterAttributes Additional attributes that you want to add to the generated
+ * `intent-filter`.
+ * @property actions The actions that should be listed for the `intent-filter`. Default:
+ * `android.intent.action.VIEW`
+ * @property categories The categories that should be listed for the `intent-filter`. Default:
+ * `android.intent.category.DEFAULT` and  `android.intent.category.BROWSABLE`.
  */
 @Target(
     AnnotationTarget.CLASS,

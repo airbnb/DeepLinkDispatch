@@ -13,7 +13,7 @@ checkstyle {
 }
 
 android {
-    namespace 'com.airbnb.deeplinkdispatch.sample'
+    namespace = 'com.airbnb.deeplinkdispatch.sample'
     compileSdk androidConfig.compileSdkVersion
 
     defaultConfig {
@@ -25,8 +25,8 @@ android {
     }
     buildTypes {
         release {
-            minifyEnabled true
-            shrinkResources true
+            minifyEnabled = true
+            shrinkResources = true
             proguardFiles getDefaultProguardFile(
                     'proguard-android-optimize.txt'),
                     'proguard-rules.pro'

@@ -42,7 +42,7 @@ abstract class BaseProcessor(
         process(annotations.map { it.toXProcessing(environment) }.toSet(), environment, XRoundEnv.create(environment, roundEnv))
 
         if (roundEnv.processingOver()) {
-            finish()
+            onProcessingFinished()
         }
 
         return false
@@ -59,9 +59,25 @@ abstract class BaseProcessor(
         return emptyList()
     }
 
+    /**
+     * Called by KSP when processing is complete.
+     * This is the KSP equivalent of processingOver() in APT.
+     */
+    final override fun finish() {
+        onProcessingFinished()
+    }
+
     abstract fun process(
         annotations: Set<XTypeElement>?,
         environment: XProcessingEnv,
         round: XRoundEnv,
     )
+
+    /**
+     * Called when all processing rounds are complete.
+     * Override this to perform any finalization work like writing aggregated outputs.
+     */
+    open fun onProcessingFinished() {
+        // Default no-op implementation
+    }
 }

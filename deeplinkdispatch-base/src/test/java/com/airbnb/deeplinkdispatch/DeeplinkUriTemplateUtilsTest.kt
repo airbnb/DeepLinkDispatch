@@ -32,7 +32,7 @@ class DeeplinkUriTemplateUtilsTest {
     }
 
     @Test
-    fun `placeholderValues returns "something" when no allowed values are present`() {
+    fun `placeholderValues returns wildcard pattern when no allowed values are present`() {
         val input = "{placeholder_name}"
         assertEquals(listOf("..*"), input.placeholderValues())
     }

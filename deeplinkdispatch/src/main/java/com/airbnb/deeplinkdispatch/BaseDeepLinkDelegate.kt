@@ -1,3 +1,5 @@
+@file:Suppress("DEPRECATION")
+
 package com.airbnb.deeplinkdispatch
 
 import android.annotation.SuppressLint
@@ -151,6 +153,7 @@ open class BaseDeepLinkDelegate
             }
         }
 
+        @Suppress("UNCHECKED_CAST")
         private fun deepLinkHandlerInstance(handlerClazz: Class<*>): com.airbnb.deeplinkdispatch.handler.DeepLinkHandler<Any> =
             try {
                 handlerClazz.getField("INSTANCE").get(null)
@@ -477,9 +480,9 @@ open class BaseDeepLinkDelegate
             return handlerClazz.genericInterfaces
                 .filterIsInstance<ParameterizedType>()
                 .singleOrNull {
-                    (it.rawType as Class<*>).canonicalName.startsWith(
+                    (it.rawType as Class<*>).canonicalName?.startsWith(
                         com.airbnb.deeplinkdispatch.handler.DeepLinkHandler::class.java.name,
-                    )
+                    ) == true
                 }?.actualTypeArguments
                 ?.getDeepLinkArgClassFromTypeArguments()
                 // If we cannot get the type from the interface the handler does not directly implement it
@@ -719,10 +722,17 @@ private fun DeepLinkEntry.hasPathPlaceholders(): Boolean {
 }
 
 /**
- * Get a map of all DeepLinkEntries and its duplicates, DeepLinkEntry objects that
- * might be slightly different but will map to the same URL during app operation.
+ * This will get all entries from all the registries and return a list of deep links and how they
+ * are duplicated by other deep links.
  *
- * Optimized approach:
+ * Deeplink duplicate detection during compilation onlyw roks for deep links that end up in the same
+ * registries but not across registries, so this can be used after a binary has been built and all
+ * registries inside the manifest are known to find potential duplicates.
+ *
+ * With a lot of deep links and possible URL combinations this can be very compute intentive so
+ * this uses an optimized approach to save most of the compares needed to compare every entry to
+ * every other one:
+ *
  * 1. Group entries by scheme + host + path segment count
  * 2. Within each group, separate into concrete (no placeholders) and wildcard entries
  * 3. Concrete entries with the same exact template are duplicates
