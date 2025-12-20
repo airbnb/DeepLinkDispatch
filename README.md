@@ -1,6 +1,6 @@
 # DeepLinkDispatch
 
-[![Build Status](https://travis-ci.org/airbnb/DeepLinkDispatch.svg)](https://travis-ci.org/airbnb/DeepLinkDispatch)
+[![Deploy snapshot](https://github.com/airbnb/DeepLinkDispatch/actions/workflows/deploy_snapshot.yml/badge.svg)](https://github.com/airbnb/DeepLinkDispatch/actions/workflows/deploy_snapshot.yml)
 
 DeepLinkDispatch provides a declarative, annotation-based API to define application deep links.
 
