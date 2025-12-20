@@ -38,18 +38,13 @@ android {
             excludes += ['META-INF/services/javax.annotation.processing.Processor']
         }
     }
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_11
-        targetCompatibility JavaVersion.VERSION_11
-    }
-
-    kotlinOptions {
-        jvmTarget = '11'
-    }
-
     lint {
         disable 'InvalidPackage'
     }
+}
+
+kotlin {
+  jvmToolchain(17)
 }
 
 dependencies {

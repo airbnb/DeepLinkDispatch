@@ -427,7 +427,7 @@ class DeepLinkProcessorKspTest : BaseDeepLinkProcessorTest() {
                  import com.example.SampleModule
                  @ManifestGenAppDeepLink( "host/deepLink","host/another")
                  @ManifestGenWebDeepLink(value = arrayOf("deepLink","another"))
-                 @DeepLink(value = "http{scheme_suffix(|s)}://example.com/direct", activityClassFqn = "com.example.SampleActivity")
+                 @DeepLink(value = ["http{scheme_suffix(|s)}://example.com/direct"], activityClassFqn = "com.example.SampleActivity")
                  @DeepLinkHandler( SampleModule::class )
                  class SampleActivity : android.app.Activity() {
                         object DeepLinks {
@@ -592,10 +592,12 @@ class DeepLinkProcessorKspTest : BaseDeepLinkProcessorTest() {
                  import com.example.SampleModule
                  @DeepLinkHandler( SampleModule::class )
                  class SampleActivity : android.app.Activity() {
-                        @ManifestGenWebDeepLink( "method1","method2")
-                        @ManifestGenAppDeepLink( "host/method1","host/method2")
-                        @JvmStatic
-                        fun webLinkMethod(context: Context) = Intent()
+                        companion object {
+                            @ManifestGenWebDeepLink( "method1","method2")
+                            @ManifestGenAppDeepLink( "host/method1","host/method2")
+                            @JvmStatic
+                            fun webLinkMethod(context: Context) = Intent()
+                        }
                  }
                  """,
             )
@@ -695,7 +697,7 @@ class DeepLinkProcessorKspTest : BaseDeepLinkProcessorTest() {
                           }
 
                           private static String matchIndex0() {
-                            return "\u0001\u0000\u0001\u0000\u0000\u0000\u0000\u0001Ër\u0002\u0000\u0007\u0000\u0000\u0000\u0000\u0000³example\u0004\u0000\u0004\u0000\u0000\u0000\u0000\u0000¦host\b\u0000\u0007\u0000C\u0000\u0000\u0000\u0000method1\u0001\u0000\u0016example://host/method1\u0000\u001acom.example.SampleActivity\rwebLinkMethod\b\u0000\u0007\u0000C\u0000\u0000\u0000\u0000method2\u0001\u0000\u0016example://host/method2\u0000\u001acom.example.SampleActivity\rwebLinkMethod\u0012\u0000\u0017\u0000\u0000\u0000\u0000\u0000èhttp{scheme_suffix(|s)}\u0004\u0000\u000b\u0000\u0000\u0000\u0000\u0000Ôexample.com\b\u0000\u0007\u0000Z\u0000\u0000\u0000\u0000method1\u0001\u0000-http{scheme_suffix(|s)}://example.com/method1\u0000\u001acom.example.SampleActivity\rwebLinkMethod\b\u0000\u0007\u0000Z\u0000\u0000\u0000\u0000method2\u0001\u0000-http{scheme_suffix(|s)}://example.com/method2\u0000\u001acom.example.SampleActivity\rwebLinkMethod";
+                            return "\u0001\u0000\u0001\u0000\u0000\u0000\u0000\u0001ór\u0002\u0000\u0007\u0000\u0000\u0000\u0000\u0000Çexample\u0004\u0000\u0004\u0000\u0000\u0000\u0000\u0000ºhost\b\u0000\u0007\u0000M\u0000\u0000\u0000\u0000method1\u0001\u0000\u0016example://host/method1\u0000${"$"}com.example.SampleActivity${"$"}Companion\rwebLinkMethod\b\u0000\u0007\u0000M\u0000\u0000\u0000\u0000method2\u0001\u0000\u0016example://host/method2\u0000${"$"}com.example.SampleActivity${"$"}Companion\rwebLinkMethod\u0012\u0000\u0017\u0000\u0000\u0000\u0000\u0000ühttp{scheme_suffix(|s)}\u0004\u0000\u000b\u0000\u0000\u0000\u0000\u0000èexample.com\b\u0000\u0007\u0000d\u0000\u0000\u0000\u0000method1\u0001\u0000-http{scheme_suffix(|s)}://example.com/method1\u0000${"$"}com.example.SampleActivity${"$"}Companion\rwebLinkMethod\b\u0000\u0007\u0000d\u0000\u0000\u0000\u0000method2\u0001\u0000-http{scheme_suffix(|s)}://example.com/method2\u0000${"$"}com.example.SampleActivity${"$"}Companion\rwebLinkMethod";
                           }
                         }
 
@@ -759,8 +761,6 @@ class DeepLinkProcessorKspTest : BaseDeepLinkProcessorTest() {
                      @DeeplinkParam(name = "value1", type = DeepLinkParamType.Path ) val value1: String,
                      @DeeplinkParam(name = "value2", type = DeepLinkParamType.Path ) val value2: String,
                  )
-                 @DeepLinkHandler( SampleModule::class )
-                 class Activity : android.app.Activity() {}
                  """,
             )
         val sourceFiles =
@@ -1059,7 +1059,7 @@ class DeepLinkProcessorKspTest : BaseDeepLinkProcessorTest() {
                  import com.airbnb.deeplinkdispatch.DeepLinkHandler
                  import com.example.SampleModule
                  @DeepLink(
-                     value = "https://example.com/verified",
+                     value = ["https://example.com/verified"],
                      activityClassFqn = "com.example.SampleActivity",
                      intentFilterAttributes = ["android:autoVerify=\"true\""]
                  )
@@ -1120,7 +1120,7 @@ class DeepLinkProcessorKspTest : BaseDeepLinkProcessorTest() {
                  import com.airbnb.deeplinkdispatch.DeepLinkHandler
                  import com.example.SampleModule
                  @DeepLink(
-                     value = "https://example.com/send",
+                     value = ["https://example.com/send"],
                      activityClassFqn = "com.example.SampleActivity",
                      actions = ["android.intent.action.SEND"],
                      categories = ["android.intent.category.DEFAULT"]
@@ -1294,7 +1294,7 @@ class DeepLinkProcessorKspTest : BaseDeepLinkProcessorTest() {
                  import com.example.SampleModule
                  @AutoVerifyDeepLink("verified1", "verified2")
                  @DeepLink(
-                     value = "https://example.com/unverified",
+                     value = ["https://example.com/unverified"],
                      activityClassFqn = "com.example.SampleActivity"
                  )
                  @SendDeepLink("send")
@@ -1391,7 +1391,7 @@ class DeepLinkProcessorKspTest : BaseDeepLinkProcessorTest() {
                  import com.example.SampleModule
                  @AutoVerifyWebDeepLink("spec1", "spec2")
                  @DeepLink(
-                     value = "https://example.com/direct",
+                     value = ["https://example.com/direct"],
                      activityClassFqn = "com.example.SampleActivity"
                  )
                  @DeepLinkHandler( SampleModule::class )

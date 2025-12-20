@@ -4,10 +4,8 @@ apply plugin: 'org.jmailen.kotlinter'
 apply plugin: 'checkstyle'
 apply from: '../publishing.gradle'
 
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(11)
-    }
+kotlin {
+  jvmToolchain(11)
 }
 
 dependencies {
@@ -36,14 +34,13 @@ checkstyle {
   configProperties = ['checkstyle.cache.file': rootProject.file('build/checkstyle.cache')]
 }
 
-tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
-  kotlinOptions {
-    jvmTarget = "11"
-    freeCompilerArgs += "-opt-in=kotlin.RequiresOptIn"
-    freeCompilerArgs += "-opt-in=androidx.room.compiler.processing.ExperimentalProcessingApi"
-    freeCompilerArgs += "-opt-in=kotlin.ExperimentalUnsignedTypes"
-    freeCompilerArgs += "-opt-in=com.squareup.kotlinpoet.javapoet.KotlinPoetJavaPoetPreview"
-  }
+kotlin.compilerOptions {
+  optIn.addAll(
+      "kotlin.RequiresOptIn",
+      "androidx.room.compiler.processing.ExperimentalProcessingApi",
+      "kotlin.ExperimentalUnsignedTypes",
+      "com.squareup.kotlinpoet.javapoet.KotlinPoetJavaPoetPreview",
+  )
 }
 
 test {

@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 apply plugin: 'java'
 apply plugin: 'kotlin'
 apply plugin: 'org.jmailen.kotlinter'
@@ -17,10 +19,8 @@ dependencies {
   testImplementation deps.assertJ
 }
 
-tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
-  kotlinOptions {
-    jvmTarget = "11"
-  }
+kotlin.compilerOptions {
+    jvmTarget = JvmTarget.JVM_11
 }
 
 checkstyle {
