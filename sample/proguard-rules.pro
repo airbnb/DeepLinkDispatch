@@ -16,21 +16,9 @@
 #   public *;
 #}
 
-# Keep our custom deep links
--keep @interface com.airbnb.deeplinkdispatch.sample.AppDeepLink
--keepclasseswithmembers class * {
-    @com.airbnb.deeplinkdispatch.sample.AppDeepLink <methods>;
-}
-
--keep @interface com.airbnb.deeplinkdispatch.sample.WebDeepLink
--keepclasseswithmembers class * {
-    @com.airbnb.deeplinkdispatch.sample.WebDeepLink <methods>;
-}
-
--keep @interface com.airbnb.deeplinkdispatch.sample.WebPlaceholderDeepLink
--keepclasseswithmembers class * {
-    @com.airbnb.deeplinkdispatch.sample.WebPlaceholderDeepLink <methods>;
-}
+# Custom deep link annotations (AppDeepLink, WebDeepLink, WebPlaceholderDeepLink) are now
+# automatically kept by the consumer proguard rules in deeplinkdispatch module.
+# Any annotation marked with @DeepLinkSpec is automatically kept.
 
 # Need to keep as we use reflection to read this field to get the type.
 -keepclassmembers class com.airbnb.deeplinkdispatch.sample.typeconversion.TypeConversionErrorHandlerCustomTypeDeepLinkActivity {

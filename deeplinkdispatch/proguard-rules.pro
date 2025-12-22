@@ -33,3 +33,15 @@
 -keepclasseswithmembers class * {
     @com.airbnb.deeplinkdispatch.DeepLink <methods>;
 }
+
+# Keep all custom deeplink annotations (those annotated with @DeepLinkSpec).
+# This automatically handles any custom deeplink annotations created by library consumers
+# without requiring them to add individual keep rules for each custom annotation.
+-keep @com.airbnb.deeplinkdispatch.DeepLinkSpec @interface *
+
+# For any class that has methods annotated with a @DeepLinkSpec annotation, keep those methods.
+# The <1> backreference captures the matched annotation and applies it to the keep rule.
+-if @com.airbnb.deeplinkdispatch.DeepLinkSpec @interface *
+-keepclasseswithmembers class * {
+    @<1> <methods>;
+}
