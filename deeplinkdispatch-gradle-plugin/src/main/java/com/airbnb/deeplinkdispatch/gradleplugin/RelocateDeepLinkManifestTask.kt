@@ -18,6 +18,11 @@ import org.gradle.api.tasks.TaskAction
  *
  * This is a separate task (rather than a doLast on KSP) because doLast doesn't run when
  * KSP is restored FROM-CACHE. This task will always run after KSP, even if KSP was cached.
+ *
+ * IMPORTANT: This task must always run when the source file exists, even if Gradle thinks
+ * it's up-to-date based on input/output comparison. This is because the task deletes the
+ * source file, and when KSP is restored from cache, it recreates the file but Gradle's
+ * up-to-date check only compares content, not file existence.
  */
 abstract class RelocateDeepLinkManifestTask : DefaultTask() {
 
@@ -28,6 +33,18 @@ abstract class RelocateDeepLinkManifestTask : DefaultTask() {
 
     @get:OutputFile
     abstract val safeManifestFile: RegularFileProperty
+
+    init {
+        // Force the task to run when the source file exists, regardless of up-to-date checks.
+        // This is necessary because:
+        // 1. KSP cache restoration recreates the source file
+        // 2. Gradle's up-to-date check only compares content, not file existence
+        // 3. The task deletes the source file, which needs to happen every time
+        outputs.upToDateWhen {
+            // Task is only up-to-date if source file doesn't exist
+            !kspManifestFile.get().asFile.exists()
+        }
+    }
 
     @TaskAction
     fun taskAction() {
