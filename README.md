@@ -768,15 +768,6 @@ At runtime we traverse the graph for each module to find the correct action to u
 The Proguard/R8 rules mandatory for the lib are defined in the [proguard-rules.pro](deeplinkdispatch/proguard-rules.pro) in `deeplinkdispatch`. However
 they are already included via `consumerProguardFiles` so there is nothing you have to do to include them.
 
-Please note however that you must add your own Proguard/R8 rules to keep Custom annotations you have used. For example:
-
-```
--keep @interface your.package.path.deeplink.<annotation class name>
--keepclasseswithmembers class * {
-    @your.package.path.deeplink.<annotation class name> <methods>;
-}
-```
-
 ## Testing the sample app
 
 Use adb to launch deep links (in the terminal type: `adb shell`).
