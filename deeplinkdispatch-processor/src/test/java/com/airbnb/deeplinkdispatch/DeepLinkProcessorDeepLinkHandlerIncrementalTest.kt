@@ -219,7 +219,7 @@ class DeepLinkProcessorDeepLinkHandlerIncrementalTest : BaseDeepLinkProcessorTes
             @DeeplinkParam(name = "one", type = DeepLinkParamType.Path ) val one: String,
             @DeeplinkParam(name = "two", type = DeepLinkParamType.Path ) val two: String,
         ) {
-        constructor(three: String) this("One", "two")
+        constructor(three: String) : this("One", "two")
         }
         """,
         )
