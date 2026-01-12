@@ -204,10 +204,35 @@ public class MatchIndex {
           if (match == null && !pathSegmentReplacements.isEmpty()) {
             int childrenPos = getChildrenPos(currentElementStartPosition);
             if (childrenPos != -1) {
-              match = matchUri(deeplinkUri, elements, placeholdersOutput,
-                elementIndex,
-                childrenPos, getElementBoundaryPos(currentElementStartPosition),
-                pathSegmentReplacements);
+              // Iterate through children and only recurse for empty configurable path segments
+              int childStartPos = childrenPos;
+              int parentBoundary = getElementBoundaryPos(currentElementStartPosition);
+
+              do {
+                CompareResult childCompareResult = compareValue(
+                  childStartPos,
+                  urlElement.getTypeFlag(),
+                  urlElement.getValue(),
+                  pathSegmentReplacements
+                );
+
+                // Only recurse for children that are empty configurable path segments
+                if (childCompareResult != null
+                        && childCompareResult.isEmptyConfigurablePathSegmentMatch()) {
+                  // Recurse into this child only (not its siblings)
+                  match = matchUri(deeplinkUri, elements, placeholdersOutput,
+                    elementIndex,
+                    childStartPos,
+                    getElementBoundaryPos(childStartPos),
+                    pathSegmentReplacements);
+
+                  if (match != null) {
+                    break;
+                  }
+                }
+
+                childStartPos = getNextElementStartPosition(childStartPos, parentBoundary);
+              } while (childStartPos != -1);
             }
           }
         }
