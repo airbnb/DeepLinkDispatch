@@ -58,7 +58,6 @@ abstract class RelocateDeepLinkManifestTask : DefaultTask() {
             sourceFile.copyTo(destFile, overwrite = true)
             // Delete from KSP resources to prevent Java resource merge conflict
             if (sourceFile.delete()) {
-                println("Moved DeepLinkDispatch manifest to safe location: ${destFile.absolutePath}")
                 // Delete empty parent directories up to but not including "resources"
                 var parentDir = sourceFile.parentFile
                 while (parentDir != null &&
@@ -75,7 +74,6 @@ abstract class RelocateDeepLinkManifestTask : DefaultTask() {
             // Source doesn't exist but dest does - this can happen on incremental builds
             // where KSP was UP-TO-DATE and we already moved the file previously.
             // The dest file is still valid, so nothing to do.
-            println("DeepLinkDispatch manifest already at safe location: ${destFile.absolutePath}")
         } else {
             // Neither file exists - no manifest was generated
             println("No DeepLinkDispatch manifest found to relocate")
