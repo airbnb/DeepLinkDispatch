@@ -28,7 +28,7 @@ def versions = [
     androicCommonToolsVersion        : '30.4.1'
 ]
 ext.androidConfig = [
-    agpVersion                          : '8.13.0',
+    agpVersion                          : '8.13.2',
     compileSdkVersion                   : 35,
     minSdkVersion                       : 16,
     minSdkVersionBenchmark              : 21,
