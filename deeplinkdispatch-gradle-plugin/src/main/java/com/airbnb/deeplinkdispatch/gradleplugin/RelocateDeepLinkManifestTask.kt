@@ -76,8 +76,8 @@ abstract class RelocateDeepLinkManifestTask : DefaultTask() {
             // The dest file is still valid, so nothing to do.
         } else {
             // Neither file exists - no manifest was generated
-            println("No DeepLinkDispatch manifest found to relocate. If this module has no deep links, consider" +
-                    "to remove the DeepLinkDispatch gradle plugin from it's gradle file.")
+            println("No DeepLinkDispatch manifest found to relocate in ${project.name}. If this module has no deep links, consider" +
+                    "removing the DeepLinkDispatch gradle plugin from it's gradle file.")
         }
     }
 }

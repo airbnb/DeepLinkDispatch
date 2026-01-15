@@ -24,7 +24,7 @@ buildscript {
         // If you are making changes to the gradle plugin, you need to change the version in the
         // gradle.properties file and run ./gradlew publishToMavenLocal in order to see the changes
         // in the sample app.
-        classpath "com.airbnb:deeplinkdispatch-gradle-plugin:7.0.0-SNAPSHOT"
+        classpath "com.airbnb:deeplinkdispatch-gradle-plugin:7.3.0-SNAPSHOT"
     }
 }
 
