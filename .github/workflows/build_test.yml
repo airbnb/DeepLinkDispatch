@@ -12,9 +12,9 @@ jobs:
       - name: Checkout DeepLinkDispatch
         uses: actions/checkout@v2
       - name: Set up JDK 22
-        uses: [actions/setup-java](https://github.com/actions/setup-java)@v4
+        uses: actions/setup-java@v5
         with:
-          java-version: '22'
           distribution: 'coretto'
+          java-version: '22'
       - name: Build/Test DeepLinkDispatch
         run: ./gradlew assemble check javadoc lintKotlin
