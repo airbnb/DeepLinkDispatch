@@ -17,7 +17,7 @@ import java.io.InputStream
 private fun Char.modifiedUtf8ByteSize(): Int {
     val codePoint = this.code
     return when {
-        codePoint == 0 -> 2  // Null character is encoded as 2 bytes in Modified UTF-8
+        codePoint == 0 -> 2 // Null character is encoded as 2 bytes in Modified UTF-8
         codePoint <= 0x7F -> 1
         codePoint <= 0x7FF -> 2
         else -> 3
