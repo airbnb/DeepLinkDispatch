@@ -7,8 +7,29 @@ import com.airbnb.deeplinkdispatch.CONFIGURABLE_PATH_SEGMENT_SUFFIX
 import java.io.InputStream
 
 /**
+ * Calculate the Modified UTF-8 byte size for a single character.
+ * In Modified UTF-8:
+ * - U+0000 (null) is encoded as 2 bytes (C0 80)
+ * - U+0001 to U+007F are encoded as 1 byte
+ * - U+0080 to U+07FF are encoded as 2 bytes
+ * - U+0800 to U+FFFF are encoded as 3 bytes
+ */
+private fun Char.modifiedUtf8ByteSize(): Int {
+    val codePoint = this.code
+    return when {
+        codePoint == 0 -> 2  // Null character is encoded as 2 bytes in Modified UTF-8
+        codePoint <= 0x7F -> 1
+        codePoint <= 0x7FF -> 2
+        else -> 3
+    }
+}
+
+/**
  * Chunk a CharSequence based on how long it's Modified UTF-8
  * (https://en.wikipedia.org/wiki/UTF-8#Modified_UTF-8) ByteArray representation would be.
+ *
+ * This implementation uses O(n) time complexity by calculating byte sizes incrementally
+ * instead of creating substrings for each character.
  */
 fun CharSequence.chunkOnModifiedUtf8ByteSize(chunkSize: Int): List<CharSequence> {
     require(chunkSize >= 3) {
@@ -16,19 +37,18 @@ fun CharSequence.chunkOnModifiedUtf8ByteSize(chunkSize: Int): List<CharSequence>
     }
     val result = mutableListOf<CharSequence>()
     var nextChunkStart = 0
+    var currentChunkByteSize = 0
+
     for (i in 0 until this.length) {
-        // Get the byte array for current chunk and check how many bytes this would take up.
-        // U+0000 is encoded as two bytes C080 in modified UTF-8, which is used by Java to
-        // store strings in the string table in class files.
-        val charModifiedUtf8ByteArraySize =
-            this
-                .substring(nextChunkStart, i + 1)
-                .let { chunk -> chunk.toByteArray().size + chunk.count { char -> char == '\u0000' } }
+        val charByteSize = this[i].modifiedUtf8ByteSize()
 
         // See if this char would still fit into the chunk. If not, create chunk and start next one.
-        if (charModifiedUtf8ByteArraySize > chunkSize) {
+        if (currentChunkByteSize + charByteSize > chunkSize) {
             result.add(this.subSequence(nextChunkStart, i))
             nextChunkStart = i
+            currentChunkByteSize = charByteSize
+        } else {
+            currentChunkByteSize += charByteSize
         }
     }
     // If there was a chunk that we started but did not add yet, add the rest.
