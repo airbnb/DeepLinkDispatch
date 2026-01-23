@@ -4,10 +4,6 @@ apply plugin: 'org.jmailen.kotlinter'
 apply plugin: 'checkstyle'
 apply from: '../publishing.gradle'
 
-kotlin {
-  jvmToolchain(11)
-}
-
 dependencies {
   implementation project(':deeplinkdispatch-base')
   implementation deps.jsr305

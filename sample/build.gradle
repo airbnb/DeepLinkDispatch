@@ -43,10 +43,6 @@ android {
     }
 }
 
-kotlin {
-  jvmToolchain(17)
-}
-
 dependencies {
     implementation project(':deeplinkdispatch')
     ksp project(':deeplinkdispatch-processor')

@@ -19,12 +19,6 @@ android {
   }
 }
 
-java {
-  toolchain {
-    languageVersion = JavaLanguageVersion.of(17)
-  }
-}
-
 dependencies {
   implementation project(':deeplinkdispatch')
   annotationProcessor project(':deeplinkdispatch-processor')

@@ -25,10 +25,6 @@ android {
     }
 }
 
-kotlin {
-  jvmToolchain(11)
-}
-
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 

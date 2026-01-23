@@ -36,7 +36,3 @@ android {
     unitTests.returnDefaultValues = true
   }
 }
-
-kotlin {
-  jvmToolchain(11)
-}
