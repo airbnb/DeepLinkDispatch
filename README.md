@@ -451,6 +451,8 @@ public @interface WebDeepLink {
 
 which saves you from defining a lot prefixes.
 
+**Note:** if using incremental annotation preocessing all custom deeplinks **must** be configured in gradle. Otherwise they do not work! See: [Incremental annotation processing](https://github.com/airbnb/DeepLinkDispatch#incremental-annotation-processing)
+
 ## Usage
 
 Add to your project `build.gradle` file (Latest version is [![DeeplinkDispatch version](https://badge.fury.io/gh/airbnb%2FDeepLinkDispatch.svg)](https://badge.fury.io/gh/airbnb%2FDeepLinkDispatch)
@@ -560,7 +562,18 @@ public class LibraryDeepLinkModule {
 ```
 
 
-Create any `Activity` (eg. `DeepLinkActivity`) with the scheme you'd like to handle in your `AndroidManifest.xml` file (using `foo` as an example):
+Create any `Activity` (eg. `DeepLinkActivity`) and add it to the `AndroidManifest.xml` (when using ksp and [manifest generation](https://github.com/airbnb/DeepLinkDispatch?tab=readme-ov-file#manifest-generation})):
+
+```xml
+<activity
+    android:name="com.example.DeepLinkActivity"
+    android:theme="@android:style/Theme.NoDisplay">
+</activity>
+```
+
+in this case the intent filters will be added automatically during build time.
+
+or when not using manifest generation also add the intent filter for your deeplinks
 
 ```xml
 <activity
@@ -595,7 +608,7 @@ public class DeepLinkActivity extends Activity {
 }
 ```
 
-of 
+or
 
 ```java
 @DeepLinkHandler({ AppDeepLinkModule.class, LibraryDeepLinkModule.class })
