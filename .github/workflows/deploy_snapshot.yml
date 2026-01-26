@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout DeepLinkDispatch
-        uses: actions/checkout@v2
+        uses: actions/checkout@v6
       - name: Update gradle.properties
         uses: DamianReeves/write-file-action@master
         with:
