@@ -35,6 +35,10 @@ ext.androidConfig = [
     targetSdkVersion                    : 35
 ]
 
+// Central JVM configuration for all modules
+ext.jvmToolchainVersion = 22  // JDK used for compilation
+ext.jvmTargetVersion = 11     // Bytecode target (compatibility)
+
 ext.versions = versions
 
 ext.deps = [

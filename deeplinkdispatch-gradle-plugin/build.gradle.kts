@@ -4,6 +4,8 @@ apply(from = "$rootDir/dependencies.gradle")
 apply(from = "$rootDir/publishing.gradle")
 
 val deps: Map<String, Any> by project
+val jvmToolchainVersion: Int by rootProject.extra
+val jvmTargetVersion: Int by rootProject.extra
 
 repositories {
     google()
@@ -17,13 +19,17 @@ plugins {
     `java-gradle-plugin`
 }
 
+// JVM toolchain and target - uses central versions from dependencies.gradle
 java {
-    sourceCompatibility = JavaVersion.VERSION_11
-    targetCompatibility = JavaVersion.VERSION_11
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(jvmToolchainVersion))
+    }
+    sourceCompatibility = JavaVersion.toVersion(jvmTargetVersion)
+    targetCompatibility = JavaVersion.toVersion(jvmTargetVersion)
 }
 
 kotlin.compilerOptions {
-    jvmTarget = JvmTarget.JVM_11
+    jvmTarget = JvmTarget.fromTarget(jvmTargetVersion.toString())
 }
 
 gradlePlugin {

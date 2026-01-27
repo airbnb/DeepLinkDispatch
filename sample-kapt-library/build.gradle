@@ -26,10 +26,6 @@ android {
   }
 }
 
-kotlin {
-  jvmToolchain(11)
-}
-
 dependencies {
   implementation project(':deeplinkdispatch')
   kapt project(':deeplinkdispatch-processor')

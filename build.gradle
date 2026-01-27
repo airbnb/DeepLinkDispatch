@@ -44,6 +44,53 @@ tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
     }
 }
 
+// Apply consistent JVM toolchain and target to all subprojects
+subprojects {
+    afterEvaluate {
+        def toolchainVersion = rootProject.ext.jvmToolchainVersion
+        def targetVersion = rootProject.ext.jvmTargetVersion
+
+        // For Kotlin projects (both pure JVM and Android)
+        if (plugins.hasPlugin('org.jetbrains.kotlin.jvm') || plugins.hasPlugin('kotlin') ||
+            plugins.hasPlugin('kotlin-android') || plugins.hasPlugin('org.jetbrains.kotlin.android')) {
+            kotlin {
+                jvmToolchain(toolchainVersion)
+            }
+            tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+                compilerOptions {
+                    jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.@Companion.fromTarget(targetVersion.toString())
+                }
+            }
+        }
+        // For Java-only projects (without Kotlin)
+        else if (plugins.hasPlugin('java') && !plugins.hasPlugin('kotlin-dsl')) {
+            java {
+                toolchain {
+                    languageVersion = JavaLanguageVersion.of(toolchainVersion)
+                }
+            }
+        }
+
+        // For Android projects, also set compileOptions
+        if (plugins.hasPlugin('com.android.library') || plugins.hasPlugin('com.android.application')) {
+            android {
+                compileOptions {
+                    sourceCompatibility = JavaVersion.toVersion(targetVersion)
+                    targetCompatibility = JavaVersion.toVersion(targetVersion)
+                }
+            }
+        }
+
+        // For pure Java projects
+        if (plugins.hasPlugin('java') && !plugins.hasPlugin('kotlin-dsl')) {
+            java {
+                sourceCompatibility = JavaVersion.toVersion(targetVersion)
+                targetCompatibility = JavaVersion.toVersion(targetVersion)
+            }
+        }
+    }
+}
+
 def getReleaseRepositoryUrl() {
     return hasProperty('RELEASE_REPOSITORY_URL') ? RELEASE_REPOSITORY_URL
             : "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
