@@ -13,6 +13,8 @@ import java.io.InputStream
  * - U+0001 to U+007F are encoded as 1 byte
  * - U+0080 to U+07FF are encoded as 2 bytes
  * - U+0800 to U+FFFF are encoded as 3 bytes
+ *
+ * Note: Surrogate pairs (for characters > U+FFFF) are encoded as two 3-byte sequences (6 bytes total).
  */
 private fun Char.modifiedUtf8ByteSize(): Int {
     val codePoint = this.code
@@ -25,24 +27,40 @@ private fun Char.modifiedUtf8ByteSize(): Int {
 }
 
 /**
- * Chunk a CharSequence based on how long it's Modified UTF-8
+ * Chunk a CharSequence based on how long its Modified UTF-8
  * (https://en.wikipedia.org/wiki/UTF-8#Modified_UTF-8) ByteArray representation would be.
  *
  * This implementation uses O(n) time complexity by calculating byte sizes incrementally
  * instead of creating substrings for each character.
+ *
+ * Surrogate pairs (characters outside the BMP) are kept together to ensure valid Unicode strings.
  */
 fun CharSequence.chunkOnModifiedUtf8ByteSize(chunkSize: Int): List<CharSequence> {
-    require(chunkSize >= 3) {
-        "UTF-8 chars can be up to 3 bytes wide. Minumum chunk size is 3 bytes."
+    require(chunkSize >= 6) {
+        "Surrogate pairs require 6 bytes in Modified UTF-8. Minimum chunk size is 6 bytes."
     }
     val result = mutableListOf<CharSequence>()
     var nextChunkStart = 0
     var currentChunkByteSize = 0
+    var i = 0
 
-    for (i in 0 until this.length) {
-        val charByteSize = this[i].modifiedUtf8ByteSize()
+    while (i < this.length) {
+        val char = this[i]
+        val charByteSize: Int
+        val charsToAdvance: Int
 
-        // See if this char would still fit into the chunk. If not, create chunk and start next one.
+        // Check for surrogate pair - keep them together to ensure valid Unicode
+        if (char.isHighSurrogate() && i + 1 < this.length && this[i + 1].isLowSurrogate()) {
+            // Surrogate pair: 6 bytes total (3 + 3)
+            charByteSize = 6
+            charsToAdvance = 2
+        } else {
+            charByteSize = char.modifiedUtf8ByteSize()
+            charsToAdvance = 1
+        }
+
+        // See if this char (or surrogate pair) would still fit into the chunk.
+        // If not, create chunk and start next one.
         if (currentChunkByteSize + charByteSize > chunkSize) {
             result.add(this.subSequence(nextChunkStart, i))
             nextChunkStart = i
@@ -50,6 +68,8 @@ fun CharSequence.chunkOnModifiedUtf8ByteSize(chunkSize: Int): List<CharSequence>
         } else {
             currentChunkByteSize += charByteSize
         }
+
+        i += charsToAdvance
     }
     // If there was a chunk that we started but did not add yet, add the rest.
     if (nextChunkStart != length) {

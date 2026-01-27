@@ -46,10 +46,10 @@ class CharSequenceUtf8Test {
 
     @Test(expected = IllegalArgumentException::class)
     fun testChunkTooSmall() {
-        "\u0000".chunkOnModifiedUtf8ByteSize(2)
+        "\u0000".chunkOnModifiedUtf8ByteSize(5)
     }
 
-    private val chunkSize = 5
+    private val chunkSize = 6
 
     @Test fun testOneNullByte() {
         val source = "\u0000"
@@ -61,31 +61,33 @@ class CharSequenceUtf8Test {
     }
 
     @Test fun testChunk() {
+        // 3 null chars, 2 bytes each = 6 bytes total, fits exactly in one chunk
         val source = "\u0000\u0000\u0000"
         val testResult = source.chunkOnModifiedUtf8ByteSize(chunkSize)
-        assertEquals(testResult.size, 2)
-        assertEquals(testResult[0].length, 2)
-        assertEquals(testResult[1].length, 1)
+        assertEquals(1, testResult.size)
+        assertEquals(3, testResult[0].length)
         assertTrue(compareSourceAndChunked(source, testResult))
         assertTrue(testResult.checkModifiedUtf8ByteArraySize(chunkSize))
     }
 
-    @Test fun testExactly5() {
+    @Test fun testExactly6() {
+        // null (2 bytes) + "123" (3 bytes) = 5 bytes, fits in one chunk
         val source = "\u0000123"
         val testResult = source.chunkOnModifiedUtf8ByteSize(chunkSize)
-        assertEquals(testResult.size, 1)
-        assertEquals(testResult[0].length, 4)
+        assertEquals(1, testResult.size)
+        assertEquals(4, testResult[0].length)
         assertTrue(compareSourceAndChunked(source, testResult))
         assertTrue(testResult.checkModifiedUtf8ByteArraySize(chunkSize))
     }
 
-    @Test fun test5CharsOverflow() {
+    @Test fun test6BytesExact() {
+        // "1234" (4 bytes) + null (2 bytes) = 6 bytes, fits exactly
         val source = "1234\u0000"
         val testResult = source.chunkOnModifiedUtf8ByteSize(chunkSize)
-        assertEquals(testResult.size, 2)
-        assertEquals(testResult[0].length, 4)
-        assertEquals(testResult[1].length, 1)
+        assertEquals(1, testResult.size)
+        assertEquals(5, testResult[0].length)
         assertTrue(compareSourceAndChunked(source, testResult))
+        assertTrue(testResult.checkModifiedUtf8ByteArraySize(chunkSize))
     }
 
     @Test fun test3ByteCharFit() {
@@ -97,27 +99,28 @@ class CharSequenceUtf8Test {
         assertTrue(testResult.checkModifiedUtf8ByteArraySize(chunkSize))
     }
 
-    @Test fun test3ByteCharOverflow() {
+    @Test fun test3ByteCharFitsExactly() {
+        // "1" (1 byte) + € (3 bytes) + null (2 bytes) = 6 bytes, fits exactly
         val source = "1€\u0000"
         val testResult = source.chunkOnModifiedUtf8ByteSize(chunkSize)
-        assertEquals(testResult.size, 2)
-        assertEquals(testResult[0].length, 2)
-        assertEquals(testResult[1].length, 1)
+        assertEquals(1, testResult.size)
+        assertEquals(3, testResult[0].length)
         assertTrue(compareSourceAndChunked(source, testResult))
         assertTrue(testResult.checkModifiedUtf8ByteArraySize(chunkSize))
     }
 
     @Test fun testNormalAscii() {
+        // 10 ASCII chars = 10 bytes, with chunkSize=6: first 6 chars, then 4 chars
         val source = "0123456789"
         val testResult = source.chunkOnModifiedUtf8ByteSize(chunkSize)
-        assertEquals(testResult.size, 2)
-        assertEquals(testResult[0].length, chunkSize)
-        assertEquals(testResult[1].length, chunkSize)
+        assertEquals(2, testResult.size)
+        assertEquals(6, testResult[0].length)
+        assertEquals(4, testResult[1].length)
         assertTrue(compareSourceAndChunked(source, testResult))
         assertTrue(testResult.checkModifiedUtf8ByteArraySize(chunkSize))
     }
 
-    @Test fun testLargeRandomUTf8StringChunk5() {
+    @Test fun testLargeRandomUTf8StringChunk6() {
         val testResult = random1000Utf8Chars.chunkOnModifiedUtf8ByteSize(chunkSize)
         assertTrue(compareSourceAndChunked(random1000Utf8Chars, testResult))
         assertTrue(testResult.checkModifiedUtf8ByteArraySize(chunkSize))
@@ -133,6 +136,72 @@ class CharSequenceUtf8Test {
         val testResult = random1000Utf8Chars.chunkOnModifiedUtf8ByteSize(100)
         assertTrue(compareSourceAndChunked(random1000Utf8Chars, testResult))
         assertTrue(testResult.checkModifiedUtf8ByteArraySize(100))
+    }
+
+    @Test fun testSurrogatePairKeptTogether() {
+        // Emoji 🎉 (U+1F389) is represented as surrogate pair \uD83C\uDF89
+        // Each surrogate is 3 bytes in Modified UTF-8, so the pair is 6 bytes
+        val source = "a\uD83C\uDF89b" // "a🎉b"
+        val testResult = source.chunkOnModifiedUtf8ByteSize(6)
+        // With chunkSize=6: "a" (1 byte) + surrogate pair (6 bytes) = 7 bytes > 6
+        // So we expect: ["a", "🎉", "b"] - surrogate pair must stay together
+        assertEquals(3, testResult.size)
+        assertEquals("a", testResult[0])
+        assertEquals("\uD83C\uDF89", testResult[1]) // The emoji as a unit
+        assertEquals("b", testResult[2])
+        assertTrue(compareSourceAndChunked(source, testResult))
+        // Verify each chunk is valid Unicode (no lone surrogates)
+        testResult.forEach { chunk ->
+            chunk.toString().toCharArray().forEachIndexed { index, char ->
+                if (char.isHighSurrogate()) {
+                    assertTrue("High surrogate at end of chunk", index + 1 < chunk.length)
+                    assertTrue("High surrogate not followed by low surrogate", chunk[index + 1].isLowSurrogate())
+                }
+                if (char.isLowSurrogate()) {
+                    assertTrue("Low surrogate at start of chunk", index > 0)
+                    assertTrue("Low surrogate not preceded by high surrogate", chunk[index - 1].isHighSurrogate())
+                }
+            }
+        }
+    }
+
+    @Test fun testMultipleSurrogatePairs() {
+        // Multiple emoji: 🎉🎊 (two surrogate pairs = 12 bytes)
+        val source = "\uD83C\uDF89\uD83C\uDF8A"
+        val testResult = source.chunkOnModifiedUtf8ByteSize(6)
+        // Each pair is 6 bytes, so with chunkSize=6 we get 2 chunks
+        assertEquals(2, testResult.size)
+        assertEquals("\uD83C\uDF89", testResult[0])
+        assertEquals("\uD83C\uDF8A", testResult[1])
+        assertTrue(compareSourceAndChunked(source, testResult))
+    }
+
+    @Test fun testSurrogatePairFitsWithOtherChars() {
+        // "ab🎉" = 1 + 1 + 6 = 8 bytes, with chunkSize=8 should fit in one chunk
+        val source = "ab\uD83C\uDF89"
+        val testResult = source.chunkOnModifiedUtf8ByteSize(8)
+        assertEquals(1, testResult.size)
+        assertEquals(source, testResult[0])
+        assertTrue(compareSourceAndChunked(source, testResult))
+    }
+
+    @Test fun testSurrogatePairOverflow() {
+        // "abc🎉" = 3 + 6 = 9 bytes, with chunkSize=8: "abc" then "🎉"
+        val source = "abc\uD83C\uDF89"
+        val testResult = source.chunkOnModifiedUtf8ByteSize(8)
+        assertEquals(2, testResult.size)
+        assertEquals("abc", testResult[0])
+        assertEquals("\uD83C\uDF89", testResult[1])
+        assertTrue(compareSourceAndChunked(source, testResult))
+    }
+
+    @Test fun testSurrogatePairInMiddle() {
+        // "a🎉b" = 1 + 6 + 1 = 8 bytes, with chunkSize=8 should fit in one chunk
+        val source = "a\uD83C\uDF89b"
+        val testResult = source.chunkOnModifiedUtf8ByteSize(8)
+        assertEquals(1, testResult.size)
+        assertEquals(source, testResult[0])
+        assertTrue(compareSourceAndChunked(source, testResult))
     }
 
     fun compareSourceAndChunked(
