@@ -31,7 +31,7 @@ import org.robolectric.shadows.ShadowApplication;
 import java.util.HashMap;
 import java.util.Map;
 
-@Config(sdk = 21, manifest = "../sample/src/main/AndroidManifest.xml", shadows = {ShadowTaskStackBuilder.class})
+@Config(sdk = 21, shadows = {ShadowTaskStackBuilder.class})
 @RunWith(RobolectricTestRunner.class)
 public class AutoGenIntentFiltersTest {
 
