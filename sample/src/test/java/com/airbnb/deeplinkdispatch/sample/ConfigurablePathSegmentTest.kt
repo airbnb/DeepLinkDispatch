@@ -49,7 +49,7 @@ class ConfigurablePathSegmentTest {
             DeepLinkDelegate(
                 SampleModuleRegistry(),
                 LibraryDeepLinkModuleRegistry(),
-                BenchmarkDeepLinkModuleRegistry(),
+                BenchmarkDeepLinkModuleRegistry(RuntimeEnvironment.getApplication().assets),
                 KaptLibraryDeepLinkModuleRegistry(),
                 KspLibraryDeepLinkModuleRegistry(RuntimeEnvironment.getApplication().assets),
                 configurablePathSegmentReplacementsAllEmpty,
@@ -65,7 +65,7 @@ class ConfigurablePathSegmentTest {
             DeepLinkDelegate(
                 SampleModuleRegistry(),
                 LibraryDeepLinkModuleRegistry(),
-                BenchmarkDeepLinkModuleRegistry(),
+                BenchmarkDeepLinkModuleRegistry(RuntimeEnvironment.getApplication().assets),
                 KaptLibraryDeepLinkModuleRegistry(),
                 KspLibraryDeepLinkModuleRegistry(RuntimeEnvironment.getApplication().assets),
                 configurablePathSegmentReplacementFirstSet,
@@ -80,7 +80,7 @@ class ConfigurablePathSegmentTest {
             DeepLinkDelegate(
                 SampleModuleRegistry(),
                 LibraryDeepLinkModuleRegistry(),
-                BenchmarkDeepLinkModuleRegistry(),
+                BenchmarkDeepLinkModuleRegistry(RuntimeEnvironment.getApplication().assets),
                 KaptLibraryDeepLinkModuleRegistry(),
                 KspLibraryDeepLinkModuleRegistry(RuntimeEnvironment.getApplication().assets),
                 configurablePathSegmentReplacementsAllEmpty,
@@ -95,7 +95,7 @@ class ConfigurablePathSegmentTest {
             DeepLinkDelegate(
                 SampleModuleRegistry(),
                 LibraryDeepLinkModuleRegistry(),
-                BenchmarkDeepLinkModuleRegistry(),
+                BenchmarkDeepLinkModuleRegistry(RuntimeEnvironment.getApplication().assets),
                 KaptLibraryDeepLinkModuleRegistry(),
                 KspLibraryDeepLinkModuleRegistry(RuntimeEnvironment.getApplication().assets),
                 configurablePathSegmentReplacementsAllEmpty,
@@ -112,7 +112,7 @@ class ConfigurablePathSegmentTest {
             DeepLinkDelegate(
                 SampleModuleRegistry(),
                 LibraryDeepLinkModuleRegistry(),
-                BenchmarkDeepLinkModuleRegistry(),
+                BenchmarkDeepLinkModuleRegistry(RuntimeEnvironment.getApplication().assets),
                 KaptLibraryDeepLinkModuleRegistry(),
                 KspLibraryDeepLinkModuleRegistry(RuntimeEnvironment.getApplication().assets),
                 configurablePathSegmentReplacementsAllEmpty,
@@ -127,7 +127,7 @@ class ConfigurablePathSegmentTest {
             DeepLinkDelegate(
                 SampleModuleRegistry(),
                 LibraryDeepLinkModuleRegistry(),
-                BenchmarkDeepLinkModuleRegistry(),
+                BenchmarkDeepLinkModuleRegistry(RuntimeEnvironment.getApplication().assets),
                 KaptLibraryDeepLinkModuleRegistry(),
                 KspLibraryDeepLinkModuleRegistry(RuntimeEnvironment.getApplication().assets),
                 configurablePathSegmentReplacementsOneEmpty,
@@ -142,7 +142,7 @@ class ConfigurablePathSegmentTest {
             DeepLinkDelegate(
                 SampleModuleRegistry(),
                 LibraryDeepLinkModuleRegistry(),
-                BenchmarkDeepLinkModuleRegistry(),
+                BenchmarkDeepLinkModuleRegistry(RuntimeEnvironment.getApplication().assets),
                 KaptLibraryDeepLinkModuleRegistry(),
                 KspLibraryDeepLinkModuleRegistry(RuntimeEnvironment.getApplication().assets),
                 configurablePathSegmentReplacementsTwoEmpty,
