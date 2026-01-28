@@ -9,30 +9,39 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 
 /**
- * Automatic manifest generation plugin for DeepLinkDispatch.
+ * Automatic manifest and asset generation plugin for DeepLinkDispatch.
  *
+ * This plugin handles two main features for KSP-based builds:
+ *
+ * ## 1. Manifest Generation
  * For deep links that have activityClassFqn set, the DeepLinkDispatch annotation processor generates
- * an AndroidManifest.xml that contains the intent filters for the deeplinks.
+ * an AndroidManifest.xml that contains the intent filters for the deeplinks. This plugin uses AGP's
+ * Artifacts API to transform the MERGED_MANIFEST artifact, merging in the KSP-generated manifest.
  *
- * This plugin uses AGP's Artifacts API to transform the MERGED_MANIFEST artifact,
- * merging in the KSP-generated manifest with intent filters.
- *
- * This means that for any deep links that have activityClassFqn set it is not necessary to add the
- * intent filters to the AndroidManifest.xml manually.
+ * ## 2. Asset-Based Match Index (KSP only)
+ * When using KSP, the processor generates a binary match index file as an Android asset instead of
+ * encoding it as strings in the generated registry class. This provides:
+ * - Faster build times (no string chunking/encoding)
+ * - Faster app startup (direct binary loading, no string decoding)
+ * - Smaller APK size (binary assets compress better than dex strings)
  *
  * IMPORTANT: This plugin requires AGP 8.0+ and only works with KSP (Kotlin Symbol Processing).
- * It does NOT work with KAPT. If you're using KAPT, you must manually add intent filters
- * to your AndroidManifest.xml.
+ * It does NOT work with KAPT. If you're using KAPT:
+ * - You must manually add intent filters to your AndroidManifest.xml
+ * - The match index will use the legacy string-based approach (still works, just less efficient)
  *
  * How it works (AGP 8.0+):
- * 1. KSP processes annotations and generates a manifest file with intent filters
- * 2. This plugin uses variant.artifacts.use().toTransform(SingleArtifact.MERGED_MANIFEST)
- *    to intercept the merged manifest and add the KSP-generated intent filters
- * 3. The transformed manifest is used by all subsequent tasks in the build pipeline
- * 4. The final merged manifest with intent filters is packaged into the APK/AAR
+ * 1. KSP processes annotations and generates:
+ *    - A manifest file with intent filters (if activityClassFqn is set)
+ *    - A binary match index asset file (assets/deeplinkdispatch/<module>.bin)
+ * 2. This plugin uses variant.artifacts.use().toTransform() to intercept:
+ *    - SingleArtifact.MERGED_MANIFEST - adds the KSP-generated intent filters
+ *    - SingleArtifact.ASSETS - adds the binary match index files
+ * 3. The transformed artifacts are used by all subsequent tasks in the build pipeline
+ * 4. The final APK/AAR includes both the merged manifest and the binary match index
  *
- * This ensures that generated manifest entries are included on the first build without requiring
- * two build passes or manual manifest modifications.
+ * This ensures that generated content is included on the first build without requiring
+ * two build passes or manual modifications.
  */
 class ManifestGenerationPlugin: Plugin<Project> {
 
@@ -54,6 +63,20 @@ class ManifestGenerationPlugin: Plugin<Project> {
                 For more details, see the DeepLinkDispatch documentation.
                 """.trimIndent()
             )
+        }
+
+        // Configure KSP to use asset-based match index when this plugin is applied.
+        // This enables the efficient binary asset loading instead of the legacy string-based approach.
+        project.afterEvaluate {
+            project.extensions.findByName("ksp")?.let { kspExtension ->
+                // Use reflection to call arg() method since we don't want to add KSP as a compile dependency
+                try {
+                    val argMethod = kspExtension::class.java.getMethod("arg", String::class.java, String::class.java)
+                    argMethod.invoke(kspExtension, ManifestGeneration.OPTION_USE_ASSET_BASED_MATCH_INDEX, "true")
+                } catch (e: Exception) {
+                    project.logger.warn("DeepLinkDispatch: Could not configure KSP argument: ${e.message}")
+                }
+            }
         }
 
         val androidComponents = project.extensions.getByType(
@@ -108,14 +131,52 @@ class ManifestGenerationPlugin: Plugin<Project> {
                 description = "Moves DeepLinkDispatch manifest from KSP resources to safe location for ${variant.name}"
             }
 
+            // === Asset handling for binary match index ===
+            // Path where KSP writes the asset files via filer API
+            val kspGeneratedAssetsPath = "generated/ksp/${variant.name}/resources/assets/${ManifestGeneration.MATCH_INDEX_ASSET_PATH_PREFIX}"
+            // Safe location where we move the assets to prevent them from being picked up by Java resource merge
+            val safeAssetsPath = "intermediates/deeplinkdispatch/${variant.name}/assets"
+
+            // Register task to relocate assets from KSP output
+            val relocateAssetsTask = project.tasks.register(
+                "relocateDeepLinkAssets${variant.name.replaceFirstChar { it.uppercase() }}",
+                RelocateDeepLinkAssetsTask::class.java
+            ) {
+                kspAssetsDir.set(project.layout.buildDirectory.dir(kspGeneratedAssetsPath))
+                safeAssetsDir.set(project.layout.buildDirectory.dir(safeAssetsPath))
+                group = "deeplinkdispatch"
+                description = "Moves DeepLinkDispatch assets from KSP resources to safe location for ${variant.name}"
+            }
+
+            // Register task to merge assets into the final asset directory
+            val mergeAssetsTask = project.tasks.register(
+                MergeDeepLinkAssetsTask.taskName(variant),
+                MergeDeepLinkAssetsTask::class.java
+            ) {
+                additionalAssetsDir.set(project.layout.buildDirectory.dir(safeAssetsPath))
+                group = "deeplinkdispatch"
+                description = "Merges DeepLinkDispatch assets for ${variant.name}"
+            }
+
+            // Transform ASSETS artifact to include our binary match index files
+            variant.artifacts.use(mergeAssetsTask)
+                .wiredWithDirectories(
+                    MergeDeepLinkAssetsTask::inputAssets,
+                    MergeDeepLinkAssetsTask::outputAssets
+                )
+                .toTransform(SingleArtifact.ASSETS)
+
             // Configure task ordering AFTER evaluation when KSP task exists
             project.afterEvaluate {
                 val kspTaskName = "ksp${variant.name.replaceFirstChar { it.uppercase() }}Kotlin"
                 val kspTask = project.tasks.findByName(kspTaskName)
 
                 if (kspTask != null) {
-                    // Relocate task runs after KSP
+                    // Relocate tasks run after KSP
                     relocateManifestTask.configure {
+                        dependsOn(kspTask)
+                    }
+                    relocateAssetsTask.configure {
                         dependsOn(kspTask)
                     }
                 }
@@ -125,9 +186,14 @@ class ManifestGenerationPlugin: Plugin<Project> {
                     dependsOn(relocateManifestTask)
                 }
 
-                // Wire relocate task into the library's Java resource processing pipeline.
-                // This ensures the manifest file is moved before the library's resources are processed,
-                // so when an app depends on this library, the file won't be in the resources.
+                // Asset merge task depends on asset relocate task
+                mergeAssetsTask.configure {
+                    dependsOn(relocateAssetsTask)
+                }
+
+                // Wire relocate tasks into the library's Java resource processing pipeline.
+                // This ensures the manifest and asset files are moved before the library's resources are processed,
+                // so when an app depends on this library, the files won't be in the resources.
                 // processJavaRes is critical - it's the task that collects resources from source
                 // directories and is what consuming app modules depend on.
                 val variantCapitalized = variant.name.replaceFirstChar { it.uppercase() }
@@ -140,6 +206,7 @@ class ManifestGenerationPlugin: Plugin<Project> {
                 ).forEach { taskName ->
                     project.tasks.findByName(taskName)?.let { task ->
                         task.dependsOn(relocateManifestTask)
+                        task.dependsOn(relocateAssetsTask)
                     }
                 }
             }

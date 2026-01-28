@@ -9,9 +9,10 @@ import org.hamcrest.core.IsEqual.equalTo
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 
-@Config(sdk = [21], manifest = "../sample/src/main/AndroidManifest.xml")
+@Config(sdk = [21])
 @RunWith(RobolectricTestRunner::class)
 class ConfigurablePathSegmentTest {
     private val configurablePathSegmentReplacementsAllEmpty =
@@ -50,7 +51,7 @@ class ConfigurablePathSegmentTest {
                 LibraryDeepLinkModuleRegistry(),
                 BenchmarkDeepLinkModuleRegistry(),
                 KaptLibraryDeepLinkModuleRegistry(),
-                KspLibraryDeepLinkModuleRegistry(),
+                KspLibraryDeepLinkModuleRegistry(RuntimeEnvironment.getApplication().assets),
                 configurablePathSegmentReplacementsAllEmpty,
             )
         val oneEmptyReplacementMatches = deepLinkDelegate.supportsUri("https://www.example.com/nothing-special")
@@ -66,7 +67,7 @@ class ConfigurablePathSegmentTest {
                 LibraryDeepLinkModuleRegistry(),
                 BenchmarkDeepLinkModuleRegistry(),
                 KaptLibraryDeepLinkModuleRegistry(),
-                KspLibraryDeepLinkModuleRegistry(),
+                KspLibraryDeepLinkModuleRegistry(RuntimeEnvironment.getApplication().assets),
                 configurablePathSegmentReplacementFirstSet,
             )
         val oneEmptyReplacementMatches = deepLinkDelegate.supportsUri("https://www.example.com/cereal/foo")
@@ -81,7 +82,7 @@ class ConfigurablePathSegmentTest {
                 LibraryDeepLinkModuleRegistry(),
                 BenchmarkDeepLinkModuleRegistry(),
                 KaptLibraryDeepLinkModuleRegistry(),
-                KspLibraryDeepLinkModuleRegistry(),
+                KspLibraryDeepLinkModuleRegistry(RuntimeEnvironment.getApplication().assets),
                 configurablePathSegmentReplacementsAllEmpty,
             )
         val oneEmptyReplacementMatches = deepLinkDelegate.supportsUri("https://www.example.com/bar?q=e")
@@ -96,7 +97,7 @@ class ConfigurablePathSegmentTest {
                 LibraryDeepLinkModuleRegistry(),
                 BenchmarkDeepLinkModuleRegistry(),
                 KaptLibraryDeepLinkModuleRegistry(),
-                KspLibraryDeepLinkModuleRegistry(),
+                KspLibraryDeepLinkModuleRegistry(RuntimeEnvironment.getApplication().assets),
                 configurablePathSegmentReplacementsAllEmpty,
             )
         val somePathElementBefore = deepLinkDelegate.supportsUri("https://www.example.com/somevalue/bar/?q=e")
@@ -113,7 +114,7 @@ class ConfigurablePathSegmentTest {
                 LibraryDeepLinkModuleRegistry(),
                 BenchmarkDeepLinkModuleRegistry(),
                 KaptLibraryDeepLinkModuleRegistry(),
-                KspLibraryDeepLinkModuleRegistry(),
+                KspLibraryDeepLinkModuleRegistry(RuntimeEnvironment.getApplication().assets),
                 configurablePathSegmentReplacementsAllEmpty,
             )
         val oneEmptyReplacementMatches = deepLinkDelegate.supportsUri("https://www.example.com/foo?q=e")
@@ -128,7 +129,7 @@ class ConfigurablePathSegmentTest {
                 LibraryDeepLinkModuleRegistry(),
                 BenchmarkDeepLinkModuleRegistry(),
                 KaptLibraryDeepLinkModuleRegistry(),
-                KspLibraryDeepLinkModuleRegistry(),
+                KspLibraryDeepLinkModuleRegistry(RuntimeEnvironment.getApplication().assets),
                 configurablePathSegmentReplacementsOneEmpty,
             )
         val oneEmptyReplacementMatches = deepLinkDelegate.supportsUri("https://www.example.com/bar/foo?q=e")
@@ -143,7 +144,7 @@ class ConfigurablePathSegmentTest {
                 LibraryDeepLinkModuleRegistry(),
                 BenchmarkDeepLinkModuleRegistry(),
                 KaptLibraryDeepLinkModuleRegistry(),
-                KspLibraryDeepLinkModuleRegistry(),
+                KspLibraryDeepLinkModuleRegistry(RuntimeEnvironment.getApplication().assets),
                 configurablePathSegmentReplacementsTwoEmpty,
             )
         val oneEmptyReplacementMatches = deepLinkDelegate.supportsUri("https://www.example.com/bar/foo?q=e")

@@ -5,6 +5,7 @@ buildscript {
     apply from: rootProject.file("dependencies.gradle")
 
     repositories {
+        mavenLocal()
         google()
         mavenCentral()
         gradlePluginPortal()
