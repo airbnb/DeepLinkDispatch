@@ -930,8 +930,9 @@ class DeepLinkProcessor(
         // This allows library modules (with the Gradle plugin) to use the efficient asset approach
         // while application modules continue to use the legacy string-based approach.
         val isKsp = environment.backend == XProcessingEnv.Backend.KSP
-        val useAssetBasedMatchIndex = isKsp &&
-            environment.options[ManifestGeneration.OPTION_USE_ASSET_BASED_MATCH_INDEX]?.toBoolean() == true
+        val useAssetBasedMatchIndex =
+            isKsp &&
+                environment.options[ManifestGeneration.OPTION_USE_ASSET_BASED_MATCH_INDEX]?.toBoolean() == true
         val registryClassName = className + REGISTRY_CLASS_SUFFIX
 
         val deepLinkRegistryBuilder =
@@ -940,17 +941,18 @@ class DeepLinkProcessor(
                 .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
                 .superclass(ClassName.get(BaseRegistry::class.java))
 
-        val constructor = if (useAssetBasedMatchIndex) {
-            // Asset-based: Write binary index as asset and generate asset-loading constructor
-            writeMatchIndexAsset(className, urisTrie, originatingElements)
-            // Add the static helper method for loading from assets
-            deepLinkRegistryBuilder.addMethod(generateLoadFromAssetMethod())
-            generateAssetLoadingConstructor(className, pathVariableKeys)
-        } else {
-            // KAPT: Use legacy string-based approach
-            val stringMethodNames = getStringMethodNames(urisTrie, deepLinkRegistryBuilder)
-            generateStringBasedConstructor(stringMethodNames, pathVariableKeys)
-        }
+        val constructor =
+            if (useAssetBasedMatchIndex) {
+                // Asset-based: Write binary index as asset and generate asset-loading constructor
+                writeMatchIndexAsset(className, urisTrie, originatingElements)
+                // Add the static helper method for loading from assets
+                deepLinkRegistryBuilder.addMethod(generateLoadFromAssetMethod())
+                generateAssetLoadingConstructor(className, pathVariableKeys)
+            } else {
+                // KAPT: Use legacy string-based approach
+                val stringMethodNames = getStringMethodNames(urisTrie, deepLinkRegistryBuilder)
+                generateStringBasedConstructor(stringMethodNames, pathVariableKeys)
+            }
 
         deepLinkRegistryBuilder.addMethod(constructor)
         originatingElements.forEach { originatingElement ->
@@ -978,7 +980,9 @@ class DeepLinkProcessor(
         try {
             environment.filer
                 .writeResource(
-                    filePath = java.nio.file.Path.of(resourcePath),
+                    filePath =
+                        java.nio.file.Path
+                            .of(resourcePath),
                     originatingElements = originatingElements.toList(),
                     mode = XFiler.Mode.Aggregating,
                 ).use { outputStream ->
@@ -1021,17 +1025,14 @@ class DeepLinkProcessor(
                     .builder(assetManagerClass, "assetManager")
                     .addAnnotation(NotNull::class.java)
                     .build(),
-            )
-            .addCode(
+            ).addCode(
                 CodeBlock
                     .builder()
                     .add(
                         "super(loadMatchIndexFromAsset(assetManager, \$S)",
                         assetPath,
-                    )
-                    .build(),
-            )
-            .addCode(generatePathVariableKeysBlock(pathVariableKeys))
+                    ).build(),
+            ).addCode(generatePathVariableKeysBlock(pathVariableKeys))
             .build()
     }
 
@@ -1098,8 +1099,7 @@ class DeepLinkProcessor(
                 "throw new \$T(\$S + assetPath, e)",
                 RuntimeException::class.java,
                 "DeepLinkDispatch: Failed to load match index from asset: ",
-            )
-            .endControlFlow()
+            ).endControlFlow()
             .build()
     }
 

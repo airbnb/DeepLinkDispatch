@@ -1481,14 +1481,16 @@ class DeepLinkProcessorKspTest : BaseDeepLinkProcessorTest() {
             )
 
         // Compile with asset-based match index enabled
-        val result = compileIncremental(
-            sourceFiles = sourceFiles,
-            useKsp = true,
-            incrementalFlag = false,
-            additionalArguments = mutableMapOf(
-                "deepLink.useAssetBasedMatchIndex" to "true"
-            ),
-        )
+        val result =
+            compileIncremental(
+                sourceFiles = sourceFiles,
+                useKsp = true,
+                incrementalFlag = false,
+                additionalArguments =
+                    mutableMapOf(
+                        "deepLink.useAssetBasedMatchIndex" to "true",
+                    ),
+            )
 
         assertThat(result.result.exitCode).isEqualTo(KotlinCompilation.ExitCode.OK)
 
@@ -1545,14 +1547,16 @@ class DeepLinkProcessorKspTest : BaseDeepLinkProcessorTest() {
             )
 
         // Compile with asset-based match index enabled
-        val result = compileIncremental(
-            sourceFiles = sourceFiles,
-            useKsp = true,
-            incrementalFlag = false,
-            additionalArguments = mutableMapOf(
-                "deepLink.useAssetBasedMatchIndex" to "true"
-            ),
-        )
+        val result =
+            compileIncremental(
+                sourceFiles = sourceFiles,
+                useKsp = true,
+                incrementalFlag = false,
+                additionalArguments =
+                    mutableMapOf(
+                        "deepLink.useAssetBasedMatchIndex" to "true",
+                    ),
+            )
 
         assertThat(result.result.exitCode).isEqualTo(KotlinCompilation.ExitCode.OK)
 
@@ -1592,14 +1596,16 @@ class DeepLinkProcessorKspTest : BaseDeepLinkProcessorTest() {
             )
 
         // Compile with asset-based match index enabled
-        val result = compileIncremental(
-            sourceFiles = sourceFiles,
-            useKsp = true,
-            incrementalFlag = false,
-            additionalArguments = mutableMapOf(
-                "deepLink.useAssetBasedMatchIndex" to "true"
-            ),
-        )
+        val result =
+            compileIncremental(
+                sourceFiles = sourceFiles,
+                useKsp = true,
+                incrementalFlag = false,
+                additionalArguments =
+                    mutableMapOf(
+                        "deepLink.useAssetBasedMatchIndex" to "true",
+                    ),
+            )
 
         assertThat(result.result.exitCode).isEqualTo(KotlinCompilation.ExitCode.OK)
 
@@ -1640,12 +1646,13 @@ class DeepLinkProcessorKspTest : BaseDeepLinkProcessorTest() {
             )
 
         // Compile WITHOUT asset-based match index (default behavior)
-        val result = compileIncremental(
-            sourceFiles = sourceFiles,
-            useKsp = true,
-            incrementalFlag = false,
-            // No additionalArguments - default behavior
-        )
+        val result =
+            compileIncremental(
+                sourceFiles = sourceFiles,
+                useKsp = true,
+                incrementalFlag = false,
+                // No additionalArguments - default behavior
+            )
 
         assertThat(result.result.exitCode).isEqualTo(KotlinCompilation.ExitCode.OK)
 
