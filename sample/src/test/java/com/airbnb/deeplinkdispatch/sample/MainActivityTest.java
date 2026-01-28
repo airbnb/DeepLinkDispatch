@@ -300,7 +300,7 @@ public class MainActivityTest {
     DeepLinkDelegate deepLinkDelegate = new DeepLinkDelegate(
       new SampleModuleRegistry(),
       new LibraryDeepLinkModuleRegistry(),
-      new BenchmarkDeepLinkModuleRegistry(),
+      new BenchmarkDeepLinkModuleRegistry(RuntimeEnvironment.getApplication().getAssets()),
       new KaptLibraryDeepLinkModuleRegistry(),
       new KspLibraryDeepLinkModuleRegistry(RuntimeEnvironment.getApplication().getAssets()),
       configurablePathSegmentReplacements);
@@ -317,7 +317,7 @@ public class MainActivityTest {
     DeepLinkDelegate deepLinkDelegate = new DeepLinkDelegate(
       new SampleModuleRegistry(),
       new LibraryDeepLinkModuleRegistry(),
-      new BenchmarkDeepLinkModuleRegistry(),
+      new BenchmarkDeepLinkModuleRegistry(RuntimeEnvironment.getApplication().getAssets()),
       new KaptLibraryDeepLinkModuleRegistry(),
       new KspLibraryDeepLinkModuleRegistry(RuntimeEnvironment.getApplication().getAssets()),
       configurablePathSegmentReplacements);
@@ -334,7 +334,7 @@ public class MainActivityTest {
     DeepLinkDelegate deepLinkDelegate = new DeepLinkDelegate(
       new SampleModuleRegistry(),
       new LibraryDeepLinkModuleRegistry(),
-      new BenchmarkDeepLinkModuleRegistry(),
+      new BenchmarkDeepLinkModuleRegistry(RuntimeEnvironment.getApplication().getAssets()),
       new KaptLibraryDeepLinkModuleRegistry(),
       new KspLibraryDeepLinkModuleRegistry(RuntimeEnvironment.getApplication().getAssets()),
       configurablePathSegmentReplacements);
@@ -352,7 +352,7 @@ public class MainActivityTest {
       DeepLinkDelegate deepLinkDelegate = new DeepLinkDelegate(
         new SampleModuleRegistry(),
         new LibraryDeepLinkModuleRegistry(),
-        new BenchmarkDeepLinkModuleRegistry(),
+        new BenchmarkDeepLinkModuleRegistry(RuntimeEnvironment.getApplication().getAssets()),
         new KaptLibraryDeepLinkModuleRegistry(),
         new KspLibraryDeepLinkModuleRegistry(RuntimeEnvironment.getApplication().getAssets()),
         configurablePathSegmentReplacements);
@@ -377,7 +377,7 @@ public class MainActivityTest {
     DeepLinkDelegate deepLinkDelegate = new DeepLinkDelegate(
       new SampleModuleRegistry(),
       new LibraryDeepLinkModuleRegistry(),
-      new BenchmarkDeepLinkModuleRegistry(),
+      new BenchmarkDeepLinkModuleRegistry(RuntimeEnvironment.getApplication().getAssets()),
       new KaptLibraryDeepLinkModuleRegistry(),
       new KspLibraryDeepLinkModuleRegistry(RuntimeEnvironment.getApplication().getAssets()),
       configurablePathSegmentReplacements);
@@ -394,7 +394,7 @@ public class MainActivityTest {
     DeepLinkDelegate deepLinkDelegate = new DeepLinkDelegate(
       new SampleModuleRegistry(),
       new LibraryDeepLinkModuleRegistry(),
-      new BenchmarkDeepLinkModuleRegistry(),
+      new BenchmarkDeepLinkModuleRegistry(RuntimeEnvironment.getApplication().getAssets()),
       new KaptLibraryDeepLinkModuleRegistry(),
       new KspLibraryDeepLinkModuleRegistry(RuntimeEnvironment.getApplication().getAssets()),
       configurablePathSegmentReplacements);

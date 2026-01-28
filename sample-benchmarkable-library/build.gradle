@@ -1,4 +1,7 @@
 apply plugin: 'com.android.library'
+apply plugin: 'kotlin-android'
+apply plugin: 'com.google.devtools.ksp'
+apply plugin: 'com.airbnb.deeplinkdispatch.manifest-generation'
 
 android {
     namespace = 'com.airbnb.deeplinkdispatch.sample.benchmarkable'
@@ -21,7 +24,11 @@ android {
 
 dependencies {
   implementation project(':deeplinkdispatch')
-  annotationProcessor project(':deeplinkdispatch-processor')
+  ksp project(':deeplinkdispatch-processor')
   implementation deps.appCompat
   testImplementation deps.junit
+}
+
+ksp {
+    arg("deepLink.incremental", "true")
 }

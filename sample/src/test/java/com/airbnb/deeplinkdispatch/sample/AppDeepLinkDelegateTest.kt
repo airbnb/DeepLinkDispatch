@@ -37,7 +37,7 @@ class AppDeepLinkDelegateTest {
             DeepLinkDelegate(
                 SampleModuleRegistry(),
                 LibraryDeepLinkModuleRegistry(),
-                BenchmarkDeepLinkModuleRegistry(),
+                BenchmarkDeepLinkModuleRegistry(RuntimeEnvironment.getApplication().assets),
                 KaptLibraryDeepLinkModuleRegistry(),
                 KspLibraryDeepLinkModuleRegistry(RuntimeEnvironment.getApplication().assets),
                 configurablePlaceholdersMap,
