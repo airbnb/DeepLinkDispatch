@@ -78,7 +78,7 @@ public class TypeConversionErrorHandlerCustomTypeDeepLinkActivity extends Activi
     DeepLinkDelegate deepLinkDelegate = new DeepLinkDelegate(
             new SampleModuleRegistry(),
             new LibraryDeepLinkModuleRegistry(),
-            new BenchmarkDeepLinkModuleRegistry(),
+            new BenchmarkDeepLinkModuleRegistry(getAssets()),
             new KaptLibraryDeepLinkModuleRegistry(),
             new KspLibraryDeepLinkModuleRegistry(getAssets()),
             configurablePlaceholdersMap,
