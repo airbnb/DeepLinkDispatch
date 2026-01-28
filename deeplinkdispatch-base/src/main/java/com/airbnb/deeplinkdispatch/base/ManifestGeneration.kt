@@ -64,6 +64,5 @@ object ManifestGeneration {
      * @return The resource path for XFiler.writeResource()
      */
     @JvmStatic
-    fun getMatchIndexResourcePath(moduleName: String): String =
-        "assets/${getMatchIndexAssetPath(moduleName)}"
+    fun getMatchIndexResourcePath(moduleName: String): String = "assets/${getMatchIndexAssetPath(moduleName)}"
 }

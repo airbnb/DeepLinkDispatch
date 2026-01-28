@@ -163,11 +163,12 @@ open class BaseDeepLinkProcessorTest {
                     .isEqualTo(KotlinCompilation.ExitCode.OK)
 
                 // Use KSP-specific expected files if provided, otherwise use the common ones
-                val expectedSourceFiles = if (result.useKsp && kspGeneratedSourceFiles != null) {
-                    kspGeneratedSourceFiles
-                } else {
-                    generatedSourceFiles
-                }
+                val expectedSourceFiles =
+                    if (result.useKsp && kspGeneratedSourceFiles != null) {
+                        kspGeneratedSourceFiles
+                    } else {
+                        generatedSourceFiles
+                    }
 
                 Assertions
                     .assertThat(result.generatedFiles.keys)
