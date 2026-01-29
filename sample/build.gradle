@@ -95,17 +95,9 @@ afterEvaluate {
         from project(':sample-ksp-library').layout.buildDirectory.dir('intermediates/assets/debug/mergeDeepLinkAssetsDebug')
         from project(':sample-benchmarkable-library').layout.buildDirectory.dir('intermediates/assets/debug/mergeDeepLinkAssetsDebug')
         into layout.buildDirectory.dir('generated/libraryAssets')
-    }
-
-    // Wire up dependencies lazily
-    def kspLibMergeTask = project(':sample-ksp-library').tasks.findByName('mergeDeepLinkAssetsDebug')
-    def benchmarkLibMergeTask = project(':sample-benchmarkable-library').tasks.findByName('mergeDeepLinkAssetsDebug')
-
-    if (kspLibMergeTask != null) {
-        copyTask.configure { dependsOn kspLibMergeTask }
-    }
-    if (benchmarkLibMergeTask != null) {
-        copyTask.configure { dependsOn benchmarkLibMergeTask }
+        // Use task path strings for lazy dependency resolution
+        dependsOn ':sample-ksp-library:mergeDeepLinkAssetsDebug'
+        dependsOn ':sample-benchmarkable-library:mergeDeepLinkAssetsDebug'
     }
 
     tasks.findByName('testDebugUnitTest')?.dependsOn(copyTask)
