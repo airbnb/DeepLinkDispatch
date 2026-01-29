@@ -82,24 +82,39 @@ ksp {
 // This is needed because Robolectric doesn't automatically merge assets from library dependencies
 // during unit testing (only during instrumentation tests and actual APK builds).
 // The assets are copied to the main assets source set so Robolectric can find them.
-tasks.register('copyLibraryAssetsForTest', Copy) {
-    from project(':sample-ksp-library').layout.buildDirectory.dir('intermediates/assets/debug/mergeDeepLinkAssetsDebug')
-    into layout.buildDirectory.dir('generated/libraryAssets')
-    dependsOn ':sample-ksp-library:mergeDeepLinkAssetsDebug'
-}
-
+//
+// We also need to copy assets from sample-benchmarkable-library since it now uses KSP with
+// asset-based match index.
 android.sourceSets.debug {
     assets.srcDirs += layout.buildDirectory.dir('generated/libraryAssets')
 }
 
 afterEvaluate {
-    tasks.findByName('testDebugUnitTest')?.dependsOn('copyLibraryAssetsForTest')
-    tasks.findByName('mergeDebugAssets')?.dependsOn('copyLibraryAssetsForTest')
+    // Register the copy task in afterEvaluate to ensure the plugin tasks exist
+    def copyTask = tasks.register('copyLibraryAssetsForTest', Copy) {
+        from project(':sample-ksp-library').layout.buildDirectory.dir('intermediates/assets/debug/mergeDeepLinkAssetsDebug')
+        from project(':sample-benchmarkable-library').layout.buildDirectory.dir('intermediates/assets/debug/mergeDeepLinkAssetsDebug')
+        into layout.buildDirectory.dir('generated/libraryAssets')
+    }
+
+    // Wire up dependencies lazily
+    def kspLibMergeTask = project(':sample-ksp-library').tasks.findByName('mergeDeepLinkAssetsDebug')
+    def benchmarkLibMergeTask = project(':sample-benchmarkable-library').tasks.findByName('mergeDeepLinkAssetsDebug')
+
+    if (kspLibMergeTask != null) {
+        copyTask.configure { dependsOn kspLibMergeTask }
+    }
+    if (benchmarkLibMergeTask != null) {
+        copyTask.configure { dependsOn benchmarkLibMergeTask }
+    }
+
+    tasks.findByName('testDebugUnitTest')?.dependsOn(copyTask)
+    tasks.findByName('mergeDebugAssets')?.dependsOn(copyTask)
     // Lint tasks also need to depend on the copy task since they scan assets
     tasks.matching { task ->
         def nameLower = task.name.toLowerCase()
         nameLower.contains('lint') && nameLower.contains('debug')
     }.configureEach {
-        dependsOn('copyLibraryAssetsForTest')
+        dependsOn(copyTask)
     }
 }
