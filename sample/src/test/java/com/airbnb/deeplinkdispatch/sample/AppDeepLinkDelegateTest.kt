@@ -16,9 +16,10 @@ import org.hamcrest.core.IsEqual
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 
-@Config(sdk = [21], manifest = "../sample/src/main/AndroidManifest.xml")
+@Config(sdk = [21])
 @RunWith(RobolectricTestRunner::class)
 class AppDeepLinkDelegateTest {
     // Demo test to find duplicate URLs across all modules
@@ -36,9 +37,9 @@ class AppDeepLinkDelegateTest {
             DeepLinkDelegate(
                 SampleModuleRegistry(),
                 LibraryDeepLinkModuleRegistry(),
-                BenchmarkDeepLinkModuleRegistry(),
+                BenchmarkDeepLinkModuleRegistry(RuntimeEnvironment.getApplication().assets),
                 KaptLibraryDeepLinkModuleRegistry(),
-                KspLibraryDeepLinkModuleRegistry(),
+                KspLibraryDeepLinkModuleRegistry(RuntimeEnvironment.getApplication().assets),
                 configurablePlaceholdersMap,
             )
         // The duplicate detection finds:

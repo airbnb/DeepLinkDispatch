@@ -1449,4 +1449,225 @@ class DeepLinkProcessorKspTest : BaseDeepLinkProcessorTest() {
             )
         }
     }
+
+    /**
+     * Test that asset-based match index generation works correctly with KSP.
+     * When the `deepLink.useAssetBasedMatchIndex` option is set to "true",
+     * the processor should:
+     * 1. Generate a registry class with an AssetManager constructor
+     * 2. Generate a binary asset file at assets/deeplinkdispatch/<module>.bin
+     * 3. NOT generate the matchIndex0() string method
+     */
+    @Test
+    fun testAssetBasedMatchIndexGeneration() {
+        val sampleActivityKotlin =
+            Source.KotlinSource(
+                "SampleActivity.kt",
+                """
+                 package com.example
+                 import com.airbnb.deeplinkdispatch.DeepLink
+                 import com.airbnb.deeplinkdispatch.DeepLinkHandler
+                 import com.example.SampleModule
+                 @DeepLink("airbnb://example.com/deepLink")
+                 @DeepLinkHandler( SampleModule::class )
+                 class SampleActivity : android.app.Activity()
+                 """,
+            )
+        val sourceFiles =
+            listOf(
+                module,
+                sampleActivityKotlin,
+                fakeBaseDeeplinkDelegateJava,
+            )
+
+        // Compile with asset-based match index enabled
+        val result =
+            compileIncremental(
+                sourceFiles = sourceFiles,
+                useKsp = true,
+                incrementalFlag = false,
+                additionalArguments =
+                    mutableMapOf(
+                        "deepLink.useAssetBasedMatchIndex" to "true",
+                    ),
+            )
+
+        assertThat(result.result.exitCode).isEqualTo(KotlinCompilation.ExitCode.OK)
+
+        // Verify the registry class was generated with AssetManager constructor
+        val registryFile = result.generatedFiles["SampleModuleRegistry.java"]
+        assertThat(registryFile).isNotNull
+        val registryContent = registryFile!!.readText()
+
+        // Verify AssetManager constructor
+        assertThat(registryContent).contains("import android.content.res.AssetManager;")
+        assertThat(registryContent).contains("public SampleModuleRegistry(@NotNull AssetManager assetManager)")
+        assertThat(registryContent).contains("loadMatchIndexFromAsset(assetManager,")
+        assertThat(registryContent).contains("\"deeplinkdispatch/samplemodule.bin\"")
+
+        // Verify the loadMatchIndexFromAsset method was generated
+        assertThat(registryContent).contains("private static byte[] loadMatchIndexFromAsset(AssetManager assetManager, String assetPath)")
+        assertThat(registryContent).contains("assetManager.open(assetPath)")
+        assertThat(registryContent).contains("ByteArrayOutputStream buffer")
+
+        // Verify NO matchIndex0() string method was generated (this is the legacy approach)
+        assertThat(registryContent).doesNotContain("matchIndex0()")
+        assertThat(registryContent).doesNotContain("Utils.readMatchIndexFromStrings")
+
+        // Verify the binary asset file was generated
+        val assetFile = result.generatedFiles["samplemodule.bin"]
+        assertThat(assetFile).isNotNull
+        assertThat(assetFile!!.length()).isGreaterThan(0)
+    }
+
+    /**
+     * Test that DeepLinkDelegate is also generated correctly when using asset-based match index.
+     * The delegate should have constructors that accept the registry with AssetManager.
+     */
+    @Test
+    fun testAssetBasedMatchIndexDelegateGeneration() {
+        val sampleActivityKotlin =
+            Source.KotlinSource(
+                "SampleActivity.kt",
+                """
+                 package com.example
+                 import com.airbnb.deeplinkdispatch.DeepLink
+                 import com.airbnb.deeplinkdispatch.DeepLinkHandler
+                 import com.example.SampleModule
+                 @DeepLink("airbnb://example.com/test")
+                 @DeepLinkHandler( SampleModule::class )
+                 class SampleActivity : android.app.Activity()
+                 """,
+            )
+        val sourceFiles =
+            listOf(
+                module,
+                sampleActivityKotlin,
+                fakeBaseDeeplinkDelegateJava,
+            )
+
+        // Compile with asset-based match index enabled
+        val result =
+            compileIncremental(
+                sourceFiles = sourceFiles,
+                useKsp = true,
+                incrementalFlag = false,
+                additionalArguments =
+                    mutableMapOf(
+                        "deepLink.useAssetBasedMatchIndex" to "true",
+                    ),
+            )
+
+        assertThat(result.result.exitCode).isEqualTo(KotlinCompilation.ExitCode.OK)
+
+        // Verify the DeepLinkDelegate was generated and can work with the asset-based registry
+        val delegateFile = result.generatedFiles["DeepLinkDelegate.java"]
+        assertThat(delegateFile).isNotNull
+        val delegateContent = delegateFile!!.readText()
+
+        // The delegate should still accept the SampleModuleRegistry
+        assertThat(delegateContent).contains("SampleModuleRegistry sampleModuleRegistry")
+        assertThat(delegateContent).contains("extends BaseDeepLinkDelegate")
+    }
+
+    /**
+     * Test that configurable path segments are still included in the registry when using asset-based match index.
+     */
+    @Test
+    fun testAssetBasedMatchIndexWithConfigurablePathSegments() {
+        val sampleActivityKotlin =
+            Source.KotlinSource(
+                "SampleActivity.kt",
+                """
+                 package com.example
+                 import com.airbnb.deeplinkdispatch.DeepLink
+                 import com.airbnb.deeplinkdispatch.DeepLinkHandler
+                 import com.example.SampleModule
+                 @DeepLink("airbnb://example.com/<configurable-path-segment>/test")
+                 @DeepLinkHandler( SampleModule::class )
+                 class SampleActivity : android.app.Activity()
+                 """,
+            )
+        val sourceFiles =
+            listOf(
+                module,
+                sampleActivityKotlin,
+                fakeBaseDeeplinkDelegateJava,
+            )
+
+        // Compile with asset-based match index enabled
+        val result =
+            compileIncremental(
+                sourceFiles = sourceFiles,
+                useKsp = true,
+                incrementalFlag = false,
+                additionalArguments =
+                    mutableMapOf(
+                        "deepLink.useAssetBasedMatchIndex" to "true",
+                    ),
+            )
+
+        assertThat(result.result.exitCode).isEqualTo(KotlinCompilation.ExitCode.OK)
+
+        // Verify the registry class includes configurable path segments
+        val registryFile = result.generatedFiles["SampleModuleRegistry.java"]
+        assertThat(registryFile).isNotNull
+        val registryContent = registryFile!!.readText()
+
+        // Should have the configurable path segment in the constructor
+        assertThat(registryContent).contains("\"configurable-path-segment\"")
+        assertThat(registryContent).contains("new String[]{\"configurable-path-segment\"}")
+    }
+
+    /**
+     * Test that when useAssetBasedMatchIndex is NOT set, the legacy string-based approach is used.
+     * This verifies backward compatibility.
+     */
+    @Test
+    fun testLegacyStringBasedMatchIndexWithKsp() {
+        val sampleActivityKotlin =
+            Source.KotlinSource(
+                "SampleActivity.kt",
+                """
+                 package com.example
+                 import com.airbnb.deeplinkdispatch.DeepLink
+                 import com.airbnb.deeplinkdispatch.DeepLinkHandler
+                 import com.example.SampleModule
+                 @DeepLink("airbnb://example.com/deepLink")
+                 @DeepLinkHandler( SampleModule::class )
+                 class SampleActivity : android.app.Activity()
+                 """,
+            )
+        val sourceFiles =
+            listOf(
+                module,
+                sampleActivityKotlin,
+                fakeBaseDeeplinkDelegateJava,
+            )
+
+        // Compile WITHOUT asset-based match index (default behavior)
+        val result =
+            compileIncremental(
+                sourceFiles = sourceFiles,
+                useKsp = true,
+                incrementalFlag = false,
+                // No additionalArguments - default behavior
+            )
+
+        assertThat(result.result.exitCode).isEqualTo(KotlinCompilation.ExitCode.OK)
+
+        // Verify the registry uses legacy string-based approach
+        val registryFile = result.generatedFiles["SampleModuleRegistry.java"]
+        assertThat(registryFile).isNotNull
+        val registryContent = registryFile!!.readText()
+
+        // Should have the legacy approach
+        assertThat(registryContent).contains("Utils.readMatchIndexFromStrings")
+        assertThat(registryContent).contains("matchIndex0()")
+        assertThat(registryContent).contains("public SampleModuleRegistry()")
+
+        // Should NOT have AssetManager constructor
+        assertThat(registryContent).doesNotContain("AssetManager")
+        assertThat(registryContent).doesNotContain("loadMatchIndexFromAsset")
+    }
 }

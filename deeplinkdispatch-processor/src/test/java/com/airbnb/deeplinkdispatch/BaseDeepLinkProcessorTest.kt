@@ -137,24 +137,46 @@ open class BaseDeepLinkProcessorTest {
         )
 
     companion object {
+        /**
+         * Assert generated code matches expected output.
+         *
+         * @param results List of compilation results (may include both KAPT and KSP)
+         * @param registryClassName The fully qualified class name of the generated registry
+         * @param indexEntries Expected deep link entries (only verified for KAPT)
+         * @param generatedSourceFiles Expected generated source files for KAPT/legacy mode
+         * @param kspGeneratedSourceFiles Optional separate expected files for KSP mode.
+         *        If null, uses generatedSourceFiles for both modes.
+         *        KSP generates different code (AssetManager-based constructor vs string-based).
+         * @param generatedFiles Additional files to verify
+         */
         internal fun assertGeneratedCode(
             results: List<CompileResult>,
             registryClassName: String,
             indexEntries: List<DeepLinkEntry>,
             generatedSourceFiles: Map<String, String>,
+            kspGeneratedSourceFiles: Map<String, String>? = null,
             generatedFiles: Map<File, String> = emptyMap(),
         ) {
             results.forEach { result ->
                 Assertions
                     .assertThat(result.result.exitCode)
                     .isEqualTo(KotlinCompilation.ExitCode.OK)
+
+                // Use KSP-specific expected files if provided, otherwise use the common ones
+                val expectedSourceFiles =
+                    if (result.useKsp && kspGeneratedSourceFiles != null) {
+                        kspGeneratedSourceFiles
+                    } else {
+                        generatedSourceFiles
+                    }
+
                 Assertions
                     .assertThat(result.generatedFiles.keys)
-                    .containsExactlyInAnyOrder(*generatedSourceFiles.keys.toTypedArray())
-                generatedSourceFiles.keys.forEach { generatedSourceFileName ->
+                    .containsExactlyInAnyOrder(*expectedSourceFiles.keys.toTypedArray())
+                expectedSourceFiles.keys.forEach { generatedSourceFileName ->
                     Assertions
                         .assertThat(result.generatedFiles[generatedSourceFileName]?.readText())
-                        .isEqualTo(generatedSourceFiles[generatedSourceFileName])
+                        .isEqualTo(expectedSourceFiles[generatedSourceFileName])
                 }
                 generatedFiles.keys.forEach { generatedFile ->
                     Assertions

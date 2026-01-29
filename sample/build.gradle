@@ -18,7 +18,8 @@ android {
 
     defaultConfig {
         applicationId "com.airbnb.deeplinkdispatch.sample"
-        minSdk = androidConfig.minSdkVersion
+        // Sample app uses minSdk 21 because the test dependency (androidx.test:core) requires it
+        minSdk = 21
         targetSdk = androidConfig.compileSdkVersion
         versionCode 1
         versionName "1.0"
@@ -40,6 +41,12 @@ android {
     }
     lint {
         disable 'InvalidPackage'
+    }
+    testOptions {
+        unitTests {
+            // Required for Robolectric to access assets from the merged debug assets
+            includeAndroidResources = true
+        }
     }
 }
 
@@ -69,4 +76,37 @@ ksp {
                     + "com.airbnb.deeplinkdispatch.sample.library.LibraryDeepLink|"
                     + "com.airbnb.deeplinkdispatch.sample.ksplibrary.ManifestGenWebDeepLink"
     )
+}
+
+// Copy KSP library assets to main assets for Robolectric tests.
+// This is needed because Robolectric doesn't automatically merge assets from library dependencies
+// during unit testing (only during instrumentation tests and actual APK builds).
+// The assets are copied to the main assets source set so Robolectric can find them.
+//
+// We also need to copy assets from sample-benchmarkable-library since it now uses KSP with
+// asset-based match index.
+android.sourceSets.debug {
+    assets.srcDirs += layout.buildDirectory.dir('generated/libraryAssets')
+}
+
+afterEvaluate {
+    // Register the copy task in afterEvaluate to ensure the plugin tasks exist
+    def copyTask = tasks.register('copyLibraryAssetsForTest', Copy) {
+        from project(':sample-ksp-library').layout.buildDirectory.dir('intermediates/assets/debug/mergeDeepLinkAssetsDebug')
+        from project(':sample-benchmarkable-library').layout.buildDirectory.dir('intermediates/assets/debug/mergeDeepLinkAssetsDebug')
+        into layout.buildDirectory.dir('generated/libraryAssets')
+        // Use task path strings for lazy dependency resolution
+        dependsOn ':sample-ksp-library:mergeDeepLinkAssetsDebug'
+        dependsOn ':sample-benchmarkable-library:mergeDeepLinkAssetsDebug'
+    }
+
+    tasks.findByName('testDebugUnitTest')?.dependsOn(copyTask)
+    tasks.findByName('mergeDebugAssets')?.dependsOn(copyTask)
+    // Lint tasks also need to depend on the copy task since they scan assets
+    tasks.matching { task ->
+        def nameLower = task.name.toLowerCase()
+        nameLower.contains('lint') && nameLower.contains('debug')
+    }.configureEach {
+        dependsOn(copyTask)
+    }
 }
