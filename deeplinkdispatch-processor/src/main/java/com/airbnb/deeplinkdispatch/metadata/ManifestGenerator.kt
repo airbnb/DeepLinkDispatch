@@ -105,13 +105,13 @@ internal class ManifestGenerator(
                 }
             manifestWritten = true
             messager.printMessage(
-                Diagnostic.Kind.WARNING,
-                " Manifest generation: Generated at KSP resource output: ${ManifestGeneration.MANIFEST_RESOURCE_PATH}",
+                Diagnostic.Kind.NOTE,
+                "Manifest generation: Generated at KSP resource output: ${ManifestGeneration.MANIFEST_RESOURCE_PATH}",
             )
         } catch (e: Exception) {
             messager.printMessage(
                 Diagnostic.Kind.ERROR,
-                " Manifest generation failed: ${e.message}",
+                "Manifest generation failed: ${e.message}",
             )
         }
     }
