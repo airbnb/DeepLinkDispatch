@@ -344,7 +344,15 @@ class DeepLinkProcessor(
     private fun validClassElement(classElement: XTypeElement) = classElement.isActivity() || classElement.isHandler()
 
     private fun verifyMethod(methodElement: XMethodElement) {
-        if (!methodElement.isStatic()) {
+        // XProcessing's isStatic() for KSP relies on annotation type resolution to detect
+        // @JvmStatic. This resolution can intermittently fail during incremental compilation
+        // with KSP2's Analysis API, causing isStatic() to return false for methods that are
+        // actually @JvmStatic inside a Kotlin object. As a workaround, we also accept methods
+        // whose enclosing type is a Kotlin object or companion object, since all methods in
+        // these types are effectively static in the JVM bytecode.
+        val enclosingElement = methodElement.enclosingElement
+        val isInKotlinObject = enclosingElement is XTypeElement && enclosingElement.isKotlinObject()
+        if (!methodElement.isStatic() && !isInKotlinObject) {
             throw DeepLinkProcessorException(
                 element = methodElement,
                 errorMessage = "Only static methods can be annotated with @${DEEP_LINK_CLASS.simpleName}",

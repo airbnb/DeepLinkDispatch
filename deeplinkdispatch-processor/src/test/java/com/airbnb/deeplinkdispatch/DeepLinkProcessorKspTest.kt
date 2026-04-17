@@ -1449,4 +1449,74 @@ class DeepLinkProcessorKspTest : BaseDeepLinkProcessorTest() {
             )
         }
     }
+
+    /**
+     * Verifies that methods inside a Kotlin `object` with @JvmStatic compile successfully.
+     * This exercises the isInKotlinObject fallback in verifyMethod(), which works around
+     * intermittent KSP annotation resolution failures where isStatic() returns false
+     * for @JvmStatic methods in object declarations.
+     */
+    @Test
+    fun testMethodInKotlinObjectWithJvmStaticCompiles() {
+        val kotlinObjectSource =
+            Source.KotlinSource(
+                "com/example/SampleDeepLinks.kt",
+                """
+                 package com.example
+                 import android.content.Context
+                 import android.content.Intent
+                 import com.airbnb.deeplinkdispatch.DeepLink
+
+                 object SampleDeepLinks {
+                     @DeepLink("airbnb://example.com/deepLink")
+                     @JvmStatic
+                     fun intentForDeepLink(context: Context): Intent = Intent()
+                 }
+                 """,
+            )
+        val results =
+            listOf(
+                compileIncremental(
+                    sourceFiles = listOf(kotlinObjectSource, module, fakeBaseDeeplinkDelegateJava),
+                    useKsp = true,
+                ),
+            )
+        results.forEach { result ->
+            assertThat(result.result.exitCode)
+                .isEqualTo(KotlinCompilation.ExitCode.OK)
+        }
+    }
+
+    /**
+     * Verifies that a non-static method (no @JvmStatic) in a plain class still fails.
+     */
+    @Test
+    fun testNonStaticMethodInClassStillFails() {
+        val nonStaticSource =
+            Source.KotlinSource(
+                "com/example/SampleActivity.kt",
+                """
+                 package com.example
+                 import android.content.Context
+                 import android.content.Intent
+                 import com.airbnb.deeplinkdispatch.DeepLink
+
+                 class SampleActivity : android.app.Activity() {
+                     @DeepLink("airbnb://example.com/deepLink")
+                     fun intentFromNoStatic(context: Context): Intent = Intent()
+                 }
+                 """,
+            )
+        val results =
+            listOf(
+                compileIncremental(
+                    sourceFiles = listOf(nonStaticSource, module, fakeBaseDeeplinkDelegateJava),
+                    useKsp = true,
+                ),
+            )
+        assertCompileError(
+            results = results,
+            errorMessage = "Only static methods can be annotated",
+        )
+    }
 }
