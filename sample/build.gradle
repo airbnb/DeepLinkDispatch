@@ -89,24 +89,31 @@ android.sourceSets.debug {
     assets.srcDirs += layout.buildDirectory.dir('generated/libraryAssets')
 }
 
-afterEvaluate {
-    // Register the copy task in afterEvaluate to ensure the plugin tasks exist
+// The producer task (`mergeDeepLinkAssetsDebug`) is registered inside the other project's
+// AGP `onVariants { }` callback, which fires during `projectsEvaluated` — after both
+// `afterEvaluate` and `evaluationDependsOn` have run. Defer wiring until then.
+gradle.projectsEvaluated {
     def copyTask = tasks.register('copyLibraryAssetsForTest', Copy) {
         from project(':sample-ksp-library').layout.buildDirectory.dir('intermediates/assets/debug/mergeDeepLinkAssetsDebug')
         from project(':sample-benchmarkable-library').layout.buildDirectory.dir('intermediates/assets/debug/mergeDeepLinkAssetsDebug')
         into layout.buildDirectory.dir('generated/libraryAssets')
-        // Use task path strings for lazy dependency resolution
-        dependsOn ':sample-ksp-library:mergeDeepLinkAssetsDebug'
-        dependsOn ':sample-benchmarkable-library:mergeDeepLinkAssetsDebug'
+        dependsOn project(':sample-ksp-library').tasks.named('mergeDeepLinkAssetsDebug')
+        dependsOn project(':sample-benchmarkable-library').tasks.named('mergeDeepLinkAssetsDebug')
     }
 
-    tasks.findByName('testDebugUnitTest')?.dependsOn(copyTask)
-    tasks.findByName('mergeDebugAssets')?.dependsOn(copyTask)
-    // Lint tasks also need to depend on the copy task since they scan assets
-    tasks.matching { task ->
-        def nameLower = task.name.toLowerCase()
-        nameLower.contains('lint') && nameLower.contains('debug')
-    }.configureEach {
+    // Debug-specific tasks that consume these assets. Match by exact name to avoid depending on
+    // unrelated tasks (e.g. lintVitalRelease) that happen to contain "lint" and "debug".
+    def consumerTaskNames = [
+            'testDebugUnitTest',
+            'mergeDebugAssets',
+            'lintDebug',
+            'lintAnalyzeDebug',
+            'generateDebugLintModel',
+            'generateDebugUnitTestLintModel',
+            'lintAnalyzeDebugUnitTest',
+            'lintReportDebug',
+    ] as Set
+    tasks.matching { it.name in consumerTaskNames }.configureEach {
         dependsOn(copyTask)
     }
 }

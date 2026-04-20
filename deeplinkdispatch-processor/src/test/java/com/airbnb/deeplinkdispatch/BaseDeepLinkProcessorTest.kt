@@ -123,6 +123,29 @@ open class BaseDeepLinkProcessorTest {
                 """,
         )
 
+    /**
+     * Stub for the real [com.airbnb.deeplinkdispatch.RegistryUtils] (which lives in the Android
+     * `:deeplinkdispatch` module and so isn't on the processor test classpath). Needed so KSP-
+     * generated registries that call `RegistryUtils.readMatchIndexFromAsset` compile during tests.
+     */
+    @JvmField
+    protected val fakeRegistryUtilsJava =
+        Source.JavaSource(
+            "com.airbnb.deeplinkdispatch.RegistryUtils",
+            """
+                package com.airbnb.deeplinkdispatch;
+
+                import android.content.res.AssetManager;
+
+                public final class RegistryUtils {
+                    private RegistryUtils() {}
+                    public static byte[] readMatchIndexFromAsset(AssetManager assetManager, String assetPath) {
+                        return new byte[0];
+                    }
+                }
+                """,
+        )
+
     internal val module =
         Source.JavaSource(
             "com.example.SampleModule",

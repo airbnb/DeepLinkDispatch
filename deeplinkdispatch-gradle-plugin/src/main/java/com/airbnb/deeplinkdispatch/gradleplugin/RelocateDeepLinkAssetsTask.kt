@@ -28,6 +28,8 @@ abstract class RelocateDeepLinkAssetsTask : DefaultTask() {
      * The directory where KSP generates the asset files.
      * Path: build/generated/ksp/<variant>/resources/assets/deeplinkdispatch/
      */
+    // Using @InputFiles (instead of @InputDirectory) so the task can still execute when the
+    // directory hasn't been created yet — modules with no deep links never produce this dir.
     @get:InputFiles
     @get:Optional
     @get:PathSensitive(PathSensitivity.RELATIVE)
@@ -41,10 +43,12 @@ abstract class RelocateDeepLinkAssetsTask : DefaultTask() {
     abstract val safeAssetsDir: DirectoryProperty
 
     init {
-        // Force the task to run when the source directory exists with files
+        // Force the task to run when the source directory exists with files.
+        // Gradle's default up-to-date check compares content, but this task also *removes*
+        // the source files (to keep them out of Java-resource processing), so if KSP is
+        // restored FROM-CACHE we need to run again to re-delete them.
         outputs.upToDateWhen {
             val sourceDir = kspAssetsDir.orNull?.asFile
-            // Task is only up-to-date if source directory doesn't exist or is empty
             sourceDir == null || !sourceDir.exists() || sourceDir.listFiles()?.isEmpty() != false
         }
     }
@@ -55,25 +59,16 @@ abstract class RelocateDeepLinkAssetsTask : DefaultTask() {
         val destDir = safeAssetsDir.get().asFile
 
         if (sourceDir != null && sourceDir.exists() && sourceDir.isDirectory) {
-            val files = sourceDir.listFiles() ?: emptyArray()
+            val files = sourceDir.listFiles()?.filter { it.isFile }.orEmpty()
             if (files.isNotEmpty()) {
-                // Ensure destination directory exists
                 destDir.mkdirs()
-
-                // Copy all files to safe location
                 files.forEach { file ->
-                    if (file.isFile) {
-                        file.copyTo(destDir.resolve(file.name), overwrite = true)
-                    }
-                }
-
-                // Delete from KSP resources to prevent Java resource processing
-                files.forEach { file ->
+                    file.copyTo(destDir.resolve(file.name), overwrite = true)
                     file.delete()
                 }
-
-                // Delete empty parent directories up to but not including "resources"
-                var parentDir = sourceDir
+                // Clean up empty parent dirs up to (but not including) the `resources` root
+                // so the dir tree doesn't leak into Java-resource processing.
+                var parentDir: java.io.File? = sourceDir
                 while (parentDir != null &&
                     parentDir.name != "resources" &&
                     parentDir.isDirectory &&
@@ -84,11 +79,9 @@ abstract class RelocateDeepLinkAssetsTask : DefaultTask() {
                     parentDir = nextParent
                 }
             }
-        } else if (destDir.exists() && destDir.listFiles()?.isNotEmpty() == true) {
-            // Source doesn't exist but dest does - this can happen on incremental builds
-            // where KSP was UP-TO-DATE and we already moved the files previously.
-            // The dest files are still valid, so nothing to do.
         }
-        // If neither exists, no assets were generated (which is fine for modules without deep links)
+        // If neither source nor dest has files, no assets were generated — fine for modules
+        // without deep links. If source is gone but dest has the previously-moved files, they
+        // remain valid across incremental builds.
     }
 }

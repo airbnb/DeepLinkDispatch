@@ -52,6 +52,7 @@ import org.jetbrains.annotations.NotNull
 import java.io.IOException
 import java.lang.reflect.Type
 import java.net.MalformedURLException
+import java.nio.file.Path
 import java.util.Arrays
 import javax.lang.model.SourceVersion
 import javax.lang.model.element.Modifier
@@ -951,13 +952,13 @@ class DeepLinkProcessor(
 
         val constructor =
             if (useAssetBasedMatchIndex) {
-                // Asset-based: Write binary index as asset and generate asset-loading constructor
+                // Asset-based: Write binary index as an asset and generate a constructor that loads
+                // it via RegistryUtils.readMatchIndexFromAsset() at runtime.
                 writeMatchIndexAsset(className, urisTrie, originatingElements)
-                // Add the static helper method for loading from assets
-                deepLinkRegistryBuilder.addMethod(generateLoadFromAssetMethod())
                 generateAssetLoadingConstructor(className, pathVariableKeys)
             } else {
-                // KAPT: Use legacy string-based approach
+                // Default (and only path for KAPT): encode the index as chunked strings in the
+                // generated class and load via Utils.readMatchIndexFromStrings().
                 val stringMethodNames = getStringMethodNames(urisTrie, deepLinkRegistryBuilder)
                 generateStringBasedConstructor(stringMethodNames, pathVariableKeys)
             }
@@ -988,24 +989,23 @@ class DeepLinkProcessor(
         try {
             environment.filer
                 .writeResource(
-                    filePath =
-                        java.nio.file.Path
-                            .of(resourcePath),
+                    filePath = Path.of(resourcePath),
                     originatingElements = originatingElements.toList(),
                     mode = XFiler.Mode.Aggregating,
                 ).use { outputStream ->
                     outputStream.write(indexBytes)
                 }
-            environment.messager.printMessage(
-                Diagnostic.Kind.NOTE,
-                "DeepLinkDispatch: Generated match index asset at: $resourcePath (${indexBytes.size} bytes)",
-            )
-        } catch (e: Exception) {
-            environment.messager.printMessage(
-                Diagnostic.Kind.ERROR,
-                "DeepLinkDispatch: Failed to write match index asset: ${e.message}",
+        } catch (e: IOException) {
+            // Rethrow so the build fails: if we emitted an asset-loading constructor but couldn't
+            // write the asset the app would crash at runtime with a less useful error.
+            throw DeepLinkProcessorException(
+                "DeepLinkDispatch: Failed to write match index asset at $resourcePath: ${e.message}",
             )
         }
+        environment.messager.printMessage(
+            Diagnostic.Kind.NOTE,
+            "DeepLinkDispatch: Generated match index asset at: $resourcePath (${indexBytes.size} bytes)",
+        )
     }
 
     /**
@@ -1023,21 +1023,20 @@ class DeepLinkProcessor(
         pathVariableKeys: Set<String>,
     ): MethodSpec {
         val assetPath = ManifestGeneration.getMatchIndexAssetPath(className)
-        val assetManagerClass = ClassName.get("android.content.res", "AssetManager")
-
         return MethodSpec
             .constructorBuilder()
             .addModifiers(Modifier.PUBLIC)
             .addParameter(
                 ParameterSpec
-                    .builder(assetManagerClass, "assetManager")
+                    .builder(CLASS_ASSET_MANAGER, "assetManager")
                     .addAnnotation(NotNull::class.java)
                     .build(),
             ).addCode(
                 CodeBlock
                     .builder()
                     .add(
-                        "super(loadMatchIndexFromAsset(assetManager, \$S)",
+                        "super(\$T.readMatchIndexFromAsset(assetManager, \$S)",
+                        CLASS_REGISTRY_UTILS,
                         assetPath,
                     ).build(),
             ).addCode(generatePathVariableKeysBlock(pathVariableKeys))
@@ -1063,53 +1062,6 @@ class DeepLinkProcessor(
                     ).build(),
             ).addCode(generatePathVariableKeysBlock(pathVariableKeys))
             .build()
-
-    /**
-     * Generates the static helper method for loading the match index from an Android asset.
-     *
-     * Generated method:
-     * private static byte[] loadMatchIndexFromAsset(AssetManager assetManager, String assetPath) {
-     *     try (InputStream is = assetManager.open(assetPath)) {
-     *         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-     *         int nRead;
-     *         byte[] data = new byte[4096];
-     *         while ((nRead = is.read(data, 0, data.length)) != -1) {
-     *             buffer.write(data, 0, nRead);
-     *         }
-     *         return buffer.toByteArray();
-     *     } catch (java.io.IOException e) {
-     *         throw new RuntimeException("Failed to load DeepLinkDispatch match index from asset: " + assetPath, e);
-     *     }
-     * }
-     */
-    private fun generateLoadFromAssetMethod(): MethodSpec {
-        val assetManagerClass = ClassName.get("android.content.res", "AssetManager")
-        val inputStreamClass = ClassName.get("java.io", "InputStream")
-        val byteArrayOutputStreamClass = ClassName.get("java.io", "ByteArrayOutputStream")
-        val ioExceptionClass = ClassName.get("java.io", "IOException")
-
-        return MethodSpec
-            .methodBuilder("loadMatchIndexFromAsset")
-            .addModifiers(Modifier.PRIVATE, Modifier.STATIC)
-            .returns(ByteArray::class.java)
-            .addParameter(assetManagerClass, "assetManager")
-            .addParameter(String::class.java, "assetPath")
-            .beginControlFlow("try (\$T is = assetManager.open(assetPath))", inputStreamClass)
-            .addStatement("\$T buffer = new \$T()", byteArrayOutputStreamClass, byteArrayOutputStreamClass)
-            .addStatement("int nRead")
-            .addStatement("byte[] data = new byte[4096]")
-            .beginControlFlow("while ((nRead = is.read(data, 0, data.length)) != -1)")
-            .addStatement("buffer.write(data, 0, nRead)")
-            .endControlFlow()
-            .addStatement("return buffer.toByteArray()")
-            .nextControlFlow("catch (\$T e)", ioExceptionClass)
-            .addStatement(
-                "throw new \$T(\$S + assetPath, e)",
-                RuntimeException::class.java,
-                "DeepLinkDispatch: Failed to load match index from asset: ",
-            ).endControlFlow()
-            .build()
-    }
 
     private fun generatePathVariableKeysBlock(pathVariableKeys: Set<String>): CodeBlock {
         val pathVariableKeysBuilder = CodeBlock.builder()
@@ -1177,6 +1129,10 @@ class DeepLinkProcessor(
         private val CLASS_BASE_DEEP_LINK_DELEGATE =
             ClassName.get(PACKAGE_NAME, "BaseDeepLinkDelegate")
         private val CLASS_UTILS = ClassName.get(Utils::class.java)
+        private val CLASS_REGISTRY_UTILS =
+            ClassName.get("com.airbnb.deeplinkdispatch", "RegistryUtils")
+        private val CLASS_ASSET_MANAGER =
+            ClassName.get("android.content.res", "AssetManager")
         private val DEEP_LINK_CLASS = DeepLink::class
         private val DEEP_LINK_SPEC_CLASS = DeepLinkSpec::class
         const val REGISTRY_CLASS_SUFFIX = "Registry"

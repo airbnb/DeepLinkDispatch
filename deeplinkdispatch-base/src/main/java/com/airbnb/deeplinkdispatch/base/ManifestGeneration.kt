@@ -53,7 +53,6 @@ object ManifestGeneration {
      * @param moduleName The module name (will be lowercased)
      * @return The asset path relative to the assets directory
      */
-    @JvmStatic
     fun getMatchIndexAssetPath(moduleName: String): String =
         "$MATCH_INDEX_ASSET_PATH_PREFIX/${moduleName.lowercase()}$MATCH_INDEX_ASSET_EXTENSION"
 
@@ -63,6 +62,30 @@ object ManifestGeneration {
      * @param moduleName The module name (will be lowercased)
      * @return The resource path for XFiler.writeResource()
      */
-    @JvmStatic
     fun getMatchIndexResourcePath(moduleName: String): String = "assets/${getMatchIndexAssetPath(moduleName)}"
+
+    /**
+     * Subdirectory inside the KSP output where `XFiler.writeResource()` places files.
+     * Full path: `build/generated/ksp/<variant>/resources/...`
+     */
+    const val KSP_RESOURCES_SUBDIR = "resources"
+
+    /**
+     * Returns the build-relative path to KSP's generated resources directory for a variant.
+     * Example: `generated/ksp/debug/resources`
+     */
+    fun kspResourcesDir(variantName: String): String = "generated/ksp/$variantName/$KSP_RESOURCES_SUBDIR"
+
+    /**
+     * Returns the build-relative path to the generated manifest under KSP resources for a variant.
+     */
+    fun kspGeneratedManifestPath(variantName: String): String =
+        "${kspResourcesDir(variantName)}/$MANIFEST_RESOURCE_PATH"
+
+    /**
+     * Returns the build-relative path to the directory containing the generated asset files under
+     * KSP resources for a variant.
+     */
+    fun kspGeneratedAssetsDir(variantName: String): String =
+        "${kspResourcesDir(variantName)}/assets/$MATCH_INDEX_ASSET_PATH_PREFIX"
 }
