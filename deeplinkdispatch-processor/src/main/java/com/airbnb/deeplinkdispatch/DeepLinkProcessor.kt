@@ -28,6 +28,7 @@ import androidx.room.compiler.processing.addOriginatingElement
 import androidx.room.compiler.processing.writeTo
 import com.airbnb.deeplinkdispatch.ProcessorUtils.decapitalizeIfNotTwoFirstCharsUpperCase
 import com.airbnb.deeplinkdispatch.ProcessorUtils.hasEmptyOrNullString
+import com.airbnb.deeplinkdispatch.base.ManifestGeneration
 import com.airbnb.deeplinkdispatch.base.MatchIndex.ALLOWED_VALUES_DELIMITER
 import com.airbnb.deeplinkdispatch.base.Utils
 import com.airbnb.deeplinkdispatch.base.Utils.isConfigurablePathSegment
@@ -51,6 +52,7 @@ import org.jetbrains.annotations.NotNull
 import java.io.IOException
 import java.lang.reflect.Type
 import java.net.MalformedURLException
+import java.nio.file.Path
 import java.util.Arrays
 import javax.lang.model.SourceVersion
 import javax.lang.model.element.Modifier
@@ -118,6 +120,7 @@ class DeepLinkProcessor(
                 Documentor.DOC_OUTPUT_PROPERTY_NAME,
                 OPTION_CUSTOM_ANNOTATIONS,
                 OPTION_INCREMENTAL,
+                ManifestGeneration.OPTION_USE_ASSET_BASED_MATCH_INDEX,
                 if (incrementalMetadata.incremental) {
                     "org.gradle.annotation.processing.aggregating"
                 } else {
@@ -929,32 +932,37 @@ class DeepLinkProcessor(
                 }
             }
         }
+
+        // Use asset-based match index if:
+        // 1. We're running in KSP (not KAPT), AND
+        // 2. The deepLink.useAssetBasedMatchIndex option is set to "true" (explicitly opted in)
+        // This allows library modules (with the Gradle plugin) to use the efficient asset approach
+        // while application modules continue to use the legacy string-based approach.
+        val isKsp = environment.backend == XProcessingEnv.Backend.KSP
+        val useAssetBasedMatchIndex =
+            isKsp &&
+                environment.options[ManifestGeneration.OPTION_USE_ASSET_BASED_MATCH_INDEX]?.toBoolean() == true
+        val registryClassName = className + REGISTRY_CLASS_SUFFIX
+
         val deepLinkRegistryBuilder =
             TypeSpec
-                .classBuilder(
-                    (className + REGISTRY_CLASS_SUFFIX),
-                ).addModifiers(Modifier.PUBLIC, Modifier.FINAL)
+                .classBuilder(registryClassName)
+                .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
                 .superclass(ClassName.get(BaseRegistry::class.java))
-        val stringMethodNames = getStringMethodNames(urisTrie, deepLinkRegistryBuilder)
-        val constructor =
-            MethodSpec
-                .constructorBuilder()
-                .addModifiers(Modifier.PUBLIC)
-                .addCode(
-                    CodeBlock
-                        .builder()
-                        .add(
-                            "super(\$T.readMatchIndexFromStrings( new String[] {$stringMethodNames})",
-                            CLASS_UTILS,
-                        ).build(),
-                ).addCode(generatePathVariableKeysBlock(pathVariableKeys))
-                .build()
 
-        // For debugging it is nice to have a file version of the index, just comment this in to get
-        // on in the classpath
-//    FileObject indexResource = filer.createResource(StandardLocation.CLASS_OUTPUT, "",
-//    MatchIndex.getMatchIdxFileName(className));
-//    urisTrie.writeToOutoutStream(indexResource.openOutputStream());
+        val constructor =
+            if (useAssetBasedMatchIndex) {
+                // Asset-based: Write binary index as an asset and generate a constructor that loads
+                // it via RegistryUtils.readMatchIndexFromAsset() at runtime.
+                writeMatchIndexAsset(className, urisTrie, originatingElements)
+                generateAssetLoadingConstructor(className, pathVariableKeys)
+            } else {
+                // Default (and only path for KAPT): encode the index as chunked strings in the
+                // generated class and load via Utils.readMatchIndexFromStrings().
+                val stringMethodNames = getStringMethodNames(urisTrie, deepLinkRegistryBuilder)
+                generateStringBasedConstructor(stringMethodNames, pathVariableKeys)
+            }
+
         deepLinkRegistryBuilder.addMethod(constructor)
         originatingElements.forEach { originatingElement ->
             deepLinkRegistryBuilder.addOriginatingElement(originatingElement)
@@ -964,6 +972,96 @@ class DeepLinkProcessor(
             .build()
             .writeTo(environment.filer, XFiler.Mode.Aggregating)
     }
+
+    /**
+     * Writes the match index byte array as an Android asset file.
+     * The asset will be located at: assets/deeplinkdispatch/<modulename>.bin
+     */
+    @ExperimentalUnsignedTypes
+    private fun writeMatchIndexAsset(
+        className: String,
+        urisTrie: Root,
+        originatingElements: Set<XElement>,
+    ) {
+        val indexBytes = urisTrie.toUByteArray().toByteArray()
+        val resourcePath = ManifestGeneration.getMatchIndexResourcePath(className)
+
+        try {
+            environment.filer
+                .writeResource(
+                    filePath = Path.of(resourcePath),
+                    originatingElements = originatingElements.toList(),
+                    mode = XFiler.Mode.Aggregating,
+                ).use { outputStream ->
+                    outputStream.write(indexBytes)
+                }
+        } catch (e: IOException) {
+            // Rethrow so the build fails: if we emitted an asset-loading constructor but couldn't
+            // write the asset the app would crash at runtime with a less useful error.
+            throw DeepLinkProcessorException(
+                "DeepLinkDispatch: Failed to write match index asset at $resourcePath: ${e.message}",
+            )
+        }
+        environment.messager.printMessage(
+            Diagnostic.Kind.NOTE,
+            "DeepLinkDispatch: Generated match index asset at: $resourcePath (${indexBytes.size} bytes)",
+        )
+    }
+
+    /**
+     * Generates a constructor that loads the match index from an Android asset.
+     * This is used for KSP-generated registries.
+     *
+     * Generated constructor signature:
+     * public SampleModuleRegistry(AssetManager assetManager) {
+     *     super(loadMatchIndexFromAsset(assetManager, "deeplinkdispatch/samplemodule.bin"),
+     *           new String[]{"configurable-path-segment"});
+     * }
+     */
+    private fun generateAssetLoadingConstructor(
+        className: String,
+        pathVariableKeys: Set<String>,
+    ): MethodSpec {
+        val assetPath = ManifestGeneration.getMatchIndexAssetPath(className)
+        return MethodSpec
+            .constructorBuilder()
+            .addModifiers(Modifier.PUBLIC)
+            .addParameter(
+                ParameterSpec
+                    .builder(CLASS_ASSET_MANAGER, "assetManager")
+                    .addAnnotation(NotNull::class.java)
+                    .build(),
+            ).addCode(
+                CodeBlock
+                    .builder()
+                    .add(
+                        "super(\$T.readMatchIndexFromAsset(assetManager, \$S)",
+                        CLASS_REGISTRY_UTILS,
+                        assetPath,
+                    ).build(),
+            ).addCode(generatePathVariableKeysBlock(pathVariableKeys))
+            .build()
+    }
+
+    /**
+     * Generates the legacy string-based constructor for KAPT.
+     */
+    private fun generateStringBasedConstructor(
+        stringMethodNames: StringBuilder,
+        pathVariableKeys: Set<String>,
+    ): MethodSpec =
+        MethodSpec
+            .constructorBuilder()
+            .addModifiers(Modifier.PUBLIC)
+            .addCode(
+                CodeBlock
+                    .builder()
+                    .add(
+                        "super(\$T.readMatchIndexFromStrings( new String[] {$stringMethodNames})",
+                        CLASS_UTILS,
+                    ).build(),
+            ).addCode(generatePathVariableKeysBlock(pathVariableKeys))
+            .build()
 
     private fun generatePathVariableKeysBlock(pathVariableKeys: Set<String>): CodeBlock {
         val pathVariableKeysBuilder = CodeBlock.builder()
@@ -1031,6 +1129,10 @@ class DeepLinkProcessor(
         private val CLASS_BASE_DEEP_LINK_DELEGATE =
             ClassName.get(PACKAGE_NAME, "BaseDeepLinkDelegate")
         private val CLASS_UTILS = ClassName.get(Utils::class.java)
+        private val CLASS_REGISTRY_UTILS =
+            ClassName.get("com.airbnb.deeplinkdispatch", "RegistryUtils")
+        private val CLASS_ASSET_MANAGER =
+            ClassName.get("android.content.res", "AssetManager")
         private val DEEP_LINK_CLASS = DeepLink::class
         private val DEEP_LINK_SPEC_CLASS = DeepLinkSpec::class
         const val REGISTRY_CLASS_SUFFIX = "Registry"

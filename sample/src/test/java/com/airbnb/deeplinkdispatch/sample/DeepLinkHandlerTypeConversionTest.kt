@@ -19,7 +19,7 @@ import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 import java.lang.NumberFormatException
 
-@Config(sdk = [21], manifest = "../sample/src/main/AndroidManifest.xml")
+@Config(sdk = [21])
 @RunWith(RobolectricTestRunner::class)
 class DeepLinkHandlerTypeConversionTest {
     @Test

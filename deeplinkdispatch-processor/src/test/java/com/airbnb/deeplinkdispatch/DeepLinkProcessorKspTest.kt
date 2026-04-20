@@ -1519,4 +1519,323 @@ class DeepLinkProcessorKspTest : BaseDeepLinkProcessorTest() {
             errorMessage = "Only static methods can be annotated",
         )
     }
+
+    /**
+     * Test that asset-based match index generation works correctly with KSP.
+     * When the `deepLink.useAssetBasedMatchIndex` option is set to "true",
+     * the processor should:
+     * 1. Generate a registry class with an AssetManager constructor
+     * 2. Generate a binary asset file at assets/deeplinkdispatch/<module>.bin
+     * 3. NOT generate the matchIndex0() string method
+     */
+    @Test
+    fun testAssetBasedMatchIndexGeneration() {
+        val sampleActivityKotlin =
+            Source.KotlinSource(
+                "SampleActivity.kt",
+                """
+                 package com.example
+                 import com.airbnb.deeplinkdispatch.DeepLink
+                 import com.airbnb.deeplinkdispatch.DeepLinkHandler
+                 import com.example.SampleModule
+                 @DeepLink("airbnb://example.com/deepLink")
+                 @DeepLinkHandler( SampleModule::class )
+                 class SampleActivity : android.app.Activity()
+                 """,
+            )
+        val sourceFiles =
+            listOf(
+                module,
+                sampleActivityKotlin,
+                fakeBaseDeeplinkDelegateJava,
+                fakeRegistryUtilsJava,
+            )
+
+        // Compile with asset-based match index enabled
+        val result =
+            compileIncremental(
+                sourceFiles = sourceFiles,
+                useKsp = true,
+                incrementalFlag = false,
+                additionalArguments =
+                    mutableMapOf(
+                        "deepLink.useAssetBasedMatchIndex" to "true",
+                    ),
+            )
+
+        assertThat(result.result.exitCode).isEqualTo(KotlinCompilation.ExitCode.OK)
+
+        // Verify the registry class was generated with AssetManager constructor
+        val registryFile = result.generatedFiles["SampleModuleRegistry.java"]
+        assertThat(registryFile).isNotNull
+        val registryContent = registryFile!!.readText()
+
+        // Verify AssetManager constructor delegates to RegistryUtils.readMatchIndexFromAsset.
+        assertThat(registryContent).contains("import android.content.res.AssetManager;")
+        assertThat(registryContent).contains("public SampleModuleRegistry(@NotNull AssetManager assetManager)")
+        assertThat(registryContent).contains("RegistryUtils.readMatchIndexFromAsset(assetManager,")
+        assertThat(registryContent).contains("\"deeplinkdispatch/samplemodule.bin\"")
+
+        // Helper is shared in RegistryUtils — it should NOT be inlined into the registry class.
+        assertThat(registryContent).doesNotContain("private static byte[] loadMatchIndexFromAsset")
+        assertThat(registryContent).doesNotContain("ByteArrayOutputStream")
+
+        // Verify NO matchIndex0() string method was generated (this is the legacy approach)
+        assertThat(registryContent).doesNotContain("matchIndex0()")
+        assertThat(registryContent).doesNotContain("Utils.readMatchIndexFromStrings")
+
+        // Verify the binary asset file was generated
+        val assetFile = result.generatedFiles["samplemodule.bin"]
+        assertThat(assetFile).isNotNull
+        assertThat(assetFile!!.length()).isGreaterThan(0)
+    }
+
+    /**
+     * Test that DeepLinkDelegate is also generated correctly when using asset-based match index.
+     * The delegate should have constructors that accept the registry with AssetManager.
+     */
+    @Test
+    fun testAssetBasedMatchIndexDelegateGeneration() {
+        val sampleActivityKotlin =
+            Source.KotlinSource(
+                "SampleActivity.kt",
+                """
+                 package com.example
+                 import com.airbnb.deeplinkdispatch.DeepLink
+                 import com.airbnb.deeplinkdispatch.DeepLinkHandler
+                 import com.example.SampleModule
+                 @DeepLink("airbnb://example.com/test")
+                 @DeepLinkHandler( SampleModule::class )
+                 class SampleActivity : android.app.Activity()
+                 """,
+            )
+        val sourceFiles =
+            listOf(
+                module,
+                sampleActivityKotlin,
+                fakeBaseDeeplinkDelegateJava,
+                fakeRegistryUtilsJava,
+            )
+
+        // Compile with asset-based match index enabled
+        val result =
+            compileIncremental(
+                sourceFiles = sourceFiles,
+                useKsp = true,
+                incrementalFlag = false,
+                additionalArguments =
+                    mutableMapOf(
+                        "deepLink.useAssetBasedMatchIndex" to "true",
+                    ),
+            )
+
+        assertThat(result.result.exitCode).isEqualTo(KotlinCompilation.ExitCode.OK)
+
+        // Verify the DeepLinkDelegate was generated and can work with the asset-based registry
+        val delegateFile = result.generatedFiles["DeepLinkDelegate.java"]
+        assertThat(delegateFile).isNotNull
+        val delegateContent = delegateFile!!.readText()
+
+        // The delegate should still accept the SampleModuleRegistry
+        assertThat(delegateContent).contains("SampleModuleRegistry sampleModuleRegistry")
+        assertThat(delegateContent).contains("extends BaseDeepLinkDelegate")
+    }
+
+    /**
+     * Test that configurable path segments are still included in the registry when using asset-based match index.
+     */
+    @Test
+    fun testAssetBasedMatchIndexWithConfigurablePathSegments() {
+        val sampleActivityKotlin =
+            Source.KotlinSource(
+                "SampleActivity.kt",
+                """
+                 package com.example
+                 import com.airbnb.deeplinkdispatch.DeepLink
+                 import com.airbnb.deeplinkdispatch.DeepLinkHandler
+                 import com.example.SampleModule
+                 @DeepLink("airbnb://example.com/<configurable-path-segment>/test")
+                 @DeepLinkHandler( SampleModule::class )
+                 class SampleActivity : android.app.Activity()
+                 """,
+            )
+        val sourceFiles =
+            listOf(
+                module,
+                sampleActivityKotlin,
+                fakeBaseDeeplinkDelegateJava,
+                fakeRegistryUtilsJava,
+            )
+
+        // Compile with asset-based match index enabled
+        val result =
+            compileIncremental(
+                sourceFiles = sourceFiles,
+                useKsp = true,
+                incrementalFlag = false,
+                additionalArguments =
+                    mutableMapOf(
+                        "deepLink.useAssetBasedMatchIndex" to "true",
+                    ),
+            )
+
+        assertThat(result.result.exitCode).isEqualTo(KotlinCompilation.ExitCode.OK)
+
+        // Verify the registry class includes configurable path segments
+        val registryFile = result.generatedFiles["SampleModuleRegistry.java"]
+        assertThat(registryFile).isNotNull
+        val registryContent = registryFile!!.readText()
+
+        // Should have the configurable path segment in the constructor
+        assertThat(registryContent).contains("\"configurable-path-segment\"")
+        assertThat(registryContent).contains("new String[]{\"configurable-path-segment\"}")
+    }
+
+    /**
+     * Test that when useAssetBasedMatchIndex is NOT set, the legacy string-based approach is used.
+     * This verifies backward compatibility.
+     */
+    @Test
+    fun testLegacyStringBasedMatchIndexWithKsp() {
+        val sampleActivityKotlin =
+            Source.KotlinSource(
+                "SampleActivity.kt",
+                """
+                 package com.example
+                 import com.airbnb.deeplinkdispatch.DeepLink
+                 import com.airbnb.deeplinkdispatch.DeepLinkHandler
+                 import com.example.SampleModule
+                 @DeepLink("airbnb://example.com/deepLink")
+                 @DeepLinkHandler( SampleModule::class )
+                 class SampleActivity : android.app.Activity()
+                 """,
+            )
+        val sourceFiles =
+            listOf(
+                module,
+                sampleActivityKotlin,
+                fakeBaseDeeplinkDelegateJava,
+            )
+
+        // Compile WITHOUT asset-based match index (default behavior)
+        val result =
+            compileIncremental(
+                sourceFiles = sourceFiles,
+                useKsp = true,
+                incrementalFlag = false,
+                // No additionalArguments - default behavior
+            )
+
+        assertThat(result.result.exitCode).isEqualTo(KotlinCompilation.ExitCode.OK)
+
+        // Verify the registry uses legacy string-based approach
+        val registryFile = result.generatedFiles["SampleModuleRegistry.java"]
+        assertThat(registryFile).isNotNull
+        val registryContent = registryFile!!.readText()
+
+        // Should have the legacy approach
+        assertThat(registryContent).contains("Utils.readMatchIndexFromStrings")
+        assertThat(registryContent).contains("matchIndex0()")
+        assertThat(registryContent).contains("public SampleModuleRegistry()")
+
+        // Should NOT have AssetManager constructor
+        assertThat(registryContent).doesNotContain("AssetManager")
+        assertThat(registryContent).doesNotContain("loadMatchIndexFromAsset")
+    }
+
+    /**
+     * End-to-end check: the binary match index written as an asset must be byte-for-byte
+     * equivalent to the index produced by the legacy string-based path (when decoded back to
+     * bytes). If they ever diverge, runtime matching in asset-based registries would silently
+     * disagree with the non-asset path.
+     */
+    @Test
+    fun testAssetBinaryMatchesStringEncodedIndex() {
+        val source =
+            Source.KotlinSource(
+                "SampleActivity.kt",
+                """
+                 package com.example
+                 import com.airbnb.deeplinkdispatch.DeepLink
+                 import com.airbnb.deeplinkdispatch.DeepLinkHandler
+                 import com.example.SampleModule
+                 @DeepLink("airbnb://example.com/<configurable-path-segment>/foo/bar")
+                 @DeepLinkHandler( SampleModule::class )
+                 class SampleActivity : android.app.Activity()
+                 """,
+            )
+        val sourceFiles = listOf(module, source, fakeBaseDeeplinkDelegateJava, fakeRegistryUtilsJava)
+
+        val assetResult =
+            compileIncremental(
+                sourceFiles = sourceFiles,
+                useKsp = true,
+                incrementalFlag = false,
+                additionalArguments =
+                    mutableMapOf("deepLink.useAssetBasedMatchIndex" to "true"),
+            )
+        val stringResult =
+            compileIncremental(
+                sourceFiles = sourceFiles,
+                useKsp = true,
+                incrementalFlag = false,
+            )
+
+        assertThat(assetResult.result.exitCode).isEqualTo(KotlinCompilation.ExitCode.OK)
+        assertThat(stringResult.result.exitCode).isEqualTo(KotlinCompilation.ExitCode.OK)
+
+        val assetBytes = assetResult.generatedFiles["samplemodule.bin"]!!.readBytes()
+
+        // The string-based registry encodes the same bytes as chunked strings; reconstruct them
+        // the way Utils.readMatchIndexFromStrings does at runtime and compare.
+        val registrySource = stringResult.generatedFiles["SampleModuleRegistry.java"]!!.readText()
+        val stringBytes = extractStringEncodedIndexBytes(registrySource)
+
+        assertThat(assetBytes).isEqualTo(stringBytes)
+    }
+
+    /**
+     * Pulls the string literals returned from the generated `matchIndex0()` (and any subsequent
+     * `matchIndexN()`) methods out of the registry source and decodes them the same way the
+     * runtime does via `Utils.readMatchIndexFromStrings`.
+     */
+    private fun extractStringEncodedIndexBytes(registrySource: String): ByteArray {
+        val stringLiteral = Regex("return\\s+\"((?:\\\\.|[^\"\\\\])*)\"\\s*;", RegexOption.DOT_MATCHES_ALL)
+        val joined =
+            stringLiteral
+                .findAll(registrySource)
+                .joinToString(separator = "") { unescapeJavaStringLiteral(it.groupValues[1]) }
+        return com.airbnb.deeplinkdispatch.base.Utils
+            .readMatchIndexFromStrings(arrayOf(joined))!!
+    }
+
+    private fun unescapeJavaStringLiteral(literal: String): String {
+        val out = StringBuilder(literal.length)
+        var i = 0
+        while (i < literal.length) {
+            val c = literal[i]
+            if (c == '\\' && i + 1 < literal.length) {
+                when (val n = literal[i + 1]) {
+                    'n' -> out.append('\n').also { i += 2 }
+                    'r' -> out.append('\r').also { i += 2 }
+                    't' -> out.append('\t').also { i += 2 }
+                    'b' -> out.append('\b').also { i += 2 }
+                    '\\' -> out.append('\\').also { i += 2 }
+                    '"' -> out.append('"').also { i += 2 }
+                    '\'' -> out.append('\'').also { i += 2 }
+                    '0' -> out.append('\u0000').also { i += 2 }
+                    'u' -> {
+                        val hex = literal.substring(i + 2, i + 6)
+                        out.append(hex.toInt(16).toChar())
+                        i += 6
+                    }
+                    else -> { out.append(n); i += 2 }
+                }
+            } else {
+                out.append(c)
+                i++
+            }
+        }
+        return out.toString()
+    }
 }

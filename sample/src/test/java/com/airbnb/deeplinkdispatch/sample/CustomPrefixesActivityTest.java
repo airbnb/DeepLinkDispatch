@@ -23,7 +23,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.robolectric.Shadows.shadowOf;
 
-@Config(sdk = 21, manifest = "../sample/src/main/AndroidManifest.xml")
+@Config(sdk = 21)
 @RunWith(RobolectricTestRunner.class)
 public class CustomPrefixesActivityTest {
   @Test public void testAppDeepLinkIntent() {
