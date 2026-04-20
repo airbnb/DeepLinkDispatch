@@ -5,9 +5,11 @@ import androidx.room.compiler.processing.XFiler
 import androidx.room.compiler.processing.XMessager
 import androidx.room.compiler.processing.XProcessingEnv
 import com.airbnb.deeplinkdispatch.DeepLinkAnnotatedElement
+import com.airbnb.deeplinkdispatch.DeepLinkProcessorException
 import com.airbnb.deeplinkdispatch.base.ManifestGeneration
 import com.airbnb.deeplinkdispatch.metadata.writers.ManifestWriter
 import com.airbnb.deeplinkdispatch.metadata.writers.Writer
+import java.io.IOException
 import java.io.PrintWriter
 import java.io.StringWriter
 import java.nio.file.Path
@@ -108,10 +110,10 @@ internal class ManifestGenerator(
                 Diagnostic.Kind.NOTE,
                 "Manifest generation: Generated at KSP resource output: ${ManifestGeneration.MANIFEST_RESOURCE_PATH}",
             )
-        } catch (e: Exception) {
-            messager.printMessage(
-                Diagnostic.Kind.ERROR,
-                "Manifest generation failed: ${e.message}",
+        } catch (e: IOException) {
+            throw DeepLinkProcessorException(
+                "Manifest generation failed: could not write " +
+                    "${ManifestGeneration.MANIFEST_RESOURCE_PATH}: ${e.message}",
             )
         }
     }

@@ -41,20 +41,18 @@ abstract class RelocateDeepLinkManifestTask : DefaultTask() {
         // 2. Gradle's up-to-date check only compares content, not file existence
         // 3. The task deletes the source file, which needs to happen every time
         outputs.upToDateWhen {
-            // Task is only up-to-date if source file doesn't exist
-            !kspManifestFile.get().asFile.exists()
+            val source = kspManifestFile.orNull?.asFile
+            source == null || !source.exists()
         }
     }
 
     @TaskAction
     fun taskAction() {
-        val sourceFile = kspManifestFile.get().asFile
+        val sourceFile = kspManifestFile.orNull?.asFile
         val destFile = safeManifestFile.get().asFile
 
-        if (sourceFile.exists()) {
-            // Ensure parent directory exists
+        if (sourceFile != null && sourceFile.exists()) {
             destFile.parentFile?.mkdirs()
-            // Copy to safe location
             sourceFile.copyTo(destFile, overwrite = true)
             // Delete from KSP resources to prevent Java resource merge conflict
             if (sourceFile.delete()) {
@@ -70,14 +68,13 @@ abstract class RelocateDeepLinkManifestTask : DefaultTask() {
                     parentDir = nextParent
                 }
             }
-        } else if (destFile.exists()) {
-            // Source doesn't exist but dest does - this can happen on incremental builds
-            // where KSP was UP-TO-DATE and we already moved the file previously.
-            // The dest file is still valid, so nothing to do.
-        } else {
-            // Neither file exists - no manifest was generated
-            println("No DeepLinkDispatch manifest found to relocate in ${project.name}. If this module has no deep links, consider" +
-                    "removing the DeepLinkDispatch gradle plugin from it's gradle file.")
+        } else if (!destFile.exists()) {
+            logger.warn(
+                "No DeepLinkDispatch manifest found to relocate in ${project.name}. " +
+                    "If this module has no deep links, consider removing the DeepLinkDispatch " +
+                    "gradle plugin from its gradle file.",
+            )
         }
+        // If source is gone but dest exists, a previous run already relocated it — nothing to do.
     }
 }
