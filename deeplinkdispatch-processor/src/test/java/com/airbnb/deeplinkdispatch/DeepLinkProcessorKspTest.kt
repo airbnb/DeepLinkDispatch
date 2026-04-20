@@ -1548,6 +1548,7 @@ class DeepLinkProcessorKspTest : BaseDeepLinkProcessorTest() {
                 module,
                 sampleActivityKotlin,
                 fakeBaseDeeplinkDelegateJava,
+                fakeRegistryUtilsJava,
             )
 
         // Compile with asset-based match index enabled
@@ -1569,16 +1570,15 @@ class DeepLinkProcessorKspTest : BaseDeepLinkProcessorTest() {
         assertThat(registryFile).isNotNull
         val registryContent = registryFile!!.readText()
 
-        // Verify AssetManager constructor
+        // Verify AssetManager constructor delegates to RegistryUtils.readMatchIndexFromAsset.
         assertThat(registryContent).contains("import android.content.res.AssetManager;")
         assertThat(registryContent).contains("public SampleModuleRegistry(@NotNull AssetManager assetManager)")
-        assertThat(registryContent).contains("loadMatchIndexFromAsset(assetManager,")
+        assertThat(registryContent).contains("RegistryUtils.readMatchIndexFromAsset(assetManager,")
         assertThat(registryContent).contains("\"deeplinkdispatch/samplemodule.bin\"")
 
-        // Verify the loadMatchIndexFromAsset method was generated
-        assertThat(registryContent).contains("private static byte[] loadMatchIndexFromAsset(AssetManager assetManager, String assetPath)")
-        assertThat(registryContent).contains("assetManager.open(assetPath)")
-        assertThat(registryContent).contains("ByteArrayOutputStream buffer")
+        // Helper is shared in RegistryUtils — it should NOT be inlined into the registry class.
+        assertThat(registryContent).doesNotContain("private static byte[] loadMatchIndexFromAsset")
+        assertThat(registryContent).doesNotContain("ByteArrayOutputStream")
 
         // Verify NO matchIndex0() string method was generated (this is the legacy approach)
         assertThat(registryContent).doesNotContain("matchIndex0()")
@@ -1614,6 +1614,7 @@ class DeepLinkProcessorKspTest : BaseDeepLinkProcessorTest() {
                 module,
                 sampleActivityKotlin,
                 fakeBaseDeeplinkDelegateJava,
+                fakeRegistryUtilsJava,
             )
 
         // Compile with asset-based match index enabled
@@ -1663,6 +1664,7 @@ class DeepLinkProcessorKspTest : BaseDeepLinkProcessorTest() {
                 module,
                 sampleActivityKotlin,
                 fakeBaseDeeplinkDelegateJava,
+                fakeRegistryUtilsJava,
             )
 
         // Compile with asset-based match index enabled
@@ -1739,5 +1741,101 @@ class DeepLinkProcessorKspTest : BaseDeepLinkProcessorTest() {
         // Should NOT have AssetManager constructor
         assertThat(registryContent).doesNotContain("AssetManager")
         assertThat(registryContent).doesNotContain("loadMatchIndexFromAsset")
+    }
+
+    /**
+     * End-to-end check: the binary match index written as an asset must be byte-for-byte
+     * equivalent to the index produced by the legacy string-based path (when decoded back to
+     * bytes). If they ever diverge, runtime matching in asset-based registries would silently
+     * disagree with the non-asset path.
+     */
+    @Test
+    fun testAssetBinaryMatchesStringEncodedIndex() {
+        val source =
+            Source.KotlinSource(
+                "SampleActivity.kt",
+                """
+                 package com.example
+                 import com.airbnb.deeplinkdispatch.DeepLink
+                 import com.airbnb.deeplinkdispatch.DeepLinkHandler
+                 import com.example.SampleModule
+                 @DeepLink("airbnb://example.com/<configurable-path-segment>/foo/bar")
+                 @DeepLinkHandler( SampleModule::class )
+                 class SampleActivity : android.app.Activity()
+                 """,
+            )
+        val sourceFiles = listOf(module, source, fakeBaseDeeplinkDelegateJava, fakeRegistryUtilsJava)
+
+        val assetResult =
+            compileIncremental(
+                sourceFiles = sourceFiles,
+                useKsp = true,
+                incrementalFlag = false,
+                additionalArguments =
+                    mutableMapOf("deepLink.useAssetBasedMatchIndex" to "true"),
+            )
+        val stringResult =
+            compileIncremental(
+                sourceFiles = sourceFiles,
+                useKsp = true,
+                incrementalFlag = false,
+            )
+
+        assertThat(assetResult.result.exitCode).isEqualTo(KotlinCompilation.ExitCode.OK)
+        assertThat(stringResult.result.exitCode).isEqualTo(KotlinCompilation.ExitCode.OK)
+
+        val assetBytes = assetResult.generatedFiles["samplemodule.bin"]!!.readBytes()
+
+        // The string-based registry encodes the same bytes as chunked strings; reconstruct them
+        // the way Utils.readMatchIndexFromStrings does at runtime and compare.
+        val registrySource = stringResult.generatedFiles["SampleModuleRegistry.java"]!!.readText()
+        val stringBytes = extractStringEncodedIndexBytes(registrySource)
+
+        assertThat(assetBytes).isEqualTo(stringBytes)
+    }
+
+    /**
+     * Pulls the string literals returned from the generated `matchIndex0()` (and any subsequent
+     * `matchIndexN()`) methods out of the registry source and decodes them the same way the
+     * runtime does via `Utils.readMatchIndexFromStrings`.
+     */
+    private fun extractStringEncodedIndexBytes(registrySource: String): ByteArray {
+        val stringLiteral = Regex("return\\s+\"((?:\\\\.|[^\"\\\\])*)\"\\s*;", RegexOption.DOT_MATCHES_ALL)
+        val joined =
+            stringLiteral
+                .findAll(registrySource)
+                .joinToString(separator = "") { unescapeJavaStringLiteral(it.groupValues[1]) }
+        return com.airbnb.deeplinkdispatch.base.Utils
+            .readMatchIndexFromStrings(arrayOf(joined))!!
+    }
+
+    private fun unescapeJavaStringLiteral(literal: String): String {
+        val out = StringBuilder(literal.length)
+        var i = 0
+        while (i < literal.length) {
+            val c = literal[i]
+            if (c == '\\' && i + 1 < literal.length) {
+                when (val n = literal[i + 1]) {
+                    'n' -> out.append('\n').also { i += 2 }
+                    'r' -> out.append('\r').also { i += 2 }
+                    't' -> out.append('\t').also { i += 2 }
+                    'b' -> out.append('\b').also { i += 2 }
+                    '\\' -> out.append('\\').also { i += 2 }
+                    '"' -> out.append('"').also { i += 2 }
+                    '\'' -> out.append('\'').also { i += 2 }
+                    '0' -> out.append('\u0000').also { i += 2 }
+                    'u' -> {
+                        val hex = literal.substring(i + 2, i + 6)
+                        out.append(hex.toInt(16).toChar())
+                        i += 6
+                    }
+                    else -> { out.append(n); i += 2 }
+                }
+            } else {
+                out.append(c)
+                i++
+            }
+        }
+        return out.toString()
     }
 }
