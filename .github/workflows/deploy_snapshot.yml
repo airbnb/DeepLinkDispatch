@@ -5,6 +5,10 @@ on:
   push:
     branches:
       - master
+
+permissions:
+  contents: read
+
 jobs:
   build-test:
     uses: airbnb/DeepLinkDispatch/.github/workflows/build_test.yml@master
