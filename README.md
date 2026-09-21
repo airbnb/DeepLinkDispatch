@@ -781,6 +781,25 @@ At runtime we traverse the graph for each module to find the correct action to u
 The Proguard/R8 rules mandatory for the lib are defined in the [proguard-rules.pro](deeplinkdispatch/proguard-rules.pro) in `deeplinkdispatch`. However
 they are already included via `consumerProguardFiles` so there is nothing you have to do to include them.
 
+## Developing the Gradle plugin
+
+The repository uses `buildSrc` to compile the Gradle plugin and its base-library dependency
+from the existing source directories before configuring the main build. The sample modules
+therefore use the current checkout's plugin without downloading a DeepLinkDispatch snapshot
+or running `publishToMavenLocal` first.
+
+The `deeplinkdispatch-gradle-plugin` project remains responsible for testing and publishing
+the plugin. For example:
+
+```sh
+./gradlew :deeplinkdispatch-gradle-plugin:test
+./gradlew :sample-ksp-library:assembleDebug
+```
+
+Dependency versions and JVM settings come from `dependencies.gradle` in both builds.
+The bootstrap build writes its outputs under `buildSrc/build`, separately from the main
+projects' outputs. Normal repository checks and publication commands remain unchanged.
+
 ## Testing the sample app
 
 Use adb to launch deep links (in the terminal type: `adb shell`).
