@@ -79,13 +79,11 @@ object ManifestGeneration {
     /**
      * Returns the build-relative path to the generated manifest under KSP resources for a variant.
      */
-    fun kspGeneratedManifestPath(variantName: String): String =
-        "${kspResourcesDir(variantName)}/$MANIFEST_RESOURCE_PATH"
+    fun kspGeneratedManifestPath(variantName: String): String = "${kspResourcesDir(variantName)}/$MANIFEST_RESOURCE_PATH"
 
     /**
      * Returns the build-relative path to the directory containing the generated asset files under
      * KSP resources for a variant.
      */
-    fun kspGeneratedAssetsDir(variantName: String): String =
-        "${kspResourcesDir(variantName)}/assets/$MATCH_INDEX_ASSET_PATH_PREFIX"
+    fun kspGeneratedAssetsDir(variantName: String): String = "${kspResourcesDir(variantName)}/assets/$MATCH_INDEX_ASSET_PATH_PREFIX"
 }

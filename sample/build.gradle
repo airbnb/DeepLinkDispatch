@@ -109,6 +109,7 @@ gradle.projectsEvaluated {
             'lintDebug',
             'lintAnalyzeDebug',
             'generateDebugLintModel',
+            'generateDebugLintReportModel',
             'generateDebugUnitTestLintModel',
             'lintAnalyzeDebugUnitTest',
             'lintReportDebug',

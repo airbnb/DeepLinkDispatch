@@ -1829,7 +1829,10 @@ class DeepLinkProcessorKspTest : BaseDeepLinkProcessorTest() {
                         out.append(hex.toInt(16).toChar())
                         i += 6
                     }
-                    else -> { out.append(n); i += 2 }
+                    else -> {
+                        out.append(n)
+                        i += 2
+                    }
                 }
             } else {
                 out.append(c)
