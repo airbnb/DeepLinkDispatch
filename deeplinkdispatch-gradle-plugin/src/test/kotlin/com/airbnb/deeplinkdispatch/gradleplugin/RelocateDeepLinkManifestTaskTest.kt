@@ -145,33 +145,49 @@ class RelocateDeepLinkManifestTaskTest {
     }
 
     @Test
-    fun `relocate task succeeds when no manifest exists`() {
+    fun `relocate task supports configuration cache when no manifest exists`() {
+        // Register the task directly to test configuration caching without applying Android plugins.
         buildFile.writeText("""
             plugins {
-                id 'com.android.library' version '8.2.0'
-                id 'org.jetbrains.kotlin.android' version '1.9.22'
-                id 'com.airbnb.deeplinkdispatch.manifest-generation'
+                id 'com.airbnb.deeplinkdispatch.manifest-generation' apply false
             }
 
-            android {
-                namespace 'com.test.library'
-                compileSdk 34
-                defaultConfig {
-                    minSdk 21
-                }
+            tasks.register('relocateDeepLinkManifestDebug',
+                    com.airbnb.deeplinkdispatch.gradleplugin.RelocateDeepLinkManifestTask) {
+                kspManifestFile.set(layout.buildDirectory.file(
+                        'generated/ksp/debug/resources/deeplinkdispatch/AndroidManifest.xml'))
+                safeManifestFile.set(layout.buildDirectory.file(
+                        'intermediates/deeplinkdispatch/debug/AndroidManifest.xml'))
             }
         """.trimIndent())
 
-        // Don't create any manifest files - simulates clean build without KSP
-
-        val result = GradleRunner.create()
+        // Neither manifest exists, so the task executes its diagnostic logging branch.
+        val runner = GradleRunner.create()
             .withProjectDir(testProjectDir.root)
-            .withArguments("relocateDeepLinkManifestDebug", "--stacktrace")
+            .withArguments(
+                "relocateDeepLinkManifestDebug",
+                "--configuration-cache",
+                "--configuration-cache-problems=fail",
+                "--rerun-tasks",
+                "--stacktrace"
+            )
             .withPluginClasspath()
-            .build()
 
-        assertThat(result.task(":relocateDeepLinkManifestDebug")?.outcome).isEqualTo(TaskOutcome.SUCCESS)
-        // Should indicate no manifest found
-        assertThat(result.output).contains("No DeepLinkDispatch manifest")
+        val firstResult = runner.build()
+        assertThat(firstResult.task(":relocateDeepLinkManifestDebug")?.outcome)
+            .isEqualTo(TaskOutcome.SUCCESS)
+        assertThat(firstResult.output).contains("Configuration cache entry stored.")
+        assertThat(firstResult.output).contains(
+            "No DeepLinkDispatch manifest found to relocate in :relocateDeepLinkManifestDebug."
+        )
+
+        // Force execution again so cache reuse cannot hide an incompatible task action.
+        val secondResult = runner.build()
+        assertThat(secondResult.task(":relocateDeepLinkManifestDebug")?.outcome)
+            .isEqualTo(TaskOutcome.SUCCESS)
+        assertThat(secondResult.output).contains("Configuration cache entry reused.")
+        assertThat(secondResult.output).contains(
+            "No DeepLinkDispatch manifest found to relocate in :relocateDeepLinkManifestDebug."
+        )
     }
 }
