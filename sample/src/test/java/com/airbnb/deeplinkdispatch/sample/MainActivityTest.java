@@ -33,7 +33,7 @@ import static org.robolectric.Shadows.shadowOf;
 
 import androidx.core.app.TaskStackBuilder;
 
-@Config(sdk = 21, shadows = {ShadowTaskStackBuilder.class})
+@Config(shadows = {ShadowTaskStackBuilder.class})
 @RunWith(RobolectricTestRunner.class)
 public class MainActivityTest {
   @Test

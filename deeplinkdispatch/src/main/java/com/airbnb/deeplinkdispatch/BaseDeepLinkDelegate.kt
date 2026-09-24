@@ -116,13 +116,19 @@ open class BaseDeepLinkDelegate
         ) {
             if (result.isSuccessful) {
                 when (result.deepLinkMatchResult?.deeplinkEntry) {
-                    is DeepLinkEntry.MethodDeeplinkEntry ->
+                    is DeepLinkEntry.MethodDeeplinkEntry -> {
                         result.methodResult.taskStackBuilder?.startActivities()
                             ?: result.methodResult.intent?.let { activity.startActivity(it) }
-                    is DeepLinkEntry.ActivityDeeplinkEntry ->
+                    }
+
+                    is DeepLinkEntry.ActivityDeeplinkEntry -> {
                         result.methodResult.intent?.let { activity.startActivity(it) }
-                    is DeepLinkEntry.HandlerDeepLinkEntry ->
+                    }
+
+                    is DeepLinkEntry.HandlerDeepLinkEntry -> {
                         callDeeplinkHandler(activity, result)
+                    }
+
                     null -> {
                         // No - op
                     }
@@ -207,7 +213,7 @@ open class BaseDeepLinkDelegate
             typeNameMap
                 .map { (annotation, type) ->
                     when (annotation.type) {
-                        DeepLinkParamType.Path ->
+                        DeepLinkParamType.Path -> {
                             mapNotNullableType(
                                 value =
                                     parameters.getOrElse(
@@ -216,12 +222,15 @@ open class BaseDeepLinkDelegate
                                 type = type,
                                 uriTemplate = uriTemplate,
                             )
-                        DeepLinkParamType.Query ->
+                        }
+
+                        DeepLinkParamType.Query -> {
                             mapNullableType(
                                 value = parameters[annotation.name],
                                 type = type,
                                 uriTemplate = uriTemplate,
                             )
+                        }
                     }
                 }.toTypedArray()
 
@@ -233,20 +242,45 @@ open class BaseDeepLinkDelegate
             if (value == null) return null
             return try {
                 typeConverters()[type]?.convert(value = value) ?: when (type) {
-                    Boolean::class.javaObjectType -> value.toBoolean()
-                    Int::class.javaObjectType -> value.toInt()
-                    Long::class.javaObjectType -> value.toLong()
-                    Short::class.javaObjectType -> value.toShort()
-                    Byte::class.javaObjectType -> value.toByte()
-                    Double::class.javaObjectType -> value.toDouble()
-                    Float::class.javaObjectType -> value.toFloat()
-                    String::class.javaObjectType -> value
-                    else ->
+                    Boolean::class.javaObjectType -> {
+                        value.toBoolean()
+                    }
+
+                    Int::class.javaObjectType -> {
+                        value.toInt()
+                    }
+
+                    Long::class.javaObjectType -> {
+                        value.toLong()
+                    }
+
+                    Short::class.javaObjectType -> {
+                        value.toShort()
+                    }
+
+                    Byte::class.javaObjectType -> {
+                        value.toByte()
+                    }
+
+                    Double::class.javaObjectType -> {
+                        value.toDouble()
+                    }
+
+                    Float::class.javaObjectType -> {
+                        value.toFloat()
+                    }
+
+                    String::class.javaObjectType -> {
+                        value
+                    }
+
+                    else -> {
                         error(
                             "Missing type converter for type $type! You must register a custom" +
                                 " type converter via the DeepLinkDelegate constructor element for all" +
                                 " but simple data types.",
                         )
+                    }
                 }
             } catch (e: NumberFormatException) {
                 typeConversionErrorNullable(uriTemplate, type, value)
@@ -260,20 +294,45 @@ open class BaseDeepLinkDelegate
         ): Any =
             try {
                 typeConverters()[type]?.convert(value = value) ?: when (type) {
-                    Boolean::class.javaPrimitiveType -> value.toBoolean()
-                    Int::class.javaPrimitiveType -> value.toInt()
-                    Long::class.javaPrimitiveType -> value.toLong()
-                    Short::class.javaPrimitiveType -> value.toShort()
-                    Byte::class.javaPrimitiveType -> value.toByte()
-                    Double::class.javaPrimitiveType -> value.toDouble()
-                    Float::class.javaPrimitiveType -> value.toFloat()
-                    String::class.javaObjectType -> value
-                    else ->
+                    Boolean::class.javaPrimitiveType -> {
+                        value.toBoolean()
+                    }
+
+                    Int::class.javaPrimitiveType -> {
+                        value.toInt()
+                    }
+
+                    Long::class.javaPrimitiveType -> {
+                        value.toLong()
+                    }
+
+                    Short::class.javaPrimitiveType -> {
+                        value.toShort()
+                    }
+
+                    Byte::class.javaPrimitiveType -> {
+                        value.toByte()
+                    }
+
+                    Double::class.javaPrimitiveType -> {
+                        value.toDouble()
+                    }
+
+                    Float::class.javaPrimitiveType -> {
+                        value.toFloat()
+                    }
+
+                    String::class.javaObjectType -> {
+                        value
+                    }
+
+                    else -> {
                         error(
                             "Missing type converter for type $type! You must register a custom" +
                                 " type converter via the DeepLinkDelegate constructor element for all" +
                                 " but simple data types.",
                         )
+                    }
                 }
             } catch (e: NumberFormatException) {
                 typeConversionErrorNonNullable(uriTemplate, type, value)
@@ -396,8 +455,10 @@ open class BaseDeepLinkDelegate
         ): IntermediateDeepLinkResult {
             val clazz = matchedDeeplinkEntry.clazz
             return when (matchedDeeplinkEntry) {
-                is DeepLinkEntry.ActivityDeeplinkEntry ->
+                is DeepLinkEntry.ActivityDeeplinkEntry -> {
                     IntermediateDeepLinkResult(Intent(activity, clazz), null, null)
+                }
+
                 is DeepLinkEntry.MethodDeeplinkEntry -> {
                     try {
                         try {
@@ -433,6 +494,7 @@ open class BaseDeepLinkDelegate
                         )
                     }
                 }
+
                 is DeepLinkEntry.HandlerDeepLinkEntry -> {
                     IntermediateDeepLinkResult(
                         Intent(activity, clazz),
@@ -507,17 +569,23 @@ open class BaseDeepLinkDelegate
             methodInvocation: Any?,
         ): IntermediateDeepLinkResult =
             when (method.returnType) {
-                TaskStackBuilder::class.java ->
+                TaskStackBuilder::class.java -> {
                     intentFromTaskStackBuilder(
                         methodInvocation as TaskStackBuilder?,
                         method.name,
                     )
-                DeepLinkMethodResult::class.java ->
+                }
+
+                DeepLinkMethodResult::class.java -> {
                     intentFromDeepLinkMethodResult(
                         methodInvocation as DeepLinkMethodResult?,
                         method.name,
                     )
-                else -> IntermediateDeepLinkResult(methodInvocation as Intent?, null, null)
+                }
+
+                else -> {
+                    IntermediateDeepLinkResult(methodInvocation as Intent?, null, null)
+                }
             }
 
         private fun intentFromDeepLinkMethodResult(
@@ -584,9 +652,15 @@ open class BaseDeepLinkDelegate
                 registries.mapNotNull { it.idxMatch(uri, configurablePathSegmentReplacements) }
             return when (entryIdxMatches.size) {
                 // Found no match
-                0 -> null
+                0 -> {
+                    null
+                }
+
                 // Found one match
-                1 -> entryIdxMatches.first()
+                1 -> {
+                    entryIdxMatches.first()
+                }
+
                 // Found multiple matches. Sort matches by concreteness:
                 // No variable element > containing placeholders >  are a configurable path segment
                 else -> {

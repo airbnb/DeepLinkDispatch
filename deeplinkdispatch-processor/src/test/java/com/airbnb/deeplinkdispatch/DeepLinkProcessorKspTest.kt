@@ -1816,19 +1816,44 @@ class DeepLinkProcessorKspTest : BaseDeepLinkProcessorTest() {
             val c = literal[i]
             if (c == '\\' && i + 1 < literal.length) {
                 when (val n = literal[i + 1]) {
-                    'n' -> out.append('\n').also { i += 2 }
-                    'r' -> out.append('\r').also { i += 2 }
-                    't' -> out.append('\t').also { i += 2 }
-                    'b' -> out.append('\b').also { i += 2 }
-                    '\\' -> out.append('\\').also { i += 2 }
-                    '"' -> out.append('"').also { i += 2 }
-                    '\'' -> out.append('\'').also { i += 2 }
-                    '0' -> out.append('\u0000').also { i += 2 }
+                    'n' -> {
+                        out.append('\n').also { i += 2 }
+                    }
+
+                    'r' -> {
+                        out.append('\r').also { i += 2 }
+                    }
+
+                    't' -> {
+                        out.append('\t').also { i += 2 }
+                    }
+
+                    'b' -> {
+                        out.append('\b').also { i += 2 }
+                    }
+
+                    '\\' -> {
+                        out.append('\\').also { i += 2 }
+                    }
+
+                    '"' -> {
+                        out.append('"').also { i += 2 }
+                    }
+
+                    '\'' -> {
+                        out.append('\'').also { i += 2 }
+                    }
+
+                    '0' -> {
+                        out.append('\u0000').also { i += 2 }
+                    }
+
                     'u' -> {
                         val hex = literal.substring(i + 2, i + 6)
                         out.append(hex.toInt(16).toChar())
                         i += 6
                     }
+
                     else -> {
                         out.append(n)
                         i += 2

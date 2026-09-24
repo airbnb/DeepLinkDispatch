@@ -65,14 +65,18 @@ class RelocateDeepLinkManifestTaskTest {
     fun `relocate task moves manifest from KSP resources to safe location`() {
         buildFile.writeText("""
             plugins {
-                id 'com.android.library' version '8.2.0'
-                id 'org.jetbrains.kotlin.android' version '1.9.22'
+                id 'com.android.library'
                 id 'com.airbnb.deeplinkdispatch.manifest-generation'
             }
 
             android {
                 namespace 'com.test.library'
-                compileSdk 34
+                compileSdk {
+                    version = release(${System.getProperty("test.compileSdk")}) {
+                        it.minorApiLevel = ${System.getProperty("test.compileSdkMinor")}
+                    }
+                }
+                buildToolsVersion '${System.getProperty("test.buildTools")}'
                 defaultConfig {
                     minSdk 21
                 }
@@ -118,14 +122,18 @@ class RelocateDeepLinkManifestTaskTest {
     fun `relocate task handles missing source file gracefully`() {
         buildFile.writeText("""
             plugins {
-                id 'com.android.library' version '8.2.0'
-                id 'org.jetbrains.kotlin.android' version '1.9.22'
+                id 'com.android.library'
                 id 'com.airbnb.deeplinkdispatch.manifest-generation'
             }
 
             android {
                 namespace 'com.test.library'
-                compileSdk 34
+                compileSdk {
+                    version = release(${System.getProperty("test.compileSdk")}) {
+                        it.minorApiLevel = ${System.getProperty("test.compileSdkMinor")}
+                    }
+                }
+                buildToolsVersion '${System.getProperty("test.buildTools")}'
                 defaultConfig {
                     minSdk 21
                 }

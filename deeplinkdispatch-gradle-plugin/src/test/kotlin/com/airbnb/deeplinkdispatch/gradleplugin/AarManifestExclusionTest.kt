@@ -78,23 +78,24 @@ class AarManifestExclusionTest {
     fun `AAR classes jar does not contain deeplinkdispatch manifest`() {
         buildFile.writeText("""
             plugins {
-                id 'com.android.library' version '8.2.0'
-                id 'org.jetbrains.kotlin.android' version '1.9.22'
+                id 'com.android.library'
                 id 'com.airbnb.deeplinkdispatch.manifest-generation'
             }
 
             android {
                 namespace 'com.test.library'
-                compileSdk 34
+                compileSdk {
+                    version = release(${System.getProperty("test.compileSdk")}) {
+                        it.minorApiLevel = ${System.getProperty("test.compileSdkMinor")}
+                    }
+                }
+                buildToolsVersion '${System.getProperty("test.buildTools")}'
                 defaultConfig {
                     minSdk 21
                 }
                 compileOptions {
                     sourceCompatibility JavaVersion.VERSION_11
                     targetCompatibility JavaVersion.VERSION_11
-                }
-                kotlinOptions {
-                    jvmTarget = '11'
                 }
             }
         """.trimIndent())
@@ -163,23 +164,24 @@ class AarManifestExclusionTest {
     fun `AAR root manifest contains merged intent filters`() {
         buildFile.writeText("""
             plugins {
-                id 'com.android.library' version '8.2.0'
-                id 'org.jetbrains.kotlin.android' version '1.9.22'
+                id 'com.android.library'
                 id 'com.airbnb.deeplinkdispatch.manifest-generation'
             }
 
             android {
                 namespace 'com.test.library'
-                compileSdk 34
+                compileSdk {
+                    version = release(${System.getProperty("test.compileSdk")}) {
+                        it.minorApiLevel = ${System.getProperty("test.compileSdkMinor")}
+                    }
+                }
+                buildToolsVersion '${System.getProperty("test.buildTools")}'
                 defaultConfig {
                     minSdk 21
                 }
                 compileOptions {
                     sourceCompatibility JavaVersion.VERSION_11
                     targetCompatibility JavaVersion.VERSION_11
-                }
-                kotlinOptions {
-                    jvmTarget = '11'
                 }
             }
         """.trimIndent())

@@ -1,11 +1,15 @@
 apply plugin: 'com.android.library'
 apply plugin: 'androidx.benchmark'
-apply plugin: 'kotlin-android'
 apply plugin: 'org.jmailen.kotlinter'
 
 android {
     namespace = "com.airbnb.deeplinkdispatch.samplebenchmark"
-    compileSdk = androidConfig.compileSdkVersion
+    compileSdk {
+        version = release(androidConfig.compileSdkVersion) {
+            it.minorApiLevel = androidConfig.compileSdkMinorVersion
+        }
+    }
+    buildToolsVersion = androidConfig.buildToolsVersion
 
     defaultConfig {
         minSdk = androidConfig.

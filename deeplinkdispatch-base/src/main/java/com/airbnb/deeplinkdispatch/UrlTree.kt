@@ -228,27 +228,32 @@ data class Root(
 
     private fun uriMatch(deepLinkEntry: DeepLinkEntry) =
         when (deepLinkEntry) {
-            is DeepLinkEntry.ActivityDeeplinkEntry ->
+            is DeepLinkEntry.ActivityDeeplinkEntry -> {
                 UriMatch(
                     MatchType.Activity,
                     deepLinkEntry.uriTemplate,
                     deepLinkEntry.className,
                     null,
                 )
-            is DeepLinkEntry.MethodDeeplinkEntry ->
+            }
+
+            is DeepLinkEntry.MethodDeeplinkEntry -> {
                 UriMatch(
                     MatchType.Method,
                     deepLinkEntry.uriTemplate,
                     deepLinkEntry.className,
                     deepLinkEntry.method,
                 )
-            is DeepLinkEntry.HandlerDeepLinkEntry ->
+            }
+
+            is DeepLinkEntry.HandlerDeepLinkEntry -> {
                 UriMatch(
                     MatchType.Handler,
                     deepLinkEntry.uriTemplate,
                     deepLinkEntry.className,
                     null,
                 )
+            }
         }
 }
 
