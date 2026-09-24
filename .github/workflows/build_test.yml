@@ -16,6 +16,8 @@ jobs:
         with:
           distribution: 'corretto'
           java-version: '25'
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v4.0.4
       - name: Install Android SDK
         run: sdkmanager 'platforms;android-37.2' 'build-tools;37.0.0'
       - name: Build/Test DeepLinkDispatch
