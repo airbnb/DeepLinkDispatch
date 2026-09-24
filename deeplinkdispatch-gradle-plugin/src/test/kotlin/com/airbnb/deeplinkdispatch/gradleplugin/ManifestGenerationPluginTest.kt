@@ -71,14 +71,18 @@ class ManifestGenerationPluginTest {
     fun `plugin applies successfully to library module`() {
         buildFile.writeText("""
             plugins {
-                id 'com.android.library' version '8.2.0'
-                id 'org.jetbrains.kotlin.android' version '1.9.22'
+                id 'com.android.library'
                 id 'com.airbnb.deeplinkdispatch.manifest-generation'
             }
 
             android {
                 namespace 'com.test.library'
-                compileSdk 34
+                compileSdk {
+                    version = release(${System.getProperty("test.compileSdk")}) {
+                        it.minorApiLevel = ${System.getProperty("test.compileSdkMinor")}
+                    }
+                }
+                buildToolsVersion '${System.getProperty("test.buildTools")}'
 
                 defaultConfig {
                     minSdk 21
@@ -101,14 +105,18 @@ class ManifestGenerationPluginTest {
     fun `plugin fails on application module with clear error message`() {
         buildFile.writeText("""
             plugins {
-                id 'com.android.application' version '8.2.0'
-                id 'org.jetbrains.kotlin.android' version '1.9.22'
+                id 'com.android.application'
                 id 'com.airbnb.deeplinkdispatch.manifest-generation'
             }
 
             android {
                 namespace 'com.test.app'
-                compileSdk 34
+                compileSdk {
+                    version = release(${System.getProperty("test.compileSdk")}) {
+                        it.minorApiLevel = ${System.getProperty("test.compileSdkMinor")}
+                    }
+                }
+                buildToolsVersion '${System.getProperty("test.buildTools")}'
 
                 defaultConfig {
                     applicationId "com.test.app"
@@ -134,14 +142,18 @@ class ManifestGenerationPluginTest {
     fun `relocate task is registered for each variant`() {
         buildFile.writeText("""
             plugins {
-                id 'com.android.library' version '8.2.0'
-                id 'org.jetbrains.kotlin.android' version '1.9.22'
+                id 'com.android.library'
                 id 'com.airbnb.deeplinkdispatch.manifest-generation'
             }
 
             android {
                 namespace 'com.test.library'
-                compileSdk 34
+                compileSdk {
+                    version = release(${System.getProperty("test.compileSdk")}) {
+                        it.minorApiLevel = ${System.getProperty("test.compileSdkMinor")}
+                    }
+                }
+                buildToolsVersion '${System.getProperty("test.buildTools")}'
 
                 defaultConfig {
                     minSdk 21
@@ -170,14 +182,18 @@ class ManifestGenerationPluginTest {
     fun `manifest merge task is registered for each variant`() {
         buildFile.writeText("""
             plugins {
-                id 'com.android.library' version '8.2.0'
-                id 'org.jetbrains.kotlin.android' version '1.9.22'
+                id 'com.android.library'
                 id 'com.airbnb.deeplinkdispatch.manifest-generation'
             }
 
             android {
                 namespace 'com.test.library'
-                compileSdk 34
+                compileSdk {
+                    version = release(${System.getProperty("test.compileSdk")}) {
+                        it.minorApiLevel = ${System.getProperty("test.compileSdkMinor")}
+                    }
+                }
+                buildToolsVersion '${System.getProperty("test.buildTools")}'
 
                 defaultConfig {
                     minSdk 21
@@ -199,14 +215,18 @@ class ManifestGenerationPluginTest {
     fun `assembleDebug succeeds without KSP generated manifest`() {
         buildFile.writeText("""
             plugins {
-                id 'com.android.library' version '8.2.0'
-                id 'org.jetbrains.kotlin.android' version '1.9.22'
+                id 'com.android.library'
                 id 'com.airbnb.deeplinkdispatch.manifest-generation'
             }
 
             android {
                 namespace 'com.test.library'
-                compileSdk 34
+                compileSdk {
+                    version = release(${System.getProperty("test.compileSdk")}) {
+                        it.minorApiLevel = ${System.getProperty("test.compileSdkMinor")}
+                    }
+                }
+                buildToolsVersion '${System.getProperty("test.buildTools")}'
 
                 defaultConfig {
                     minSdk 21
@@ -229,14 +249,18 @@ class ManifestGenerationPluginTest {
     fun `plugin works with product flavors`() {
         buildFile.writeText("""
             plugins {
-                id 'com.android.library' version '8.2.0'
-                id 'org.jetbrains.kotlin.android' version '1.9.22'
+                id 'com.android.library'
                 id 'com.airbnb.deeplinkdispatch.manifest-generation'
             }
 
             android {
                 namespace 'com.test.library'
-                compileSdk 34
+                compileSdk {
+                    version = release(${System.getProperty("test.compileSdk")}) {
+                        it.minorApiLevel = ${System.getProperty("test.compileSdkMinor")}
+                    }
+                }
+                buildToolsVersion '${System.getProperty("test.buildTools")}'
 
                 defaultConfig {
                     minSdk 21
@@ -271,14 +295,18 @@ class ManifestGenerationPluginTest {
     fun `manifest merge task is up-to-date on second run`() {
         buildFile.writeText("""
             plugins {
-                id 'com.android.library' version '8.2.0'
-                id 'org.jetbrains.kotlin.android' version '1.9.22'
+                id 'com.android.library'
                 id 'com.airbnb.deeplinkdispatch.manifest-generation'
             }
 
             android {
                 namespace 'com.test.library'
-                compileSdk 34
+                compileSdk {
+                    version = release(${System.getProperty("test.compileSdk")}) {
+                        it.minorApiLevel = ${System.getProperty("test.compileSdkMinor")}
+                    }
+                }
+                buildToolsVersion '${System.getProperty("test.buildTools")}'
 
                 defaultConfig {
                     minSdk 21
@@ -315,14 +343,18 @@ class ManifestGenerationPluginTest {
 
         buildFile.writeText("""
             plugins {
-                id 'com.android.library' version '8.2.0'
-                id 'org.jetbrains.kotlin.android' version '1.9.22'
+                id 'com.android.library'
                 id 'com.airbnb.deeplinkdispatch.manifest-generation'
             }
 
             android {
                 namespace 'com.test.library'
-                compileSdk 34
+                compileSdk {
+                    version = release(${System.getProperty("test.compileSdk")}) {
+                        it.minorApiLevel = ${System.getProperty("test.compileSdkMinor")}
+                    }
+                }
+                buildToolsVersion '${System.getProperty("test.buildTools")}'
 
                 defaultConfig {
                     minSdk 21

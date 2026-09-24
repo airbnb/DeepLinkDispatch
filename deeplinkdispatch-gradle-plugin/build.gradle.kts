@@ -5,18 +5,24 @@ apply(from = "$rootDir/publishing.gradle")
 
 val deps: Map<String, Any> by project
 val jvmToolchainVersion: Int by rootProject.extra
-val jvmTargetVersion: Int by rootProject.extra
+val jvmTargetVersion = 17 // Matches the minimum JVM required by Gradle and AGP.
+val androidConfig: Map<String, Any> by project
 
 repositories {
     google()
     mavenCentral()
     gradlePluginPortal()
-    maven(url = "https://oss.sonatype.org/service/local/repositories/snapshots/content/")
+    maven(url = "https://central.sonatype.com/repository/maven-snapshots/")
 }
 
 plugins {
-    `kotlin-dsl`
+    id("org.jetbrains.kotlin.jvm")
+    id("org.jetbrains.kotlin.plugin.sam.with.receiver")
     `java-gradle-plugin`
+}
+
+samWithReceiver {
+    annotation("org.gradle.api.HasImplicitReceiver")
 }
 
 // JVM toolchain and target - uses central versions from dependencies.gradle
@@ -55,6 +61,9 @@ dependencies {
 
 tasks.test {
     useJUnit()
+    systemProperty("test.compileSdk", androidConfig.getValue("compileSdkVersion").toString())
+    systemProperty("test.compileSdkMinor", androidConfig.getValue("compileSdkMinorVersion").toString())
+    systemProperty("test.buildTools", androidConfig.getValue("buildToolsVersion").toString())
     testLogging {
         events("passed", "skipped", "failed")
         showStandardStreams = true

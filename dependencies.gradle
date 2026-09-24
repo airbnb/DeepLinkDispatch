@@ -1,42 +1,46 @@
 def versions = [
 
-    kotlinVersion                    : '2.3.0',
+    kotlinVersion                    : '2.4.20',
     appCompatVersion                 : '1.6.1',
     localBroadcastManagerVersion     : '1.1.0',
-    roboelectricVersion              : '4.14.1',
-    benchmarkVersion                 : '1.4.1',
-    kotlinCompileTestingVersion      : '0.12.1',
-    kspVersion                       : '2.3.4',
-    xProcessorVersion                : '2.8.4',
-    mockkVersion                     : '1.14.7',
-    ktlintGradlePluginVersion        : '5.2.0',
+    roboelectricVersion              : '4.17',
+    benchmarkVersion                 : '1.5.0',
+    kotlinCompileTestingVersion      : '0.14.0',
+    kspVersion                       : '2.3.12',
+    xProcessorVersion                : '2.8.5',
+    mockkVersion                     : '1.14.11',
+    ktlintGradlePluginVersion        : '5.7.0',
     androidXTestingVersion           : '1.7.0',
+    androidxCoreTestVersion           : '1.19.1',
     testRulesVersion                 : '1.7.0',
-    autoCommonVersion                : '1.0',
+    autoCommonVersion                : '1.2.2',
     javaPoetVersion                  : '1.13.0',
     jsr305Version                    : '3.0.2',
     okioVersion                      : '3.6.0',
     androidXAnnotationsVersion       : '1.3.0',
-    gradleMavenPublishPluginVersion  : '0.35.0',
-    dokkaPluginVersion               : '2.1.0',
+    gradleMavenPublishPluginVersion  : '0.37.0',
+    dokkaPluginVersion               : '2.2.0',
     junitVersion                     : '4.13.2',
-    assertJVersion                   : '3.22.0',
+    checkstyleVersion                : '14.1.0',
+    assertJVersion                   : '3.27.7',
     androidVersion                   : '4.1.1.4',
     testRunnerVersion                : '1.7.0',
     constraintLayoutVersion          : '2.2.1',
     testExtVersion                   : '1.3.0',
-    androicCommonToolsVersion        : '30.4.1'
+    androidCommonToolsVersion        : '32.4.1'
 ]
 ext.androidConfig = [
-    agpVersion                          : '8.13.2',
-    compileSdkVersion                   : 35,
+    agpVersion                          : '9.4.1',
+    compileSdkVersion                   : 37,
+    compileSdkMinorVersion              : 2,
+    buildToolsVersion                   : '37.0.0',
     minSdkVersion                       : 16,
     minSdkVersionBenchmark              : 21,
     targetSdkVersion                    : 35
 ]
 
 // Central JVM configuration for all modules
-ext.jvmToolchainVersion = 22  // JDK used for compilation
+ext.jvmToolchainVersion = 25  // Latest LTS JDK used for compilation
 ext.jvmTargetVersion = 11     // Bytecode target (compatibility)
 
 ext.versions = versions
@@ -54,14 +58,16 @@ ext.deps = [
     // https://vanniktech.github.io/gradle-maven-publish-plugin/
     gradleMavenPublishPlugin : "com.vanniktech:gradle-maven-publish-plugin:$versions.gradleMavenPublishPluginVersion",
     dokkaPlugin              : "org.jetbrains.dokka:dokka-gradle-plugin:$versions.dokkaPluginVersion",
+    kotlinMetadata           : "org.jetbrains.kotlin:kotlin-metadata-jvm:$versions.kotlinVersion",
     ksp                      : "com.google.devtools.ksp:symbol-processing-api:$versions.kspVersion",
     kspGradlePlugin          : "com.google.devtools.ksp:com.google.devtools.ksp.gradle.plugin:$versions.kspVersion",
     xProcessor               : "androidx.room:room-compiler-processing:$versions.xProcessorVersion",
     ktlintGradlePlugin       : "org.jmailen.gradle:kotlinter-gradle:$versions.ktlintGradlePluginVersion",
     constraintLayout         : "androidx.constraintlayout:constraintlayout:$versions.constraintLayoutVersion",
-    androidCommonTools       : "com.android.tools:common:$versions.androicCommonToolsVersion",
+    androidCommonTools       : "com.android.tools:common:$versions.androidCommonToolsVersion",
 
     // Testing
+    androidxCoreTest         : "androidx.core:core:$versions.androidxCoreTestVersion",
     androidxTestCore         : "androidx.test:core:$versions.androidXTestingVersion",
     androidxTestRunner       : "androidx.test:runner:$versions.testRunnerVersion",
     androidxTestRules        : "androidx.test:rules:$versions.testRulesVersion",

@@ -10,14 +10,12 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
-import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowActivity;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.robolectric.Shadows.shadowOf;
 
-@Config(sdk = 21)
 @RunWith(RobolectricTestRunner.class)
 public class SecondActivityTest {
   @Test public void testIntent() {

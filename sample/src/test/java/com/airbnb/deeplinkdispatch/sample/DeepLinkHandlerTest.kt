@@ -19,9 +19,7 @@ import org.junit.runner.RunWith
 import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows
-import org.robolectric.annotation.Config
 
-@Config(sdk = [21])
 @RunWith(RobolectricTestRunner::class)
 class DeepLinkHandlerTest {
     @Test

@@ -1,7 +1,8 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
-    `kotlin-dsl`
+    id("org.jetbrains.kotlin.jvm")
+    id("org.jetbrains.kotlin.plugin.sam.with.receiver")
     `java-gradle-plugin`
 }
 
@@ -11,12 +12,16 @@ apply(from = "../dependencies.gradle")
 
 val deps: Map<String, Any> by project
 val jvmToolchainVersion: Int by extra
-val jvmTargetVersion: Int by extra
+val jvmTargetVersion = 17 // Gradle and AGP require Java 17 or newer.
 
 repositories {
     google()
     mavenCentral()
     gradlePluginPortal()
+}
+
+samWithReceiver {
+    annotation("org.gradle.api.HasImplicitReceiver")
 }
 
 java {

@@ -34,6 +34,7 @@ internal class GenericDocumentationWriter : Writer {
                         print(CLASS_METHOD_NAME_DELIMITER)
                         print(element.method)
                     }
+
                     else -> { // Nothing
                     }
                 }

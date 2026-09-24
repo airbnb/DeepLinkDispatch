@@ -249,7 +249,7 @@ class DeepLinkProcessor(
         ).mapNotNull { uriAndActivityFqn ->
             try {
                 when {
-                    element is XMethodElement ->
+                    element is XMethodElement -> {
                         DeepLinkAnnotatedElement.MethodAnnotatedElement(
                             uri = uriAndActivityFqn.uri,
                             activityClassFqn = uriAndActivityFqn.activityClassFqn,
@@ -258,8 +258,9 @@ class DeepLinkProcessor(
                             categories = uriAndActivityFqn.categories,
                             element = element,
                         )
+                    }
 
-                    element is XTypeElement && element.isActivity() ->
+                    element is XTypeElement && element.isActivity() -> {
                         DeepLinkAnnotatedElement.ActivityAnnotatedElement(
                             uri = uriAndActivityFqn.uri,
                             activityClassFqn = uriAndActivityFqn.activityClassFqn,
@@ -268,6 +269,7 @@ class DeepLinkProcessor(
                             categories = uriAndActivityFqn.categories,
                             element = element,
                         )
+                    }
 
                     element is XTypeElement && element.isHandler() -> {
                         verifyHandlerMatchArgs(element, uriAndActivityFqn.uri)
@@ -281,11 +283,12 @@ class DeepLinkProcessor(
                         )
                     }
 
-                    else ->
+                    else -> {
                         error(
                             "Internal error: Elements can only be 'MethodAnnotatedElement', " +
                                 "'ActivityAnnotatedElement' or 'HandlerAnnotatedElement'",
                         )
+                    }
                 }
             } catch (_: MalformedURLException) {
                 environment.messager.printMessage(
@@ -889,14 +892,16 @@ class DeepLinkProcessor(
             val uriTemplate = element.uriTemplate
             try {
                 when (element) {
-                    is DeepLinkAnnotatedElement.ActivityAnnotatedElement ->
+                    is DeepLinkAnnotatedElement.ActivityAnnotatedElement -> {
                         urisTrie.addToTrie(
                             DeepLinkEntry.ActivityDeeplinkEntry(
                                 uriTemplate = uriTemplate,
                                 className = element.className,
                             ),
                         )
-                    is DeepLinkAnnotatedElement.MethodAnnotatedElement ->
+                    }
+
+                    is DeepLinkAnnotatedElement.MethodAnnotatedElement -> {
                         urisTrie.addToTrie(
                             DeepLinkEntry.MethodDeeplinkEntry(
                                 uriTemplate = uriTemplate,
@@ -904,13 +909,16 @@ class DeepLinkProcessor(
                                 method = element.method,
                             ),
                         )
-                    is DeepLinkAnnotatedElement.HandlerAnnotatedElement ->
+                    }
+
+                    is DeepLinkAnnotatedElement.HandlerAnnotatedElement -> {
                         urisTrie.addToTrie(
                             DeepLinkEntry.HandlerDeepLinkEntry(
                                 uriTemplate = uriTemplate,
                                 className = element.className,
                             ),
                         )
+                    }
                 }
             } catch (e: IllegalArgumentException) {
                 logError(
@@ -1224,27 +1232,37 @@ class DeepLinkProcessor(
             if (comparisonResult == 0) {
                 val element1Representation =
                     when (element1) {
-                        is DeepLinkAnnotatedElement.ActivityAnnotatedElement ->
+                        is DeepLinkAnnotatedElement.ActivityAnnotatedElement -> {
                             element1.uriTemplate +
                                 DeepLinkAnnotatedElement.ActivityAnnotatedElement::class.simpleName
-                        is DeepLinkAnnotatedElement.HandlerAnnotatedElement ->
+                        }
+
+                        is DeepLinkAnnotatedElement.HandlerAnnotatedElement -> {
                             "handler_" + element1.uriTemplate +
                                 DeepLinkAnnotatedElement.ActivityAnnotatedElement::class.simpleName
-                        is DeepLinkAnnotatedElement.MethodAnnotatedElement ->
+                        }
+
+                        is DeepLinkAnnotatedElement.MethodAnnotatedElement -> {
                             element1.uriTemplate + element1.method +
                                 DeepLinkAnnotatedElement.MethodAnnotatedElement::class.simpleName
+                        }
                     }
                 val element2Representation =
                     when (element2) {
-                        is DeepLinkAnnotatedElement.ActivityAnnotatedElement ->
+                        is DeepLinkAnnotatedElement.ActivityAnnotatedElement -> {
                             element2.uriTemplate +
                                 DeepLinkAnnotatedElement.ActivityAnnotatedElement::class.simpleName
-                        is DeepLinkAnnotatedElement.HandlerAnnotatedElement ->
+                        }
+
+                        is DeepLinkAnnotatedElement.HandlerAnnotatedElement -> {
                             "handler_" + element2.uriTemplate +
                                 DeepLinkAnnotatedElement.ActivityAnnotatedElement::class.simpleName
-                        is DeepLinkAnnotatedElement.MethodAnnotatedElement ->
+                        }
+
+                        is DeepLinkAnnotatedElement.MethodAnnotatedElement -> {
                             element2.uriTemplate + element2.method +
                                 DeepLinkAnnotatedElement.MethodAnnotatedElement::class.simpleName
+                        }
                     }
                 comparisonResult = element1Representation.compareTo(element2Representation)
             }

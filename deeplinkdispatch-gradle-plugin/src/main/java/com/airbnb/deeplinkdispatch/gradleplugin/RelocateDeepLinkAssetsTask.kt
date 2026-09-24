@@ -8,6 +8,7 @@ import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.TaskAction
+import org.gradle.work.DisableCachingByDefault
 
 /**
  * Task that relocates the KSP-generated assets from the resources directory to a safe location.
@@ -22,6 +23,7 @@ import org.gradle.api.tasks.TaskAction
  * This is a separate task (rather than a doLast on KSP) because doLast doesn't run when
  * KSP is restored FROM-CACHE. This task will always run after KSP, even if KSP was cached.
  */
+@DisableCachingByDefault(because = "Relocation deletes KSP inputs, which must also happen after a cache restore")
 abstract class RelocateDeepLinkAssetsTask : DefaultTask() {
 
     /**
