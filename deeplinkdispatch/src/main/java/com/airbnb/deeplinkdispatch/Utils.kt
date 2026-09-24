@@ -1,6 +1,37 @@
 package com.airbnb.deeplinkdispatch
 
+import android.content.res.AssetManager
 import android.os.Bundle
+import java.io.IOException
+
+/**
+ * Utilities used by DeepLinkDispatch-generated registry classes at runtime.
+ *
+ * This object exists so generated Java code can call these helpers as
+ * `RegistryUtils.readMatchIndexFromAsset(...)` without repeating the
+ * implementation in every generated registry.
+ */
+object RegistryUtils {
+    /**
+     * Reads the binary DeepLinkDispatch match index from an Android asset.
+     *
+     * Called from generated registry constructors when asset-based match index is enabled
+     * (see `ManifestGenerationPlugin` / `OPTION_USE_ASSET_BASED_MATCH_INDEX`).
+     */
+    @JvmStatic
+    fun readMatchIndexFromAsset(
+        assetManager: AssetManager,
+        assetPath: String,
+    ): ByteArray =
+        try {
+            assetManager.open(assetPath).use { it.readBytes() }
+        } catch (e: IOException) {
+            throw RuntimeException(
+                "DeepLinkDispatch: Failed to load match index from asset: $assetPath",
+                e,
+            )
+        }
+}
 
 /**
  * Regex pattern for valid URL path characters according to RFC 3986.

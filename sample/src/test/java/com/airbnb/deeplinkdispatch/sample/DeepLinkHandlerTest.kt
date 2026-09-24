@@ -21,7 +21,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows
 import org.robolectric.annotation.Config
 
-@Config(sdk = [21], manifest = "../sample/src/main/AndroidManifest.xml")
+@Config(sdk = [21])
 @RunWith(RobolectricTestRunner::class)
 class DeepLinkHandlerTest {
     @Test

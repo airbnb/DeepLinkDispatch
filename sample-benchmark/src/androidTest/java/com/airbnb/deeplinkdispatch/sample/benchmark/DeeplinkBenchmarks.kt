@@ -1,9 +1,11 @@
 package com.airbnb.deeplinkdispatch.sample.benchmark
 
 import android.content.Intent
+import android.content.res.AssetManager
 import androidx.benchmark.junit4.BenchmarkRule
 import androidx.benchmark.junit4.measureRepeated
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.rule.ActivityTestRule
 import com.airbnb.deeplinkdispatch.BaseDeepLinkDelegate
 import com.airbnb.deeplinkdispatch.BaseRegistry
@@ -40,10 +42,14 @@ class DeeplinkBenchmarks {
     @get:Rule
     val activityRule = ActivityTestRule(ScaleTestActivity::class.java)
 
+    private val assetManager: AssetManager
+        get() = InstrumentationRegistry.getInstrumentation().targetContext.assets
+
     @Test
     fun newRegistry() {
+        val assets = assetManager
         benchmarkRule.measureRepeated {
-            BenchmarkDeepLinkModuleRegistry()
+            BenchmarkDeepLinkModuleRegistry(assets)
         }
     }
 
@@ -84,7 +90,7 @@ class DeeplinkBenchmarks {
      */
     @Test
     fun createResultDeeplink1() {
-        val delegate = DeepLinkDelegate()
+        val delegate = DeepLinkDelegate(assetManager)
         val intent = intent(DEEPLINK_1)
         val entry = entry(DEEPLINK_1)
         val activity = activityRule.activity
@@ -95,7 +101,7 @@ class DeeplinkBenchmarks {
         Assert.assertEquals("", result?.error)
     }
 
-    fun registry() = BenchmarkDeepLinkModuleRegistry()
+    fun registry() = BenchmarkDeepLinkModuleRegistry(assetManager)
 
     fun intent(uri: String): Intent {
         val intent = Intent.parseUri(DEEPLINK_1, 0)
@@ -115,4 +121,6 @@ class DeeplinkBenchmarks {
     }
 }
 
-class DeepLinkDelegate : BaseDeepLinkDelegate(listOf<BaseRegistry>(BenchmarkDeepLinkModuleRegistry()))
+class DeepLinkDelegate(
+    assetManager: AssetManager,
+) : BaseDeepLinkDelegate(listOf<BaseRegistry>(BenchmarkDeepLinkModuleRegistry(assetManager)))

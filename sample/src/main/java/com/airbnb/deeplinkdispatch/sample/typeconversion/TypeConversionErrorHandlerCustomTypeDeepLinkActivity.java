@@ -74,12 +74,13 @@ public class TypeConversionErrorHandlerCustomTypeDeepLinkActivity extends Activi
     configurablePlaceholdersMap.put("configurable-path-segment", "");
     configurablePlaceholdersMap.put("configurable-path-segment-two", "");
     configurablePlaceholdersMap.put("configPathOne", "/somePathOne");
+    // KSP library modules with manifest-generation plugin require AssetManager to load binary match index
     DeepLinkDelegate deepLinkDelegate = new DeepLinkDelegate(
             new SampleModuleRegistry(),
             new LibraryDeepLinkModuleRegistry(),
-            new BenchmarkDeepLinkModuleRegistry(),
+            new BenchmarkDeepLinkModuleRegistry(getAssets()),
             new KaptLibraryDeepLinkModuleRegistry(),
-            new KspLibraryDeepLinkModuleRegistry(),
+            new KspLibraryDeepLinkModuleRegistry(getAssets()),
             configurablePlaceholdersMap,
             typeConvertersLambda,
             typeConversionErrorNullable,

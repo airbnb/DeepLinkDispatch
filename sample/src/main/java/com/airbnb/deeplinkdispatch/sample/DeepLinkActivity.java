@@ -28,12 +28,16 @@ public class DeepLinkActivity extends Activity {
     configurablePlaceholdersMap.put("configurable-path-segment", "");
     configurablePlaceholdersMap.put("configurable-path-segment-two", "");
     configurablePlaceholdersMap.put("configPathOne", "/somePathOne");
+    // KSP library modules with the manifest-generation plugin (KspLibraryDeepLinkModuleRegistry)
+    // require AssetManager to load the binary match index from assets.
+    // Application modules (SampleModuleRegistry) and KAPT-generated registries
+    // use the legacy string-based approach and don't need AssetManager.
     DeepLinkDelegate deepLinkDelegate = new DeepLinkDelegate(
             new SampleModuleRegistry(),
             new LibraryDeepLinkModuleRegistry(),
-            new BenchmarkDeepLinkModuleRegistry(),
+            new BenchmarkDeepLinkModuleRegistry(getAssets()),
             new KaptLibraryDeepLinkModuleRegistry(),
-            new KspLibraryDeepLinkModuleRegistry(),
+            new KspLibraryDeepLinkModuleRegistry(getAssets()),
             configurablePlaceholdersMap
     );
     deepLinkDelegate.dispatchFrom(this);

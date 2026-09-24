@@ -5,34 +5,44 @@ import com.android.build.api.artifact.SingleArtifact
 import com.android.build.api.variant.AndroidComponentsExtension
 import com.android.build.api.variant.HasHostTests
 import com.android.manifmerger.ManifestMerger2
+import com.google.devtools.ksp.gradle.KspExtension
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 
 /**
- * Automatic manifest generation plugin for DeepLinkDispatch.
+ * Automatic manifest and asset generation plugin for DeepLinkDispatch.
  *
+ * This plugin handles two main features for KSP-based builds:
+ *
+ * ## 1. Manifest Generation
  * For deep links that have activityClassFqn set, the DeepLinkDispatch annotation processor generates
- * an AndroidManifest.xml that contains the intent filters for the deeplinks.
+ * an AndroidManifest.xml that contains the intent filters for the deeplinks. This plugin uses AGP's
+ * Artifacts API to transform the MERGED_MANIFEST artifact, merging in the KSP-generated manifest.
  *
- * This plugin uses AGP's Artifacts API to transform the MERGED_MANIFEST artifact,
- * merging in the KSP-generated manifest with intent filters.
- *
- * This means that for any deep links that have activityClassFqn set it is not necessary to add the
- * intent filters to the AndroidManifest.xml manually.
+ * ## 2. Asset-Based Match Index (KSP only)
+ * When using KSP, the processor generates a binary match index file as an Android asset instead of
+ * encoding it as strings in the generated registry class. This provides:
+ * - Faster build times (no string chunking/encoding)
+ * - Faster app startup (direct binary loading, no string decoding)
+ * - Smaller APK size (binary assets compress better than dex strings)
  *
  * IMPORTANT: This plugin requires AGP 8.0+ and only works with KSP (Kotlin Symbol Processing).
- * It does NOT work with KAPT. If you're using KAPT, you must manually add intent filters
- * to your AndroidManifest.xml.
+ * It does NOT work with KAPT. If you're using KAPT:
+ * - You must manually add intent filters to your AndroidManifest.xml
+ * - The match index will use the legacy string-based approach (still works, just less efficient)
  *
  * How it works (AGP 8.0+):
- * 1. KSP processes annotations and generates a manifest file with intent filters
- * 2. This plugin uses variant.artifacts.use().toTransform(SingleArtifact.MERGED_MANIFEST)
- *    to intercept the merged manifest and add the KSP-generated intent filters
- * 3. The transformed manifest is used by all subsequent tasks in the build pipeline
- * 4. The final merged manifest with intent filters is packaged into the APK/AAR
+ * 1. KSP processes annotations and generates:
+ *    - A manifest file with intent filters (if activityClassFqn is set)
+ *    - A binary match index asset file (assets/deeplinkdispatch/<module>.bin)
+ * 2. This plugin uses variant.artifacts.use().toTransform() to intercept:
+ *    - SingleArtifact.MERGED_MANIFEST - adds the KSP-generated intent filters
+ *    - SingleArtifact.ASSETS - adds the binary match index files
+ * 3. The transformed artifacts are used by all subsequent tasks in the build pipeline
+ * 4. The final APK/AAR includes both the merged manifest and the binary match index
  *
- * This ensures that generated manifest entries are included on the first build without requiring
- * two build passes or manual manifest modifications.
+ * This ensures that generated content is included on the first build without requiring
+ * two build passes or manual modifications.
  */
 class ManifestGenerationPlugin: Plugin<Project> {
 
@@ -56,38 +66,42 @@ class ManifestGenerationPlugin: Plugin<Project> {
             )
         }
 
+        // Configure KSP to use asset-based match index when this plugin is applied.
+        // Using pluginManager.withPlugin ensures we apply the arg whenever KSP is present,
+        // regardless of whether it is applied before or after this plugin.
+        project.pluginManager.withPlugin("com.google.devtools.ksp") {
+            val ksp = project.extensions.getByType(KspExtension::class.java)
+            ksp.arg(ManifestGeneration.OPTION_USE_ASSET_BASED_MATCH_INDEX, "true")
+        }
+
         val androidComponents = project.extensions.getByType(
             AndroidComponentsExtension::class.java
         )
 
         androidComponents.onVariants { variant ->
-            // Merge type is always library as this does not support application modules
             val mergeType = ManifestMerger2.MergeType.LIBRARY
+            val variantName = variant.name
+            val variantCapitalized = variantName.replaceFirstChar { it.uppercase() }
+            val kspTaskName = "ksp${variantCapitalized}Kotlin"
 
-            // Path where KSP writes the manifest via filer API (this is cached by Gradle)
-            val kspGeneratedManifestPath = "generated/ksp/${variant.name}/resources/${ManifestGeneration.MANIFEST_RESOURCE_PATH}"
-            // Safe location where we move the manifest to prevent it from being picked up by Java resource merge
-            val safeManifestPath = "intermediates/deeplinkdispatch/${variant.name}/AndroidManifest.xml"
+            // Build-dir-relative paths (all centralized in ManifestGeneration)
+            val kspGeneratedManifestPath = ManifestGeneration.kspGeneratedManifestPath(variantName)
+            val kspGeneratedAssetsPath = ManifestGeneration.kspGeneratedAssetsDir(variantName)
+            val kspKotlinOutputPath = "generated/ksp/$variantName/kotlin"
+            val safeManifestPath = "intermediates/deeplinkdispatch/$variantName/AndroidManifest.xml"
+            val safeAssetsPath = "intermediates/deeplinkdispatch/$variantName/assets"
 
             val manifestMergeTask = project.tasks.register(
                 GenerateManifestIntentFiltersForDeeplinkDispatchTask.taskName(variant),
                 GenerateManifestIntentFiltersForDeeplinkDispatchTask::class.java
             ) {
-                // Read manifest from safe location (moved there by KSP doLast action)
                 generatedManifestPath.set(project.layout.buildDirectory.file(safeManifestPath))
-                // Set KSP output directory as an input to establish dependency on KSP task
-                kspOutputDirectory.set(project.layout.buildDirectory.dir(
-                    "generated/ksp/${variant.name}/kotlin"
-                ))
-                // Set merge type determined during configuration phase
+                kspOutputDirectory.set(project.layout.buildDirectory.dir(kspKotlinOutputPath))
                 this.mergeType.set(mergeType)
                 group = "deeplinkdispatch"
-                description = "Merges KSP-generated manifest for ${variant.name}"
+                description = "Merges KSP-generated manifest for $variantName"
             }
 
-            // Transform MERGED_MANIFEST
-            // By making our task depend on KSP output directory, we establish that KSP must run first
-            // This might create a circular dependency in app modules but could work for libraries
             variant.artifacts.use(manifestMergeTask)
                 .wiredWithFiles(
                     GenerateManifestIntentFiltersForDeeplinkDispatchTask::mergedManifest,
@@ -95,67 +109,87 @@ class ManifestGenerationPlugin: Plugin<Project> {
                 )
                 .toTransform(SingleArtifact.MERGED_MANIFEST)
 
-            // Register a task to move the manifest from KSP resources to a safe location.
-            // This must be a separate task (not doLast on KSP) because doLast doesn't run
-            // when KSP is restored FROM-CACHE.
+            // Moves the manifest out of the KSP resources dir so it isn't picked up as a Java
+            // resource. Must be a separate task (rather than a KSP `doLast`) because `doLast`
+            // doesn't run when KSP is restored FROM-CACHE.
             val relocateManifestTask = project.tasks.register(
-                "relocateDeepLinkManifest${variant.name.replaceFirstChar { it.uppercase() }}",
+                "relocateDeepLinkManifest$variantCapitalized",
                 RelocateDeepLinkManifestTask::class.java
             ) {
                 kspManifestFile.set(project.layout.buildDirectory.file(kspGeneratedManifestPath))
                 safeManifestFile.set(project.layout.buildDirectory.file(safeManifestPath))
                 group = "deeplinkdispatch"
-                description = "Moves DeepLinkDispatch manifest from KSP resources to safe location for ${variant.name}"
+                description = "Moves DeepLinkDispatch manifest from KSP resources to safe location for $variantName"
             }
 
-            // Configure task ordering AFTER evaluation when KSP task exists
-            project.afterEvaluate {
-                val kspTaskName = "ksp${variant.name.replaceFirstChar { it.uppercase() }}Kotlin"
-                val kspTask = project.tasks.findByName(kspTaskName)
+            val relocateAssetsTask = project.tasks.register(
+                "relocateDeepLinkAssets$variantCapitalized",
+                RelocateDeepLinkAssetsTask::class.java
+            ) {
+                kspAssetsDir.set(project.layout.buildDirectory.dir(kspGeneratedAssetsPath))
+                safeAssetsDir.set(project.layout.buildDirectory.dir(safeAssetsPath))
+                group = "deeplinkdispatch"
+                description = "Moves DeepLinkDispatch assets from KSP resources to safe location for $variantName"
+            }
 
-                if (kspTask != null) {
-                    // Relocate task runs after KSP
-                    relocateManifestTask.configure {
-                        dependsOn(kspTask)
-                    }
+            val mergeAssetsTask = project.tasks.register(
+                MergeDeepLinkAssetsTask.taskName(variant),
+                MergeDeepLinkAssetsTask::class.java
+            ) {
+                additionalAssetsDir.set(project.layout.buildDirectory.dir(safeAssetsPath))
+                group = "deeplinkdispatch"
+                description = "Merges DeepLinkDispatch assets for $variantName"
+            }
+
+            variant.artifacts.use(mergeAssetsTask)
+                .wiredWithDirectories(
+                    MergeDeepLinkAssetsTask::inputAssets,
+                    MergeDeepLinkAssetsTask::outputAssets
+                )
+                .toTransform(SingleArtifact.ASSETS)
+
+            // Merge tasks always run after their respective relocate task; these are in-plugin
+            // task providers so they can be wired lazily without `findByName`.
+            manifestMergeTask.configure { dependsOn(relocateManifestTask) }
+            mergeAssetsTask.configure { dependsOn(relocateAssetsTask) }
+
+            // Wire KSP -> relocate only when the KSP plugin is applied. We use `tasks.matching`
+            // (not `named`) because KSP registers its variant-specific tasks lazily during
+            // project evaluation, possibly after this block runs.
+            project.pluginManager.withPlugin("com.google.devtools.ksp") {
+                project.tasks.matching { it.name == kspTaskName }.configureEach {
+                    // no-op; ensures the task is realized
                 }
-
-                // Manifest merge task always runs after relocate (regardless of KSP presence)
-                manifestMergeTask.configure {
-                    dependsOn(relocateManifestTask)
+                relocateManifestTask.configure {
+                    dependsOn(project.tasks.matching { it.name == kspTaskName })
                 }
-
-                // Wire relocate task into the library's Java resource processing pipeline.
-                // This ensures the manifest file is moved before the library's resources are processed,
-                // so when an app depends on this library, the file won't be in the resources.
-                // processJavaRes is critical - it's the task that collects resources from source
-                // directories and is what consuming app modules depend on.
-                val variantCapitalized = variant.name.replaceFirstChar { it.uppercase() }
-                listOf(
-                    "process${variantCapitalized}JavaRes",
-                    "merge${variantCapitalized}JavaResource",
-                    "bundleLibCompileToJar${variantCapitalized}",
-                    "bundleLibRuntimeToJar${variantCapitalized}",
-                    "sync${variantCapitalized}LibJars"
-                ).forEach { taskName ->
-                    project.tasks.findByName(taskName)?.let { task ->
-                        task.dependsOn(relocateManifestTask)
-                    }
+                relocateAssetsTask.configure {
+                    dependsOn(project.tasks.matching { it.name == kspTaskName })
                 }
             }
 
-            // Also transform the manifest for host tests (unit tests) so that
-            // Robolectric tests can access the merged intent filters via PackageManager
+            // Make the library's Java-resource and jar-bundling tasks run after our relocate
+            // tasks so the KSP-generated files aren't copied into the AAR as Java resources.
+            val javaResourceTaskNames = setOf(
+                "process${variantCapitalized}JavaRes",
+                "merge${variantCapitalized}JavaResource",
+                "bundleLibCompileToJar$variantCapitalized",
+                "bundleLibRuntimeToJar$variantCapitalized",
+                "sync${variantCapitalized}LibJars",
+            )
+            project.tasks.matching { it.name in javaResourceTaskNames }.configureEach {
+                dependsOn(relocateManifestTask, relocateAssetsTask)
+            }
+
+            // Also transform the manifest for host tests (unit tests) so that Robolectric tests
+            // can access the merged intent filters via PackageManager.
             (variant as? HasHostTests)?.hostTests?.forEach { (_, hostTest) ->
                 val hostTestManifestMergeTask = project.tasks.register(
                     "${hostTest.name}GenerateManifestIntentFiltersForDeepLinkDispatch",
                     GenerateManifestIntentFiltersForDeeplinkDispatchTask::class.java
                 ) {
-                    // Read manifest from safe location (moved there by KSP doLast action)
                     generatedManifestPath.set(project.layout.buildDirectory.file(safeManifestPath))
-                    kspOutputDirectory.set(project.layout.buildDirectory.dir(
-                        "generated/ksp/${variant.name}/kotlin"
-                    ))
+                    kspOutputDirectory.set(project.layout.buildDirectory.dir(kspKotlinOutputPath))
                     this.mergeType.set(mergeType)
                     group = "deeplinkdispatch"
                     description = "Merges KSP-generated manifest for ${hostTest.name}"
@@ -168,20 +202,10 @@ class ManifestGenerationPlugin: Plugin<Project> {
                     )
                     .toTransform(SingleArtifact.MERGED_MANIFEST)
 
-                // Configure task ordering for host test tasks
-                project.afterEvaluate {
-                    val kspTaskName = "ksp${variant.name.replaceFirstChar { it.uppercase() }}Kotlin"
-                    val kspTask = project.tasks.findByName(kspTaskName)
-
-                    if (kspTask != null) {
-                        hostTestManifestMergeTask.configure {
-                            dependsOn(kspTask)
-                        }
-                    }
-
-                    // Host test manifest merge task always depends on relocate task
+                hostTestManifestMergeTask.configure { dependsOn(relocateManifestTask) }
+                project.pluginManager.withPlugin("com.google.devtools.ksp") {
                     hostTestManifestMergeTask.configure {
-                        dependsOn(relocateManifestTask)
+                        dependsOn(project.tasks.matching { it.name == kspTaskName })
                     }
                 }
             }
