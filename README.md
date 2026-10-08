@@ -91,6 +91,23 @@ and
 
 but you can override that default by providing different values for `actions` and/or `categories` in the `@DeepLink` annotation or in the `@DeepLinkSpec` annotation (for special annotation definition).
 
+`intentFilterAttributes` adds attributes to the generated `intent-filter`, e.g. `android:autoVerify="true"` for
+[App Links](https://developer.android.com/training/app-links). Android verifies every host in such a filter, and on
+Android 11 and lower a single host that fails verification fails it for all of them. For hosts that can never pass
+verification, e.g. an internal host only reachable on a VPN, a `@DeepLinkSpec` can list them in `unverifiedPrefix`
+instead of `prefix`. They match exactly like `prefix` in the app, but get their own `intent-filter` without
+`intentFilterAttributes`:
+
+```kotlin
+@DeepLinkSpec(
+    prefix = ["https://example.com/"],
+    unverifiedPrefix = ["https://staging.example.com/"],
+    activityClassFqn = "com.example.MainActivity",
+    intentFilterAttributes = ["android:autoVerify=\"true\""],
+)
+annotation class WebDeepLink(vararg val value: String)
+```
+
 The integration of the generated `AndroidManfiest.xml` file into the Android build system is done by a gradle plugin that needs to be applied to every module that is using manifest generation.
 
 To do that you need to first make it known to your projects root gradle file:
