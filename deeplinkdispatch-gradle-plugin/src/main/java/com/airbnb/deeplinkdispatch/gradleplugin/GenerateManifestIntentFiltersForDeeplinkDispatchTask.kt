@@ -5,6 +5,7 @@ import com.android.manifmerger.ManifestMerger2
 import com.android.manifmerger.MergingReport
 import com.android.utils.StdLogger
 import org.gradle.api.DefaultTask
+import org.gradle.api.GradleException
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.Property
@@ -82,12 +83,12 @@ abstract class GenerateManifestIntentFiltersForDeeplinkDispatchTask : DefaultTas
             generatedManifestFile.length() > 0
 
         if (!hasGeneratedManifest) {
-            println(
+            logger.warn(
                 "No DeepLinkDispatch generated manifest found or manifest is empty. Copying input" +
-                        " manifest to output without modifications. You might have applied the" +
-                        " deep link dispatch gradle plugin to a module that does not have deep" +
-                        " links defined or you forgot the set the `activityClassFqn` on your deep" +
-                        " links."
+                    " manifest to output without modifications. You might have applied the" +
+                    " deep link dispatch gradle plugin to a module that does not have deep" +
+                    " links defined or you forgot to set the `activityClassFqn` on your deep" +
+                    " links.",
             )
             inputManifest.copyTo(outputManifest, overwrite = true)
             return
@@ -112,7 +113,7 @@ abstract class GenerateManifestIntentFiltersForDeeplinkDispatchTask : DefaultTas
         val merge = invoker.merge()
         if (merge.result.isSuccess) {
             val mergedDocument = merge.getMergedDocument(MergingReport.MergedManifestKind.MERGED)
-                ?: error("Failed to get merged document")
+                ?: throw GradleException("DeepLinkDispatch: failed to get merged manifest document")
             outputManifest.writeText(mergedDocument)
         } else {
             val errorMessage = buildString {
@@ -121,7 +122,7 @@ abstract class GenerateManifestIntentFiltersForDeeplinkDispatchTask : DefaultTas
                     appendLine("  ${record.severity}: ${record.message}")
                 }
             }
-            error(errorMessage)
+            throw GradleException(errorMessage)
         }
     }
 
