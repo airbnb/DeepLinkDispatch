@@ -836,3 +836,17 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 ```
+
+## Building from source
+
+Use JDK 25 (LTS) and install Android SDK Platform 37.2 and Build Tools 37.0.0.
+The Gradle wrapper supplies Gradle; build and test dependency versions are centralized in
+[`dependencies.gradle`](dependencies.gradle).
+
+```shell
+./gradlew assemble assembleAndroidTest check javadoc lintKotlin
+```
+
+Android modules use AGP's built-in Kotlin support. The kapt sample uses
+`com.android.legacy-kapt`; KSP samples continue to use `com.google.devtools.ksp`.
+The compile SDK is independent of the existing minimum and target SDK levels.

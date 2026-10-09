@@ -1,7 +1,6 @@
 plugins {
     id("com.android.application")
     id("checkstyle")
-    id("kotlin-android")
     id("com.google.devtools.ksp")
     id('org.jmailen.kotlinter')
 }
@@ -14,13 +13,18 @@ checkstyle {
 
 android {
     namespace = 'com.airbnb.deeplinkdispatch.sample'
-    compileSdk androidConfig.compileSdkVersion
+    compileSdk {
+        version = release(androidConfig.compileSdkVersion) {
+            it.minorApiLevel = androidConfig.compileSdkMinorVersion
+        }
+    }
+    buildToolsVersion = androidConfig.buildToolsVersion
 
     defaultConfig {
         applicationId "com.airbnb.deeplinkdispatch.sample"
         // Sample app uses minSdk 21 because the test dependency (androidx.test:core) requires it
         minSdk = 21
-        targetSdk = androidConfig.compileSdkVersion
+        targetSdk = androidConfig.targetSdkVersion
         versionCode 1
         versionName "1.0"
     }

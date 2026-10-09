@@ -2,7 +2,6 @@
 // Published-library integration is documented in README.md under Manifest Generation.
 
 apply plugin: 'com.android.library'
-apply plugin: 'kotlin-android'
 apply plugin: 'org.jmailen.kotlinter'
 apply plugin: 'com.google.devtools.ksp'
 apply plugin: 'com.airbnb.deeplinkdispatch.manifest-generation'
@@ -14,11 +13,16 @@ apply plugin: 'com.airbnb.deeplinkdispatch.manifest-generation'
 
 android {
     namespace = "com.airbnb.deeplinkdispatch.sampleksplibrary"
-    compileSdk androidConfig.compileSdkVersion
+    compileSdk {
+        version = release(androidConfig.compileSdkVersion) {
+            it.minorApiLevel = androidConfig.compileSdkMinorVersion
+        }
+    }
+    buildToolsVersion = androidConfig.buildToolsVersion
 
     defaultConfig {
         minSdk = androidConfig.minSdkVersion
-        targetSdk = androidConfig.compileSdkVersion
+        targetSdk = androidConfig.targetSdkVersion
 
         javaCompileOptions {
             annotationProcessorOptions {

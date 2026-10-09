@@ -14,6 +14,8 @@ buildscript {
     dependencies {
         classpath deps.androidPlugin
         classpath deps.kotlinGradlePlugin
+        classpath "org.jetbrains.kotlin:kotlin-sam-with-receiver:$versions.kotlinVersion"
+        classpath "com.android.legacy-kapt:com.android.legacy-kapt.gradle.plugin:$androidConfig.agpVersion"
         classpath deps.gradleMavenPublishPlugin
         classpath deps.benchmarkGradlePlugin
         // Dokka is needed on classpath for vanniktech publish plugin
@@ -34,20 +36,24 @@ allprojects {
 }
 
 tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
-    kotlinOptions {
+    compilerOptions {
         allWarningsAsErrors = true
     }
 }
 
 // Apply consistent JVM toolchain and target to all subprojects
 subprojects {
+    plugins.withId('checkstyle') {
+        checkstyle.toolVersion = rootProject.ext.versions.checkstyleVersion
+    }
     afterEvaluate {
         def toolchainVersion = rootProject.ext.jvmToolchainVersion
-        def targetVersion = rootProject.ext.jvmTargetVersion
+        // Gradle/AGP plugins run on Java 17+; library bytecode remains Java 11.
+        def targetVersion = plugins.hasPlugin('java-gradle-plugin') ? 17 : rootProject.ext.jvmTargetVersion
 
         // For Kotlin projects (both pure JVM and Android)
         if (plugins.hasPlugin('org.jetbrains.kotlin.jvm') || plugins.hasPlugin('kotlin') ||
-            plugins.hasPlugin('kotlin-android') || plugins.hasPlugin('org.jetbrains.kotlin.android')) {
+            plugins.hasPlugin('com.android.library') || plugins.hasPlugin('com.android.application')) {
             kotlin {
                 jvmToolchain(toolchainVersion)
             }
@@ -58,7 +64,7 @@ subprojects {
             }
         }
         // For Java-only projects (without Kotlin)
-        else if (plugins.hasPlugin('java') && !plugins.hasPlugin('kotlin-dsl')) {
+        else if (plugins.hasPlugin('java')) {
             java {
                 toolchain {
                     languageVersion = JavaLanguageVersion.of(toolchainVersion)
@@ -77,7 +83,7 @@ subprojects {
         }
 
         // For pure Java projects
-        if (plugins.hasPlugin('java') && !plugins.hasPlugin('kotlin-dsl')) {
+        if (plugins.hasPlugin('java')) {
             java {
                 sourceCompatibility = JavaVersion.toVersion(targetVersion)
                 targetCompatibility = JavaVersion.toVersion(targetVersion)

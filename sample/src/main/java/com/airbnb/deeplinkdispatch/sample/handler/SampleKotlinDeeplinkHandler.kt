@@ -18,7 +18,7 @@ object SampleKotlinDeepLinkHandler :
         context: Context,
         deepLinkArgs: TestKotlinDeepLinkHandlerDeepLinkArgs,
     ) {
-        /**
+        /*
          * From here any internal/3rd party navigation framework can be called the provided args.
          */
         Log.d(TAG, "SampleKotlinDeepLinkHandler with $deepLinkArgs")
@@ -34,7 +34,7 @@ object SamplePartialParamKotlinDeepLinkHandler :
         context: Context,
         deepLinkArgs: TestKotlinDeepLinkHandlerDeepLinkArgsMissingPathParamExtraQueryParam,
     ) {
-        /**
+        /*
          * From here any internal/3rd party navigation framework can be called the provided args.
          */
         Log.d(TAG, "SamplePartialParamKotlinDeepLinkHandler with $deepLinkArgs")
@@ -50,7 +50,7 @@ object SampleNoParamsKotlinDeepLinkHandler :
         context: Context,
         deepLinkArgs: Any,
     ) {
-        /**
+        /*
          * From here any internal/3rd party navigation framework can be called the provided args.
          */
         Log.d(TAG, "SampleNoParamsKotlinDeepLinkHandler with $deepLinkArgs")
@@ -64,7 +64,7 @@ abstract class DeepLinkHandlerThatIsUsedAsExtensionByAnotherClass : DeepLinkHand
         context: Context,
         deepLinkArgs: Any,
     ) {
-        /**
+        /*
          * From here any internal/3rd party navigation framework can be called the provided args.
          */
         Log.d(TAG, "SampleNoParamsKotlinDeepLinkHandler with $deepLinkArgs")

@@ -46,9 +46,11 @@ class NodeMetadata(
                 validateIfConfigurablePathSegment(this) -> {
                     MetadataMasks.CONFIGURABLE_PATH_SEGMENT_MASK
                 }
+
                 validateIfComponentParam(this) -> {
                     MetadataMasks.COMPONENT_PARAM_MASK
                 }
+
                 else -> {
                     0
                 }

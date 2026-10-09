@@ -8,6 +8,7 @@ import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.TaskAction
+import org.gradle.work.DisableCachingByDefault
 
 /**
  * Task that relocates the KSP-generated manifest from the resources directory to a safe location.
@@ -24,6 +25,7 @@ import org.gradle.api.tasks.TaskAction
  * source file, and when KSP is restored from cache, it recreates the file but Gradle's
  * up-to-date check only compares content, not file existence.
  */
+@DisableCachingByDefault(because = "Relocation deletes KSP inputs, which must also happen after a cache restore")
 abstract class RelocateDeepLinkManifestTask : DefaultTask() {
 
     @get:InputFiles

@@ -1,0 +1,40 @@
+import org.gradle.api.artifacts.transform.TransformAction
+import org.gradle.api.artifacts.transform.TransformOutputs
+import org.gradle.api.artifacts.transform.TransformParameters
+import org.gradle.api.artifacts.transform.InputArtifact
+import org.gradle.api.attributes.Attribute
+import org.gradle.api.attributes.Usage
+import org.gradle.api.file.FileSystemLocation
+import org.gradle.api.provider.Provider
+
+import java.util.zip.ZipFile
+
+// JVM processor tests need AndroidX classes without applying the Android plugin.
+// Resolve current AARs from Maven and extract their classes instead of checking in JARs.
+abstract class AndroidTestClasses implements TransformAction<TransformParameters.None> {
+    @InputArtifact
+    abstract Provider<FileSystemLocation> getInputArtifact()
+
+    @Override
+    void transform(TransformOutputs outputs) {
+        new ZipFile(inputArtifact.get().asFile).withCloseable { archive ->
+            archive.getInputStream(archive.getEntry('classes.jar')).withCloseable { input ->
+                outputs.file('classes.jar').withOutputStream { output -> output << input }
+            }
+        }
+    }
+}
+
+def artifactType = Attribute.of('artifactType', String)
+dependencies.registerTransform(AndroidTestClasses) {
+    from.attribute(artifactType, 'aar')
+    to.attribute(artifactType, 'jar')
+}
+def testAndroidStubs = configurations.create('testAndroidStubs') {
+    canBeConsumed = false
+    transitive = false
+    attributes.attribute(Usage.USAGE_ATTRIBUTE, objects.named(Usage, Usage.JAVA_RUNTIME))
+}
+dependencies.add('testImplementation', testAndroidStubs.incoming.artifactView {
+    attributes.attribute(artifactType, 'jar')
+}.files)

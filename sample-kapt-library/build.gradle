@@ -1,6 +1,5 @@
 apply plugin: 'com.android.library'
-apply plugin: 'kotlin-android'
-apply plugin: 'kotlin-kapt'
+apply plugin: 'com.android.legacy-kapt'
 apply plugin: 'org.jmailen.kotlinter'
 
 // This is just here to show an example how DLD works with eitehr `annotationProcessor` (sample-library)
@@ -9,11 +8,16 @@ apply plugin: 'org.jmailen.kotlinter'
 
 android {
     namespace = 'com.airbnb.deeplinkdispatch.sample.kaptlibrary'
-    compileSdk androidConfig.compileSdkVersion
+    compileSdk {
+        version = release(androidConfig.compileSdkVersion) {
+            it.minorApiLevel = androidConfig.compileSdkMinorVersion
+        }
+    }
+    buildToolsVersion = androidConfig.buildToolsVersion
 
     defaultConfig {
         minSdk = androidConfig.minSdkVersion
-        targetSdk = androidConfig.compileSdkVersion
+        targetSdk = androidConfig.targetSdkVersion
 
         javaCompileOptions {
       annotationProcessorOptions {

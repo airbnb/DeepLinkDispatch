@@ -10,9 +10,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
-import org.robolectric.annotation.Config
 
-@Config(sdk = [21])
 @RunWith(RobolectricTestRunner::class)
 class ConfigurablePathSegmentTest {
     private val configurablePathSegmentReplacementsAllEmpty =

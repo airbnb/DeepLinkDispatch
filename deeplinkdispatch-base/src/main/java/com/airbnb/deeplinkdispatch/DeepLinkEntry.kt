@@ -272,21 +272,35 @@ sealed class DeepLinkEntry(
      */
     override fun compareTo(other: DeepLinkEntry): Int {
         return when {
-            /**
+            /*
              * Specific conditions added for fully concrete links.
              * Concrete link will always return -1 for firstNonConcreteIndex,
              * so the general comparison logic will not work.
              */
-            this.firstNonConcreteIndex < 0 && this.firstNonConcreteIndex != other.firstNonConcreteIndex -> -1
-            other.firstNonConcreteIndex < 0 && other.firstNonConcreteIndex != this.firstNonConcreteIndex -> 1
-            this.firstNonConcreteIndex < other.firstNonConcreteIndex -> 1
+            this.firstNonConcreteIndex < 0 && this.firstNonConcreteIndex != other.firstNonConcreteIndex -> {
+                -1
+            }
+
+            other.firstNonConcreteIndex < 0 && other.firstNonConcreteIndex != this.firstNonConcreteIndex -> {
+                1
+            }
+
+            this.firstNonConcreteIndex < other.firstNonConcreteIndex -> {
+                1
+            }
+
             this.firstNonConcreteIndex == other.firstNonConcreteIndex -> {
                 when {
                     // Both are fully concrete
-                    this.firstNonConcreteIndex == -1 -> 0
+                    this.firstNonConcreteIndex == -1 -> {
+                        0
+                    }
+
                     // Compare by total number of non-concrete elements (fewer is more concrete)
-                    this.totalNonConcreteElements != other.totalNonConcreteElements ->
+                    this.totalNonConcreteElements != other.totalNonConcreteElements -> {
                         this.totalNonConcreteElements.compareTo(other.totalNonConcreteElements)
+                    }
+
                     // Same number of non-concrete elements, compare types and positions pairwise
                     else -> {
                         val thisElements = this.nonConcreteElementIndicesAndTypes
@@ -327,7 +341,10 @@ sealed class DeepLinkEntry(
                     }
                 }
             }
-            else -> -1
+
+            else -> {
+                -1
+            }
         }
     }
 }
