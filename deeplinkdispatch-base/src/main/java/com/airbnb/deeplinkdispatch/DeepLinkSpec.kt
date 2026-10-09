@@ -47,6 +47,12 @@ package com.airbnb.deeplinkdispatch
  * `android.intent.action.VIEW`
  * @property categories The categories that should be listed for the `intent-filter`. Default:
  * `android.intent.category.DEFAULT` and  `android.intent.category.BROWSABLE`.
+ * @property unverifiedPrefix Prefixes that match exactly like [prefix], but whose generated
+ * `intent-filter` leaves out [intentFilterAttributes]. Use it for hosts that can never pass App Links
+ * verification, e.g. internal hosts only reachable on a VPN, in a spec that sets
+ * `android:autoVerify="true"`: links to them still route in the app and from other apps, without
+ * failing the verification of the hosts in [prefix]. Same format as [prefix], except that empty
+ * strings are ignored, so a build config constant can be empty for some builds.
  */
 @Target(AnnotationTarget.ANNOTATION_CLASS) // When using tools like Dexguard we require these annotations to still be inside the .dex files
 // produced by D8 but because of this bug https://issuetracker.google.com/issues/168524920 they
@@ -58,4 +64,5 @@ annotation class DeepLinkSpec(
     val intentFilterAttributes: Array<String> = [],
     val actions: Array<String> = ["android.intent.action.VIEW"],
     val categories: Array<String> = ["android.intent.category.DEFAULT", "android.intent.category.BROWSABLE"],
+    val unverifiedPrefix: Array<String> = [],
 )

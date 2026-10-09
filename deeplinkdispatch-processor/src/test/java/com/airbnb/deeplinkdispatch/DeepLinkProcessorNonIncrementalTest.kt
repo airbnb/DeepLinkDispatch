@@ -614,6 +614,35 @@ class DeepLinkProcessorNonIncrementalTest : BaseDeepLinkProcessorTest() {
     }
 
     @Test
+    fun testProcessorWithPrefixInPrefixAndUnverifiedPrefixFail() {
+        val overlappingPrefixLink =
+            Source.JavaSource(
+                "com.example.MyDeepLink",
+                """
+                    package com.example;
+                    import com.airbnb.deeplinkdispatch.DeepLinkSpec;
+                    @DeepLinkSpec(prefix = { "http://example.com/" }, unverifiedPrefix = { "http://example.com/" })
+                    public @interface MyDeepLink {
+                        String[] value();
+                    }
+                    """,
+            )
+        val sourceFiles = listOf(overlappingPrefixLink, SIMPLE_DEEPLINK_ACTIVITY, SAMPLE_DEEPLINK_MODULE)
+
+        val resultsKapt =
+            listOf(
+                compile(
+                    sourceFiles = sourceFiles,
+                    useKsp = false,
+                ),
+            )
+        assertCompileError(
+            results = resultsKapt,
+            errorMessage = "Prefixes cannot be in both prefix and unverifiedPrefix: http://example.com/",
+        )
+    }
+
+    @Test
     fun testProcessorWithEmptyDeepLinkSpecPrefixesFail() {
         val emptyPrefixArrayLink =
             Source.JavaSource(

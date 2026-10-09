@@ -1363,6 +1363,98 @@ class DeepLinkProcessorKspTest : BaseDeepLinkProcessorTest() {
     }
 
     @Test
+    fun testDeepLinkSpecWithUnverifiedPrefix() {
+        val customWebDeepLinkJava =
+            Source.JavaSource(
+                "com.example.WebDeepLink",
+                """
+                package com.example;
+                import com.airbnb.deeplinkdispatch.DeepLinkSpec;
+                @DeepLinkSpec(
+                    prefix = { "https://example.com/" },
+                    // The trailing separator yields an empty prefix, which is ignored.
+                    unverifiedPrefix = { "https://staging.example.com/#" },
+                    activityClassFqn = "com.example.SampleActivity",
+                    intentFilterAttributes = { "android:autoVerify=\"true\"" }
+                )
+                public @interface WebDeepLink {
+                    String[] value();
+                }
+                """,
+            )
+        val sampleActivityKotlin =
+            Source.KotlinSource(
+                "SampleActivity.kt",
+                """
+                 package com.example
+                 import com.airbnb.deeplinkdispatch.DeepLinkHandler
+                 import com.example.SampleModule
+                 @WebDeepLink("path")
+                 @DeepLinkHandler( SampleModule::class )
+                 class SampleActivity : android.app.Activity()
+                 """,
+            )
+        val sourceFiles =
+            listOf(
+                customWebDeepLinkJava,
+                module,
+                sampleActivityKotlin,
+                fakeBaseDeeplinkDelegateJava,
+            )
+        val results =
+            listOf(
+                compileIncremental(
+                    sourceFiles = sourceFiles,
+                    customDeepLinks = listOf("com.example.WebDeepLink"),
+                    useKsp = true,
+                    incrementalFlag = false,
+                ),
+            )
+        results.forEach { result ->
+            assertThat(result.result.exitCode).isEqualTo(KotlinCompilation.ExitCode.OK)
+            // Only the hosts in prefix get the intent filter attributes, so a failing unverified host cannot fail their
+            // App Links verification.
+            assertThat(result.generatedFiles["AndroidManifest.xml"]?.readText()).isEqualTo(
+                """
+                <?xml version="1.0" encoding="utf-8"?>
+                <manifest xmlns:android="http://schemas.android.com/apk/res/android" >
+                    <application>
+                        <activity
+                            android:name="com.example.SampleActivity" android:exported="true">
+                            <intent-filter android:autoVerify="true">
+                                <action android:name="android.intent.action.VIEW" />
+                                <category android:name="android.intent.category.DEFAULT" />
+                                <category android:name="android.intent.category.BROWSABLE" />
+                                <data android:scheme="https" />
+                                <data android:host="example.com" />
+                                <data android:path="/path" />
+                            </intent-filter>
+                            <intent-filter>
+                                <action android:name="android.intent.action.VIEW" />
+                                <category android:name="android.intent.category.DEFAULT" />
+                                <category android:name="android.intent.category.BROWSABLE" />
+                                <data android:scheme="https" />
+                                <data android:host="staging.example.com" />
+                                <data android:path="/path" />
+                            </intent-filter>
+                        </activity>
+                    </application>
+                </manifest>
+
+                """.trimIndent(),
+            )
+            // The unverified host still routes in the app.
+            val registry =
+                result.generatedFiles
+                    .filterKeys { it.endsWith("Registry.java") }
+                    .values
+                    .single()
+                    .readText()
+            assertThat(registry).contains("staging.example.com")
+        }
+    }
+
+    @Test
     fun testDeepLinkSpecVsDeepLinkDifferentIntentFilterAttributes() {
         val customAutoVerifyWebDeepLinkJava =
             Source.JavaSource(

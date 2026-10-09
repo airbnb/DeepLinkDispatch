@@ -517,13 +517,10 @@ class DeepLinkProcessor(
                 // and is not otherwise useed in the url template format of DLD.
                 // Because the values within the array in the anotation definition have to be constant it is otherwise not possible to
                 // easily configure multiple prefixes that are not hardcoded in the codebase of the app using DLD
-                val prefixes =
-                    customAnnotationTypeElement
-                        .getArrayAnnotationParameter("prefix")
-                        .map { singlePrefix ->
-                            singlePrefix.split(CUSTOM_ANNOTATION_URL_PREFIX_DELIMITER)
-                        }.flatten()
-                        .toTypedArray()
+                val prefixes = customAnnotationTypeElement.getPrefixesAnnotationParameter("prefix")
+                // Empty unverified prefixes are ignored, so a build config constant can be empty for some builds.
+                val unverifiedPrefixes =
+                    customAnnotationTypeElement.getPrefixesAnnotationParameter("unverifiedPrefix").filter { it.isNotEmpty() }
                 val actions = customAnnotationTypeElement.getArrayAnnotationParameter("actions")
                 val categories = customAnnotationTypeElement.getArrayAnnotationParameter("categories")
                 val intentFilterAttributes = customAnnotationTypeElement.getArrayAnnotationParameter("intentFilterAttributes")
@@ -540,18 +537,37 @@ class DeepLinkProcessor(
                         message = "Prefix property cannot be empty",
                     )
                 }
+                val prefixesInBoth = prefixes.intersect(unverifiedPrefixes.toSet())
+                if (prefixesInBoth.isNotEmpty()) {
+                    logError(
+                        element = customAnnotationTypeElement,
+                        message = "Prefixes cannot be in both prefix and unverifiedPrefix: ${prefixesInBoth.joinToString()}",
+                    )
+                }
+
+                fun prefixAndActivityFqn(
+                    prefix: String,
+                    intentFilterAttributes: Set<String>,
+                ) = PrefixAndActivityFqn(
+                    prefix = prefix,
+                    activityClassFqn = activityClassFqn,
+                    actions = actions.toSet(),
+                    categories = categories.toSet(),
+                    intentFilterAttributes = intentFilterAttributes,
+                )
                 customAnnotationTypeElement.qualifiedName to
-                    prefixes
-                        .map {
-                            PrefixAndActivityFqn(
-                                prefix = it,
-                                activityClassFqn = activityClassFqn,
-                                actions = actions.toSet(),
-                                categories = categories.toSet(),
-                                intentFilterAttributes = intentFilterAttributes.toSet(),
-                            )
-                        }.toTypedArray()
+                    (
+                        prefixes.map { prefixAndActivityFqn(it, intentFilterAttributes.toSet()) } +
+                            // Different intent filter attributes put these into their own intent-filter.
+                            unverifiedPrefixes.map { prefixAndActivityFqn(it, intentFilterAttributes = emptySet()) }
+                    ).toTypedArray()
             }
+
+    // See where the prefixes are read for why a single string can hold several prefixes.
+    private fun XTypeElement.getPrefixesAnnotationParameter(propertyName: String): Array<String> =
+        getArrayAnnotationParameter(propertyName)
+            .flatMap { singlePrefix -> singlePrefix.split(CUSTOM_ANNOTATION_URL_PREFIX_DELIMITER) }
+            .toTypedArray()
 
     private fun XTypeElement.getArrayAnnotationParameter(propertyName: String): Array<String> =
         getAnnotation(DEEP_LINK_SPEC_CLASS)?.getAsList<String>(propertyName)?.toTypedArray()
