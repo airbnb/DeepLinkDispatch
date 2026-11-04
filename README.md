@@ -792,6 +792,7 @@ At runtime we traverse the graph for each module to find the correct action to u
 * Configurable path segments can lead to duplicates. e.g. `dld://airbnb/obamaos/cereal` will match both  `@Deeplink('dld://airbnb/obamaos/cereal/')` and `@Deeplink('dld://airbnb/<brand>/cereal')` if `<brand>` is configured to be `obamaos`. The same match rules as mentioned before apply here.
 * Configurable path segments can have empty values e.g. `<brand>` can be set to `""` in the previous example. Which would then match `dld://airbnb/cereal`. If a deeplink like that is defined already somewhere else the same match rules as mentioned before apply to which match actually gets found.
 * Because of limitations of the algo the last path element (the item behind the last slash) cannot  be a configurable path segment with it's value set to `""`. Currently the system will allow you to do this but will not correctly match in that case.
+* There are no wildcards. Android intent filter glob syntax such as `dld://airbnb/renewals/..*` or `https://*.airbnb.com/renewals` would only match a literal `*`, so a `*` in the host or path of a template fails the build. Use a placeholder like `dld://airbnb/renewals/{page}` instead. A placeholder matches exactly one path segment, so there is no way to match any number of segments.
 
 ## Proguard/R8 Rules
 
