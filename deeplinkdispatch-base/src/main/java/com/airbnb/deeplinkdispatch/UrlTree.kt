@@ -14,6 +14,7 @@ import com.airbnb.deeplinkdispatch.base.MatchIndex.MATCH_INDEX_ENCODING
 import com.airbnb.deeplinkdispatch.base.MatchIndex.ROOT_VALUE
 import com.airbnb.deeplinkdispatch.base.Utils.validateIfComponentParam
 import com.airbnb.deeplinkdispatch.base.Utils.validateIfConfigurablePathSegment
+import com.airbnb.deeplinkdispatch.base.Utils.validateNoWildcard
 import com.airbnb.deeplinkdispatch.base.chunkOnModifiedUtf8ByteSize
 import java.io.OutputStream
 import java.nio.charset.Charset
@@ -201,7 +202,10 @@ data class Root(
                         deepLinkUri
                             .host()
                             .orderPlaceholderValues()
-                            .also { validateIfComponentParam(it) },
+                            .also {
+                                validateIfComponentParam(it)
+                                validateNoWildcard(it)
+                            },
                     ),
                 )
             if (deepLinkUri.pathSegments().isNullOrEmpty()) {
@@ -218,6 +222,7 @@ data class Root(
                                 .also {
                                     validateIfComponentParam(it)
                                     validateIfConfigurablePathSegment(it)
+                                    validateNoWildcard(it)
                                 },
                         ),
                     )

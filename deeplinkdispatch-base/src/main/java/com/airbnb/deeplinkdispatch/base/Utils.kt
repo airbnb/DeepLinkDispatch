@@ -145,6 +145,23 @@ object Utils {
         return false
     }
 
+    /**
+     * DeepLinkDispatch has no wildcards: a `*` in a URI template only ever matches a literal `*`.
+     * Templates written with Android intent filter glob syntax (e.g. `..*` or `*.example.com`) therefore never
+     * match, while the generated manifest can still route those links to the app.
+     *
+     * Throws IllegalArgumentException if [uriComponent] contains a `*`.
+     */
+    fun validateNoWildcard(uriComponent: String) {
+        require(!uriComponent.contains(WILDCARD)) {
+            "Invalid URI component: $uriComponent. DeepLinkDispatch does not support wildcards, so $WILDCARD only" +
+                " matches a literal $WILDCARD. Use a placeholder such as ${COMPONENT_PARAM_PREFIX}name$COMPONENT_PARAM_SUFFIX" +
+                " to match any value of a single path segment."
+        }
+    }
+
+    private const val WILDCARD = '*'
+
     @JvmStatic
     fun isConfigurablePathSegment(pathSegment: String) =
         pathSegment.startsWith(CONFIGURABLE_PATH_SEGMENT_PREFIX) &&

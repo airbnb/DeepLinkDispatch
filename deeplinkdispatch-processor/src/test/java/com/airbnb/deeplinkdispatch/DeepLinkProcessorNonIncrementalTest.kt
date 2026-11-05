@@ -993,6 +993,41 @@ class DeepLinkProcessorNonIncrementalTest : BaseDeepLinkProcessorTest() {
         )
     }
 
+    @Test
+    fun wildcardInPathSegmentFailsWithErrorMessage() {
+        val simpleActivity =
+            Source.JavaSource(
+                "com.example.SampleActivity",
+                """
+                    package com.example;
+                    import com.airbnb.deeplinkdispatch.DeepLink;
+                    import com.airbnb.deeplinkdispatch.DeepLinkHandler;
+
+                    import com.Example.SampleModule;
+
+                    @DeepLink("airbnb://example.com/renewals/..*")@DeepLinkHandler({ SampleModule.class })
+                    public class SampleActivity extends android.app.Activity {
+                    }
+                    """,
+            )
+        val results =
+            listOf(
+                compile(
+                    sourceFiles = listOf(SAMPLE_DEEPLINK_MODULE, simpleActivity),
+                    useKsp = false,
+                ),
+                compile(
+                    sourceFiles = listOf(SAMPLE_DEEPLINK_MODULE, simpleActivity),
+                    useKsp = true,
+                ),
+            )
+        assertCompileError(
+            results,
+            "Invalid URI component: ..*. DeepLinkDispatch does not support wildcards, so * only" +
+                " matches a literal *. Use a placeholder such as {name} to match any value of a single path segment.",
+        )
+    }
+
     companion object {
         private val SIMPLE_DEEPLINK_ACTIVITY =
             Source.JavaSource(
