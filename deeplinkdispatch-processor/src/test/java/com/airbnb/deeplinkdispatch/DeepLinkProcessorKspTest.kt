@@ -553,8 +553,8 @@ class DeepLinkProcessorKspTest : BaseDeepLinkProcessorTest() {
                                         <category android:name="android.intent.category.BROWSABLE" />
                                         <data android:scheme="example" />
                                         <data android:host="host" />
-                                        <data android:path="/deepLink" />
                                         <data android:path="/another" />
+                                        <data android:path="/deepLink" />
                                     </intent-filter>
                                     <intent-filter>
                                         <action android:name="android.intent.action.VIEW" />
@@ -563,8 +563,8 @@ class DeepLinkProcessorKspTest : BaseDeepLinkProcessorTest() {
                                         <data android:scheme="http" />
                                         <data android:scheme="https" />
                                         <data android:host="example.com" />
-                                        <data android:path="/deepLink" />
                                         <data android:path="/another" />
+                                        <data android:path="/deepLink" />
                                         <data android:path="/direct" />
                                         <data android:path="/method1/test" />
                                         <data android:path="/method2/test" />
@@ -713,9 +713,8 @@ class DeepLinkProcessorKspTest : BaseDeepLinkProcessorTest() {
                                         <action android:name="android.intent.action.VIEW" />
                                         <category android:name="android.intent.category.DEFAULT" />
                                         <category android:name="android.intent.category.BROWSABLE" />
-                                        <data android:scheme="http" />
-                                        <data android:scheme="https" />
-                                        <data android:host="example.com" />
+                                        <data android:scheme="example" />
+                                        <data android:host="host" />
                                         <data android:path="/method1" />
                                         <data android:path="/method2" />
                                     </intent-filter>
@@ -723,8 +722,9 @@ class DeepLinkProcessorKspTest : BaseDeepLinkProcessorTest() {
                                         <action android:name="android.intent.action.VIEW" />
                                         <category android:name="android.intent.category.DEFAULT" />
                                         <category android:name="android.intent.category.BROWSABLE" />
-                                        <data android:scheme="example" />
-                                        <data android:host="host" />
+                                        <data android:scheme="http" />
+                                        <data android:scheme="https" />
+                                        <data android:host="example.com" />
                                         <data android:path="/method1" />
                                         <data android:path="/method2" />
                                     </intent-filter>
@@ -818,9 +818,8 @@ class DeepLinkProcessorKspTest : BaseDeepLinkProcessorTest() {
                                         <action android:name="android.intent.action.VIEW" />
                                         <category android:name="android.intent.category.DEFAULT" />
                                         <category android:name="android.intent.category.BROWSABLE" />
-                                        <data android:scheme="http" />
-                                        <data android:scheme="https" />
-                                        <data android:host="example.com" />
+                                        <data android:scheme="example" />
+                                        <data android:host="host" />
                                         <data android:pathPattern="/handler1/..*/..*" />
                                         <data android:pathPattern="/handler2/..*/..*" />
                                     </intent-filter>
@@ -828,8 +827,9 @@ class DeepLinkProcessorKspTest : BaseDeepLinkProcessorTest() {
                                         <action android:name="android.intent.action.VIEW" />
                                         <category android:name="android.intent.category.DEFAULT" />
                                         <category android:name="android.intent.category.BROWSABLE" />
-                                        <data android:scheme="example" />
-                                        <data android:host="host" />
+                                        <data android:scheme="http" />
+                                        <data android:scheme="https" />
+                                        <data android:host="example.com" />
                                         <data android:pathPattern="/handler1/..*/..*" />
                                         <data android:pathPattern="/handler2/..*/..*" />
                                     </intent-filter>
@@ -1329,15 +1329,6 @@ class DeepLinkProcessorKspTest : BaseDeepLinkProcessorTest() {
                     <application>
                         <activity
                             android:name="com.example.SampleActivity" android:exported="true">
-                            <intent-filter android:autoVerify="true">
-                                <action android:name="android.intent.action.VIEW" />
-                                <category android:name="android.intent.category.DEFAULT" />
-                                <category android:name="android.intent.category.BROWSABLE" />
-                                <data android:scheme="https" />
-                                <data android:host="example.com" />
-                                <data android:path="/verified1" />
-                                <data android:path="/verified2" />
-                            </intent-filter>
                             <intent-filter>
                                 <action android:name="android.intent.action.SEND" />
                                 <category android:name="android.intent.category.DEFAULT" />
@@ -1352,6 +1343,15 @@ class DeepLinkProcessorKspTest : BaseDeepLinkProcessorTest() {
                                 <data android:scheme="https" />
                                 <data android:host="example.com" />
                                 <data android:path="/unverified" />
+                            </intent-filter>
+                            <intent-filter android:autoVerify="true">
+                                <action android:name="android.intent.action.VIEW" />
+                                <category android:name="android.intent.category.DEFAULT" />
+                                <category android:name="android.intent.category.BROWSABLE" />
+                                <data android:scheme="https" />
+                                <data android:host="example.com" />
+                                <data android:path="/verified1" />
+                                <data android:path="/verified2" />
                             </intent-filter>
                         </activity>
                     </application>
@@ -1516,6 +1516,14 @@ class DeepLinkProcessorKspTest : BaseDeepLinkProcessorTest() {
                     <application>
                         <activity
                             android:name="com.example.SampleActivity" android:exported="true">
+                            <intent-filter>
+                                <action android:name="android.intent.action.VIEW" />
+                                <category android:name="android.intent.category.DEFAULT" />
+                                <category android:name="android.intent.category.BROWSABLE" />
+                                <data android:scheme="https" />
+                                <data android:host="example.com" />
+                                <data android:path="/direct" />
+                            </intent-filter>
                             <intent-filter android:autoVerify="true">
                                 <action android:name="android.intent.action.VIEW" />
                                 <category android:name="android.intent.category.DEFAULT" />
@@ -1524,14 +1532,6 @@ class DeepLinkProcessorKspTest : BaseDeepLinkProcessorTest() {
                                 <data android:host="example.com" />
                                 <data android:path="/spec1" />
                                 <data android:path="/spec2" />
-                            </intent-filter>
-                            <intent-filter>
-                                <action android:name="android.intent.action.VIEW" />
-                                <category android:name="android.intent.category.DEFAULT" />
-                                <category android:name="android.intent.category.BROWSABLE" />
-                                <data android:scheme="https" />
-                                <data android:host="example.com" />
-                                <data android:path="/direct" />
                             </intent-filter>
                         </activity>
                     </application>

@@ -90,7 +90,7 @@ internal class ManifestGenerator(
             StringWriter().use { stringWriter ->
                 PrintWriter(stringWriter, true).use { writer ->
                     val docWriter: Writer = ManifestWriter()
-                    docWriter.write(processingEnv, writer, accumulatedElements)
+                    docWriter.write(processingEnv, writer, accumulatedElements.sortedForManifest())
                 }
                 stringWriter.toString()
             }
@@ -118,3 +118,19 @@ internal class ManifestGenerator(
         }
     }
 }
+
+/**
+ * Orders elements by their own content, so the manifest does not depend on the order in which the
+ * processor found them. That order follows the order of the source files, which can differ between
+ * two builds of the same sources, and the writer emits and groups entries in the order it is given.
+ */
+internal fun List<DeepLinkAnnotatedElement>.sortedForManifest(): List<DeepLinkAnnotatedElement> =
+    sortedWith(
+        compareBy<DeepLinkAnnotatedElement>(
+            { it.activityClassFqn.orEmpty() },
+            { it.uriTemplate },
+            { it.actions.sorted().joinToString() },
+            { it.categories.sorted().joinToString() },
+            { it.intentFilterAttributes.sorted().joinToString() },
+        ),
+    )
