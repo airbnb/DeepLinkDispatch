@@ -5,6 +5,7 @@ import androidx.room.compiler.processing.XMessager
 import androidx.room.compiler.processing.XProcessingEnv
 import androidx.room.compiler.processing.XTypeElement
 import com.airbnb.deeplinkdispatch.DeepLinkAnnotatedElement
+import com.airbnb.deeplinkdispatch.metadata.sortedForManifest
 import com.squareup.javapoet.ClassName
 import com.squareup.kotlinpoet.javapoet.KotlinPoetJavaPoetPreview
 import io.mockk.every
@@ -2182,6 +2183,47 @@ class ManifestWriterTest {
 
         // {https} × {example.com} × {/path1, /path2} = 2, actual = 2 (from expansion)
         assertThat(writer.canMerge(urls)).isTrue()
+    }
+
+    /**
+     * The processor finds elements in source file order, which can differ between two builds of the
+     * same sources. The generated manifest must be the same for every such order.
+     */
+    @Test
+    @OptIn(KotlinPoetJavaPoetPreview::class)
+    fun testManifestDoesNotDependOnElementDiscoveryOrder() {
+        val uris =
+            listOf(
+                "https://www.airbnb.com/checkout/addons/stay/{code}/{id}",
+                "https://www.airbnb.com/checkout/alteration/stay/{code}",
+                "https://www.airbnb.com/book/services/{id}",
+                "https://www.airbnb.com/book",
+                "airbnb://d/book",
+            )
+
+        fun manifestFor(order: List<String>): String {
+            val stringWriter = StringWriter()
+            ManifestWriter().write(
+                processingEnv,
+                PrintWriter(stringWriter),
+                order
+                    .map { createActivityElement(uri = it, activityClassFqn = "com.example.TestActivity") }
+                    .sortedForManifest(),
+            )
+            return stringWriter.toString()
+        }
+
+        fun <T> permutations(items: List<T>): List<List<T>> =
+            if (items.size <= 1) {
+                listOf(items)
+            } else {
+                items.flatMap { item -> permutations(items - item).map { listOf(item) + it } }
+            }
+
+        val manifests = permutations(uris).map(::manifestFor).toSet()
+
+        assertThat(manifests).hasSize(1)
+        assertThat(manifests.single()).contains("/checkout/addons/stay/..*/..*")
     }
 
     @OptIn(KotlinPoetJavaPoetPreview::class)
